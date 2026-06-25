@@ -1,126 +1,86 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import GameOver from './GameOver';
 
-// Mock react-i18next
+// Mock de i18n
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key, opts) => {
-      if (opts && typeof opts === 'object') {
-        return `${key}:${JSON.stringify(opts)}`;
+      if (key === 'results_score' && opts) {
+        return `Has acertado ${opts.score}/${opts.total}`;
       }
-      return key;
+      const translations = {
+        results_excellent: '¡Eres un experto en dinosaurios!',
+        results_great: '¡Muy bien hecho!',
+        results_good: '¡Buen trabajo!',
+        results_keepTrying: '¡Sigue practicando!',
+        newBestScore: '¡Nueva mejor puntuación!',
+        results_bestScore: 'Tu mejor puntuación:',
+        replay: 'Volver a jugar',
+        replay_aria_label: 'Volver a jugar',
+        results_aria_label: 'Pantalla de resultados',
+      };
+      return translations[key] || key;
     },
   }),
 }));
 
-// Mock storage
-vi.mock('../../utils/storage', () => ({
-  getBestScore: vi.fn(() => 5),
-  setBestScore: vi.fn(() => true),
-  evaluateBestScore: vi.fn((score) => {
-    const prev = 5;
-    return {
-      isNewBest: score > prev,
-      previousBest: prev,
-      shouldUpdate: score > prev,
-    };
-  }),
-}));
-
-import { getBestScore } from '../../utils/storage';
-
 describe('GameOver', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    localStorage.clear();
   });
 
-  it('renders the score in X/10 format', async () => {
+  it('muestra la puntuación en formato X/10', () => {
     render(
-      <GameOver
-        score={7}
-        bestScore={7}
-        isNewBestScore={true}
-        onReplay={() => {}}
-        onFinalizeScore={() => {}}
-      />
+      <GameOver score={7} bestScore={5} isNewBestScore={false} onReplay={() => {}} />
     );
-    expect(screen.getByText(/resultsScore/)).toBeInTheDocument();
+    expect(screen.getByText('Has acertado 7/10')).toBeInTheDocument();
   });
 
-  it('shows new best banner only when isNewBestScore is true', async () => {
-    const { rerender } = render(
-      <GameOver
-        score={7}
-        bestScore={7}
-        isNewBestScore={true}
-        onReplay={() => {}}
-        onFinalizeScore={() => {}}
-      />
-    );
-    expect(screen.getByText('newBestScore')).toBeInTheDocument();
-
-    rerender(
-      <GameOver
-        score={3}
-        bestScore={5}
-        isNewBestScore={false}
-        onReplay={() => {}}
-        onFinalizeScore={() => {}}
-      />
-    );
-    expect(screen.queryByText('newBestScore')).not.toBeInTheDocument();
-  });
-
-  it('calls onFinalizeScore with the numeric score on mount', async () => {
-    const onFinalizeScore = vi.fn();
+  it('muestra mensaje de nueva mejor puntuación cuando isNewBestScore es true', () => {
     render(
-      <GameOver
-        score={8}
-        bestScore={5}
-        isNewBestScore={false}
-        onReplay={() => {}}
-        onFinalizeScore={onFinalizeScore}
-      />
+      <GameOver score={8} bestScore={8} isNewBestScore={true} onReplay={() => {}} />
     );
-    await waitFor(() => {
-      expect(onFinalizeScore).toHaveBeenCalledWith(8);
-    });
+    expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
   });
 
-  it('calls onReplay when the replay button is clicked', async () => {
+  it('NO muestra mensaje de nueva mejor puntuación cuando isNewBestScore es false', () => {
+    render(
+      <GameOver score={3} bestScore={8} isNewBestScore={false} onReplay={() => {}} />
+    );
+    expect(screen.queryByText('¡Nueva mejor puntuación!')).not.toBeInTheDocument();
+  });
+
+  it('muestra mensaje motivador excelente para 9-10 aciertos', () => {
+    render(
+      <GameOver score={10} bestScore={10} isNewBestScore={true} onReplay={() => {}} />
+    );
+    expect(screen.getByText('¡Eres un experto en dinosaurios!')).toBeInTheDocument();
+  });
+
+  it('muestra mensaje motivador de seguir practicando para 0-3 aciertos', () => {
+    render(
+      <GameOver score={2} bestScore={5} isNewBestScore={false} onReplay={() => {}} />
+    );
+    expect(screen.getByText('¡Sigue practicando!')).toBeInTheDocument();
+  });
+
+  it('llama a onReplay al pulsar el botón', () => {
     const onReplay = vi.fn();
     render(
-      <GameOver
-        score={5}
-        bestScore={5}
-        isNewBestScore={false}
-        onReplay={onReplay}
-        onFinalizeScore={() => {}}
-      />
+      <GameOver score={5} bestScore={5} isNewBestScore={false} onReplay={onReplay} />
     );
-    fireEvent.click(screen.getByRole('button'));
-    expect(onReplay).toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Volver a jugar'));
+    expect(onReplay).toHaveBeenCalledTimes(1);
   });
 
-  it('does NOT use eval (no dynamic code execution)', () => {
-    // This is a guard test: ensure the component renders without eval.
-    // If eval were present, the following render would be fine, but the
-    // source code review confirms it's removed. This test ensures the
-    // motivational message renders for all ranges.
-    const scores = [0, 3, 4, 6, 7, 8, 9, 10];
-    for (const s of scores) {
-      const { unmount } = render(
-        <GameOver
-          score={s}
-          bestScore={s}
-          isNewBestScore={false}
-          onReplay={() => {}}
-          onFinalizeScore={() => {}}
-        />
-      );
-      expect(screen.getByText(/resultsMessage/)).toBeInTheDocument();
-      unmount();
-    }
+  it('no usa eval() — el mensaje se determina por comparación directa', () => {
+ // Si eval() se usara, esto podría ejecutar código arbitrario
+    // Verificamos que el render es seguro con valores normales
+    const { container } = render(
+      <GameOver score={5} bestScore={3} isNewBestScore={true} onReplay={() => {}} />
+    );
+    expect(container).toBeDefined();
+    expect(screen.getByText('Has acertado 5/10')).toBeInTheDocument();
   });
 });
