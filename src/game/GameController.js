@@ -1,150 +1,94 @@
+import { handleReplayGameStart, handleGameOver } from '../telemetry/replayTelemetry.js';
+import { buildGameStartedEvent } from '../telemetry/events.js';
+import { trackEvent } from '../telemetry/transport.js';
+
 /**
- * GameController — orchestrates the game lifecycle.
+ * GameController manages the lifecycle of a quiz game session.
  *
- * TRIOFSND-41 instrumentation:
- *  - When a game starts via the initial "¡Jugar!" button, emit `game_started`
- *    with `trigger: 'initial'`.
- *  - When a game starts via "Volver a jugar" (replay), emit `game_started`
- *    with `trigger: 'replay'`.
- *  - When a game completes, call recordGameCompleted so the replay-rate
- *    metric can be computed later.
+ * Telemetry responsibilities:
+ *   - On startNewGame({ trigger: 'replay' }): emit 'game_started' with trigger:'replay'.
+ *   - On startNewGame({ trigger: 'initial' }) or default: emit 'game_started' with trigger:'initial'.
+ *   - On gameComplete(): emit 'game_completed' and record game_over for replay-rate metric.
  */
-
-import { recordGameStartedInitial, recordGameStartedReplay, recordGameCompleted } from '../telemetry/replayTelemetry.js';
-import { GAME_START_TRIGGERS } from '../telemetry/events.js';
-
-export class GameController {
-  constructor({ questionsPool, onStateChange } = {}) {
-    this.questionsPool = questionsPool || [];
+export default class GameController {
+  constructor({ questions, onStateChange } = {}) {
+    this.questions = questions || [];
     this.onStateChange = onStateChange || (() => {});
-    this._currentGame = null;
+    this.currentIndex = 0;
+    this.score = 0;
+    this.activeQuestions = [];
+    this.isComplete = false;
   }
 
   /**
    * Start a new game.
-   *
-   * @param {object} options
-   * @param {string} options.trigger - 'initial' or 'replay'
-   */  startGame({ trigger = GAME_START_TRIGGERS.INITIAL } = {}) {
+   * @param {{trigger?: 'initial'|'replay'}} [opts]
+   */
+  startNewGame(opts = {}) {
+    const trigger = opts.trigger === 'replay' ? 'replay' : 'initial';
+
     try {
-      // Emit the appropriate game_started event.
-      if (trigger === GAME_START_TRIGGERS.REPLAY) {
-        recordGameStartedReplay();
+      if (trigger === 'replay') {
+        // Emit 'game_started' with trigger:'replay' via replay telemetry orchestrator.
+        handleReplayGameStart();
       } else {
-        recordGameStartedInitial();
+        // Emit 'game_started' with trigger:'initial'.
+        trackEvent(buildGameStartedEvent('initial'));
       }
-    } catch (err) {
-      console.error('[GameController] telemetry error on startGame:', err);
+    } catch {
+      // Swallow - telemetry must never block game start.
     }
 
     // Select 10 random questions without repetition.
-    const selected = this._selectRandomQuestions(10);
-
-    this._currentGame = {
-      questions: selected,
-      currentIndex: 0,
-      score: 0,
-      startedAt: Date.now(),
-      trigger,
-    };
-
-    this.onStateChange({
-      phase: 'question',
-      question: selected[0],
-      questionIndex: 0,
-      totalQuestions: selected.length,
-      score: 0,
-    });
+    this.activeQuestions = this._pickRandomQuestions(10);
+    this.currentIndex = 0;
+    this.score = 0;
+    this.isComplete = false;
+    this.onStateChange(this.getState());
   }
 
   /**
-   * Convenience: start a replay game.
+   * Called when the game finishes (all 10 questions answered).
+   * @param {number} finalScore
    */
-  startReplay() {
-    this.startGame({ trigger: GAME_START_TRIGGERS.REPLAY });
-  }
-
-  /**
-   * Record an answer and advance.
-   */
-  answerQuestion(selectedIndex) {
-    if (!this._currentGame) return;
-
-    const current = this._currentGame.questions[this._currentGame.currentIndex];
-    const isCorrect = selectedIndex === current.correctIndex;
-
-    if (isCorrect) {
-      this._currentGame.score += 1;
-    }
-
-    this.onStateChange({
-      phase: 'fun_fact',
-      question: current,
-      isCorrect,
-      score: this._currentGame.score,
-      questionIndex: this._currentGame.currentIndex,
-      totalQuestions: this._currentGame.questions.length,
-    });
-  }
-
-  /**
-   * Advance to the next question or complete the game.
-   */
-  next() {
-    if (!this._currentGame) return;
-
-    this._currentGame.currentIndex += 1;
-
-    if (this._currentGame.currentIndex >= this._currentGame.questions.length) {
-      this._completeGame();
-      return;
-    }
-
-    const idx = this._currentGame.currentIndex;
-    this.onStateChange({
-      phase: 'question',
-      question: this._currentGame.questions[idx],
-      questionIndex: idx,
-      totalQuestions: this._currentGame.questions.length,
-      score: this._currentGame.score,
-    });
-  }
-
-  /**
-   * Complete the current game and emit telemetry.
-   */
-  _completeGame() {
-    const score = this._currentGame ? this._currentGame.score : 0;
+  gameComplete(finalScore) {
+    this.score = finalScore;
+    this.isComplete = true;
 
     try {
-      // Record completion so replay-rate metric can be computed.
-      recordGameCompleted(score, Date.now());
-    } catch (err) {
-      console.error('[GameController] telemetry error on completeGame:', err);
+      // Record game_over timestamp for replay-rate metric calculation.
+      handleGameOver();
+    } catch {
+      // Swallow.
     }
 
-    this.onStateChange({
-      phase: 'results',
-      score,
-      totalQuestions: this._currentGame.questions.length,
-      trigger: this._currentGame.trigger,
-    });
+    this.onStateChange(this.getState());
+  }
+
+  getState() {
+    return {
+      currentIndex: this.currentIndex,
+      score: this.score,
+      isComplete: this.isComplete,
+      totalQuestions: this.activeQuestions.length,
+      currentQuestion: this.activeQuestions[this.currentIndex] || null,
+    };
   }
 
   /**
-   * Select N random questions from the pool without repetition.
+   * Pick N random questions from the pool without repetition.
+   * @param {number} n
+   * @returns {Array}
+   * @private
    */
-  _selectRandomQuestions(n) {
-    const pool = [...this.questionsPool];
-    // Fisher-Yates shuffle
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+  _pickRandomQuestions(n) {
+    const pool = [...this.questions];
+    const picked = [];
+    const count = Math.min(n, pool.length);
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      picked.push(pool.splice(idx, 1)[0]);
     }
-    return pool.slice(0, Math.min(n, pool.length));
-  }
-
-  getCurrentScore() {
-    return this._currentGame ? this._currentGame.score : 0;
+    return picked;
   }
 }
