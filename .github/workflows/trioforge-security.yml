@@ -1,5 +1,5 @@
-# Managed by TrioForge — deterministic security gate (secrets + dependencies).
-# Edit via TrioForge re-provisioning rather than by hand.
+# Managed by TrioForge — deterministic security gate.
+# Policy: {'secrets': 'block', 'deps': 'block', 'sast': 'block', 'iac': 'warn', 'lint': 'off'}. Edit via TrioForge re-provisioning rather than by hand.
 name: trioforge-security
 on:
   pull_request:
@@ -12,17 +12,40 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Secret scan (gitleaks)
         run: |
           base=https://github.com/gitleaks/gitleaks/releases/download
           curl -sSfL "$base/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz" | tar -xz gitleaks
-          ./gitleaks detect --source . --redact --no-banner -v
+          if ! ./gitleaks detect --source . --redact --no-banner; then
+            echo "::error::trioforge-security: gitleaks detected committed secrets"
+            exit 1
+          fi
       - name: Dependency scan (osv-scanner)
         run: |
           base=https://github.com/google/osv-scanner/releases/download
           curl -sSfL "$base/v1.9.2/osv-scanner_linux_amd64" -o osv-scanner
           chmod +x osv-scanner
           ./osv-scanner --recursive ./ ; code=$?
-          # 0=clean, 1=vulnerabilities (block), 128=no packages found (clean).
-          if [ "$code" = "1" ]; then exit 1; fi
-          exit 0
+          if [ "$code" = "1" ]; then
+            echo "::error::trioforge-security: osv-scanner found vulnerable dependencies"
+            exit 1
+          fi
+      - name: SAST (semgrep)
+        run: |
+          pip install --quiet semgrep
+          semgrep --config auto --error --quiet . ; code=$?
+          if [ "$code" != "0" ]; then
+            echo "::error::trioforge-security: semgrep found SAST issues"
+            exit 1
+          fi
+      - name: IaC scan (checkov)
+        run: |
+          pip install --quiet checkov
+          checkov -d . --quiet --compact ; code=$?
+          if [ "$code" != "0" ]; then
+            echo "::error::trioforge-security: checkov found IaC misconfigurations"
+            true
+          fi
