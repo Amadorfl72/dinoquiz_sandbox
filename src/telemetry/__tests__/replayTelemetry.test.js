@@ -1,108 +1,124 @@
-/**
- * Unit tests for replay telemetry (TRIOFSND-41).
- */
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  vi,
+} from 'vitest';
 
 import {
-  recordGameCompleted,
-  recordReplayClicked,
-  recordGameStartedReplay,
-  recordGameStartedInitial,
-  _resetReplayTelemetryState,
-  _getReplayTelemetryState,
+  handleReplayClick,
+  handleReplayGameStart,
+  handleGameOver,
 } from '../replayTelemetry.js';
-import { telemetry } from '../telemetry.js';
-import { EVENT_NAMES, GAME_START_TRIGGERS } from '../events.js';
-import { METRIC_NAMES, REPLAY_WINDOW_MS } from '../metrics.js';
+import { trackEvent, trackMetric } from '../transport.js';
+import {
+  recordGameOver,
+  computeReplayRateUnder5Min,
+  resetReplayRateTracking,
+} from '../metrics.js';
+
+vi.mock('../transport.js', () => ({
+  trackEvent: vi.fn(),
+  trackMetric: vi.fn(),
+}));
 
 describe('replayTelemetry', () => {
   beforeEach(() => {
-    _resetReplayTelemetryState();
-    telemetry._buffer = [];
+    vi.clearAllMocks();
+    resetReplayRateTracking();
   });
 
-  describe('recordReplayClicked', () => {
+  describe('handleReplayClick', () => {
     it('emits replay_clicked with previous_score and timestamp', () => {
-      const ts = Date.now();
-      recordReplayClicked(7, ts);
+      handleReplayClick(7, { timestamp: 1000000 });
 
-      const events = telemetry.getBuffer();
-      const replayEvent = events.find((e) => e.event === EVENT_NAMES.REPLAY_CLICKED);
+      expect(trackEvent).toHaveBeenCalledWith({
+        event: 'replay_clicked',
+        previous_score: 7,
+        timestamp: 1000000,
+      });
+    });
 
-      expect(replayEvent).toBeDefined();
-      expect(replayEvent.previous_score).toBe(7);
-      expect(replayEvent.timestamp).toBe(ts);
+    it('defaults previous_score to 0 if invalid', () => {
+      handleReplayClick(undefined, { timestamp: 1000000 });
+
+      expect(trackEvent).toHaveBeenCalledWith({
+        event: 'replay_clicked',
+        previous_score: 0,
+        timestamp: 1000000,
+      });
     });
 
     it('emits replay_rate_under_5min metric when delta < 5 min', () => {
-      const completedAt = Date.now();
-      recordGameCompleted(8, completedAt);
+      recordGameOver(1000000); // game over at t=1000000
+      handleReplayClick(5, { timestamp: 1000000 + 120000 }); // replay 2 min later
 
-      // Replay 2 minutes later
-      const replayAt = completedAt + 2 * 60 * 1000;
-      recordReplayClicked(8, replayAt);
-
-      const events = telemetry.getBuffer();
-      const metric = events.find((e) => e.event === 'metric' && e.metric === METRIC_NAMES.REPLAY_RATE_UNDER_5MIN);
-
-      expect(metric).toBeDefined();
-      expect(metric.value).toBe(true);
-      expect(metric.delta_ms).toBe(2 * 60 * 1000);
+      expect(trackMetric).toHaveBeenCalledWith({
+        metric: 'replay_rate_under_5min',
+        value: true,
+        delta_ms: 120000,
+      });
     });
 
     it('emits replay_rate_under_5min=false when delta >= 5 min', () => {
-      const completedAt = Date.now();
-      recordGameCompleted(5, completedAt);
+      recordGameOver(1000000);
+      handleReplayClick(5, { timestamp: 1000000 + 400000 }); // 6.6 min later
 
-      // Replay 6 minutes later
-      const replayAt = completedAt + 6 * 60 * 1000;
-      recordReplayClicked(5, replayAt);
-
-      const events = telemetry.getBuffer();
-      const metric = events.find((e) => e.event === 'metric' && e.metric === METRIC_NAMES.REPLAY_RATE_UNDER_5MIN);
-
-      expect(metric).toBeDefined();
-      expect(metric.value).toBe(false);
+      expect(trackMetric).toHaveBeenCalledWith({
+        metric: 'replay_rate_under_5min',
+        value: false,
+        delta_ms: 400000,
+      });
     });
 
-    it('does not emit metric when no prior game_completed', () => {
-      recordReplayClicked(3, Date.now());
+    it('does not emit metric if no prior game_over', () => {
+      handleReplayClick(5, { timestamp: 1000000 });
 
-      const events = telemetry.getBuffer();
-      const metric = events.find((e) => e.event === 'metric' && e.metric === METRIC_NAMES.REPLAY_RATE_UNDER_5MIN);
-
-      expect(metric).toBeUndefined();
+      expect(trackMetric).not.toHaveBeenCalled();
     });
 
-    it('does not throw on telemetry failure', () => {
-      expect(() => recordReplayClicked(null, null)).not.toThrow();
+    it('does not throw if transport fails', () => {
+      trackEvent.mockImplementationOnce(() => {
+        throw new Error('Network error');
+      });
+
+      expect(() => handleReplayClick(5)).not.toThrow();
     });
   });
 
-  describe('recordGameStarted', () => {
+  describe('handleReplayGameStart', () => {
     it('emits game_started with trigger replay', () => {
-      recordGameStartedReplay();
+      handleReplayGameStart();
 
-      const events = telemetry.getBuffer();
-      const started = events.find((e) => e.event === EVENT_NAMES.GAME_STARTED);
-
-      expect(started).toBeDefined();
-      expect(started.trigger).toBe(GAME_START_TRIGGERS.REPLAY);
+      expect(trackEvent).toHaveBeenCalledWith({
+        event: 'game_started',
+        trigger: 'replay',
+      });
     });
 
-    it('emits game_started with trigger initial', () => {
-      recordGameStartedInitial();
+    it('resets replay rate tracking after emitting', () => {
+      recordGameOver(1000000);
+      handleReplayGameStart();
 
-      const events = telemetry.getBuffer();
-      const started = events.find((e) => e.event === EVENT_NAMES.GAME_STARTED);
+      // After reset, a subsequent replay click should not emit a metric.
+      trackMetric.mockClear();
+      handleReplayClick(5, { timestamp: 2000000 });
+      expect(trackMetric).not.toHaveBeenCalled();
+    });
 
-      expect(started).toBeDefined();
-      expect(started.trigger).toBe(GAME_START_TRIGGERS.INITIAL);
+    it('does not throw if transport fails', () => {
+      trackEvent.mockImplementationOnce(() => {
+        throw new Error('Network error');
+      });
+
+      expect(() => handleReplayGameStart()).not.toThrow();
     });
   });
 
-  describe('REPLAY_WINDOW_MS', () => {
-    it('is 5 minutes', () => {
-      expect(REPLAY_WINDOW_MS).toBe(5 * 60 * 1000);
+  describe('handleGameOver', () => {
+    it('records game over timestamp without throwing', () => {
+      expect(() => handleGameOver()).not.toThrow();
     });
   });
 });
