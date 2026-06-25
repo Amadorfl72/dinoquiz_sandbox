@@ -1,146 +1,132 @@
 /**
- * Safe localStorage helpers for DinoQuiz.
- *
- * All access is wrapped in try-catch to gracefully handle:
- * - localStorage disabled (e.g. cookies blocked)
- * - Private / incognito mode quota errors
- * - Safari ITP restrictions
- *
- * Values are validated as finite numbers before being returned.
+ * Utilidades de almacenamiento local para DinoQuiz.
+ * Maneja de forma elegante los casos en los que localStorage
+ * no está disponible (modo privado, almacenamiento lleno, etc.)
+ * y valida que los valores sean numéricos antes de usarlos.
  */
 
-export const STORAGE_KEYS = Object.freeze({
-  BEST_SCORE: 'dinoquiz_best_score',
-  MUTE: 'dinoquiz_mute',
-  FONT_SIZE: 'dinoquiz_font_size',
-  HIGH_CONTRAST: 'dinoquiz_high_contrast',
-});
+const BEST_SCORE_KEY = 'dinoquiz_bestScore';
 
 /**
- * Safely read a string value from localStorage.
- * Returns null if storage is unavailable or key is absent.
- *
- * @param {string} key
- * @returns {string | null}
- */
-function safeGetItem(key) {
-  try {
-    return window.localStorage.getItem(key);
-  } catch (err) {
-    // localStorage may be disabled, in incognito, or quota exceeded.
-    // Degrade gracefully — the app still works, just without persistence.
-    return null;
-  }
-}
-
-/**
- * Safely write a string value to localStorage.
- *
- * @param {string} key
- * @param {string} value
- * @returns {boolean} true if the write succeeded.
- */
-function safeSetItem(key, value) {
-  try {
-    window.localStorage.setItem(key, value);
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
-/**
- * Read and validate the best score from localStorage.
- *
- * Returns 0 when:
- * - There is no stored value (first visit).
- * - The stored value is not a finite number (corrupted / manually tampered).
- * - localStorage is unavailable.
- *
- * @returns {number} A finite integer >= 0.
- */
-export function getBestScore() {
-  const raw = safeGetItem(STORAGE_KEYS.BEST_SCORE);
-  if (raw === null) {
-    return 0;
-  }
-  const parsed = Number(raw);
-  // Guard against NaN, Infinity, -Infinity, and non-numeric strings.
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return 0;
-  }
-  return Math.floor(parsed);
-}
-
-/**
- * Persist the best score to localStorage.
- *
- * @param {number} score
- * @returns {boolean} true if the write succeeded.
- */
-export function setBestScore(score) {
-  const safeScore = Number(score);
-  if (!Number.isFinite(safeScore) || safeScore < 0) {
-    return false;
-  }
-  return safeSetItem(STORAGE_KEYS.BEST_SCORE, String(Math.floor(safeScore)));
-}
-
-/**
- * Determine whether the current score is a new best.
- *
- * A score is considered a "new best" ONLY when it strictly exceeds a
- * previously-stored finite value. On the very first play (no stored value
- * or invalid stored value) the score is saved but we do NOT flag it as a
- * "new best" — there was no previous record to surpass.
- *
- * This function does NOT write to localStorage; the caller should call
- * `setBestScore` afterwards if needed.
- *
- * @param {number} score - The score achieved in the just-finished game.
- * @returns {{ isNewBest: boolean, previousBest: number, shouldUpdate: boolean }}
- */
-export function evaluateBestScore(score) {
-  const numericScore = Number(score);
-  if (!Number.isFinite(numericScore) || numericScore < 0) {
-    return { isNewBest: false, previousBest: 0, shouldUpdate: false };
-  }
-
-  const raw = safeGetItem(STORAGE_KEYS.BEST_SCORE);
-  const hasPrevious = raw !== null;
-
-  const parsed = Number(raw);
-  const previousBest = hasPrevious && Number.isFinite(parsed) && parsed >= 0
-    ? Math.floor(parsed)
-    : 0;
-
-  const shouldUpdate = numericScore > previousBest;
-  // Only show the "new best score" message when there was a genuine previous
-  // record AND the new score strictly exceeds it.
-  const isNewBest = shouldUpdate && hasPrevious && Number.isFinite(parsed);
-
-  return { isNewBest, previousBest, shouldUpdate };
-}
-
-/**
- * Generic safe getter for boolean-like preferences (mute, high contrast).
- *
- * @param {string} key
- * @returns {boolean | null} null if unset.
- */
-export function getBooleanPref(key) {
-  const raw = safeGetItem(key);
-  if (raw === null) return null;
-  return raw === 'true';
-}
-
-/**
- * Generic safe setter for boolean-like preferences.
- *
- * @param {string} key
- * @param {boolean} value
+ * Comprueba si localStorage está disponible y funcional.
+ * En algunos navegadores (modo privado de Safari) puede existir
+ * el objeto pero lanzar al escribir.
  * @returns {boolean}
  */
-export function setBooleanPref(key, value) {
-  return safeSetItem(key, value ? 'true' : 'false');
+function isLocalStorageAvailable() {
+  try {
+    const testKey = '__dinoquiz_test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  } catch {
+    return false;
+  }
 }
+
+/**
+ * Obtiene la mejor puntuación guardada en localStorage.
+ * Retorna 0 si no hay valor previo, si el valor no es numérico
+ * o si localStorage no está disponible.
+ * @returns {number} mejor puntuación (entero ≥ 0)
+ */
+export function getBestScore() {
+  if (!isLocalStorageAvailable()) {
+    return 0;
+  }
+
+  const raw = localStorage.getItem(BEST_SCORE_KEY);
+
+  // Si no existe valor previo, retornar valor por defecto
+  if (raw === null || raw === undefined) {
+    return 0;
+  }
+
+  // Parsear con radix explícito y validar que sea un número válido
+  const parsed = parseInt(raw, 10);
+
+  // Si el valor almacenado no es numérico (manipulación manual, corrupción),
+ // retornar 0 en lugar de NaN para evitar comparaciones erróneas
+  if (Number.isNaN(parsed)) {
+    return 0;
+  }
+
+  // Asegurar que no sea negativo
+  return Math.max(0, parsed);
+}
+
+/**
+ * Guarda la mejor puntuación en localStorage.
+ * No lanza errores si el almacenamiento no está disponible;
+ * la app sigue funcionando sin persistencia.
+ * @param {number} score - puntuación a guardar
+ * @returns {boolean} true si se guardó correctamente, false si no
+ */
+export function setBestScore(score) {
+  // Validar que score sea numérico antes de guardar
+  const numericScore = Number(score);
+  if (Number.isNaN(numericScore)) {
+    return false;
+  }
+
+  if (!isLocalStorageAvailable()) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(BEST_SCORE_KEY, String(Math.floor(numericScore)));
+    return true;
+  } catch {
+    // Almacenamiento lleno o deshabilitado: degradar elegantemente
+    return false;
+  }
+}
+
+/**
+ * Compara la puntuación actual con la mejor guardada y, si es mayor,
+ * actualiza localStorage y retorna información sobre el resultado.
+ *
+ * Lógica:
+ *   1. Obtener bestScore de localStorage (con validación numérica)
+ *   2. Asegurar que currentScore sea numérico
+ *   3. Si currentScore > bestScore: guardar y marcar como nueva mejor
+ *   4. Si no: omitir mensaje (no actualizar)
+ *
+ * @param {number} currentScore - puntuación de la partida recién terminada
+ * @returns {{ isNewBestScore: boolean, bestScore: number, currentScore: number }}
+ */
+export function evaluateBestScore(currentScore) {
+  // Asegurar que currentScore sea numérico
+  const numericCurrentScore = parseInt(currentScore, 10);
+
+  // Si currentScore no es numérico, no actualizar nada
+  if (Number.isNaN(numericCurrentScore)) {
+    return {
+      isNewBestScore: false,
+      bestScore: getBestScore(),
+      currentScore: 0,
+    };
+  }
+
+  const storedBestScore = getBestScore();
+
+  // CRÍTICO: la comparación debe ser currentScore > bestScore (no invertida)
+  if (numericCurrentScore > storedBestScore) {
+    const saved = setBestScore(numericCurrentScore);
+    // Solo marcar como nueva mejor si se guardó correctamente
+    return {
+      isNewBestScore: saved,
+      bestScore: saved ? numericCurrentScore : storedBestScore,
+      currentScore: numericCurrentScore,
+    };
+  }
+
+  // La puntuación actual no supera la mejor: omitir mensaje
+  return {
+    isNewBestScore: false,
+    bestScore: storedBestScore,
+    currentScore: numericCurrentScore,
+  };
+}
+
+export { BEST_SCORE_KEY };
