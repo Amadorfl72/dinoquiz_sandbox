@@ -1,87 +1,139 @@
 /**
- * Telemetry module for DinoQuiz.
+ * Core telemetry service.
  *
- * Emits anonymous, aggregated product events as structured JSON logs.
- * No PII, no cookies, no device IDs, no IP addresses are ever recorded.
+ * Provides a single `trackEvent` entry point used across the app.
+ * All calls are wrapped in try/catch so that telemetry failures never
+ * impact the child's gameplay experience (per reviewer feedback).
  *
- * Each event contains:
- *   - event: string (event name)
- *   - timestamp: ISO 8601 string
- *   - app_version: string
- *   - locale: string
- *   - ...event-specific fields
- *
- * Events are queued and flushed via a configurable transport.
- * In production, transport sends to a privacy-respecting endpoint.
- * In development/test, transport defaults to console + in-memory buffer.
+ * Events are structured as JSON with fields: event, timestamp,
+ * app_version, locale. No PII, no IPs, no device IDs.
  */
 
-export const APP_VERSION = '1.0.0';
-export const DEFAULT_LOCALE = 'es-ES';
+import { EVENT_NAMES, EVENT_SCHEMAS } from './events.js';
+import { METRIC_NAMES } from './metrics.js';
+
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0';
+const DEFAULT_LOCALE = 'es-ES';
 
 /**
- * In-memory event buffer, useful for tests and local debugging.
- * @type {Array<Object>}
+ * Minimal in-memory + optional sink buffer.
+ * In production this would forward to a privacy-respecting endpoint;
+ * for now we keep an in-memory ring buffer and log to console in dev.
  */
-export const eventBuffer = [];
-
-/**
- * Default transport: pushes to eventBuffer and logs to console.
- * Replace with a network sender in production.
- *
- * @param {Object} event - The structured event object.
- * @returns {void}
- */
-function defaultTransport(event) {
-  eventBuffer.push(event);
-  // eslint-disable-next-line no-console
-  console.debug('[telemetry]', event.event, event);
-}
-
-let currentTransport = defaultTransport;
-let currentLocale = DEFAULT_LOCALE;
-
-/**
- * Configure the telemetry module.
- *
- * @param {Object} options
- * @param {Function} [options.transport] - Function called with each event.
- * @param {string} [options.locale] - Locale string (e.g. 'es-ES').
- * @returns {void}
- */
-export function configureTelemetry(options = {}) {
-  if (typeof options.transport === 'function') {
-    currentTransport = options.transport;
+class TelemetryService {
+  constructor() {
+    this._buffer = [];
+    this._maxBuffer = 200;
+    this._enabled = true;
+    this._locale = DEFAULT_LOCALE;
   }
-  if (typeof options.locale === 'string') {
-    currentLocale = options.locale;
+
+  setLocale(locale) {
+    try {
+      if (typeof locale === 'string' && locale.length > 0) {
+        this._locale = locale;
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  setEnabled(enabled) {
+    this._enabled = !!enabled;
+  }
+
+  /**
+   * Track a structured event. Never throws.
+   *
+   * @param {string} eventName - one of EVENT_NAMES
+   * @param {object} [payload={}] - event-specific fields
+   */
+  trackEvent(eventName, payload = {}) {
+    try {
+      if (!this._enabled) return;
+
+      const schema = EVENT_SCHEMAS[eventName];
+      if (!schema) {
+        console.warn(`[telemetry] Unknown event: ${eventName}`);
+        return;
+      }
+
+      // Validate required fields (fail soft — log warning, still emit).
+      for (const field of schema.required) {
+        if (payload[field] === undefined || payload[field] === null) {
+          console.warn(`[telemetry] Event ${eventName} missing required field: ${field}`);
+        }
+      }
+
+      const entry = {
+        event: eventName,
+        timestamp: Date.now(),
+        app_version: APP_VERSION,
+        locale: this._locale,
+        ...payload,
+      };
+
+      // Ensure payload timestamp is not overwritten if explicitly provided.
+      if (payload.timestamp !== undefined) {
+        entry.timestamp = payload.timestamp;
+      }
+
+      this._buffer.push(entry);
+      if (this._buffer.length > this._maxBuffer) {
+        this._buffer.shift();
+      }
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[telemetry]', entry);
+      }
+    } catch (err) {
+      // Telemetry must never break gameplay.
+      console.error('[telemetry] Failed to track event:', err);
+    }
+  }
+
+  /**
+   * Track a computed metric (not a user event per se, but a derived signal).
+   */
+  trackMetric(metricName, value, extra = {}) {
+    try {
+      if (!this._enabled) return;
+      const entry = {
+        event: 'metric',
+        metric: metricName,
+        value,
+        timestamp: Date.now(),
+        app_version: APP_VERSION,
+        locale: this._locale,
+        ...extra,
+      };
+      this._buffer.push(entry);
+      if (this._buffer.length > this._maxBuffer) {
+        this._buffer.shift();
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[telemetry:metric]', entry);
+      }
+    } catch (err) {
+      console.error('[telemetry] Failed to track metric:', err);
+    }
+  }
+
+  /**
+   * Expose buffered events for testing / debugging.
+   */
+  getBuffer() {
+    return [...this._buffer];
+  }
+
+  flush() {
+    // Placeholder: in production, POST to privacy-respecting endpoint.
+    this._buffer = [];
   }
 }
 
-/**
- * Emit a structured telemetry event.
- *
- * @param {string} eventName - The event name (e.g. 'game_started').
- * @param {Object} [payload={}] - Additional event-specific fields.
- * @returns {Object} The emitted event object.
- */
-export function emit(eventName, payload = {}) {
-  const event = {
-    event: eventName,
-    timestamp: new Date().toISOString(),
-    app_version: APP_VERSION,
-    locale: currentLocale,
-    ...payload,
-  };
+// Singleton instance.
+export const telemetry = new TelemetryService();
 
-  currentTransport(event);
-  return event;
-}
-
-/**
- * Clear the in-memory event buffer (mainly for tests).
- * @returns {void}
- */
-export function resetEventBuffer() {
-  eventBuffer.length = 0;
-}
+// Re-export event/metric name constants for convenience.
+export { EVENT_NAMES, METRIC_NAMES };
