@@ -1,56 +1,55 @@
 /**
- * Centralized definition of telemetry event names and their expected schemas.
- * Keeping this in one place ensures consistency across the codebase and
- * makes it easy to audit which events exist and what fields they carry.
- *
- * Privacy note: No PII, no device IDs, no IPs. Only anonymous, aggregated
- * product events as described in the PRD logging_observability section.
+ * Structured telemetry event definitions for DinoQuiz.
+ * All events are anonymous, aggregated, and contain no PII.
+ * Common fields (added by the transport layer): app_version, locale, timestamp.
  */
 
-export const EVENT_NAMES = Object.freeze({
+export const EVENT_TYPES = {
   GAME_STARTED: 'game_started',
   QUESTION_ANSWERED: 'question_answered',
   FUN_FACT_VIEWED: 'fun_fact_viewed',
   GAME_COMPLETED: 'game_completed',
   REPLAY_CLICKED: 'replay_clicked',
   BEST_SCORE_UPDATED: 'best_score_updated',
-});
+};
 
 /**
- * Schema descriptors for documentation and optional runtime validation.
- * Each entry lists the required fields for the event payload.
+ * Build a 'replay_clicked' event payload.
+ * @param {number} previousScore - The score of the just-completed game (0-10).
+ * @param {number} [timestamp] - Optional override; defaults to Date.now().
+ * @returns {{event: string, previous_score: number, timestamp: number}}
  */
-export const EVENT_SCHEMAS = Object.freeze({
-  [EVENT_NAMES.GAME_STARTED]: {
-    required: ['trigger'],
-    optional: ['app_version', 'locale', 'timestamp'],
-  },
-  [EVENT_NAMES.QUESTION_ANSWERED]: {
-    required: ['is_correct'],
-    optional: ['question_id', 'app_version', 'locale', 'timestamp'],
-  },
-  [EVENT_NAMES.FUN_FACT_VIEWED]: {
-    required: [],
-    optional: ['question_id', 'app_version', 'locale', 'timestamp'],
-  },
-  [EVENT_NAMES.GAME_COMPLETED]: {
-    required: ['score'],
-    optional: ['app_version', 'locale', 'timestamp'],
-  },
-  [EVENT_NAMES.REPLAY_CLICKED]: {
-    required: ['previous_score', 'timestamp'],
-    optional: ['app_version', 'locale'],
-  },
-  [EVENT_NAMES.BEST_SCORE_UPDATED]: {
-    required: ['new_best', 'previous_best'],
-    optional: ['app_version', 'locale', 'timestamp'],
-  },
-});
+export function buildReplayClickedEvent(previousScore, timestamp = Date.now()) {
+  if (typeof previousScore !== 'number' || Number.isNaN(previousScore)) {
+    previousScore = 0;
+  }
+  return {
+    event: EVENT_TYPES.REPLAY_CLICKED,
+    previous_score: previousScore,
+    timestamp: timestamp,
+  };
+}
 
 /**
- * Values for the `trigger` field on `game_started`.
+ * Build a 'game_started' event payload.
+ * @param {'initial'|'replay'} trigger - What triggered the game start.
+ * @returns {{event: string, trigger: string}}
  */
-export const GAME_START_TRIGGERS = Object.freeze({
-  INITIAL: 'initial',
-  REPLAY: 'replay',
-});
+export function buildGameStartedEvent(trigger = 'initial') {
+  return {
+    event: EVENT_TYPES.GAME_STARTED,
+    trigger: trigger === 'replay' ? 'replay' : 'initial',
+  };
+}
+
+/**
+ * Build a 'game_completed' event payload.
+ * @param {number} score - Final score (0-10).
+ * @returns {{event: string, score: number}}
+ */
+export function buildGameCompletedEvent(score) {
+  return {
+    event: EVENT_TYPES.GAME_COMPLETED,
+    score: typeof score === 'number' ? score : 0,
+  };
+}
