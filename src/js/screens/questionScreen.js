@@ -1,125 +1,110 @@
 /**
- * Question screen module.
- * Renders a single question with 3 answer options and handles answer feedback.
+ * questionScreen.js
+ * Renders the question screen with 3 answer options.
+ * Called on game start and after each 'Siguiente' / replay transition.
  */
 
-import { GameState, incrementScore, advanceQuestion, getCurrentQuestion } from '../game/state.js';
-import { renderResultsScreen } from './resultsScreen.js';
-import { logEvent } from '../utils/metrics.js';
-import { strings } from '../i18n/strings.es-ES.js';
+import { GameState } from '../gameState.js';
+import { logEvent } from '../analytics.js';
 
 /**
- * Renders a question screen.
- *
- * @param {HTMLElement} container
- * @param {Array<object>} questions - full set of questions for this game
- * @param {number} index - zero-based question index
- * @param {object} [opts]
- * @param {Array<object>} [opts.questionPool] - pool for replay (needed when transitioning to results)
- * @param {Function} [opts.onAnswered] - callback after each answer
- */
-export function renderQuestionScreen(container, questions, index, opts = {}) {
-  const question = questions[index];
+ * Renders a single question screen.
+ * @param {Object} question - The question object to display.
+ * @param {Object} ui - UI helpers for screen transitions and asset access.
+   */
+function renderQuestionScreen(question, ui) {
   if (!question) {
-    // Safety fallback: if no question, go to results
-    renderResultsScreen(container, GameState.score, opts.questionPool ?? questions, { onReplay: opts.onAnswered });
+    console.error('[DinoQuiz] No question to render.');
+    ui.showStartScreen();
     return;
   }
 
-  const questionNumber = index + 1;
-  const total = questions.length;
+  const container = ui.getScreenContainer();
+  const currentIndex = GameState.get().currentIndex;
+  const total = GameState.getTotalQuestions();
 
   container.innerHTML = `
-    <section class="question-screen" role="main" aria-labelledby="question-prompt">
-      <div class="question-progress">${questionNumber} / ${total}</div>
-      <img class="question-image" src="${question.image}" alt="" aria-hidden="true" />
-      <h1 id="question-prompt" class="question-prompt">${question.prompt}</h1>
-      <div class="question-options" role="group" aria-label="${strings.options_aria}">
-        ${question.options.map((option, i) => `
-          <button
-            class="btn btn-option"
-            data-index="${i}"
-            type="button"
-            aria-label="${option}"
-          >${option}</button>
-        `).join('')}
+    <section class="question-screen" role="region" aria-label="Pregunta ${currentIndex + 1} de ${total}">
+      <div class="question__progress">
+        <span class="question__progress-text">${currentIndex + 1} / ${total}</span>
+      </div>
+      <div class="question__content">
+        <img
+          class="question__image"
+          src="${ui.getAssetUrl(question.dinosaurImage)}"
+          alt="${question.dinosaurName}"
+          loading="eager"
+        />
+        <h2 class="question__text">${question.statement}</h2>
+        <div class="question__options" role="group" aria-label="Opciones de respuesta">
+          ${question.options
+            .map(
+              (option, index) => `
+            <button
+              class="btn btn--option"
+              data-option-index="${index}"
+              type="button"
+              aria-label="Opción ${index + 1}: ${option}"
+            >
+              ${option}
+            </button>
+          `
+            )
+            .join('')}
+        </div>
       </div>
     </section>
   `;
 
-  // Wire option buttons
-  const optionButtons = container.querySelectorAll('.btn-option');
-  optionButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const selectedIndex = parseInt(btn.dataset.index, 10);
-      handleAnswer(container, questions, index, selectedIndex, opts);
+  // Attach answer handlers
+  const optionButtons = container.querySelectorAll('.btn--option');
+  optionButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const selectedIndex = parseInt(event.currentTarget.dataset.optionIndex, 10);
+      handleAnswer(selectedIndex, question, ui);
     });
   });
 }
 
 /**
- * Handles an answer selection: records correctness, shows feedback, then
- * transitions to the fun-fact screen or results screen.
- *
- * @param {HTMLElement} container
- * @param {Array<object>} questions
- * @param {number} index
+ * Handles an answer selection.
  * @param {number} selectedIndex
- * @param {object} opts
- */
-function handleAnswer(container, questions, index, selectedIndex, opts) {
-  const question = questions[index];
-  const isCorrect = selectedIndex === question.correctIndex;
+ * @param {Object} question
+ * @param {Object} ui
+   */
+function handleAnswer(selectedIndex, question, ui) {
+  const isCorrect = selectedIndex === question.correctAnswer;
 
-  if (isCorrect) {
-    incrementScore();
-  }
+  GameState.recordAnswer(question.id, selectedIndex, isCorrect);
 
-  logEvent('question_answered', { is_correct: isCorrect });
+  logEvent('question_answered', {
+    question_id: question.id,
+    is_correct: isCorrect,
+  });
 
-  // Show fun-fact screen, then advance
-  renderFunFactScreen(container, question, isCorrect, () => {
-    const hasMore = advanceQuestion();
-    if (hasMore) {
-      renderQuestionScreen(container, questions, GameState.currentIndex, opts);
-    } else {
-      GameState.inProgress = false;
-      logEvent('game_completed', { score: GameState.score });
-      renderResultsScreen(container, GameState.score, opts.questionPool ?? questions, {
-        onReplay: opts.onAnswered,
-      });
+  // Disable all option buttons to prevent multiple selections
+  const optionButtons = ui.getScreenContainer().querySelectorAll('.btn--option');
+  optionButtons.forEach((btn) => {
+    btn.disabled = true;
+    const idx = parseInt(btn.dataset.optionIndex, 10);
+    if (idx === question.correctAnswer) {
+      btn.classList.add('btn--option-correct');
+    } else if (idx === selectedIndex && !isCorrect) {
+      btn.classList.add('btn--option-wrong');
     }
   });
+
+  // Play sound effect
+  if (isCorrect) {
+    ui.playSound('correct');
+  } else {
+    ui.playSound('wrong');
+  }
+
+  // Transition to fun fact screen after a brief delay
+  setTimeout(() => {
+    ui.showFunFactScreen(question, isCorrect);
+  }, 800);
 }
 
-/**
- * Renders the fun-fact screen with feedback and a 'Siguiente' button.
- *
- * @param {HTMLElement} container
- * @param {object} question
- * @param {boolean} isCorrect
- * @param {Function} onNext
- */
-function renderFunFactScreen(container, question, isCorrect, onNext) {
-  const feedbackText = isCorrect
-    ? strings.feedback_correct
-    : strings.feedback_incorrect.replace('{correct}', question.options[question.correctIndex]);
-
-  container.innerHTML = `
-    <section class="funfact-screen" role="main">
-      <div class="funfact-feedback ${isCorrect ? 'correct' : 'incorrect'}">
-        ${feedbackText}
-      </div>
-      <img class="funfact-image" src="${question.image}" alt="" aria-hidden="true" />
-      <p class="funfact-text">${question.funFact}</p>
-      <button id="next-btn" class="btn btn-primary" type="button">
-        ${strings.next_button}
-      </button>
-    </section>
-  `;
-
-  logEvent('fun_fact_viewed');
-
-  const nextBtn = container.querySelector('#next-btn');
-  nextBtn.addEventListener('click', onNext);
-}
+export { renderQuestionScreen, handleAnswer };
