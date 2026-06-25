@@ -28,7 +28,7 @@ jobs:
           base=https://github.com/google/osv-scanner/releases/download
           curl -sSfL "$base/v1.9.2/osv-scanner_linux_amd64" -o osv-scanner
           chmod +x osv-scanner
-          ./osv-scanner --recursive ./ ; code=$?
+          set +e; ./osv-scanner --recursive ./ ; code=$?; set -e
           if [ "$code" = "1" ]; then
             echo "::error::trioforge-security: osv-scanner found vulnerable dependencies"
             exit 1
@@ -36,7 +36,7 @@ jobs:
       - name: SAST (semgrep)
         run: |
           pip install --quiet semgrep
-          semgrep --config auto --error --quiet . ; code=$?
+          set +e; semgrep --config auto --error --quiet . ; code=$?; set -e
           if [ "$code" != "0" ]; then
             echo "::error::trioforge-security: semgrep found SAST issues"
             exit 1
@@ -44,7 +44,7 @@ jobs:
       - name: IaC scan (checkov)
         run: |
           pip install --quiet checkov
-          checkov -d . --quiet --compact ; code=$?
+          set +e; checkov -d . --quiet --compact ; code=$?; set -e
           if [ "$code" != "0" ]; then
             echo "::error::trioforge-security: checkov found IaC misconfigurations"
             true
