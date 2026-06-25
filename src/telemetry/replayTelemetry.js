@@ -1,151 +1,80 @@
 /**
- * Replay-specific telemetry orchestration.
+ * Replay telemetry orchestrator.
  *
- * Responsibilities (TRIOFSND-41):
- *  1. Emit `replay_clicked` with `previous_score` and `timestamp` when the
- *     user taps "Volver a jugar".
- *  2. Emit `game_started` with `trigger: 'replay'` when a new game starts
- *     as a result of a replay click.
- *  3. Calculate and emit the `replay_rate_under_5min` metric by measuring
- *     the delta between `game_completed` and the subsequent `replay_clicked`.
+ * Coordinates the emission of 'replay_clicked' and 'game_started' (trigger:'replay')
+ * events, as well as the 'replay_rate_under_5min' metric.
  *
- * All public functions are wrapped in try/catch so telemetry failures never
- * affect the child's experience.
+ * All operations are wrapped in try/catch so that telemetry failures never
+ * affect the user experience (per PRD: no blocking errors for children).
  */
 
-import { telemetry } from './telemetry.js';
-import { EVENT_NAMES, GAME_START_TRIGGERS } from './events.js';
 import {
-  METRIC_NAMES,
-  computeReplayDelta,
-  buildReplayRateMetric,
+  buildReplayClickedEvent,
+  buildGameStartedEvent,
+} from './events.js';
+import {
+  recordGameOver,
+  computeReplayRateUnder5Min,
+  resetReplayRateTracking,
 } from './metrics.js';
+import { trackEvent, trackMetric } from './transport.js';
 
 /**
- * Internal state for replay metric computation.
- * We store the timestamp of the last game_completed so that when a
- * replay_clicked arrives we can compute the delta.
- */
-const replayState = {
-  lastGameCompletedTimestamp: null,
-  lastGameCompletedScore: null,
-  lastReplayClickedTimestamp: null,
-};
-
-/**
- * Called when a game completes. Stores the completion timestamp so the
- * replay-rate metric can be computed later.
+ * Called when the user clicks 'Volver a jugar'.
  *
- * @param {number} score - final score (0-10)
- * @param {number} [timestamp=Date.now()]
+ * Emits:
+ *   1. 'replay_clicked' with previous_score and timestamp.
+ *   2. 'replay_rate_under_5min' metric (computed from last game_over).
+ *
+ * @param {number} previousScore - Score of the just-completed game.
+ * @param {object} [opts] - Internal/testing overrides.
+ * @param {number} [opts.timestamp] - Override replay_clicked timestamp.
  */
-export function recordGameCompleted(score, timestamp = Date.now()) {
+export function handleReplayClick(previousScore, opts = {}) {
   try {
-    replayState.lastGameCompletedTimestamp = timestamp;
-    replayState.lastGameCompletedScore = score;
+    const timestamp = opts.timestamp ?? Date.now();
 
-    telemetry.trackEvent(EVENT_NAMES.GAME_COMPLETED, {
-      score,
-      timestamp,
-    });
-  } catch (err) {
-    console.error('[replayTelemetry] recordGameCompleted failed:', err);
-  }
-}
+    // 1. Emit 'replay_clicked' with previous_score and timestamp.
+    const replayEvent = buildReplayClickedEvent(previousScore, timestamp);
+    trackEvent(replayEvent);
 
-/**
- * Called when the user clicks "Volver a jugar".
- *
- * Emits the `replay_clicked` event with `previous_score` and `timestamp`,
- * and computes the `replay_rate_under_5min` metric using the delta from
- * the last `game_completed`.
- *
- * @param {number} previousScore - the score of the just-completed game
- * @param {number} [timestamp=Date.now()]
- */
-export function recordReplayClicked(previousScore, timestamp = Date.now()) {
-  try {
-    // Emit the structured event with required fields.
-    telemetry.trackEvent(EVENT_NAMES.REPLAY_CLICKED, {
-      previous_score: previousScore,
-      timestamp,
-    });
-
-    replayState.lastReplayClickedTimestamp = timestamp;
-
-    // Compute and emit the replay_rate_under_5min metric.
-    if (replayState.lastGameCompletedTimestamp !== null) {
-      const delta = computeReplayDelta(
-        replayState.lastGameCompletedTimestamp,
-        timestamp
-      );
-
-      if (delta) {
-        const metricPayload = buildReplayRateMetric(delta);
-        telemetry.trackMetric(
-          METRIC_NAMES.REPLAY_RATE_UNDER_5MIN,
-          delta.withinWindow,
-          {
-            delta_ms: delta.deltaMs,
-            previous_score: previousScore,
-          }
-        );
-
-        // Also expose the metric payload for callers that want it.
-        return metricPayload;
-      }
+    // 2. Compute and emit replay_rate_under_5min metric.
+    const replayMetric = computeReplayRateUnder5Min(timestamp);
+    if (replayMetric) {
+      trackMetric(replayMetric);
     }
-  } catch (err) {
-    console.error('[replayTelemetry] recordReplayClicked failed:', err);
+  } catch {
+    // Swallow - telemetry must never break gameplay.
   }
-
-  return null;
 }
 
 /**
- * Called when a new game starts. If this start is a replay (i.e. it follows
- * a replay_clicked), emit `game_started` with `trigger: 'replay'`.
+ * Called when a new game starts as a result of a replay.
  *
- * @param {string} trigger - one of GAME_START_TRIGGERS
- * @param {number} [timestamp=Date.now()]
+ * Emits 'game_started' with trigger: 'replay'.
+ * Also resets the replay-rate tracking so the next cycle starts fresh.
  */
-export function recordGameStarted(trigger, timestamp = Date.now()) {
+export function handleReplayGameStart() {
   try {
-    telemetry.trackEvent(EVENT_NAMES.GAME_STARTED, {
-      trigger,
-      timestamp,
-    });
-  } catch (err) {
-    console.error('[replayTelemetry] recordGameStarted failed:', err);
+    const gameStartedEvent = buildGameStartedEvent('replay');
+    trackEvent(gameStartedEvent);
+    resetReplayRateTracking();
+  } catch {
+    // Swallow - telemetry must never break gameplay.
   }
 }
 
 /**
- * Convenience: emit game_started with trigger 'replay'.
+ * Called when a game completes (game over).
+ * Records the timestamp so the replay-rate metric can be computed later.
  */
-export function recordGameStartedReplay(timestamp = Date.now()) {
-  recordGameStarted(GAME_START_TRIGGERS.REPLAY, timestamp);
+export function handleGameOver() {
+  try {
+    recordGameOver();
+  } catch {
+    // Swallow.
+  }
 }
 
-/**
- * Convenience: emit game_started with trigger 'initial'.
- */
-export function recordGameStartedInitial(timestamp = Date.now()) {
-  recordGameStarted(GAME_START_TRIGGERS.INITIAL, timestamp);
-}
-
-/**
- * Reset internal state. Useful for tests.
- */
-export function _resetReplayTelemetryState() {
-  replayState.lastGameCompletedTimestamp = null;
-  replayState.lastGameCompletedScore = null;
-  replayState.lastReplayClickedTimestamp = null;
-}
-
-/**
- * Expose internal state for testing / inspection.
- */
-export function _getReplayTelemetryState() {
-  return { ...replayState };
-}
+// Re-export for convenience.
+export { recordGameOver, computeReplayRateUnder5Min, resetReplayRateTracking };
