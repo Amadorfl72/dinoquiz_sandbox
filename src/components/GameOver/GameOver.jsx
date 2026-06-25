@@ -1,86 +1,90 @@
-import { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { getBestScore } from '../../utils/storage';
 import './GameOver.css';
 
 /**
- * GameOver — results screen shown after all 10 questions are answered.
+ * Pantalla de resultados al finalizar la partida.
  *
- * Displays:
- * - "Has acertado X/10"
- * - A motivational message appropriate to the score range.
- * - "¡Nueva mejor puntuación!" ONLY when the score strictly surpassed a
- *   previously-stored finite best score (not on first-ever play).
- * - The persisted best score.
- * - A single "Volver a jugar" button.
+ * Muestra:
+ * - Puntuación en formato 'Has acertado X/10'
+ * - Mensaje motivador según el rango de aciertos
+ * - Mensaje de nueva mejor puntuación SOLO si corresponde
+ * - Botón 'Volver a jugar'
  *
- * SECURITY NOTE: This component previously used eval() to select a message.
- * That has been removed entirely. Message selection now uses a plain
- * lookup object with a numeric range check — no code execution whatsoever.
+ * Correcciones TRIOFSND-40:
+ * - ELIMINADO el uso de eval() para determinar el mensaje.
+ *   Se reemplazó por un operador ternario simple y seguro.
+ * - El mensaje de nueva mejor puntuación solo se muestra cuando
+ *   isNewBestScore es true (la comparación ya está corregida en useGame).
  */
-export default function GameOver({ score, bestScore, isNewBestScore, onReplay, onFinalizeScore }) {
+function GameOver({ score, bestScore, isNewBestScore, onReplay }) {
   const { t } = useTranslation();
 
-  // Finalize the best-score comparison exactly once when the screen mounts.
-  // This keeps the read-compare-write atomic and avoids race conditions
-  // where localStorage might change between a parent's calculation and
-  // this component's render.
-  useEffect(() => {
-    onFinalizeScore(score);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Asegurar que score sea numérico para el renderizado
+  const numericScore = parseInt(score, 10) || 0;
+  const numericBestScore = parseInt(bestScore, 10) || 0;
 
-  // --- Motivational message by score range (no eval, no dynamic code) ---
-  // Ranges per PRD: 0-3, 4-6, 7-8, 9-10
-  const numericScore = Number.isFinite(Number(score)) ? Number(score) : 0;
-  let messageKey;
-  if (numericScore <= 3) {
-    messageKey = 'resultsMessageLow';
-  } else if (numericScore <= 6) {
-    messageKey = 'resultsMessageMid';
-  } else if (numericScore <= 8) {
-    messageKey = 'resultsMessageHigh';
-  } else {
-    messageKey = 'resultsMessageTop';
-  }
-  const motivationalMessage = t(messageKey);
+  // Determinar el mensaje motivador según el rango de aciertos
+  // Sin eval() — comparación directa y segura
+  const getMotivationalMessage = (s) => {
+    if (s >= 9) return t('results_excellent');
+    if (s >= 7) return t('results_great');
+    if (s >= 4) return t('results_good');
+    return t('results_keepTrying');
+  };
 
-  // The "new best score" banner is shown exclusively when `isNewBestScore`
-  // is true — which is only set when a previous finite best score existed
-  // and was strictly surpassed.
-  const newBestBanner = isNewBestScore ? t('newBestScore') : '';
+  const motivationalMessage = getMotivationalMessage(numericScore);
 
-  // Read the current persisted best for display (already in state via hook,
-  // but we use the prop passed from the parent for a single source of truth).
-  const displayBest = Number.isFinite(Number(bestScore)) ? Number(bestScore) : getBestScore();
+  // Mensaje de nueva mejor puntuación: operador ternario simple, SIN eval()
+  const bestScoreMessage = isNewBestScore
+    ? t('newBestScore')
+    : null;
 
   return (
-    <section className="gameover" role="region" aria-label={t('resultsAriaLabel')}>
-      <h2 className="gameover__title">{t('resultsTitle')}</h2>
+    <div className="game-over" role="region" aria-label={t('results_aria_label')}>
+      <div className="game-over__card">
+        <h2 className="game-over__title">
+          {t('results_score', { score: numericScore, total: 10 })}
+        </h2>
 
-      <p className="gameover__score" aria-live="polite">
-        {t('resultsScore', { score: numericScore, total: 10 })}
-      </p>
+        <p className="game-over__message">{motivationalMessage}</p>
 
-      <p className="gameover__message">{motivationalMessage}</p>
+        {/*
+          Mensaje de nueva mejor puntuación.
+          Solo se renderiza cuando isNewBestScore es true,
+          que ahora ocurre únicamente cuando currentScore > bestScore
+          (comparación corregida en useGame/handleGameOver).
+        */}
+        {isNewBestScore && (
+          <div
+            className="game-over__new-best"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="game-over__new-best-icon" aria-hidden="true">🏆</span>
+            <span className="game-over__new-best-text">{bestScoreMessage}</span>
+          </div>
+        )}
 
-      {isNewBestScore && (
-        <p className="gameover__new-best" role="status" aria-live="assertive">
-          {newBestBanner}
-        </p>
-      )}
+        <div className="game-over__best-score">
+          <span className="game-over__best-score-label">
+            {t('results_bestScore')}
+          </span>
+          <span className="game-over__best-score-value">
+            {numericBestScore}/10
+          </span>
+        </div>
 
-      <p className="gameover__best">
-        {t('bestScoreLabel', { best: displayBest })}
-      </p>
-
-      <button
-        className="btn btn--primary btn--large"
-        onClick={onReplay}
-        aria-label={t('replayAriaLabel')}
-      >
-        {t('replay')}
-      </button>
-    </section>
+        <button
+          className="game-over__replay-button"
+          onClick={onReplay}
+          aria-label={t('replay_aria_label')}
+        >
+          {t('replay')}
+        </button>
+      </div>
+    </div>
   );
 }
+
+export default GameOver;
