@@ -1,123 +1,167 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { evaluateBestScore, setBestScore, getBestScore } from '../utils/storage';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getBestScore, evaluateBestScore, BEST_SCORE_KEY } from '../utils/storage';
 
 /**
- * useGame — central game-state hook.
+ * Hook principal del juego DinoQuiz.
+ * Gestiona el estado de la partida, la puntuación y la sincronización
+ * de la mejor puntuación con localStorage.
  *
- * Responsibilities:
- * - Track current question index, score, and game phase.
- * - On game completion, atomically evaluate + persist the best score.
- * - Keep `bestScore` state in sync across multiple open tabs via the
- *   window `storage` event.
- *
- * Race-condition guard: the best-score comparison and write happen in a
- * single synchronous call inside `handleGameOver`, so there is no window
- * where localStorage could be modified between read and write.
+ * Correcciones TRIOFSND-40:
+ * - La comparación de mejor puntuación ya no está invertida.
+ * - Se valida que las puntuaciones sean numéricas antes de comparar.
+ * - Se sincroniza el estado entre pestañas mediante el evento 'storage'.
+ * - Se maneja el caso de localStorage no disponible de forma elegante.
  */
-export function useGame(questions) {
-  const [phase, setPhase] = useState('idle'); // 'idle' | 'playing' | 'fact' | 'gameover'
-  const [currentIndex, setCurrentIndex] = useState(0);
+export function useGame() {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScoreState] = useState(() => getBestScore());
   const [isNewBestScore, setIsNewBestScore] = useState(false);
+  const [gameState, setGameState] = useState('start'); // 'start' | 'playing' | 'gameover'
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questions, setQuestions] = useState([]);
 
-  // Ref mirror of bestScore so the storage event listener (which has no
-  // access to latest state in a stale closure) can update state safely.
-  const bestScoreRef = useRef(bestScore);
-  bestScoreRef.current = bestScore;
+  // Ref para evitar sincronización redundante
+  const isMountedRef = useRef(true);
 
-  // ------------------------------------------------------------------
-  // Multi-tab synchronisation: listen for `storage` events so that if
-  // another tab updates the best score, this tab reflects it.
-  // ------------------------------------------------------------------
   useEffect(() => {
-    function onStorage(e) {
-      if (e.key === 'dinoquiz_best_score') {
-        const updated = getBestScore();
-        setBestScoreState(updated);
-      }
-    }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
-  // ------------------------------------------------------------------
-  // Game flow
-  // ------------------------------------------------------------------
-  const startGame = useCallback(() => {
+  /**
+   * Sincroniza bestScore entre pestañas usando el evento 'storage'.
+   * Cuando otra pestaña actualiza localStorage, esta pestaña
+   * actualiza su estado para mantener consistencia.
+   */
+ useEffect(() => {
+    function handleStorageChange(event) {
+      if (event.key === BEST_SCORE_KEY && isMountedRef.current) {
+        const newValue = parseInt(event.newValue, 10);
+        if (!Number.isNaN(newValue)) {
+          setBestScoreState(Math.max(0, newValue));
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  /**
+   * Maneja el fin de partida: compara la puntuación actual con
+   * la mejor guardada y actualiza localStorage SOLO si es mayor.
+   *
+   * @param {number} finalScore - puntuación final de la partida
+   * @returns {{ isNewBestScore: boolean, bestScore: number }}
+   */
+  const handleGameOver = useCallback((finalScore) => {
+    // Asegurar que finalScore sea numérico antes de procesar
+    const numericScore = parseInt(finalScore, 10);
+
+    if (Number.isNaN(numericScore)) {
+      // Si la puntuación no es válida, no actualizar nada
+      const currentBest = getBestScore();
+      setIsNewBestScore(false);
+      setBestScoreState(currentBest);
+      setGameState('gameover');
+      return { isNewBestScore: false, bestScore: currentBest };
+    }
+
+    // evaluateBestScore compara numericScore > bestScore (no invertido)
+    // y actualiza localStorage solo si es mayor
+    const result = evaluateBestScore(numericScore);
+
+    if (isMountedRef.current) {
+      setIsNewBestScore(result.isNewBestScore);
+      setBestScoreState(result.bestScore);
+      setGameState('gameover');
+    }
+
+    return result;
+  }, []);
+
+  /**
+   * Inicia una nueva partida: resetea puntuación, estado de nueva
+   * mejor puntuación y selecciona preguntas aleatorias.
+   */
+  const startGame = useCallback((questionPool) => {
     setScore(0);
-    setCurrentIndex(0);
     setIsNewBestScore(false);
-    setPhase('playing');
+    setCurrentQuestionIndex(0);
+
+    // Seleccionar 10 preguntas aleatorias sin repetición
+    const shuffled = [...questionPool].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(10, shuffled.length));
+
+    setQuestions(selected);
+    setGameState('playing');
   }, []);
 
-  const answerQuestion = useCallback((isCorrect) => {
-    if (isCorrect) {
-      setScore((prev) => prev + 1);
-    }
-    setPhase('fact');
+  /**
+   * Registra una respuesta correcta incrementando la puntuación.
+   */
+  const registerCorrectAnswer = useCallback(() => {
+    setScore((prev) => {
+      const newScore = parseInt(prev, 10) + 1;
+      return Number.isNaN(newScore) ? 0 : newScore;
+    });
   }, []);
 
+  /**
+   * Avanza a la siguiente pregunta o finaliza la partida.
+   */
   const nextQuestion = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = prev + 1;
+    setCurrentQuestionIndex((prevIndex) => {
+      const next = prevIndex + 1;
       if (next >= questions.length) {
-        // Defer game-over handling so state (score) has flushed.
-        // We use a microtask to ensure the latest score is committed.
-        setPhase('gameover');
-        return prev; // stay on last index; GameOver screen takes over
+        // Fin de partida: usar la puntuación actual del estado
+        // Se llama a handleGameOver desde un efecto para evitar
+        // usar score stale en el callback
+        return prevIndex;
       }
-      setPhase('playing');
       return next;
     });
   }, [questions.length]);
 
   /**
-   * Called once when the GameOver screen mounts (or via effect when
-   * phase transitions to 'gameover'). Performs the atomic read-compare-write
-   * for the best score.
+   * Finaliza la partida usando la puntuación actual.
+   * Se llama explícitamente cuando se responde la última pregunta.
    */
-  const finalizeScore = useCallback((finalScore) => {
-    // Ensure we are always comparing numbers.
-    const numericScore = Number(finalScore);
-    if (!Number.isFinite(numericScore)) {
-      setIsNewBestScore(false);
-      return;
-    }
+  const finishGame = useCallback(() => {
+    // Usar el valor numérico más reciente de score
+    setScore((currentScoreValue) => {
+      handleGameOver(currentScoreValue);
+      return currentScoreValue;
+    });
+  }, [handleGameOver]);
 
-    // Atomic evaluation: read previous, compare, decide.
-    const { isNewBest, shouldUpdate, previousBest } = evaluateBestScore(numericScore);
-
-    if (shouldUpdate) {
-      // Write immediately — no async gap for another tab to interfere.
-      setBestScore(numericScore);
-      setBestScoreState(numericScore);
-    } else {
-      // Ensure state matches storage (e.g. first-ever game).
-      setBestScoreState(previousBest);
-    }
-
-    setIsNewBestScore(isNewBest);
-  }, []);
-
-  const resetGame = useCallback(() => {
+  /**
+   * Vuelve a la pantalla de inicio.
+   */
+  const backToStart = useCallback(() => {
+    setGameState('start');
     setScore(0);
-    setCurrentIndex(0);
     setIsNewBestScore(false);
-    setBestScoreState(getBestScore());
-    setPhase('idle');
+    setCurrentQuestionIndex(0);
+    setQuestions([]);
   }, []);
 
   return {
-    phase,
-    currentIndex,
     score,
     bestScore,
     isNewBestScore,
+    gameState,
+    currentQuestionIndex,
+    questions,
     startGame,
-    answerQuestion,
+    registerCorrectAnswer,
     nextQuestion,
-    finalizeScore,
-    resetGame,
+    finishGame,
+    handleGameOver,
+    backToStart,
   };
 }
