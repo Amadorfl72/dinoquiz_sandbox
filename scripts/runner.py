@@ -2,5 +2,5 @@ import subprocess
 
 
 def run(cmd):
-    # intentionally insecure to exercise the SAST gate
+    # insecure on purpose to exercise the SAST gate (v2)
     subprocess.call(cmd, shell=True)
