@@ -1,34 +1,51 @@
-import { checkAndUpdateBestScore } from './scoreUtils';
+const { updateBestScore } = require('./scoreUtils');
 
 describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
+  let mockStorage;
+
   beforeEach(() => {
-    localStorage.clear();
+    mockStorage = {};
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => mockStorage[key] || null);
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      mockStorage[key] = value;
+    });
   });
 
-  it('should update best score in localStorage if current score is greater', () => {
-    localStorage.setItem('bestScore', '100');
-    const isNewBestScore = checkAndUpdateBestScore(150);
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('debería actualizar localStorage y devolver true si la puntuación actual es mayor que la guardada', () => {
+    mockStorage['bestScore'] = '100';
+    
+    const isNewBestScore = updateBestScore(150);
+    
+    expect(localStorage.setItem).toHaveBeenCalledWith('bestScore', '150');
     expect(isNewBestScore).toBe(true);
-    expect(localStorage.getItem('bestScore')).toBe('150');
   });
 
-  it('should not update best score if current score is lower', () => {
-    localStorage.setItem('bestScore', '200');
-    const isNewBestScore = checkAndUpdateBestScore(150);
+  it('no debería actualizar localStorage y devolver false si la puntuación actual es menor que la guardada', () => {
+    mockStorage['bestScore'] = '200';
+    
+    const isNewBestScore = updateBestScore(150);
+    
+    expect(localStorage.setItem).not.toHaveBeenCalled();
     expect(isNewBestScore).toBe(false);
-    expect(localStorage.getItem('bestScore')).toBe('200');
   });
 
-  it('should not update best score if current score is equal', () => {
-    localStorage.setItem('bestScore', '150');
-    const isNewBestScore = checkAndUpdateBestScore(150);
+  it('no debería actualizar localStorage y devolver false si la puntuación actual es igual a la guardada', () => {
+    mockStorage['bestScore'] = '150';
+    
+    const isNewBestScore = updateBestScore(150);
+    
+    expect(localStorage.setItem).not.toHaveBeenCalled();
     expect(isNewBestScore).toBe(false);
-    expect(localStorage.getItem('bestScore')).toBe('150');
   });
 
-  it('should update best score if no score is saved in localStorage', () => {
-    const isNewBestScore = checkAndUpdateBestScore(50);
+  it('debería actualizar localStorage y devolver true si no hay puntuación guardada previamente', () => {
+    const isNewBestScore = updateBestScore(50);
+    
+    expect(localStorage.setItem).toHaveBeenCalledWith('bestScore', '50');
     expect(isNewBestScore).toBe(true);
-    expect(localStorage.getItem('bestScore')).toBe('50');
   });
 });
