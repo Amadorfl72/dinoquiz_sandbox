@@ -21,11 +21,12 @@ const logGameStarted = (questionIds) => {
   });
 };
 
-const logQuestionAnswered = (questionId, isHit, responseTimeMs) => {
+const logQuestionAnswered = (questionId, isHit, responseTimeMs, previousQuestionId) => {
   logEvent(analytics, 'pregunta_respondida', {
     question_id: questionId,
     is_hit: isHit,
-    response_time_ms: responseTimeMs
+    response_time_ms: responseTimeMs,
+    previous_question_id: previousQuestionId
   });
 };
 
