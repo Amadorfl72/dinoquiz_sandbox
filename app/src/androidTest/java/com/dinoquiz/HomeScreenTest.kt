@@ -65,7 +65,7 @@ class HomeScreenTest {
     @Test
     fun testHomeScreenElementsAreDisplayed() {
         onView(withText("DinoQuiz")).check(matches(isDisplayed()))
-        onView(withContentDescription("Dinosaur mascot")).check(matches(isDisplayed()))
+        onView(withId(R.id.dino_mascot)).check(matches(isDisplayed()))
         onView(withText("¡Jugar!")).check(matches(isDisplayed()))
     }
 
