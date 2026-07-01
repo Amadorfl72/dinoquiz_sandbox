@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DinoQuiz</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <div id="app">
+    <h1>DinoQuiz</h1>
+    <button id="playButton">¡Jugar!</button>
+  </div>
+  <script src="/scripts/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
