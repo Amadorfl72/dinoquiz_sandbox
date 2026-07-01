@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "question": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "options": ["Triceratops", "Tyrannosaurus Rex", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "Tyrannosaurus Rex",
+    "funFact": "El T-Rex tenía una mordida tan fuerte que podía triturar huesos.",
+    "dinosaurImage": "trex.png"
+  },
+  {
+    "id": 2,
+    "question": "¿Qué dinosaurio tenía tres cuernos en la cabeza?",
+    "options": ["Triceratops", "Brachiosaurus", "Ankylosaurus", "Pteranodon"],
+    "correctAnswer": "Triceratops",
+    "funFact": "El Triceratops usaba sus cuernos para defenderse de los depredadores.",
+    "dinosaurImage": "triceratops.png"
+  }
+]
