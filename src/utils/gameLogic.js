@@ -23,6 +23,11 @@ const resetGame = (newQuestions) => {
   currentQuestions = newQuestions || selectNewQuestions();
   currentQuestionIndex = 0;
   score = 0;
+  return {
+    currentQuestions,
+    currentQuestionIndex,
+    score
+  };
 };
 
 export { currentQuestions, currentQuestionIndex, score, selectNewQuestions, resetGame };
