@@ -18,8 +18,10 @@ export const aggregateTimeToAnswerMetrics = (events) => {
     };
   }
 
+  const validEvents = events.filter(e => e && typeof e.time_to_answer_ms === 'number');
+
   return aggregateMetrics({
-    events: events.filter(e => e && typeof e.time_to_answer_ms === 'number'),
+    events: validEvents,
     metricField: 'time_to_answer_ms',
     buckets: [
       { range: [0, 1000], label: '0-1s' },
