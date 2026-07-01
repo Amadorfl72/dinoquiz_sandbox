@@ -21,11 +21,15 @@ const getTop5WorstPerformingQuestions = async () => {
           questionId: '$_id',
           accuracy: {
             $divide: ['$correctAttempts', '$totalAttempts']
-          }
+          },
+          totalAttempts: 1
         }
       },
       {
-        $sort: { accuracy: 1 }
+        $match: { totalAttempts: { $gte: 10 } } // Only consider questions with sufficient data
+      },
+      {
+        $sort: { accuracy: 1 } // Sort by accuracy ascending (worst first)
       },
       {
         $limit: 5
