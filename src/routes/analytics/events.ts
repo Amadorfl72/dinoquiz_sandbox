@@ -14,8 +14,17 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
     
+    // Ensure required deviceInfo is present
+    if (!event.deviceInfo) {
+      return res.status(400).json({ error: 'Missing required deviceInfo' });
+    }
+    
     // Store event in database
-    const storedEvent = await AnalyticsEvent.create(event);
+    const storedEvent = await AnalyticsEvent.create({
+      eventType: event.eventType,
+      payload: event.payload,
+      deviceInfo: event.deviceInfo
+    });
     
     res.status(201).json(storedEvent);
   } catch (error) {
