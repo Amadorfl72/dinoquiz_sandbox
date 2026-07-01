@@ -27,20 +27,31 @@ describe('QuestionService', () => {
   });
 
   it('should return 10 random questions by default', () => {
-    const questions = QuestionService.getRandomQuestions();
+    const questions = QuestionService.selectQuestionsForSession();
     expect(questions).toHaveLength(10);
     expect(new Set(questions.map(q => q.id)).size).toBe(10); // No duplicates
   });
 
   it('should throw if requesting more questions than available', () => {
-    expect(() => QuestionService.getRandomQuestions(100)).toThrow();
+    expect(() => QuestionService.selectQuestionsForSession(100)).toThrow();
   });
 
   it('should return different questions on subsequent calls', () => {
-    const firstSet = QuestionService.getRandomQuestions();
-    const secondSet = QuestionService.getRandomQuestions();
+    const firstSet = QuestionService.selectQuestionsForSession();
+    const secondSet = QuestionService.selectQuestionsForSession();
     
     // Not guaranteed to be different due to randomness, but very likely with sufficient bank size
     expect(firstSet).not.toEqual(secondSet);
+  });
+
+  it('should return deep copies of questions, not references', () => {
+    const questions = QuestionService.selectQuestionsForSession();
+    const bank = QuestionService.getBank();
+    
+    questions.forEach(selQ => {
+      const bankQ = bank.find(bq => bq.id === selQ.id);
+      expect(selQ).not.toBe(bankQ);
+      expect(selQ).toEqual(bankQ);
+    });
   });
 });
