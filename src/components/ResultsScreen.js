@@ -10,7 +10,10 @@ const ResultsScreen = ({ route }) => {
   const handlePlayAgain = () => {
     const newQuestions = selectNewQuestions();
     resetGame(newQuestions);
-    navigation.navigate('Question', { currentQuestionIndex: 0 });
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Question', params: { currentQuestionIndex: 0 } }],
+    });
   };
 
   const stars = Math.min(3, Math.floor(score / 3.34) + 1);
