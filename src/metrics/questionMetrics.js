@@ -5,7 +5,12 @@ const calculateAverageSuccessRatio = (questionStats) => {
 };
 
 const getTimeToAnswerDistribution = (questionStats) => {
-  return questionStats.map(stat => stat.timeToAnswerMs);
+  const durations = questionStats.map(stat => stat.timeToAnswerMs);
+  return {
+    min: Math.min(...durations),
+    max: Math.max(...durations),
+    avg: durations.reduce((sum, duration) => sum + duration, 0) / durations.length
+  };
 };
 
 const getTop5WorstPerformingQuestions = (questionStats) => {
@@ -16,7 +21,7 @@ const getTop5WorstPerformingQuestions = (questionStats) => {
   const sorted = [...validQuestions].sort((a, b) => a.successRatio - b.successRatio);
   
   // Return top 5 or all if less than 5
-  return sorted.slice(0, 5);
+  return sorted.slice(0, 5).map(q => q.questionId);
 };
 
 export { calculateAverageSuccessRatio, getTimeToAnswerDistribution, getTop5WorstPerformingQuestions };
