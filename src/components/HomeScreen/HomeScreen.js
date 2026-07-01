@@ -2,13 +2,15 @@ import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { logAnalyticsEvent } from '../../utils/analytics';
+import { getAppOpenTime } from '../../utils/appTiming';
 import styles from './styles';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
 
   const handleJugarPress = () => {
-    logAnalyticsEvent('first_tap_jugar', { timestamp: Date.now() });
+    const timeSinceAppOpen = Date.now() - getAppOpenTime();
+    logAnalyticsEvent('first_tap_jugar', { timestamp: timeSinceAppOpen });
     navigation.navigate('Game');
   };
 
