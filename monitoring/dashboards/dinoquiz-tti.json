@@ -1,0 +1,22 @@
+{
+  "title": "DinoQuiz - TTI p95 Dashboard",
+  "panels": [
+    {
+      "title": "TTI p95 Over Time",
+      "type": "timeseries",
+      "queries": [
+        {
+          "query": "histogram_quantile(0.95, sum(rate(frontend_tti_seconds_bucket[5m])) by (le))",
+          "legend": "TTI p95"
+        }
+      ],
+      "thresholds": [
+        {
+          "value": 2,
+          "color": "red",
+          "alert": true
+        }
+      ]
+    }
+  ]
+}
