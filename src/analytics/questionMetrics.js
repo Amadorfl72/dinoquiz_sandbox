@@ -32,12 +32,12 @@ const getTop5WorstPerformingQuestions = async () => {
         $sort: { accuracy: 1 } // Sort by accuracy ascending (worst first)
       },
       {
-        $limit: 5
+        $limit: 5 // Strictly limit to 5 results
       }
     ];
 
     const result = await db.collection('analytics').aggregate(pipeline).toArray();
-    return result.length <= 5 ? result : result.slice(0, 5); // Ensure we never return more than 5
+    return result;
   } catch (error) {
     console.error('Error fetching top 5 worst performing questions:', error);
     throw error;
