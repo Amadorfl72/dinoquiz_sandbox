@@ -15,11 +15,11 @@ export default function FunFactScreen({ route }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="fun-fact-screen">
       <Text style={styles.title}>¡Dato Curioso!</Text>
       <Image source={{ uri: fact.image }} style={styles.image} />
-      <Text style={styles.factText}>{fact.text}</Text>
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+      <Text style={styles.factText} testID="fun-fact-text">{fact.text}</Text>
+      <TouchableOpacity style={styles.nextButton} onPress={handleNext} testID="next-button">
         <Text style={styles.nextButtonText}>Siguiente</Text>
       </TouchableOpacity>
     </View>
