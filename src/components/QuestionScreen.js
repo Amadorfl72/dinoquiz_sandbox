@@ -27,7 +27,9 @@ export default function QuestionScreen({ question, options, image, onSelect }) {
             style={[styles.optionButton, { 
               backgroundColor: theme.buttonColor,
               minHeight: responsiveStyle.optionButtonHeight,
-              minWidth: '100%'
+              minWidth: responsiveStyle.optionButtonMinWidth,
+              paddingHorizontal: 16,
+              paddingVertical: 12
             }]}
             onPress={() => onSelect(option)}
             activeOpacity={0.7}
@@ -77,7 +79,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
     marginBottom: 15,
-    paddingHorizontal: 10,
   },
   optionText: {
     fontFamily: 'KidsFont',
