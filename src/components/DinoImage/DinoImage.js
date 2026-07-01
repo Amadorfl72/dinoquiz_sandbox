@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import placeholderImage from '../../assets/images/dino-placeholder.png';
+import placeholderSrc from '../../assets/images/dino-placeholder.png';
 import './DinoImage.css';
 
 const DinoImage = ({ src, alt }) => {
@@ -14,13 +14,17 @@ const DinoImage = ({ src, alt }) => {
     <div className="dino-image-container">
       {imageError ? (
         <img 
-          src={placeholderImage} 
+          key="placeholder"
+          src={placeholderSrc} 
           alt={`Placeholder for ${alt}`} 
           className="dino-image"
           data-testid="dino-placeholder"
+          role="img"
+          aria-label={`Missing dinosaur image for ${alt}`}
         />
       ) : (
         <img 
+          key="dino-image"
           src={src} 
           alt={alt} 
           className="dino-image"
