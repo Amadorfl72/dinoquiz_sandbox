@@ -7,7 +7,15 @@ const getTimeToAnswerDistribution = (questionStats) => {
 };
 
 const getTop5WorstPerformingQuestions = (questionStats) => {
-  return questionStats.sort((a, b) => a.successRatio - b.successRatio).slice(0, 5);
+  // Ensure we have at least 5 questions by padding with empty entries if needed
+  const paddedStats = questionStats.length >= 5 
+    ? questionStats 
+    : [...questionStats, ...Array(5 - questionStats.length).fill({ successRatio: 1 })];
+  
+  return paddedStats
+    .sort((a, b) => a.successRatio - b.successRatio)
+    .slice(0, 5)
+    .filter(q => q.questionId); // Remove any padding entries
 };
 
 export { calculateAverageSuccessRatio, getTimeToAnswerDistribution, getTop5WorstPerformingQuestions };
