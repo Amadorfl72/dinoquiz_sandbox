@@ -1,6 +1,6 @@
 name: "DinoQuiz TTI p95 Alert"
 description: "Alert if TTI p95 exceeds 2 seconds for 1 hour"
-condition: "histogram_quantile(0.95, sum(rate(frontend_tti_seconds_bucket[1h])) by (le)) > 2"
+condition: "histogram_quantile(0.95, sum(rate(frontend_tti_seconds_bucket[60m])) by (le)) > 2"
 severity: "critical"
 for: "1h"
 annotations:
