@@ -9,6 +9,17 @@ function App() {
   useEffect(() => {
     // Clear any existing session when app loads
     SessionService.clearSession();
+    
+    // Add event listener to clear session when app is closed
+    const handleBeforeUnload = () => {
+      SessionService.clearSession();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   return (
