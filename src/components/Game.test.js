@@ -42,9 +42,11 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
 
   // 4) Disabled localStorage doesn't block game and shows no error.
   it('does not block game or show error when localStorage is disabled', () => {
-    const mockError = new Error('localStorage is disabled');
-    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw mockError; });
-    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw mockError; });
+    // Simulate localStorage being disabled
+    Object.defineProperty(window, 'localStorage', {
+      value: undefined,
+      configurable: true
+    });
     
     // Should not throw during render
     expect(() => render(<Game />)).not.toThrow();
