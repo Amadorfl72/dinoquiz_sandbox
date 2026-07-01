@@ -1,0 +1,11 @@
+name: "DinoQuiz Funnel Drop-off Alert"
+description: "Alert if significant drop-off in user funnel"
+condition: "(sum(frontend_events_total{event=\"tap_jugar\"}) / sum(frontend_events_total{event=\"pantalla_inicio\"})) < 0.7"
+severity: "warning"
+for: "30m"
+annotations:
+  summary: "Significant drop-off detected in user funnel"
+  description: "Less than 70% of users reaching pantalla_inicio proceed to tap_jugar"
+labels:
+  team: "product"
+  service: "dinoquiz"
