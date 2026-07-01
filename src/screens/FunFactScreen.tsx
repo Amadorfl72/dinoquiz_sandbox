@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
-import { logEvent } from '../services/analytics';
+import { logger } from '../services/logger';
 
 type FunFactScreenProps = {
   route: {
@@ -16,7 +16,7 @@ const FunFactScreen: React.FC<FunFactScreenProps> = ({ route }) => {
   const { funFact, dinosaurName, factId } = route.params;
 
   useEffect(() => {
-    logEvent('fun_fact_viewed', {
+    logger.log('fun_fact_viewed', {
       dinosaur_name: dinosaurName,
       fact_id: factId
     });
