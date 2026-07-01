@@ -14,15 +14,32 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
+const sanitizeParams = (params) => {
+  const sanitized = {};
+  for (const key in params) {
+    if (typeof params[key] !== 'object' && typeof params[key] !== 'function') {
+      sanitized[key] = params[key];
+    }
+  }
+  return sanitized;
+};
+
 const trackEvent = (eventName, eventParams = {}) => {
-  if (process.env.NODE_ENV === 'production') {
-    logEvent(analytics, eventName, eventParams);
-  } else {
-    console.log(`[Analytics] Event: ${eventName}`, eventParams);
+  try {
+    const safeParams = sanitizeParams(eventParams);
+    
+    if (process.env.NODE_ENV === 'production') {
+      logEvent(analytics, eventName, safeParams);
+    } else {
+      console.log(`[Analytics] Event: ${eventName}`, safeParams);
+    }
+  } catch (error) {
+    console.error('[Analytics Tracking Error]', error);
   }
 };
 
 export const trackAppOpen = (isFirstOpen) => {
+  if (typeof isFirstOpen !== 'boolean') return;
   trackEvent('app_open', { first_apertura: isFirstOpen });
 };
 
