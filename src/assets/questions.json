@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "question": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "options": ["Triceratops", "T-Rex", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "T-Rex",
+    "image_path": "assets/images/t-rex.png",
+    "fun_fact": {
+      "text": "El T-Rex tenía los dientes del tamaño de un plátano.",
+      "image_path": "assets/images/fun-fact-t-rex.png"
+    }
+  },
+  {
+    "id": 2,
+    "question": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "options": ["T-Rex", "Triceratops", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Triceratops",
+    "image_path": "assets/images/triceratops.png",
+    "fun_fact": {
+      "text": "El Triceratops usaba sus cuernos para defenderse de los depredadores.",
+      "image_path": "assets/images/fun-fact-triceratops.png"
+    }
+  },
+  {
+    "id": 3,
+    "question": "¿Qué dinosaurio es conocido por sus plumas y su inteligencia?",
+    "options": ["T-Rex", "Triceratops", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Velociraptor",
+    "image_path": "assets/images/velociraptor.png",
+    "fun_fact": {
+      "text": "El Velociraptor era muy rápido y podía correr hasta 40 km/h.",
+      "image_path": "assets/images/fun-fact-velociraptor.png"
+    }
+  },
+  {
+    "id": 4,
+    "question": "¿Qué dinosaurio tenía placas óseas en su espalda?",
+    "options": ["T-Rex", "Triceratops", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Estegosaurio",
+    "image_path": "assets/images/stegosaurus.png",
+    "fun_fact": {
+      "text": "Las placas del Estegosaurio podían ayudarle a regular su temperatura.",
+      "image_path": "assets/images/fun-fact-stegosaurus.png"
+    }
+  },
+  {
+    "id": 5,
+    "question": "¿Qué dinosaurio es conocido por su largo cuello?",
+    "options": ["T-Rex", "Triceratops", "Braquiosaurio", "Estegosaurio"],
+    "correct_answer": "Braquiosaurio",
+    "image_path": "assets/images/brachiosaurus.png",
+    "fun_fact": {
+      "text": "El Braquiosaurio podía comer hojas de los árboles más altos gracias a su cuello.",
+      "image_path": "assets/images/fun-fact-brachiosaurus.png"
+    }
+  },
+  {
+    "id": 6,
+    "question": "¿Qué dinosaurio tenía una cola con una bola de hueso al final?",
+    "options": ["T-Rex", "Ankylosaurus", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Ankylosaurus",
+    "image_path": "assets/images/ankylosaurus.png",
+    "fun_fact": {
+      "text": "El Ankylosaurus usaba su cola como un mazo para defenderse.",
+      "image_path": "assets/images/fun-fact-ankylosaurus.png"
+    }
+  },
+  {
+    "id": 7,
+    "question": "¿Qué dinosaurio podía volar?",
+    "options": ["T-Rex", "Triceratops", "Pteranodon", "Estegosaurio"],
+    "correct_answer": "Pteranodon",
+    "image_path": "assets/images/pteranodon.png",
+    "fun_fact": {
+      "text": "El Pteranodon no era un dinosaurio, sino un reptil volador.",
+      "image_path": "assets/images/fun-fact-pteranodon.png"
+    }
+  },
+  {
+    "id": 8,
+    "question": "¿Qué dinosaurio es conocido por su gran tamaño y su cuello largo?",
+    "options": ["T-Rex", "Triceratops", "Braquiosaurio", "Estegosaurio"],
+    "correct_answer": "Braquiosaurio",
+    "image_path": "assets/images/brachiosaurus.png",
+    "fun_fact": {
+      "text": "El Braquiosaurio pesaba tanto como 10 elefantes juntos.",
+      "image_path": "assets/images/fun-fact-brachiosaurus.png"
+    }
+  },
+  {
+    "id": 9,
+    "question": "¿Qué dinosaurio es conocido por su gran cabeza y sus pequeños brazos?",
+    "options": ["T-Rex", "Triceratops", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "T-Rex",
+    "image_path": "assets/images/t-rex.png",
+    "fun_fact": {
+      "text": "El T-Rex tenía una de las mordidas más fuertes de todos los dinosaurios.",
+      "image_path": "assets/images/fun-fact-t-rex.png"
+    }
+  },
+  {
+    "id": 10,
+    "question": "¿Qué dinosaurio es conocido por su gran cuerno en la nariz?",
+    "options": ["T-Rex", "Triceratops", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Triceratops",
+    "image_path": "assets/images/triceratops.png",
+    "fun_fact": {
+      "text": "El Triceratops podía usar su cuerno para luchar con otros Triceratops.",
+      "image_path": "assets/images/fun-fact-triceratops.png"
+    }
+  }
+]
