@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import Logger from '../analytics/logger';
 
-const FUN_FACT_VIEW_DELAY = 2000; // 2 seconds
+const FUN_FACT_VIEW_DELAY = 4000; // 4 seconds as per requirements
 
 const QuestionView = ({ question, onAnswerSelected }) => {
   const { id, dinosaurId, funFact } = question;
