@@ -12,7 +12,7 @@ const DinosaurImage = ({ src, alt, children }) => {
   return (
     <div className="dinosaur-image-container" data-testid="dinosaur-image-container">
       {imageError ? (
-        <div className="image-placeholder" data-testid="image-placeholder">
+        <div className="image-placeholder" data-testid="image-placeholder" role="img" aria-label={`${alt} placeholder`}>
           <img 
             src={placeholderImage} 
             alt={`${alt} placeholder`} 
