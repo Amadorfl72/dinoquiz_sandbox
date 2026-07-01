@@ -54,7 +54,6 @@ describe('ScoreManager - Best Score Persistence and Error Scenarios', () => {
     it('should continue normally when localStorage is disabled (null)', () => {
       global.localStorage = null;
       
-      // Should not throw TypeError during initialization
       expect(() => {
         const manager = new ScoreManager();
         expect(manager.getBestScore()).toBe(0);
