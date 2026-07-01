@@ -13,7 +13,7 @@
       "description": "The answer options",
       "type": "array",
       "minItems": 3,
-      "maxItems": 3,
+      "maxItems": 4,
       "items": {
         "type": "string",
         "minLength": 1
@@ -23,7 +23,7 @@
       "description": "The index of the correct answer in the options array",
       "type": "integer",
       "minimum": 0,
-      "maximum": 2
+      "maximum": 3
     },
     "dinoId": {
       "description": "The identifier of the dinosaur related to the question",
