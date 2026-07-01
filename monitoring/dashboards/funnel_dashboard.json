@@ -1,0 +1,27 @@
+{
+  "title": "User Journey Funnel",
+  "panels": [
+    {
+      "title": "Conversion Funnel",
+      "type": "funnel",
+      "targets": [
+        {
+          "expr": "count_over_time(user_journey_stage{stage='app_open'}[1h])"
+        },
+        {
+          "expr": "count_over_time(user_journey_stage{stage='pantalla_inicio'}[1h])"
+        },
+        {
+          "expr": "count_over_time(user_journey_stage{stage='tap_jugar'}[1h])"
+        },
+        {
+          "expr": "count_over_time(user_journey_stage{stage='partida_iniciada'}[1h])"
+        }
+      ],
+      "options": {
+        "showPercentages": true,
+        "sort": "descending"
+      }
+    }
+  ]
+}
