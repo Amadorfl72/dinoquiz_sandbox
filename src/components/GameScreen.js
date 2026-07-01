@@ -12,13 +12,18 @@ const GameScreen = ({ onGameStart }) => {
   }, []);
 
   const startNewGame = () => {
-    const selectedQuestions = selectRandomQuestions(questions, 10);
-    setCurrentQuestions(selectedQuestions);
-    setCurrentQuestionIndex(0);
-    if (selectedQuestions.length > 0) {
-      setShuffledAnswers(shuffleAnswers(selectedQuestions[0]));
+    try {
+      const selectedQuestions = selectRandomQuestions(questions, 10);
+      setCurrentQuestions(selectedQuestions);
+      setCurrentQuestionIndex(0);
+      if (selectedQuestions.length > 0) {
+        setShuffledAnswers(shuffleAnswers(selectedQuestions[0]));
+      }
+      onGameStart();
+    } catch (error) {
+      console.error('Game initialization failed:', error);
+      // Handle error state appropriately
     }
-    onGameStart();
   };
 
   const handleAnswerSelect = (answer) => {
