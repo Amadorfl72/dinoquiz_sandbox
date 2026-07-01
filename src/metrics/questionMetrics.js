@@ -1,5 +1,7 @@
 const calculateAverageSuccessRatio = (questionStats) => {
-  return questionStats.reduce((sum, stat) => sum + stat.successRatio, 0) / questionStats.length;
+  const validQuestions = questionStats.filter(q => q.attempts > 0);
+  if (validQuestions.length === 0) return 0;
+  return validQuestions.reduce((sum, stat) => sum + stat.successRatio, 0) / validQuestions.length;
 };
 
 const getTimeToAnswerDistribution = (questionStats) => {
@@ -7,8 +9,8 @@ const getTimeToAnswerDistribution = (questionStats) => {
 };
 
 const getTop5WorstPerformingQuestions = (questionStats) => {
-  // Filter out questions with no attempts
-  const validQuestions = questionStats.filter(q => q.attempts > 0);
+  // Filter out questions with less than 5 attempts
+  const validQuestions = questionStats.filter(q => q.attempts >= 5);
   
   // Sort by success ratio ascending (worst first)
   const sorted = [...validQuestions].sort((a, b) => a.successRatio - b.successRatio);
