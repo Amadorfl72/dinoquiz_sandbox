@@ -17,7 +17,11 @@ class FunFactScreenTest {
     @Test
     fun testFunFactTextDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Test fun fact",
+                dinosaurImageResId = android.R.drawable.ic_dialog_info,
+                onNextClicked = {}
+            )
         }
         composeTestRule.onNodeWithTag("funFactText").assertIsDisplayed()
     }
@@ -25,7 +29,11 @@ class FunFactScreenTest {
     @Test
     fun testDinosaurImageDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Test fun fact",
+                dinosaurImageResId = android.R.drawable.ic_dialog_info,
+                onNextClicked = {}
+            )
         }
         composeTestRule.onNodeWithTag("dinosaurImage").assertIsDisplayed()
     }
@@ -33,7 +41,11 @@ class FunFactScreenTest {
     @Test
     fun testNextButtonMinimumHeight() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Test fun fact",
+                dinosaurImageResId = android.R.drawable.ic_dialog_info,
+                onNextClicked = {}
+            )
         }
         val nextButton = composeTestRule.onNodeWithTag("nextButton")
         nextButton.assertIsDisplayed()
