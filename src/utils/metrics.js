@@ -20,7 +20,7 @@ export const trackLCP = (lcpValue) => {
       value: lcpValue,
       timestamp: new Date().toISOString()
     })
-  });
+  }).catch(() => {}); // Silently fail if network error
 };
 
 /**
@@ -40,7 +40,7 @@ export const trackJSError = (error) => {
       location: window.location.href,
       timestamp: new Date().toISOString()
     })
-  });
+  }).catch(() => {}); // Silently fail if network error
 };
 
 /**
@@ -56,7 +56,7 @@ export const trackGameStarted = () => {
       event: 'game_started',
       timestamp: new Date().toISOString()
     })
-  });
+  }).catch(() => {}); // Silently fail if network error
 };
 
 // Listen for global JS errors
