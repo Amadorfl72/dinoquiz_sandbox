@@ -25,6 +25,10 @@ export function logEvent(payload: Record<string, unknown>): void {
  * @param dino_id The unique identifier of the dinosaur.
  */
 export function logFunFactViewed(question_id: string, dino_id: string): void {
+  if (!question_id || !dino_id) {
+    throw new Error('question_id and dino_id are required');
+  }
+
   const payload: FunFactViewedPayload = {
     event: 'fun_fact_viewed',
     question_id,
