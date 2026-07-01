@@ -1,6 +1,6 @@
 describe('TRIOFSND-21: Implement Image Fallback', () => {
   beforeEach(() => {
-    cy.intercept('GET', '/dino.png', { statusCode: 404, body: '' });
+    cy.intercept('GET', '**/assets/dino.png', { statusCode: 404, body: '' });
     cy.visit('/');
   });
 
