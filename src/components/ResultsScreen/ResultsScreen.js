@@ -34,6 +34,7 @@ export default function ResultsScreen({ route }) {
       <TouchableOpacity 
         style={styles.playAgainButton}
         onPress={() => navigation.replace('Quiz')}
+        testID="play-again-button"
       >
         <Text style={styles.playAgainButtonText}>Volver a jugar</Text>
       </TouchableOpacity>
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 8,
-    minHeight: 48, // Ensuring minimum height of 48dp
+    minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
     width: '80%',
