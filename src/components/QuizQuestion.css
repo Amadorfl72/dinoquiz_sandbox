@@ -61,6 +61,17 @@
   color: #383d41;
 }
 
+.positive-animation {
+  margin: 20px 0;
+  font-size: 48px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
 .fun-fact-preview {
   margin-top: 20px;
   padding: 15px;
