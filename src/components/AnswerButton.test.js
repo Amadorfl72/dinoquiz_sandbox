@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { AnswerButton } from './AnswerButton';
+import AnswerButton from './AnswerButton';
 
 describe('TRIOFSND-20: Implement Double Tap Debounce', () => {
   beforeEach(() => {
@@ -13,29 +13,29 @@ describe('TRIOFSND-20: Implement Double Tap Debounce', () => {
   });
 
   it('registers the first tap on an option', () => {
-    const handleSelect = jest.fn();
-    render(<AnswerButton optionId="A" onSelect={handleSelect} />);
+    const handleAnswer = jest.fn();
+    render(<AnswerButton answer="A" onAnswer={handleAnswer} />);
     const button = screen.getByRole('button');
     
     fireEvent.click(button);
-    expect(handleSelect).toHaveBeenCalledTimes(1);
-    expect(handleSelect).toHaveBeenCalledWith('A');
+    expect(handleAnswer).toHaveBeenCalledTimes(1);
+    expect(handleAnswer).toHaveBeenCalledWith('A');
   });
 
   it('prevents registering a second tap if done quickly (double tap)', () => {
-    const handleSelect = jest.fn();
-    render(<AnswerButton optionId="A" onSelect={handleSelect} />);
+    const handleAnswer = jest.fn();
+    render(<AnswerButton answer="A" onAnswer={handleAnswer} />);
     const button = screen.getByRole('button');
     
     fireEvent.click(button);
     fireEvent.click(button);
     
-    expect(handleSelect).toHaveBeenCalledTimes(1);
+    expect(handleAnswer).toHaveBeenCalledTimes(1);
   });
 
   it('allows registering a tap after the debounce period has passed', () => {
-    const handleSelect = jest.fn();
-    render(<AnswerButton optionId="A" onSelect={handleSelect} />);
+    const handleAnswer = jest.fn();
+    render(<AnswerButton answer="A" onAnswer={handleAnswer} />);
     const button = screen.getByRole('button');
     
     fireEvent.click(button);
@@ -46,15 +46,15 @@ describe('TRIOFSND-20: Implement Double Tap Debounce', () => {
     
     fireEvent.click(button);
     
-    expect(handleSelect).toHaveBeenCalledTimes(2);
+    expect(handleAnswer).toHaveBeenCalledTimes(2);
   });
 
   it('does not prevent registering a different option if tapped quickly', () => {
-    const handleSelect = jest.fn();
+    const handleAnswer = jest.fn();
     render(
       <div>
-        <AnswerButton optionId="A" onSelect={handleSelect} />
-        <AnswerButton optionId="B" onSelect={handleSelect} />
+        <AnswerButton answer="A" onAnswer={handleAnswer} />
+        <AnswerButton answer="B" onAnswer={handleAnswer} />
       </div>
     );
     const buttonA = screen.getByText('A');
@@ -63,8 +63,8 @@ describe('TRIOFSND-20: Implement Double Tap Debounce', () => {
     fireEvent.click(buttonA);
     fireEvent.click(buttonB);
     
-    expect(handleSelect).toHaveBeenCalledTimes(2);
-    expect(handleSelect).toHaveBeenNthCalledWith(1, 'A');
-    expect(handleSelect).toHaveBeenNthCalledWith(2, 'B');
+    expect(handleAnswer).toHaveBeenCalledTimes(2);
+    expect(handleAnswer).toHaveBeenNthCalledWith(1, 'A');
+    expect(handleAnswer).toHaveBeenNthCalledWith(2, 'B');
   });
 });
