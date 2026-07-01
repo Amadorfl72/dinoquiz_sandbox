@@ -1,18 +1,20 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useResponsive } from '../utils/useResponsive';
 
 export default function QuestionScreen({ question, options, image, onSelect }) {
   const { theme } = useTheme();
+  const responsiveStyle = useResponsive();
   
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <View style={styles.questionContainer}>
-        <Text style={[styles.questionText, { color: theme.textColor }]}>{question}</Text>
+        <Text style={[styles.questionText, { color: theme.textColor, fontSize: responsiveStyle.questionText }]}>{question}</Text>
         {image ? (
-          <Image source={{ uri: image }} style={styles.dinoImage} />
+          <Image source={{ uri: image }} style={[styles.dinoImage, { width: responsiveStyle.dinoImageSize, height: responsiveStyle.dinoImageSize }]} />
         ) : (
-          <View style={styles.placeholder}>
+          <View style={[styles.placeholder, { width: responsiveStyle.dinoImageSize, height: responsiveStyle.dinoImageSize }]}>
             <Text style={styles.placeholderText}>Dinosaurio</Text>
           </View>
         )}
@@ -22,11 +24,15 @@ export default function QuestionScreen({ question, options, image, onSelect }) {
         {options.map((option, index) => (
           <TouchableOpacity 
             key={index}
-            style={[styles.optionButton, { backgroundColor: theme.buttonColor }]}
+            style={[styles.optionButton, { 
+              backgroundColor: theme.buttonColor,
+              minHeight: responsiveStyle.optionButtonHeight,
+              minWidth: '100%'
+            }]}
             onPress={() => onSelect(option)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.optionText, { color: theme.buttonTextColor }]}>{option}</Text>
+            <Text style={[styles.optionText, { color: theme.buttonTextColor, fontSize: responsiveStyle.optionText }]}>{option}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -45,20 +51,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   questionText: {
-    fontSize: 24,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 28,
     fontFamily: 'KidsFont',
   },
   dinoImage: {
-    width: 200,
-    height: 200,
     resizeMode: 'contain',
   },
   placeholder: {
-    width: 200,
-    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
@@ -72,7 +73,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   optionButton: {
-    minHeight: 60,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
@@ -80,7 +80,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   optionText: {
-    fontSize: 20,
     fontFamily: 'KidsFont',
     textAlign: 'center',
   },
