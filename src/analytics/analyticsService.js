@@ -61,3 +61,34 @@ export const trackTooltipDismissed = (tooltipId) => {
   if (!tooltipId) return;
   trackEvent('tooltip_dismissed', { tooltip_id: tooltipId });
 };
+
+export const handleAnalyticsEvent = async (eventType, eventData) => {
+  try {
+    switch (eventType) {
+      case 'app_open':
+        if (typeof eventData?.first_apertura === 'boolean') {
+          trackAppOpen(eventData.first_apertura);
+          return { status: 'success' };
+        }
+        break;
+      case 'tooltip_shown':
+        if (eventData?.tooltip_id) {
+          trackTooltipShown(eventData.tooltip_id);
+          return { status: 'success' };
+        }
+        break;
+      case 'tooltip_dismissed':
+        if (eventData?.tooltip_id) {
+          trackTooltipDismissed(eventData.tooltip_id);
+          return { status: 'success' };
+        }
+        break;
+      default:
+        throw new Error('Invalid event type');
+    }
+    throw new Error('Invalid event data');
+  } catch (error) {
+    console.error('[Analytics Event Handling Error]', error);
+    throw error;
+  }
+};
