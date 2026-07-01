@@ -3,13 +3,14 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const QuestionScreen = ({ question, options, dinosaurImage, onSelect }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.questionText}>{question}</Text>
+    <View style={styles.container} testID="question-screen">
+      <Text style={styles.questionText} accessibilityRole="text">{question}</Text>
       <Image 
         source={dinosaurImage} 
         style={styles.dinosaurImage} 
         testID="dinosaur-image"
         accessibilityLabel="Illustration of the dinosaur"
+        accessibilityRole="image"
       />
       <View style={styles.optionsContainer}>
         {options.map((option, index) => (
@@ -18,8 +19,8 @@ const QuestionScreen = ({ question, options, dinosaurImage, onSelect }) => {
             style={styles.optionButton}
             onPress={() => onSelect(option)}
             accessibilityRole="button"
-            testID="answer-option-button"
-            accessibilityLabel={`Answer option: ${option}`}
+            testID={`answer-option-button-${index}`}
+            accessibilityLabel={`Answer option ${index + 1}: ${option}`}
           >
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
@@ -43,6 +44,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     color: '#333',
+    minHeight: 48,
   },
   dinosaurImage: {
     width: 200,
@@ -61,6 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 48,
     justifyContent: 'center',
+    minWidth: '80%',
   },
   optionText: {
     color: 'white',
