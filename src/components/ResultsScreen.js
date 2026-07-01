@@ -1,10 +1,15 @@
 import React, { useEffect } from 'react';
-import { logGameCompleted } from '../utils/logging';
+import { logGameCompleted } from '../logging/gameCompleted';
+import { getAppVersion } from '../utils/appInfo';
 
 const ResultsScreen = ({ score, gameStartTime }) => {
   useEffect(() => {
     const durationMs = Date.now() - gameStartTime;
-    logGameCompleted(score, durationMs);
+    logGameCompleted({
+      score,
+      duration_ms: durationMs,
+      app_version: getAppVersion()
+    });
   }, [score, gameStartTime]);
 
   return (
