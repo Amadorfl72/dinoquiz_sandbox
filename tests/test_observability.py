@@ -1,101 +1,64 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import json
+from datetime import datetime
+from app.observability import log_partida_iniciada, log_pregunta_respondida, log_bank_load_validation, record_metrics, check_alerts
 
-# Assuming the implementation is in a module named trivia_observability
-import trivia_observability as obs
-
-def test_log_partida_iniciada():
-    timestamp = "2023-10-01T12:00:00Z"
+@patch('app.observability.logger')
+def test_log_partida_iniciada(mock_logger):
+    timestamp = datetime.now().isoformat()
     question_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    
-    with patch.object(obs.logger, 'info') as mock_info:
-        obs.log_partida_iniciada(timestamp, question_ids)
-        mock_info.assert_called_once()
-        log_data = mock_info.call_args[0][0]
-        
-        assert "partida_iniciada" in log_data
-        assert timestamp in log_data
-        for qid in question_ids:
-            assert str(qid) in log_data
+    log_partida_iniciada(timestamp, question_ids)
+    mock_logger.info.assert_called_once_with('partida_iniciada', extra={'timestamp': timestamp, 'question_ids': question_ids})
 
-def test_log_pregunta_respondida():
-    question_id = 42
+@patch('app.observability.logger')
+def test_log_pregunta_respondida(mock_logger):
+    question_id = 5
     hit = True
-    response_time = 5.5
-    
-    with patch.object(obs.logger, 'info') as mock_info:
-        obs.log_pregunta_respondida(question_id, hit, response_time)
-        mock_info.assert_called_once()
-        log_data = mock_info.call_args[0][0]
-        
-        assert "pregunta_respondida" in log_data
-        assert str(question_id) in log_data
-        assert "hit" in log_data
-        assert str(response_time) in log_data
+    time_spent = 12.5
+    log_pregunta_respondida(question_id, hit, time_spent)
+    mock_logger.info.assert_called_once_with('pregunta_respondida', extra={'id': question_id, 'hit': hit, 'time': time_spent})
 
-def test_log_bank_load_validation_success():
-    is_valid = True
-    details = "Bank loaded successfully with 100 questions"
-    
-    with patch.object(obs.logger, 'info') as mock_info:
-        obs.log_bank_load_validation(is_valid, details)
-        mock_info.assert_called_once()
-        log_data = mock_info.call_args[0][0]
-        
-        assert "bank_load_validation" in log_data
-        assert "success" in log_data.lower()
+@patch('app.observability.logger')
+def test_log_bank_load_validation_success(mock_logger):
+    log_bank_load_validation(is_valid=True, details={'count': 10})
+    mock_logger.info.assert_called_once_with('bank_load_validation', extra={'is_valid': True, 'details': {'count': 10}})
 
-def test_log_bank_load_validation_failure():
-    is_valid = False
-    details = "Missing 2 questions"
-    
-    with patch.object(obs.logger, 'error') as mock_error:
-        obs.log_bank_load_validation(is_valid, details)
-        mock_error.assert_called_once()
-        log_data = mock_error.call_args[0][0]
-        
-        assert "bank_load_validation" in log_data
-        assert "Missing 2 questions" in log_data
+@patch('app.observability.logger')
+def test_log_bank_load_validation_failure(mock_logger):
+    log_bank_load_validation(is_valid=False, details={'error': 'File not found'})
+    mock_logger.error.assert_called_once_with('bank_load_validation', extra={'is_valid': False, 'details': {'error': 'File not found'}})
 
-def test_calculate_metrics():
-    stats = {
-        1: {'presented': 100, 'answered': 95, 'hits': 30},
-        2: {'presented': 100, 'answered': 100, 'hits': 50}
-    }
-    metrics = obs.calculate_metrics(stats)
-    
-    assert metrics[1]['hit_percentage'] == 30.0
-    assert metrics[1]['drop_off_percentage'] == 5.0
-    assert metrics[2]['hit_percentage'] == 50.0
-    assert metrics[2]['drop_off_percentage'] == 0.0
+@patch('app.observability.metrics_client')
+def test_record_metrics_hit(mock_metrics):
+    record_metrics(question_id=1, hit=True)
+    mock_metrics.increment.assert_any_call('question_1_attempts')
+    mock_metrics.increment.assert_any_call('question_1_hits')
 
-def test_alerts_triggered_drop_off():
-    metrics = {
-        1: {'hit_percentage': 80.0, 'drop_off_percentage': 10.0} # >5% drop-off
-    }
-    alerts = obs.check_alerts(metrics)
-    assert 1 in alerts
-    assert "drop_off" in alerts[1]
+@patch('app.observability.metrics_client')
+def test_record_metrics_miss(mock_metrics):
+    record_metrics(question_id=2, hit=False)
+    mock_metrics.increment.assert_any_call('question_2_attempts')
+    mock_metrics.increment.assert_any_call('question_2_misses')
 
-def test_alerts_triggered_hit_rate():
-    metrics = {
-        2: {'hit_percentage': 30.0, 'drop_off_percentage': 0.0} # <40% hit
-    }
-    alerts = obs.check_alerts(metrics)
-    assert 2 in alerts
-    assert "hit_rate" in alerts[2]
+@patch('app.observability.metrics_client')
+def test_check_alerts_high_dropoff(mock_metrics):
+    # Simulate >5% drop-off
+    mock_metrics.get_dropoff_rate.return_value = 0.06
+    mock_metrics.get_hit_rate.return_value = 0.80
+    check_alerts(question_id=1)
+    mock_metrics.trigger_alert.assert_called_once_with('High drop-off rate for question 1: 6.0%')
 
-def test_alerts_not_triggered():
-    metrics = {
-        3: {'hit_percentage': 90.0, 'drop_off_percentage': 2.0} # No alert
-    }
-    alerts = obs.check_alerts(metrics)
-    assert 3 not in alerts
+@patch('app.observability.metrics_client')
+def test_check_alerts_low_hit_rate(mock_metrics):
+    # Simulate <40% hit rate
+    mock_metrics.get_dropoff_rate.return_value = 0.02
+    mock_metrics.get_hit_rate.return_value = 0.35
+    check_alerts(question_id=2)
+    mock_metrics.trigger_alert.assert_called_once_with('Low hit rate for question 2: 35.0%')
 
-def test_alerts_boundary_conditions():
-    metrics = {
-        4: {'hit_percentage': 40.0, 'drop_off_percentage': 5.0} # Exactly on boundary, no alert
-    }
-    alerts = obs.check_alerts(metrics)
-    assert 4 not in alerts
+@patch('app.observability.metrics_client')
+def test_check_alerts_no_alert(mock_metrics):
+    mock_metrics.get_dropoff_rate.return_value = 0.03
+    mock_metrics.get_hit_rate.return_value = 0.50
+    check_alerts(question_id=3)
+    mock_metrics.trigger_alert.assert_not_called()
