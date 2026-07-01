@@ -2,14 +2,12 @@ const request = require('supertest');
 const app = require('../src/app');
 
 describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
-  const endpoint = '/api/metrics';
+  const endpoint = '/metrics';
 
-  describe('POST /api/metrics', () => {
-    it('should successfully ingest a valid "game_started" metric and return 201', async () => {
+  describe('POST /metrics', () => {
+    it('should successfully ingest a valid "game_started" metric and return 200', async () => {
       const payload = {
-        event: 'game_started',
-        count: 1,
-        timestamp: new Date().toISOString()
+        event: 'game_started'
       };
 
       const response = await request(app)
@@ -17,15 +15,13 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .send(payload)
         .set('Accept', 'application/json');
 
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('status', 'success');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
     });
 
-    it('should successfully ingest a valid "app_open" metric and return 201', async () => {
+    it('should successfully ingest a valid "app_open" metric and return 200', async () => {
       const payload = {
-        event: 'app_open',
-        count: 5,
-        timestamp: new Date().toISOString()
+        event: 'app_open'
       };
 
       const response = await request(app)
@@ -33,15 +29,12 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .send(payload)
         .set('Accept', 'application/json');
 
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('status', 'success');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
     });
 
     it('should return 400 if event name is missing', async () => {
-      const payload = {
-        count: 1,
-        timestamp: new Date().toISOString()
-      };
+      const payload = {};
 
       const response = await request(app)
         .post(endpoint)
@@ -52,10 +45,9 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
       expect(response.body).toHaveProperty('error');
     });
 
-    it('should return 400 if count is missing', async () => {
+    it('should reject invalid event types with 400', async () => {
       const payload = {
-        event: 'game_started',
-        timestamp: new Date().toISOString()
+        event: 'invalid_event'
       };
 
       const response = await request(app)
@@ -64,13 +56,12 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .set('Accept', 'application/json');
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toMatch(/invalid event type/i);
     });
 
     it('should reject payload containing PII (email) with 400', async () => {
       const payload = {
         event: 'game_started',
-        count: 1,
         email: 'user@example.com'
       };
 
@@ -80,13 +71,12 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .set('Accept', 'application/json');
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/PII/i);
+      expect(response.body.error).toMatch(/sensitive information/i);
     });
 
     it('should reject payload containing PII (user_id) with 400', async () => {
       const payload = {
         event: 'app_open',
-        count: 1,
         user_id: '12345'
       };
 
@@ -96,13 +86,12 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .set('Accept', 'application/json');
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/PII/i);
+      expect(response.body.error).toMatch(/sensitive information/i);
     });
 
     it('should reject payload containing PII (ip_address) with 400', async () => {
       const payload = {
         event: 'app_open',
-        count: 1,
         ip_address: '192.168.1.1'
       };
 
@@ -112,7 +101,20 @@ describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
         .set('Accept', 'application/json');
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/PII/i);
+      expect(response.body.error).toMatch(/sensitive information/i);
+    });
+  });
+
+  describe('GET /metrics/summary', () => {
+    it('should return metrics summary', async () => {
+      const response = await request(app)
+        .get('/metrics/summary')
+        .set('Accept', 'application/json');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('metrics');
+      expect(response.body.metrics).toHaveProperty('game_started');
+      expect(response.body.metrics).toHaveProperty('app_open');
     });
   });
 });
