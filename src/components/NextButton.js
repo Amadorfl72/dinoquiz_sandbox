@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-const NextButton = ({ onClick, debounceMs = 500 }) => {
+const NextButton = ({ onNext, debounceMs = 500 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleClick = () => {
     if (isLoading) return;
     setIsLoading(true);
-    setTimeout(() => {
-      onClick();
+    timeoutRef.current = setTimeout(() => {
+      onNext();
       setIsLoading(false);
     }, debounceMs);
   };
