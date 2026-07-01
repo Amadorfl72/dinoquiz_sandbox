@@ -1,17 +1,23 @@
 class GameSession {
   constructor(questions) {
+    if (!questions || questions.length !== 10) {
+      throw new Error('GameSession requires exactly 10 questions');
+    }
+    
+    // Check for duplicate question IDs
+    const questionIds = questions.map(q => q.id);
+    if (new Set(questionIds).size !== questionIds.length) {
+      throw new Error('Duplicate question IDs found');
+    }
+    
     this.questions = questions;
     this.currentQuestionIndex = 0;
-    this.selectedQuestions = this.selectRandomQuestions();
+    this.selectedQuestions = [...questions]; // Use all provided questions
     this.score = 0;
     this.streak = 0;
     this.maxStreak = 0;
     this.seenFacts = new Set();
-  }
-
-  selectRandomQuestions() {
-    const shuffled = [...this.questions].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 10);
+    this.shownQuestionIds = new Set();
   }
 
   getCurrentQuestion() {
@@ -19,6 +25,12 @@ class GameSession {
   }
 
   answerQuestion(isCorrect) {
+    const currentQuestion = this.getCurrentQuestion();
+    
+    if (this.shownQuestionIds.has(currentQuestion.id)) {
+      throw new Error('Question already answered');
+    }
+    
     if (isCorrect) {
       this.score += 1;
       this.streak += 1;
@@ -28,16 +40,18 @@ class GameSession {
     } else {
       this.streak = 0;
     }
-    const currentQuestion = this.getCurrentQuestion();
+    
     this.seenFacts.add(currentQuestion.fact);
+    this.shownQuestionIds.add(currentQuestion.id);
   }
 
   nextQuestion() {
-    if (this.currentQuestionIndex < this.selectedQuestions.length - 1) {
-      this.currentQuestionIndex += 1;
-      return true;
+    if (this.isGameOver()) {
+      throw new Error('Game session is already over');
     }
-    return false;
+    
+    this.currentQuestionIndex += 1;
+    return !this.isGameOver();
   }
 
   isGameOver() {
@@ -52,6 +66,10 @@ class GameSession {
       stars: stars,
       seenFacts: this.seenFacts.size
     };
+  }
+
+  getShownQuestionIds() {
+    return Array.from(this.shownQuestionIds);
   }
 }
 
