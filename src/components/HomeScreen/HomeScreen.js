@@ -27,7 +27,10 @@ export default function HomeScreen({ onStartGame }) {
       <button
         id="jugar-button"
         className="jugar-button"
-        onClick={onStartGame}
+        onClick={(e) => {
+          handleFirstTap();
+          onStartGame(e);
+        }}
         data-testid="jugar-button"
       >
         ¡Jugar!
