@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigation } from '@react-navigation/native';
 import happySound from '../assets/sounds/happy.mp3';
 import './QuizQuestion.css';
 
@@ -9,7 +9,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFunFact, setShowFunFact] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
-  const navigate = useNavigate();
+  const navigation = useNavigation();
   const happyAudio = new Audio(happySound);
 
   const handleOptionClick = (option) => {
@@ -25,6 +25,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
       setShowAnimation(true);
       setTimeout(() => {
         setShowFunFact(true);
+        navigation.navigate('FunFact', { funFact: question.funFact });
       }, 1000);
     }
     
@@ -32,7 +33,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
   };
 
   const handleNext = () => {
-    navigate('/fun-fact', { state: { funFact: question.funFact } });
+    navigation.navigate('FunFact', { funFact: question.funFact });
   };
 
   return (
@@ -53,7 +54,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
       </div>
       
       {showFeedback && (
-        <div className={`feedback ${isCorrect ? 'happy' : 'neutral'}`}>
+        <div className={`feedback ${isCorrect ? 'happy' : 'neutral'}``}
           {isCorrect ? '¡Correcto! 🎉' : `La respuesta correcta es: ${question.correctAnswer}`}
         </div>
       )}
