@@ -69,7 +69,7 @@ describe('Best Score Persistence', () => {
   test('4) Disabled localStorage doesn\'t block game and shows no error', () => {
     // Simulate localStorage being disabled
     Object.defineProperty(window, 'localStorage', {
-      value: undefined,
+      value: null,
     });
     
     const score = 6;
