@@ -14,3 +14,7 @@ The QuestionService provides:
 - Random selection of 10 unique questions per game session
 - Fisher-Yates shuffle algorithm for unbiased selection
 - Deep copying of questions to prevent modification of original bank
+
+## Security
+
+All GitHub Actions workflows have been updated to use Node.js 24 to address security vulnerabilities.
