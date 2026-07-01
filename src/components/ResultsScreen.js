@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import strings from '../strings.json';
 
-export default function ResultsScreen({ score, onReplay }) {
+export default function ResultsScreen({ score, onPlayAgain }) {
   const totalQuestions = 10;
+  
   const getStars = (score) => {
     if (score <= 3) return '⭐';
     if (score <= 6) return '⭐⭐';
@@ -32,7 +33,7 @@ export default function ResultsScreen({ score, onReplay }) {
       </Text>
       <TouchableOpacity 
         style={styles.replayButton} 
-        onPress={onReplay} 
+        onPress={onPlayAgain} 
         testID="play-again-button"
         accessibilityLabel={strings.resultsScreen.replayButton}
         accessibilityRole="button"
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     color: '#2c3e50',
+    paddingHorizontal: 20,
   },
   replayButton: {
     backgroundColor: '#4CAF50',
@@ -81,6 +83,11 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3, // For Android shadow
+    shadowColor: '#000', // For iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   replayButtonText: {
     color: 'white',
