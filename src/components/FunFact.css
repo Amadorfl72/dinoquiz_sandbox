@@ -5,6 +5,7 @@
   justify-content: space-between;
   height: 100%;
   padding: 20px;
+  background-color: #f9f7e8;
 }
 
 .fun-fact-content {
@@ -18,30 +19,35 @@
   width: 200px;
   height: auto;
   border-radius: 10px;
+  border: 3px solid #ff9f1c;
 }
 
 .fun-fact-text {
   font-size: 20px;
   text-align: center;
   color: #333;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
 }
 
 .next-button {
-  background-color: #4CAF50;
+  background-color: #ff9f1c;
   border: none;
   color: white;
   padding: 15px 32px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 16px;
+  font-size: 20px;
   margin: 20px 0;
   cursor: pointer;
   border-radius: 12px;
   min-height: 48px;
   min-width: 120px;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .next-button:hover {
-  background-color: #45a049;
+  background-color: #ffbf69;
+  transform: scale(1.05);
 }
