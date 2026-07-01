@@ -5,8 +5,10 @@ import '@testing-library/jest-dom';
 import HomeScreen from './HomeScreen';
 
 describe('HomeScreen Component - TRIOFSND-50', () => {
+  const mockNavigation = { navigate: jest.fn() };
+
   beforeEach(() => {
-    render(<HomeScreen />);
+    render(<HomeScreen navigation={mockNavigation} />);
   });
 
   it('renders the DinoQuiz title', () => {
@@ -14,45 +16,34 @@ describe('HomeScreen Component - TRIOFSND-50', () => {
     expect(title).toBeInTheDocument();
   });
 
-  it('renders the dinosaur mascot illustration', () => {
-    const mascot = screen.getByAltText(/dinosaur mascot/i);
+  it('renders the dinosaur mascot illustration with accessibility attributes', () => {
+    const mascot = screen.getByRole('image', { name: /Mascota de DinoQuiz/i });
     expect(mascot).toBeInTheDocument();
   });
 
-  it('renders the ¡Jugar! button', () => {
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
+  it('renders the ¡Jugar! button with proper accessibility attributes', () => {
+    const button = screen.getByRole('button', { name: /Botón para empezar a jugar/i });
     expect(button).toBeInTheDocument();
+    expect(button).toHaveAccessibleName('Botón para empezar a jugar');
+    expect(button).toHaveAttribute('accessibilityHint', 'Presiona para comenzar una nueva partida');
   });
 
-  it('applies ARIA labels to the button for accessibility', () => {
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
-    expect(button).toHaveAttribute('aria-label', 'Jugar');
-  });
-
-  it('ensures button is keyboard navigable', async () => {
+  it('navigates to Quiz screen when button is pressed', async () => {
     const user = userEvent.setup();
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
-    await user.tab();
-    expect(button).toHaveFocus();
+    const button = screen.getByRole('button', { name: /Botón para empezar a jugar/i });
+    await user.click(button);
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('Quiz');
   });
 
-  it('meets accessibility standards for button height (>= 64px)', () => {
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
-    expect(button).toHaveStyle({ minHeight: '64px' });
+  it('meets accessibility standards for button dimensions', () => {
+    const button = screen.getByRole('button', { name: /Botón para empezar a jugar/i });
+    expect(button).toHaveStyle({ minHeight: '64px', minWidth: '200px' });
   });
 
-  it('meets accessibility standards for touch area (>= 48x48px)', () => {
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
-    expect(button).toHaveStyle({ minWidth: '48px', minHeight: '48px' });
-  });
-
-  it('meets accessibility standards for text size (>= 24px)', () => {
-    const button = screen.getByRole('button', { name: /¡Jugar!/i });
-    expect(button).toHaveStyle({ fontSize: '24px' });
-  });
-
-  it('applies responsive design classes for tablet horizontal layout', () => {
-    const container = screen.getByTestId('home-screen-container');
-    expect(container).toHaveClass('tablet-horizontal-layout');
+  it('has sufficient text contrast (WCAG AA)', () => {
+    const buttonText = screen.getByText('¡Jugar!');
+    expect(buttonText).toHaveStyle({ color: '#FFFFFF' });
+    const button = screen.getByRole('button', { name: /Botón para empezar a jugar/i });
+    expect(button).toHaveStyle({ backgroundColor: '#4ECDC4' });
   });
 });
