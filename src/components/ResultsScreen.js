@@ -14,11 +14,16 @@ const ResultsScreen = ({ route }) => {
     loadBestScore();
   }, []);
 
+  const isNewRecord = currentScore > bestScore;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>¡Partida Terminada!</Text>
       <Text style={styles.score}>Tu puntuación: {currentScore}/10</Text>
       <Text style={styles.bestScore}>Mejor puntuación: {bestScore}/10</Text>
+      {isNewRecord && (
+        <Text style={styles.newRecord}>¡Nuevo récord! 🎉</Text>
+      )}
       {/* Rest of the results screen UI */}
     </View>
   );
@@ -44,6 +49,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 20,
     fontWeight: 'bold',
+  },
+  newRecord: {
+    fontSize: 18,
+    color: 'green',
+    marginTop: 10,
   },
 });
 
