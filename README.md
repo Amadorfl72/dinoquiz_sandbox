@@ -11,3 +11,4 @@ Los agentes crean ramas `feat/...` desde `main` y abren PRs.
 ## Best Score Logic
 - Implemented best score comparison and update logic
 - Added tests for score comparison and update functionality
+- Fixed security vulnerabilities in score handling
