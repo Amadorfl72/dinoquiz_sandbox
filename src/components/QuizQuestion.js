@@ -44,14 +44,15 @@ export default function QuizQuestion({ question, options, correctAnswer, funFact
             className={`option ${getOptionClass(option)}`}
             onClick={() => handleOptionClick(option)}
             disabled={showFeedback}
+            aria-label={option === correctAnswer && showFeedback ? "correct answer" : option === selectedOption && !isCorrect ? "incorrect answer" : option}
           >
             {option}
           </button>
         ))}
       </div>
       {showFeedback && !isCorrect && (
-        <div className="feedback-message">
-          <p>¡Casi! La respuesta correcta es {correctAnswer}.</p>
+        <div className="feedback-message" data-testid="incorrect-feedback-message">
+          <p>¡Buen intento! La respuesta correcta es {correctAnswer}. ¡Sigue aprendiendo!</p>
         </div>
       )}
     </div>
