@@ -71,7 +71,7 @@ def test_ingest_missing_fields(aggregator):
         aggregator.ingest(log)
 
 def test_top_5_with_fewer_questions(aggregator):
-    # Test with only 3 questions to ensure we still get 5 results
+    # Test with only 3 questions to ensure we still get up to 5 results
     logs = [
         {"event": "question_answered", "question_id": "q1", "success": False, "time_to_answer_ms": 1000},
         {"event": "question_answered", "question_id": "q2", "success": False, "time_to_answer_ms": 2000},
@@ -80,7 +80,8 @@ def test_top_5_with_fewer_questions(aggregator):
     for log in logs:
         aggregator.ingest(log)
     worst = aggregator.get_top_5_worst_performing_questions()
-    assert len(worst) == 5  # Should return 5 items even with only 3 questions
+    assert len(worst) <= 5  # Should return up to 5 items
     assert "q1" in worst
     assert "q2" in worst
     assert "q3" not in worst  # q3 has 100% success
+    assert len(worst) == 2  # Only 2 questions with failures
