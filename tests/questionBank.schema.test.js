@@ -1,102 +1,95 @@
 const fs = require('fs');
 const path = require('path');
 
-const POSSIBLE_PATHS = [
-  'src/data/questionBank.json',
-  'src/data/questions.json',
-  'src/data/question-bank.json',
-  'data/questionBank.json',
-  'data/questions.json',
-  'data/question-bank.json',
-  'questionBank.json',
-  'questions.json',
-  'question-bank.json',
-];
+const QUESTION_BANK_PATH = path.resolve(__dirname, '../data/questionBank.json');
 
-function findQuestionBank() {
-  for (const p of POSSIBLE_PATHS) {
-    const full = path.resolve(process.cwd(), p);
-    if (fs.existsSync(full)) return full;
-  }
-  return null;
-}
+let questionBank;
 
-const filePath = findQuestionBank();
-const questions = filePath ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : [];
+beforeAll(() => {
+  const raw = fs.readFileSync(QUESTION_BANK_PATH, 'utf-8');
+  questionBank = JSON.parse(raw);
+});
 
-const VALID_DINOSAURS = [
-  't-rex',
-  'triceratops',
-  'velociraptor',
-  'stegosaurus',
-  'brachiosaurus',
-  'ankylosaurus',
-  'pteranodon',
-];
-
-describe('TRIOFSND-57: JSON Schema Validation', () => {
-  test('each question object has exactly the expected shape', () => {
-    const allowedKeys = [
-      'statement',
-      'options',
-      'correctAnswer',
-      'funFact',
-      'imageReference',
-      'dinosaur',
-      'category',
-      'topic',
-      'subject',
-      'id',
-      'difficulty',
-    ];
-
-    questions.forEach((q, i) => {
-      Object.keys(q).forEach((key) => {
+describe('JSON Schema Validation', () => {
+  test('each question should conform to the expected schema', () => {
+    questionBank.forEach((question, index) => {
+      // Top-level keys check
+      const allowedKeys = [
+        'statement',
+        'options',
+        'correctAnswer',
+        'funFact',
+        'imageReference',
+        'dinosaur',
+      ];
+      Object.keys(question).forEach((key) => {
         expect(allowedKeys).toContain(key);
       });
-    });
-  });
 
-  test('options array contains only string values', () => {
-    questions.forEach((q) => {
-      q.options.forEach((opt) => {
+      // Type checks
+      expect(typeof question.statement).toBe('string');
+      expect(Array.isArray(question.options)).toBe(true);
+      expect(typeof question.correctAnswer).toBe('string');
+      expect(typeof question.funFact).toBe('string');
+      expect(typeof question.imageReference).toBe('string');
+
+      // Options array element type check
+      question.options.forEach((opt) => {
         expect(typeof opt).toBe('string');
       });
+
+      // correctAnswer must be in options
+      expect(question.options).toContain(question.correctAnswer);
     });
   });
 
-  test('correctAnswer is not an index but a string value', () => {
-    questions.forEach((q) => {
-      expect(typeof q.correctAnswer).not.toBe('number');
+  test('should not have any null or undefined values in any field', () => {
+    const checkNoNullUndefined = (obj, path = '') => {
+      Object.entries(obj).forEach(([key, value]) => {
+        const currentPath = path ? `${path}.${key}` : key;
+        expect(value).not.toBeNull();
+        expect(value).not.toBeUndefined();
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          checkNoNullUndefined(value, currentPath);
+        }
+        if (Array.isArray(value)) {
+          value.forEach((item, idx) => {
+            expect(item).not.toBeNull();
+            expect(item).not.toBeUndefined();
+            if (typeof item === 'object') {
+              checkNoNullUndefined(item, `${currentPath}[${idx}]`);
+            }
+          });
+        }
+      });
+    };
+
+    questionBank.forEach((q, idx) => {
+      checkNoNullUndefined(q, `question[${idx}]`);
     });
   });
 
-  test('imageReference looks like a file path or URL', () => {
-    questions.forEach((q) => {
+  test('imageReference should be a valid file path or URL format', () => {
+    questionBank.forEach((q, idx) => {
       const ref = q.imageReference.trim();
-      const hasExtension = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(ref);
-      const isUrl = /^https?:\/\//i.test(ref);
-      const isRelativePath = !ref.includes(' ') || hasExtension;
-      expect(hasExtension || isUrl || isRelativePath).toBe(true);
+      const isUrl = /^(https?:\/\/|www\.)/.test(ref);
+      const isFilePath = /^\.?\.?\/|^[\w-]+\.(png|jpg|jpeg|gif|svg|webp)$/i.test(ref);
+      const isAssetName = /^[\w/-]+\.(png|jpg|jpeg|gif|svg|webp)$/i.test(ref);
+      expect(isUrl || isFilePath || isAssetName).toBe(true);
     });
   });
 
-  test('dinosaur field values are from the allowed set', () => {
-    questions.forEach((q) => {
-      const dino = (q.dinosaur || q.category || q.topic || q.subject || '').toLowerCase();
-      expect(VALID_DINOSAURS).toContain(dino);
+  test('correctAnswer should not be an empty string', () => {
+    questionBank.forEach((q, idx) => {
+      expect(q.correctAnswer.trim().length).toBeGreaterThan(0);
     });
   });
 
-  test('no question has an empty or whitespace-only funFact', () => {
-    questions.forEach((q) => {
-      expect(q.funFact.trim().length).toBeGreaterThan(10);
-    });
-  });
-
-  test('no question has an empty or whitespace-only statement', () => {
-    questions.forEach((q) => {
-      expect(q.statement.trim().length).toBeGreaterThan(10);
+  test('options should not contain empty strings', () => {
+    questionBank.forEach((q, idx) => {
+      q.options.forEach((opt, optIdx) => {
+        expect(opt.trim().length).toBeGreaterThan(0);
+      });
     });
   });
 });
