@@ -6,3 +6,6 @@ Los agentes crean ramas `feat/...` desde `main` y abren PRs.
 ## Security Updates
 - Updated GitHub Actions to use Node.js 24
 - Fixed security issues identified by semgrep
+
+## New Features
+- Added FunFactScreen composable with dinosaur image, fun fact text, and large Next button
