@@ -18,6 +18,8 @@ const AnswerOptionButton = ({ option, onPress, isSelected, isCorrect }) => {
       style={buttonStyle}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Answer option: ${option}`}
     >
       <Text style={styles.text}>{option}</Text>
     </TouchableOpacity>
@@ -32,7 +34,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 56,
     minWidth: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -41,9 +43,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   smallDeviceButton: {
-    minHeight: 48,
-    minWidth: 48,
-    padding: 12,
+    minHeight: 56,
+    minWidth: '100%',
+    padding: 16,
   },
   text: {
     fontSize: 18,
