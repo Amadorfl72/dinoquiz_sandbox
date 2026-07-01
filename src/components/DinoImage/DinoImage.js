@@ -17,6 +17,7 @@ const DinoImage = ({ src, alt }) => {
           src={placeholderImage} 
           alt={`Placeholder for ${alt}`} 
           className="dino-image"
+          data-testid="dino-placeholder"
         />
       ) : (
         <img 
@@ -24,6 +25,7 @@ const DinoImage = ({ src, alt }) => {
           alt={alt} 
           className="dino-image"
           onError={handleImageError}
+          data-testid="dino-image"
         />
       )}
     </div>
