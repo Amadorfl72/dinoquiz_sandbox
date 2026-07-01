@@ -12,11 +12,13 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF6B6B',
     marginBottom: 20,
+    textAlign: 'center',
   },
   mascot: {
     width: 200,
     height: 200,
     marginBottom: 40,
+    resizeMode: 'contain',
   },
   playButton: {
     backgroundColor: '#4ECDC4',
@@ -24,8 +26,14 @@ export const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 30,
     minHeight: 64,
+    minWidth: 200,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   playButtonText: {
     fontSize: 24,
