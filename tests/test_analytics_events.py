@@ -4,41 +4,69 @@ from app.main import app
 
 client = TestClient(app)
 
-VALID_EVENTS = [
-    ("app_open", {"first_apertura": True}),
-    ("app_open", {"first_apertura": False}),
-    ("tooltip_shown", {"tooltip_id": "tip_1"}),
-    ("tooltip_dismissed", {"tooltip_id": "tip_1"}),
-]
+BASE_URL = "/api/v1/analytics/events"
 
-@pytest.mark.parametrize("event_type, data", VALID_EVENTS)
-def test_valid_analytics_events(event_type, data):
-    response = client.post("/api/v1/analytics/events", json={"event_type": event_type, "data": data})
+def test_app_open_event_with_first_apertura_true():
+    payload = {
+        "event_type": "app_open",
+        "first_apertura": True
+    }
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 201
+    assert response.json().get("status") == "success"
+
+def test_app_open_event_with_first_apertura_false():
+    payload = {
+        "event_type": "app_open",
+        "first_apertura": False
+    }
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 201
+    assert response.json().get("status") == "success"
+
+def test_tooltip_shown_event():
+    payload = {
+        "event_type": "tooltip_shown"
+    }
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 201
+    assert response.json().get("status") == "success"
+
+def test_tooltip_dismissed_event():
+    payload = {
+        "event_type": "tooltip_dismissed"
+    }
+    response = client.post(BASE_URL, json=payload)
     assert response.status_code == 201
     assert response.json().get("status") == "success"
 
 def test_invalid_event_type():
-    response = client.post("/api/v1/analytics/events", json={"event_type": "invalid_event", "data": {}})
-    assert response.status_code == 400
-
-def test_missing_event_type():
-    response = client.post("/api/v1/analytics/events", json={"data": {}})
+    payload = {
+        "event_type": "invalid_event"
+    }
+    response = client.post(BASE_URL, json=payload)
     assert response.status_code == 422
 
-def test_app_open_missing_first_apertura():
-    response = client.post("/api/v1/analytics/events", json={"event_type": "app_open", "data": {}})
-    assert response.status_code == 400
+def test_missing_event_type():
+    payload = {}
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 422
 
-PII_FIELDS = [
-    {"email": "test@example.com"},
-    {"user_id": "12345"},
-    {"ip_address": "192.168.1.1"},
-    {"name": "John Doe"},
-]
+def test_app_open_missing_first_apertura_flag():
+    payload = {
+        "event_type": "app_open"
+    }
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 422
 
-@pytest.mark.parametrize("pii_data", PII_FIELDS)
-def test_pii_rejection(pii_data):
-    payload = {"event_type": "tooltip_shown", "data": pii_data}
-    response = client.post("/api/v1/analytics/events", json=payload)
-    assert response.status_code == 400
-    assert "PII" in response.json().get("detail", "")
+def test_pii_rejection():
+    # Ensure no PII is collected by rejecting extra fields that could contain PII
+    payload = {
+        "event_type": "app_open",
+        "first_apertura": True,
+        "user_email": "test@example.com",
+        "ip_address": "192.168.1.1",
+        "user_id": "12345"
+    }
+    response = client.post(BASE_URL, json=payload)
+    assert response.status_code == 422
