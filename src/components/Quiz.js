@@ -17,7 +17,7 @@ const Quiz = ({ questions }) => {
       <h2>{questions[currentQuestionIndex].question}</h2>
       {questions[currentQuestionIndex].answers.map((answer, index) => (
         <AnswerButton key={index} answer={answer} onAnswer={handleAnswer} />
-      ))}
+      ))};
     </div>
   );
 };
