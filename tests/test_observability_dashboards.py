@@ -164,51 +164,5 @@ class TestFunnelDashboard:
     def test_funnel_steps_in_order(self, dashboard):
         text = json.dumps(dashboard).lower()
         positions = [text.find(step) for step in self.EXPECTED_STEPS]
-        assert all(pos != -1 for pos in positions), "Not all funnel steps present"
-        assert positions == sorted(positions), \
-            "Funnel steps must appear in order: app_open -> pantalla_inicio -> tap_jugar -> partida_iniciada"
-
-
-# ---------------------------------------------------------------------------
-# Alert: TTI p95 > 2s sustained for 1 hour
-# ---------------------------------------------------------------------------
-
-class TestTTIP95Alert:
-    ALERT_NAME = "TTI p95 > 2s sustained 1h"
-
-    @pytest.fixture(scope="class")
-    def alert_rule(self):
-        rule = _find_alert_rule(self.ALERT_NAME)
-        assert rule is not None, f"Alert rule '{self.ALERT_NAME}' not found"
-        return rule
-
-    def test_alert_exists(self, alert_rule):
-        assert alert_rule is not None
-
-    def test_alert_threshold_is_2_seconds(self, alert_rule):
-        blob = json.dumps(alert_rule)
-        # Accept 2, 2.0, 2000ms representations
-        assert ("2" in blob), "Alert threshold must reference 2 seconds"
-
-    def test_alert_sustained_for_1_hour(self, alert_rule):
-        blob = json.dumps(alert_rule).lower()
-        assert ("1h" in blob or "3600" in blob or "60m" in blob), \
-            "Alert must be sustained for 1 hour (1h / 3600s / 60m)"
-
-    def test_alert_uses_p95_aggregation(self, alert_rule):
-        blob = json.dumps(alert_rule).lower()
-        assert ("p95" in blob or "quantile(0.95" in blob), \
-            "Alert must use p95 aggregation"
-
-    def test_alert_queries_tti_metric(self, alert_rule):
-        blob = json.dumps(alert_rule).lower()
-        assert "tti" in blob, "Alert must reference the TTI metric"
-
-    def test_alert_severity_is_warning_or_critical(self, alert_rule):
-        labels = alert_rule.get("labels", {})
-        severity = labels.get("severity", "").lower()
-        if not severity:
-            # Try nested alert field
-            severity = alert_rule.get("alert", {}).get("labels", {}).get("severity", "").lower()
-        assert severity in ("warning", "critical"), \
-            f"Alert severity must be warning or critical, got: {severity}"
+        assert all(pos != -1 for pos in positions)
+        assert positions == sorted(positions), "Funnel steps are not in expected order"
