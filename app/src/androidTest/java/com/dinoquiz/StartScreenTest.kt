@@ -1,14 +1,13 @@
 package com.dinoquiz
 
-import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.hamcrest.Description
-import org.hamcrest.Matcher
-import org.hamcrest.TypeSafeMatcher
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,55 +16,28 @@ import org.junit.runner.RunWith
 class StartScreenTest {
 
     @Test
-    fun title_isDisplayed() {
-        ActivityScenario.launch(StartActivity::class.java)
-        onView(withText("DinoQuiz")).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun dinosaurIllustration_isDisplayed() {
-        ActivityScenario.launch(StartActivity::class.java)
-        // Assuming the dinosaur illustration has a content description for accessibility
-        onView(withContentDescription("dinosaur_illustration")).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun playButton_isDisplayedWithCorrectText() {
-        ActivityScenario.launch(StartActivity::class.java)
-        onView(withText("¡Jugar!")).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun playButton_hasMinimumHeight64dp() {
-        ActivityScenario.launch(StartActivity::class.java)
-        onView(withText("¡Jugar!")).check(matches(withMinHeight(64)))
-    }
-
-    @Test
-    fun startScreen_rendersWithin3Seconds() {
+    fun startScreen_displaysAllElementsAndRendersUnder3Seconds() {
         val startTime = System.currentTimeMillis()
-        ActivityScenario.launch(StartActivity::class.java)
-        
-        // Wait for the main title to be displayed, indicating the screen has rendered
-        onView(withText("DinoQuiz")).check(matches(isDisplayed()))
-        
-        val endTime = System.currentTimeMillis()
-        val renderTime = endTime - startTime
-        
-        assertTrue("Screen should render in <3s, but took ${renderTime}ms", renderTime < 3000)
-    }
 
-    // Custom matcher to check if a view's height is at least the specified dp value
-    private fun withMinHeight(minHeightDp: Int): Matcher<View> {
-        return object : TypeSafeMatcher<View>() {
-            override fun describeTo(description: Description) {
-                description.appendText("with min height: $minHeightDp dp")
-            }
+        ActivityScenario.launch(StartActivity::class.java).use {
+            val renderTime = System.currentTimeMillis() - startTime
+            assertTrue("Screen should render in less than 3 seconds", renderTime < 3000)
 
-            override fun matchesSafely(view: View): Boolean {
-                val density = view.resources.displayMetrics.density
-                val actualHeightDp = view.height / density
-                return actualHeightDp >= minHeightDp
+            // Check title
+            onView(withText("DinoQuiz")).check(matches(isDisplayed()))
+
+            // Check dinosaur illustration
+            onView(withId(R.id.dinosaurIllustration)).check(matches(isDisplayed()))
+
+            // Check '¡Jugar!' button
+            onView(withText("¡Jugar!")).check(matches(isDisplayed()))
+
+            // Check button height is at least 64dp
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val expectedHeight = (64 * context.resources.displayMetrics.density).toInt()
+            onView(withText("¡Jugar!")).check { view, noViewFoundException ->
+                if (noViewFoundException != null) throw noViewFoundException
+                assertTrue("Button height should be at least 64dp", view.height >= expectedHeight)
             }
         }
     }
