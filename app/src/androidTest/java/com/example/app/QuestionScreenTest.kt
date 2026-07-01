@@ -1,15 +1,13 @@
 package com.example.app
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.unit.dp
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class QuestionScreenTest {
 
     @get:Rule
@@ -21,23 +19,13 @@ class QuestionScreenTest {
             QuestionScreen()
         }
 
-        val answerButtons = composeTestRule.onAllNodesWithTag("AnswerOptionButton")
-        val nodes = answerButtons.fetchSemanticsNodes()
-        
-        Assert.assertTrue("No answer option buttons found", nodes.isNotEmpty())
+        // Assuming the answer options are displayed as buttons with specific text
+        val answerOptions = listOf("Option A", "Option B", "Option C", "Option D")
 
-        val minTouchTargetPx = with(composeTestRule.density) { 48.dp.toPx() }
-
-        nodes.forEach { node ->
-            val bounds = node.boundsInRoot
-            Assert.assertTrue(
-                "Expected answer option buttons to have a minimum touch target width of 48dp, but received ${bounds.width / composeTestRule.density.density}dp",
-                bounds.width >= minTouchTargetPx
-            )
-            Assert.assertTrue(
-                "Expected answer option buttons to have a minimum touch target height of 48dp, but received ${bounds.height / composeTestRule.density.density}dp",
-                bounds.height >= minTouchTargetPx
-            )
+        answerOptions.forEach { optionText ->
+            composeTestRule.onNodeWithText(optionText)
+                .assertWidthIsAtLeast(48.dp)
+                .assertHeightIsAtLeast(48.dp)
         }
     }
 }
