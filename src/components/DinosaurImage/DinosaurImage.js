@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import placeholderImage from '../../assets/images/dino-placeholder.png';
 import './DinosaurImage.css';
 
-const DinosaurImage = ({ src, alt, children }) => {
+const DinosaurImage = ({ src, alt, fallbackSrc, children }) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = (e) => {
@@ -14,9 +14,10 @@ const DinosaurImage = ({ src, alt, children }) => {
       {imageError ? (
         <div className="image-placeholder" data-testid="image-placeholder" role="img" aria-label={`${alt} placeholder`}>
           <img 
-            src={placeholderImage} 
+            src={fallbackSrc || placeholderImage} 
             alt={`${alt} placeholder`} 
             className="placeholder-image"
+            data-testid="placeholder-image"
           />
           <div className="placeholder-overlay" data-testid="placeholder-overlay"></div>
           {children}
