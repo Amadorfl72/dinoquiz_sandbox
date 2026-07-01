@@ -3,10 +3,12 @@ export const appOpened = (isFirstOpen) => ({
   payload: { isFirstOpen }
 });
 
-export const tooltipShown = () => ({
-  type: 'TOOLTIP_SHOWN'
+export const tooltipShown = (tooltipId) => ({
+  type: 'TOOLTIP_SHOWN',
+  payload: { tooltipId }
 });
 
-export const tooltipDismissed = () => ({
-  type: 'TOOLTIP_DISMISSED'
+export const tooltipDismissed = (tooltipId) => ({
+  type: 'TOOLTIP_DISMISSED',
+  payload: { tooltipId }
 });
