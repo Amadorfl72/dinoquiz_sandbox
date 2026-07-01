@@ -6,7 +6,7 @@
     "correct_answer": "T-Rex",
     "image_path": "assets/images/t-rex.png",
     "fun_fact": {
-      "text": "El T-Rex tenía los dientes del tamaño de un plátano.",
+      "text": "El T-Rex tenía dientes tan grandes como plátanos.",
       "image_path": "assets/images/fun-fact-t-rex.png"
     }
   },
@@ -17,7 +17,7 @@
     "correct_answer": "Triceratops",
     "image_path": "assets/images/triceratops.png",
     "fun_fact": {
-      "text": "El Triceratops usaba sus cuernos para defenderse de los depredadores.",
+      "text": "El Triceratops usaba sus cuernos para protegerse.",
       "image_path": "assets/images/fun-fact-triceratops.png"
     }
   },
@@ -28,7 +28,7 @@
     "correct_answer": "Velociraptor",
     "image_path": "assets/images/velociraptor.png",
     "fun_fact": {
-      "text": "El Velociraptor era muy rápido y podía correr hasta 40 km/h.",
+      "text": "El Velociraptor era muy rápido y ágil.",
       "image_path": "assets/images/fun-fact-velociraptor.png"
     }
   },
@@ -39,7 +39,7 @@
     "correct_answer": "Estegosaurio",
     "image_path": "assets/images/stegosaurus.png",
     "fun_fact": {
-      "text": "Las placas del Estegosaurio podían ayudarle a regular su temperatura.",
+      "text": "Las placas del Estegosaurio le ayudaban con el calor.",
       "image_path": "assets/images/fun-fact-stegosaurus.png"
     }
   },
@@ -50,7 +50,7 @@
     "correct_answer": "Braquiosaurio",
     "image_path": "assets/images/brachiosaurus.png",
     "fun_fact": {
-      "text": "El Braquiosaurio podía comer hojas de los árboles más altos gracias a su cuello.",
+      "text": "El Braquiosaurio comía hojas de los árboles altos.",
       "image_path": "assets/images/fun-fact-brachiosaurus.png"
     }
   },
@@ -61,7 +61,7 @@
     "correct_answer": "Ankylosaurus",
     "image_path": "assets/images/ankylosaurus.png",
     "fun_fact": {
-      "text": "El Ankylosaurus usaba su cola como un mazo para defenderse.",
+      "text": "El Ankylosaurus usaba su cola como un mazo.",
       "image_path": "assets/images/fun-fact-ankylosaurus.png"
     }
   },
@@ -83,7 +83,7 @@
     "correct_answer": "Braquiosaurio",
     "image_path": "assets/images/brachiosaurus.png",
     "fun_fact": {
-      "text": "El Braquiosaurio pesaba tanto como 10 elefantes juntos.",
+      "text": "El Braquiosaurio pesaba tanto como 10 elefantes.",
       "image_path": "assets/images/fun-fact-brachiosaurus.png"
     }
   },
@@ -94,7 +94,7 @@
     "correct_answer": "T-Rex",
     "image_path": "assets/images/t-rex.png",
     "fun_fact": {
-      "text": "El T-Rex tenía una de las mordidas más fuertes de todos los dinosaurios.",
+      "text": "El T-Rex tenía una de las mordidas más fuertes.",
       "image_path": "assets/images/fun-fact-t-rex.png"
     }
   },
@@ -105,8 +105,228 @@
     "correct_answer": "Triceratops",
     "image_path": "assets/images/triceratops.png",
     "fun_fact": {
-      "text": "El Triceratops podía usar su cuerno para luchar con otros Triceratops.",
+      "text": "El Triceratops podía luchar con otros usando su cuerno.",
       "image_path": "assets/images/fun-fact-triceratops.png"
+    }
+  },
+  {
+    "id": 11,
+    "question": "¿Qué dinosaurio tenía una gran vela en su espalda?",
+    "options": ["T-Rex", "Triceratops", "Spinosaurus", "Estegosaurio"],
+    "correct_answer": "Spinosaurus",
+    "image_path": "assets/images/spinosaurus.png",
+    "fun_fact": {
+      "text": "El Spinosaurus era más grande que el T-Rex.",
+      "image_path": "assets/images/fun-fact-spinosaurus.png"
+    }
+  },
+  {
+    "id": 12,
+    "question": "¿Qué dinosaurio tenía un cuello muy largo y una cola larga?",
+    "options": ["T-Rex", "Diplodocus", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Diplodocus",
+    "image_path": "assets/images/diplodocus.png",
+    "fun_fact": {
+      "text": "El Diplodocus podía medir más de 20 metros de largo.",
+      "image_path": "assets/images/fun-fact-diplodocus.png"
+    }
+  },
+  {
+    "id": 13,
+    "question": "¿Qué dinosaurio tenía un gran pico y una cresta en la cabeza?",
+    "options": ["T-Rex", "Parasaurolophus", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Parasaurolophus",
+    "image_path": "assets/images/parasaurolophus.png",
+    "fun_fact": {
+      "text": "El Parasaurolophus hacía sonidos con su cresta.",
+      "image_path": "assets/images/fun-fact-parasaurolophus.png"
+    }
+  },
+  {
+    "id": 14,
+    "question": "¿Qué dinosaurio tenía un gran cuerno en la nariz y dos en la cabeza?",
+    "options": ["T-Rex", "Triceratops", "Styracosaurus", "Estegosaurio"],
+    "correct_answer": "Styracosaurus",
+    "image_path": "assets/images/styracosaurus.png",
+    "fun_fact": {
+      "text": "El Styracosaurus tenía una nariz muy puntiaguda.",
+      "image_path": "assets/images/fun-fact-styracosaurus.png"
+    }
+  },
+  {
+    "id": 15,
+    "question": "¿Qué dinosaurio tenía una armadura de placas y espinas?",
+    "options": ["T-Rex", "Ankylosaurus", "Kentrosaurus", "Estegosaurio"],
+    "correct_answer": "Kentrosaurus",
+    "image_path": "assets/images/kentrosaurus.png",
+    "fun_fact": {
+      "text": "El Kentrosaurus tenía espinas en su cola para defenderse.",
+      "image_path": "assets/images/fun-fact-kentrosaurus.png"
+    }
+  },
+  {
+    "id": 16,
+    "question": "¿Qué dinosaurio tenía una gran cola con púas?",
+    "options": ["T-Rex", "Ankylosaurus", "Gigantspinosaurus", "Estegosaurio"],
+    "correct_answer": "Gigantspinosaurus",
+    "image_path": "assets/images/gigantspinosaurus.png",
+    "fun_fact": {
+      "text": "El Gigantspinosaurus tenía una espina enorme en el hombro.",
+      "image_path": "assets/images/fun-fact-gigantspinosaurus.png"
+    }
+  },
+  {
+    "id": 17,
+    "question": "¿Qué dinosaurio tenía un pico de loro y era herbívoro?",
+    "options": ["T-Rex", "Triceratops", "Psittacosaurus", "Estegosaurio"],
+    "correct_answer": "Psittacosaurus",
+    "image_path": "assets/images/psittacosaurus.png",
+    "fun_fact": {
+      "text": "El Psittacosaurus tenía un pico como un loro.",
+      "image_path": "assets/images/fun-fact-psittacosaurus.png"
+    }
+  },
+  {
+    "id": 18,
+    "question": "¿Qué dinosaurio tenía una gran cresta en la cabeza y era muy rápido?",
+    "options": ["T-Rex", "Cryolophosaurus", "Hypsilophodon", "Estegosaurio"],
+    "correct_answer": "Hypsilophodon",
+    "image_path": "assets/images/hypsilophodon.png",
+    "fun_fact": {
+      "text": "El Hypsilophodon corría en grupo para estar seguro.",
+      "image_path": "assets/images/fun-fact-hypsilophodon.png"
+    }
+  },
+  {
+    "id": 19,
+    "question": "¿Qué dinosaurio tenía una gran cabeza con cuernos pequeños?",
+    "options": ["T-Rex", "Triceratops", "Protoceratops", "Estegosaurio"],
+    "correct_answer": "Protoceratops",
+    "image_path": "assets/images/protoceratops.png",
+    "fun_fact": {
+      "text": "El Protoceratops cuidaba mucho a sus crías.",
+      "image_path": "assets/images/fun-fact-protoceratops.png"
+    }
+  },
+  {
+    "id": 20,
+    "question": "¿Qué dinosaurio tenía una gran cola con una maza en el final?",
+    "options": ["T-Rex", "Ankylosaurus", "Europelta", "Estegosaurio"],
+    "correct_answer": "Europelta",
+    "image_path": "assets/images/europelta.png",
+    "fun_fact": {
+      "text": "El Europelta tenía una armadura muy fuerte.",
+      "image_path": "assets/images/fun-fact-europelta.png"
+    }
+  },
+  {
+    "id": 21,
+    "question": "¿Qué dinosaurio tenía una gran vela en la espalda y era carnívoro?",
+    "options": ["T-Rex", "Acrocanthosaurus", "Spinosaurus", "Estegosaurio"],
+    "correct_answer": "Acrocanthosaurus",
+    "image_path": "assets/images/acrocanthosaurus.png",
+    "fun_fact": {
+      "text": "El Acrocanthosaurus tenía una vela alta en su espalda.",
+      "image_path": "assets/images/fun-fact-acrocanthosaurus.png"
+    }
+  },
+  {
+    "id": 22,
+    "question": "¿Qué dinosaurio tenía una gran cabeza con cuernos y era herbívoro?",
+    "options": ["T-Rex", "Triceratops", "Chasmosaurus", "Estegosaurio"],
+    "correct_answer": "Chasmosaurus",
+    "image_path": "assets/images/chasmosaurus.png",
+    "fun_fact": {
+      "text": "El Chasmosaurus tenía un collar de hueso en la cabeza.",
+      "image_path": "assets/images/fun-fact-chasmosaurus.png"
+    }
+  },
+  {
+    "id": 23,
+    "question": "¿Qué dinosaurio tenía una gran cola con plumas?",
+    "options": ["T-Rex", "Anchiornis", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Anchiornis",
+    "image_path": "assets/images/anchiornis.png",
+    "fun_fact": {
+      "text": "El Anchiornis tenía plumas de muchos colores.",
+      "image_path": "assets/images/fun-fact-anchiornis.png"
+    }
+  },
+  {
+    "id": 24,
+    "question": "¿Qué dinosaurio tenía una gran cresta en la nariz?",
+    "options": ["T-Rex", "Cryolophosaurus", "Parasaurolophus", "Estegosaurio"],
+    "correct_answer": "Cryolophosaurus",
+    "image_path": "assets/images/cryolophosaurus.png",
+    "fun_fact": {
+      "text": "El Cryolophosaurus tenía una cresta como un peine.",
+      "image_path": "assets/images/fun-fact-cryolophosaurus.png"
+    }
+  },
+  {
+    "id": 25,
+    "question": "¿Qué dinosaurio tenía una gran cola con espinas y era herbívoro?",
+    "options": ["T-Rex", "Kentrosaurus", "Stegosaurus", "Estegosaurio"],
+    "correct_answer": "Stegosaurus",
+    "image_path": "assets/images/stegosaurus.png",
+    "fun_fact": {
+      "text": "El Stegosaurus tenía un cerebro muy pequeño.",
+      "image_path": "assets/images/fun-fact-stegosaurus.png"
+    }
+  },
+  {
+    "id": 26,
+    "question": "¿Qué dinosaurio tenía una gran cabeza con cuernos y era muy rápido?",
+    "options": ["T-Rex", "Triceratops", "Leptoceratops", "Estegosaurio"],
+    "correct_answer": "Leptoceratops",
+    "image_path": "assets/images/leptoceratops.png",
+    "fun_fact": {
+      "text": "El Leptoceratops era más pequeño que otros con cuernos.",
+      "image_path": "assets/images/fun-fact-leptoceratops.png"
+    }
+  },
+  {
+    "id": 27,
+    "question": "¿Qué dinosaurio tenía una gran cola con una bola y era herbívoro?",
+    "options": ["T-Rex", "Ankylosaurus", "Minotaurasaurus", "Estegosaurio"],
+    "correct_answer": "Minotaurasaurus",
+    "image_path": "assets/images/minotaurasaurus.png",
+    "fun_fact": {
+      "text": "El Minotaurasaurus tenía una cabeza como un toro.",
+      "image_path": "assets/images/fun-fact-minotaurasaurus.png"
+    }
+  },
+  {
+    "id": 28,
+    "question": "¿Qué dinosaurio tenía una gran cresta en la cabeza y era carnívoro?",
+    "options": ["T-Rex", "Carnotaurus", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Carnotaurus",
+    "image_path": "assets/images/carnotaurus.png",
+    "fun_fact": {
+      "text": "El Carnotaurus tenía dos cuernos sobre los ojos.",
+      "image_path": "assets/images/fun-fact-carnotaurus.png"
+    }
+  },
+  {
+    "id": 29,
+    "question": "¿Qué dinosaurio tenía una gran cola con plumas y era carnívoro?",
+    "options": ["T-Rex", "Microraptor", "Velociraptor", "Estegosaurio"],
+    "correct_answer": "Microraptor",
+    "image_path": "assets/images/microraptor.png",
+    "fun_fact": {
+      "text": "El Microraptor podía volar entre los árboles.",
+      "image_path": "assets/images/fun-fact-microraptor.png"
+    }
+  },
+  {
+    "id": 30,
+    "question": "¿Qué dinosaurio tenía una gran cabeza con cuernos y era muy fuerte?",
+    "options": ["T-Rex", "Triceratops", "Pentaceratops", "Estegosaurio"],
+    "correct_answer": "Pentaceratops",
+    "image_path": "assets/images/pentaceratops.png",
+    "fun_fact": {
+      "text": "El Pentaceratops tenía cinco cuernos en la cabeza.",
+      "image_path": "assets/images/fun-fact-pentaceratops.png"
     }
   }
 ]
