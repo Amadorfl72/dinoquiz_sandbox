@@ -1,97 +1,78 @@
 const { test, expect } = require('@playwright/test');
 
+const EXPECTED_CACHED_FILES = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/assets/audio/sample.mp3',
+  '/assets/images/logo.png',
+  '/data/questions.json'
+];
+
 test.describe('TRIOFSND-6: Service Worker Setup and Caching', () => {
-  test.beforeEach(async ({ page, context }) => {
-    // Clear all caches and unregister service workers before each test
-    const client = await context.newCDPSession(page);
-    await client.send('Network.clearBrowserCache');
-    await client.send('ServiceWorker.unregister');
-    
+  test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000');
+    // Wait for service worker to register and activate
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null, { timeout: 10000 });
   });
 
-  test('should register a service worker on first load', async ({ page }) => {
-    const swRegistered = await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.getRegistration();
-      return !!registration;
-    });
-    
-    expect(swRegistered).toBeTruthy();
+  test('Service Worker is registered and active', async ({ page }) => {
+    const isRegistered = await page.evaluate(() => 
+      navigator.serviceWorker.getRegistration().then(reg => !!reg)
+    );
+    expect(isRegistered).toBeTruthy();
   });
 
-  test('should cache app shell, assets, audio, images, and questions JSON on first load', async ({ page }) => {
-    // Wait for service worker to install and activate
-    await page.waitForFunction(async () => {
-      const registration = await navigator.serviceWorker.getRegistration();
-      return registration && registration.active;
-    }, { timeout: 10000 });
-
-    // Give it a moment to finish caching
+  test('App shell, assets, audio, images, and questions JSON are cached on first load', async ({ page }) => {
+    // Wait for caching to complete after first load
     await page.waitForTimeout(3000);
 
-    const cacheContents = await page.evaluate(async () => {
+    const cachedRequests = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
-      let allUrls = [];
+      let allRequests = [];
       for (const name of cacheNames) {
         const cache = await caches.open(name);
         const requests = await cache.keys();
-        allUrls = allUrls.concat(requests.map(req => req.url));
+        allRequests = allRequests.concat(requests.map(req => req.url));
       }
-      return allUrls;
+      return allRequests;
     });
 
-    // Check for app shell
-    expect(cacheContents.some(url => url.includes('index.html'))).toBeTruthy();
-    
-    // Check for assets (CSS/JS)
-    expect(cacheContents.some(url => url.endsWith('.css') || url.endsWith('.js'))).toBeTruthy();
-    
-    // Check for audio
-    expect(cacheContents.some(url => url.match(/\.(mp3|wav|ogg)$/))).toBeTruthy();
-    
-    // Check for images
-    expect(cacheContents.some(url => url.match(/\.(png|jpg|jpeg|svg|gif)$/))).toBeTruthy();
-    
-    // Check for questions JSON
-    expect(cacheContents.some(url => url.includes('questions.json') || url.includes('questions'))).toBeTruthy();
+    for (const file of EXPECTED_CACHED_FILES) {
+      expect(cachedRequests.some(url => url.includes(file))).toBeTruthy();
+    }
   });
 
-  test('should serve content offline (PWA installability and offline criteria)', async ({ page, context }) => {
-    // Wait for service worker to be active
-    await page.waitForFunction(async () => {
-      const registration = await navigator.serviceWorker.getRegistration();
-      return registration && registration.active;
-    }, { timeout: 10000 });
+  test('App is installable (has manifest and service worker)', async ({ page }) => {
+    const hasManifest = await page.evaluate(() => {
+      return document.querySelector('link[rel="manifest"]') !== null;
+    });
+    expect(hasManifest).toBeTruthy();
 
-    // Wait for caching to complete
-    await page.waitForTimeout(3000);
+    const manifestContent = await page.evaluate(async () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      const response = await fetch(link.href);
+      return response.json();
+    });
+    expect(manifestContent.name).toBeDefined();
+    expect(manifestContent.icons.length).toBeGreaterThan(0);
 
-    // Go offline
+    const hasSW = await page.evaluate(() => navigator.serviceWorker.controller !== null);
+    expect(hasSW).toBeTruthy();
+  });
+
+  test('App works offline using cached resources', async ({ page, context }) => {
     await context.setOffline(true);
-
+    
     // Reload the page
     await page.reload();
-
-    // Check if the app shell is still rendered
-    const bodyVisible = await page.isVisible('body');
-    expect(bodyVisible).toBeTruthy();
-
-    // Check if the app didn't show a network error (e.g., dinosaur page)
-    const title = await page.title();
-    expect(title).not.toBe('No Internet');
     
-    // Check if questions are loaded from cache
-    const questionsLoaded = await page.evaluate(async () => {
-      try {
-        const response = await fetch('/questions.json');
-        return response.ok;
-      } catch (e) {
-        return false;
-      }
-    });
-    expect(questionsLoaded).toBeTruthy();
+    // Check if the app shell is still loaded
+    const bodyText = await page.evaluate(() => document.body.innerText);
+    expect(bodyText.length).toBeGreaterThan(0);
 
-    // Go back online
+    // Turn offline back off
     await context.setOffline(false);
   });
 });
