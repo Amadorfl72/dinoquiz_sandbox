@@ -40,14 +40,21 @@ Get a summary of recorded metrics.
 
 1. Install dependencies:
 ```bash
-npm install express cors
+npm install
 ```
 
 2. Start the server:
 ```bash
-node src/app.js
+npm start
 ```
 
 ## Deployment
 
 This service can be deployed to any Node.js hosting provider. Ensure environment variables are set as needed (e.g., `PORT`).
+
+## Testing
+
+Run the tests with:
+```bash
+npm test
+```
