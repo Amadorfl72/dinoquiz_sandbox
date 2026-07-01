@@ -41,8 +41,22 @@ describe('TRIOFSND-27: DinosaurImage fallback placeholder', () => {
       render(<DinosaurImage src="/images/broken.png" alt="Dinosaur" />);
       const img = screen.getByTestId('dinosaur-image');
       fireEvent.error(img);
-      const placeholderImg = screen.getByTestId('image-placeholder').querySelector('img');
+      const placeholderImg = screen.getByTestId('placeholder-image');
       expect(placeholderImg).toHaveAttribute('src', expect.stringContaining('placeholder'));
+    });
+
+    it('uses a custom fallback placeholder when provided', () => {
+      render(
+        <DinosaurImage 
+          src="/images/broken.png" 
+          alt="Dinosaur" 
+          fallbackSrc="/images/custom-placeholder.png" 
+        />
+      );
+      const img = screen.getByTestId('dinosaur-image');
+      fireEvent.error(img);
+      const placeholderImg = screen.getByTestId('placeholder-image');
+      expect(placeholderImg).toHaveAttribute('src', '/images/custom-placeholder.png');
     });
 
     it('sets onError handler on the image element', () => {
@@ -135,9 +149,23 @@ describe('TRIOFSND-27: DinosaurImage fallback placeholder', () => {
       const container = screen.getByTestId('dinosaur-image-container');
       const originalHeight = container.offsetHeight;
       const originalWidth = container.offsetWidth;
-      
+
       fireEvent.error(img);
-      
+
+      const placeholder = screen.getByTestId('image-placeholder');
+      expect(placeholder.offsetHeight).toBe(originalHeight);
+      expect(placeholder.offsetWidth).toBe(originalWidth);
+    });
+
+    it('does not cause layout shift when switching to placeholder', () => {
+      render(<DinosaurImage src="/images/broken.png" alt="Dinosaur" />);
+      const container = screen.getByTestId('dinosaur-image-container');
+      const originalHeight = container.offsetHeight;
+      const originalWidth = container.offsetWidth;
+
+      const img = screen.getByTestId('dinosaur-image');
+      fireEvent.error(img);
+
       const updatedContainer = screen.getByTestId('dinosaur-image-container');
       expect(updatedContainer.offsetHeight).toBe(originalHeight);
       expect(updatedContainer.offsetWidth).toBe(originalWidth);
