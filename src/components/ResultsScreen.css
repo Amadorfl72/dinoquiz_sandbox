@@ -1,0 +1,10 @@
+.play-again-button {
+  min-height: 48dp;
+  padding: 12px 24px;
+  font-size: 18px;
+  border-radius: 8px;
+  background-color: #4CAF50;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+}
