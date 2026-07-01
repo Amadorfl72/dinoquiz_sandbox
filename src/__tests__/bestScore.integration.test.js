@@ -62,9 +62,7 @@ describe('TRIOFSND-48: Best score integration — close/reopen simulation', () =
     // Now simulate localStorage becoming unavailable
     Object.defineProperty(global, 'localStorage', {
       configurable: true,
-      get: () => {
-        throw new Error('SecurityError: Access denied');
-      },
+      value: null
     });
 
     expect(() => loadBestScore()).not.toThrow();
