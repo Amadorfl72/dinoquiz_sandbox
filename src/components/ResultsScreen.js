@@ -22,7 +22,7 @@ export default function ResultsScreen({ score, onReplay }) {
       <Text style={styles.score}>Has acertado {score}/{totalQuestions}</Text>
       <Text style={styles.stars}>{getStars(score)}</Text>
       <Text style={styles.message}>{getMotivationalMessage(score)}</Text>
-      <TouchableOpacity style={styles.replayButton} onPress={onReplay}>
+      <TouchableOpacity style={styles.replayButton} onPress={onReplay} testID="play-again-button">
         <Text style={styles.replayButtonText}>Volver a jugar</Text>
       </TouchableOpacity>
     </View>
@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     minWidth: 200,
     minHeight: 48,
-    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
