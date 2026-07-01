@@ -1,0 +1,15 @@
+{
+  "name": "dinoquiz-ingestion",
+  "version": "1.0.0",
+  "description": "Anonymous event ingestion backend for DinoQuiz PWA",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
