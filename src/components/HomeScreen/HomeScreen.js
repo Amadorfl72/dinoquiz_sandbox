@@ -7,27 +7,28 @@ export default function HomeScreen({ onStartGame }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    const isFirstOpen = localStorage.getItem('firstOpen') === null;
-    if (isFirstOpen) {
+    const hasOpenedApp = localStorage.getItem('hasOpenedApp');
+    if (hasOpenedApp !== 'true') {
       setShowTooltip(true);
-      localStorage.setItem('firstOpen', 'false');
     }
   }, []);
 
   const handleFirstTap = () => {
     if (showTooltip) {
       setShowTooltip(false);
+      localStorage.setItem('hasOpenedApp', 'true');
     }
   };
 
   return (
-    <div className="home-screen" onClick={handleFirstTap}>
+    <div className="home-screen" onClick={handleFirstTap} data-testid="home-screen">
       <h1>DinoQuiz</h1>
       <div className="dino-illustration" />
       <button
         id="jugar-button"
         className="jugar-button"
         onClick={onStartGame}
+        data-testid="jugar-button"
       >
         ¡Jugar!
       </button>
@@ -38,6 +39,7 @@ export default function HomeScreen({ onStartGame }) {
           place="top"
           isOpen={showTooltip}
           className="first-open-tooltip"
+          data-testid="first-open-tooltip"
         >
           ¡Pulsa aquí para empezar a jugar!
         </Tooltip>
