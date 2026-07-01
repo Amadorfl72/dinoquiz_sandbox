@@ -14,29 +14,39 @@ class FunFactScreenTest {
     @Test
     fun testFunFactTextDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Did you know? The T-Rex had the strongest bite of any land animal.",
+                dinosaurImageResId = R.drawable.trex,
+                onNextClicked = {}
+            )
         }
         
-        composeTestRule.onAllNodes(hasText("fun fact", ignoreCase = true))
-            .onFirst()
+        composeTestRule.onNodeWithText("Did you know? The T-Rex had the strongest bite of any land animal.")
             .assertIsDisplayed()
     }
 
     @Test
     fun testDinosaurImageDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Did you know? The T-Rex had the strongest bite of any land animal.",
+                dinosaurImageResId = R.drawable.trex,
+                onNextClicked = {}
+            )
         }
         
-        composeTestRule.onAllNodes(hasContentDescription("dinosaur", ignoreCase = true))
-            .onFirst()
+        composeTestRule.onNodeWithContentDescription("Dinosaur Image")
             .assertIsDisplayed()
     }
 
     @Test
     fun testNextButtonMinimumHeight() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(
+                funFact = "Did you know? The T-Rex had the strongest bite of any land animal.",
+                dinosaurImageResId = R.drawable.trex,
+                onNextClicked = {}
+            )
         }
         
         val nextButton = composeTestRule.onNodeWithText("Next", ignoreCase = true)
