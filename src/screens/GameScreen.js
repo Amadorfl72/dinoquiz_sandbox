@@ -5,8 +5,12 @@ import { setBestScore } from '../utils/storage';
 const GameScreen = ({ navigation }) => {
   // ... existing game logic ...
 
-  const handleGameCompletion = (finalScore) => {
-    setBestScore(finalScore);
+  const handleGameCompletion = async (finalScore) => {
+    try {
+      await setBestScore(finalScore);
+    } catch (error) {
+      console.error('Failed to save best score:', error);
+    }
     navigation.navigate('Results', { currentScore: finalScore });
   };
 
