@@ -9,6 +9,17 @@ describe('QuestionSelector', () => {
     { id: 5, text: 'Question 5' },
   ];
 
+  it('should throw error when initialized with empty array', () => {
+    expect(() => new QuestionSelector([])).toThrow('Questions must be a non-empty array');
+  });
+
+  it('should throw error when count is not positive number', () => {
+    const selector = new QuestionSelector(mockQuestions);
+    expect(() => selector.getRandomQuestions(0)).toThrow('Count must be a positive number');
+    expect(() => selector.getRandomQuestions(-1)).toThrow('Count must be a positive number');
+    expect(() => selector.getRandomQuestions('invalid')).toThrow('Count must be a positive number');
+  });
+
   it('should select random questions without repetition', () => {
     const selector = new QuestionSelector(mockQuestions);
     const selected = selector.getRandomQuestions(3);
