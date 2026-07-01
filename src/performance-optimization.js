@@ -33,4 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
       lazyImageObserver.observe(lazyImage);
     });
   }
+
+  // Critical CSS inlining for above-the-fold content
+  const criticalCSS = `
+    body { font-family: 'cartoon-font', sans-serif; }
+    #home-screen { display: flex; flex-direction: column; align-items: center; }
+    #play-button { min-height: 64px; font-size: 24px; }
+  `;
+  const style = document.createElement('style');
+  style.textContent = criticalCSS;
+  document.head.appendChild(style);
 });
