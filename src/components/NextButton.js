@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const NextButton = ({ onClick }) => {
+const NextButton = ({ onClick, debounceMs = 500 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = () => {
@@ -9,12 +9,19 @@ const NextButton = ({ onClick }) => {
     setTimeout(() => {
       onClick();
       setIsLoading(false);
-    }, 1000); // 1 second debounce
+    }, debounceMs);
   };
 
   return (
-    <button onClick={handleClick} disabled={isLoading}>
-      {isLoading ? 'Loading...' : 'Next'}
+    <button 
+      onClick={handleClick} 
+      disabled={isLoading}
+      aria-busy={isLoading}
+      data-testid="next-button"
+    >
+      {isLoading ? (
+        <span data-testid="next-button-loading">Loading...</span>
+      ) : 'Next'}
     </button>
   );
 };
