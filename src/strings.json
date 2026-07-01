@@ -1,0 +1,13 @@
+{
+  "resultsScreen": {
+    "title": "Resultados",
+    "score": "Has acertado {score}/10",
+    "messages": {
+      "low": "¡Sigue intentándolo! ¡Los dinosaurios también practicaron mucho!",
+      "medium": "¡Buen trabajo! Cada vez sabes más sobre dinosaurios.",
+      "high": "¡Excelente! Eres casi un paleontólogo profesional.",
+      "perfect": "¡Increíble! ¡Eres un experto en dinosaurios!"
+    },
+    "replayButton": "Volver a jugar"
+  }
+}
