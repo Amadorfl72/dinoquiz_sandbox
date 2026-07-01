@@ -1,4 +1,5 @@
+import { logger } from './logger';
+
 export const logEvent = (eventName: string, params?: Record<string, any>) => {
-  // Implementation to send event to analytics service
-  console.log(`Event: ${eventName}`, params);
+  logger.log(eventName, params);
 };
