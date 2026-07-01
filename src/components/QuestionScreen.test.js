@@ -70,4 +70,18 @@ describe('QuestionScreen', () => {
     const buttons = getAllByRole('button');
     expect(buttons).toHaveLength(3);
   });
+
+  it('has proper accessibility labels for options', () => {
+    const { getAllByLabelText } = render(
+      <QuestionScreen
+        question={mockQuestion}
+        options={mockOptions}
+        dinosaurImage={mockDinosaurImage}
+        onSelect={mockOnSelect}
+      />
+    );
+    mockOptions.forEach(option => {
+      expect(getAllByLabelText(`Answer option: ${option}`)).toBeTruthy();
+    });
+  });
 });
