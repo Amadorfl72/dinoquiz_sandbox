@@ -45,6 +45,7 @@ export default function QuizQuestion({ question, options, correctAnswer, funFact
             onClick={() => handleOptionClick(option)}
             disabled={showFeedback}
             aria-label={option === correctAnswer && showFeedback ? "correct answer" : option === selectedOption && !isCorrect ? "incorrect answer" : option}
+            data-testid={`option-${index}`}
           >
             {option}
           </button>
