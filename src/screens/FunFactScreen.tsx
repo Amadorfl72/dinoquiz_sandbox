@@ -7,18 +7,20 @@ type FunFactScreenProps = {
     params: {
       funFact: string;
       dinosaurName: string;
+      factId: string;
     };
   };
 };
 
 const FunFactScreen: React.FC<FunFactScreenProps> = ({ route }) => {
-  const { funFact, dinosaurName } = route.params;
+  const { funFact, dinosaurName, factId } = route.params;
 
   useEffect(() => {
     logEvent('fun_fact_viewed', {
       dinosaur_name: dinosaurName,
+      fact_id: factId
     });
-  }, [dinosaurName]);
+  }, [dinosaurName, factId]);
 
   return (
     <View>
