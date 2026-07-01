@@ -4,21 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 
 export default function QuestionScreen({ route }) {
   const navigation = useNavigation();
-  const { questionId } = route.params;
+  const { question, questionId, totalQuestions, currentScore } = route.params;
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isCorrect, setIsCorrect] = useState(false);
-
-  // Mock data - replace with actual data fetching
-  const question = {
-    id: questionId,
-    text: '¿Qué dinosaurio tenía tres cuernos?',
-    options: ['T-Rex', 'Triceratops', 'Velociraptor', 'Estegosaurio'],
-    correctAnswer: 'Triceratops',
-    fact: {
-      text: 'El Triceratops usaba sus tres cuernos para defenderse de depredadores como el T-Rex.',
-      image: 'triceratops_image_url',
-    },
-  };
 
   const handleAnswer = (answer) => {
     setSelectedAnswer(answer);
@@ -29,16 +17,18 @@ export default function QuestionScreen({ route }) {
     setTimeout(() => {
       navigation.navigate('FunFact', {
         fact: question.fact,
-        isLastQuestion: questionId === 10, // Assuming 10 questions total
+        isLastQuestion: questionId === totalQuestions,
         nextQuestionId: questionId + 1,
-        score: correct ? 1 : 0, // Update score based on correctness
+        score: currentScore + (correct ? 1 : 0),
+        totalQuestions: totalQuestions,
+        question: question
       });
     }, 1000);
   };
 
   return (
     <View style={styles.container} testID="question-screen">
-      <Text style={styles.questionText} testID="question-text">{question.text}</Text>
+      <Text style={styles.questionText} testID="question-text">{question.question}</Text>
       {question.options.map((option, index) => (
         <TouchableOpacity
           key={index}
