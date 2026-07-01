@@ -3,27 +3,16 @@ import { app } from './analytics';
 
 const functions = getFunctions(app);
 
-const calculateHitPercentage = httpsCallable(functions, 'calculateHitPercentage');
-const checkForDropOffAlerts = httpsCallable(functions, 'checkForDropOffAlerts');
+const getCurrentAlerts = httpsCallable(functions, 'getCurrentAlerts');
 
-const getHitPercentage = async (questionId) => {
+const getAlerts = async () => {
   try {
-    const result = await calculateHitPercentage({ questionId });
-    return result.data.hitPercentage;
-  } catch (error) {
-    console.error('Error calculating hit percentage:', error);
-    return null;
-  }
-};
-
-const getDropOffAlerts = async () => {
-  try {
-    const result = await checkForDropOffAlerts();
+    const result = await getCurrentAlerts();
     return result.data.alerts;
   } catch (error) {
-    console.error('Error checking for drop-off alerts:', error);
+    console.error('Error getting alerts:', error);
     return [];
   }
 };
 
-export { getHitPercentage, getDropOffAlerts };
+export { getAlerts as getCurrentAlerts };
