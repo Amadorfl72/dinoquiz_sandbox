@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "question": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "answers": ["Triceratops", "Tyrannosaurus Rex", "Velociraptor"],
+    "correctAnswer": "Tyrannosaurus Rex",
+    "funFact": "El T-Rex tenía una mordida tan fuerte que podía romper huesos fácilmente."
+  },
+  {
+    "id": 2,
+    "question": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "answers": ["Stegosaurus", "Triceratops", "Brachiosaurus"],
+    "correctAnswer": "Triceratops",
+    "funFact": "Los cuernos del Triceratops podían medir hasta 1 metro de largo."
+  }
+  // Additional questions would be added here to reach the total of 30
+]
