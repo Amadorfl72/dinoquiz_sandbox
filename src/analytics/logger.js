@@ -9,7 +9,7 @@ const Logger = {
   },
 
   logFunFactViewed: (dinosaurId, factId) => {
-    this.logEvent(AnalyticsEvents.FUN_FACT_VIEWED, {
+    Logger.logEvent(AnalyticsEvents.FUN_FACT_VIEWED, {
       dinosaur_id: dinosaurId,
       fun_fact_id: factId
     });
