@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const preloadLinks = [
     { href: '/styles/main.css', as: 'style' },
     { href: '/scripts/main.js', as: 'script' },
-    { href: '/images/dino-mascot.png', as: 'image' }
+    { href: '/images/dino-mascot.png', as: 'image' },
+    { href: '/fonts/cartoon-font.woff2', as: 'font' }
   ];
 
   preloadLinks.forEach((link) => {
