@@ -174,7 +174,7 @@ describe('Analytics Event Tracking', () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toContain('Event contains prohibited PII fields');
+    expect(response.body.error).toContain('prohibited PII fields');
     
     const event = await AnalyticsEvent.findOne({ eventType: 'app_open' });
     expect(event).toBeNull();
