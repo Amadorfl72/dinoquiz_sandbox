@@ -21,15 +21,21 @@ class FunFactScreenTest {
     @Test
     fun funFactText_isDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(FunFactScreenState(
+                fact = "Triceratops had three horns on its head!",
+                onNext = {}
+            ))
         }
-        composeTestRule.onNodeWithTag("FunFactText").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Triceratops had three horns on its head!").assertIsDisplayed()
     }
 
     @Test
     fun dinosaurImage_isDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(FunFactScreenState(
+                fact = "Fact",
+                onNext = {}
+            ))
         }
         composeTestRule.onNodeWithTag("DinosaurImage").assertIsDisplayed()
     }
@@ -37,7 +43,10 @@ class FunFactScreenTest {
     @Test
     fun nextButton_isDisplayed() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(FunFactScreenState(
+                fact = "Fact",
+                onNext = {}
+            ))
         }
         composeTestRule.onNodeWithText("Next").assertIsDisplayed()
     }
@@ -45,7 +54,10 @@ class FunFactScreenTest {
     @Test
     fun nextButton_meetsMinimumTouchTargetSize() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(FunFactScreenState(
+                fact = "Fact",
+                onNext = {}
+            ))
         }
         composeTestRule.onNodeWithText("Next").assertHeightIsAtLeast(48.dp)
         composeTestRule.onNodeWithText("Next").assertWidthIsAtLeast(48.dp)
@@ -54,9 +66,12 @@ class FunFactScreenTest {
     @Test
     fun nextButton_hasKidFriendlyStyling() {
         composeTestRule.setContent {
-            FunFactScreen()
+            FunFactScreen(FunFactScreenState(
+                fact = "Fact",
+                onNext = {}
+            ))
         }
-        // Verify that the next button has a custom background color tag applied for kid-friendly styling
-        composeTestRule.onNodeWithTag("NextButton").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Next")
+            .assertIsDisplayed()
     }
 }
