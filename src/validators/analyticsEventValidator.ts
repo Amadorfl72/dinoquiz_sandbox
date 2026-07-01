@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-const piiFields = ['email', 'name', 'phone', 'address', 'birthdate', 'username'];
+const piiFields = ['email', 'name', 'phone', 'address', 'birthdate', 'username', 'user_id', 'ssn', 'phone_number'];
 
 const baseEventSchema = Joi.object({
   eventType: Joi.string().valid(
