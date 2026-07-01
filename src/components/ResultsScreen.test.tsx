@@ -60,9 +60,9 @@ describe('ResultsScreen', () => {
     const style = button.props.style;
     let height = 0;
     if (Array.isArray(style)) {
-      height = style.reduce((acc: number, s: any) => (s && s.height ? s.height : acc), 0);
-    } else if (style && style.height) {
-      height = style.height;
+      height = style.reduce((acc: number, s: any) => (s && s.minHeight ? s.minHeight : acc), 0);
+    } else if (style && style.minHeight) {
+      height = style.minHeight;
     }
     
     expect(height).toBeGreaterThanOrEqual(48);
