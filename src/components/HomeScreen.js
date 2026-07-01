@@ -6,7 +6,7 @@ const HomeScreen = () => {
     <div className="home-screen">
       <h1>DinoQuiz</h1>
       <img id="dino_mascot" src="dino_mascot.png" alt="Dino Mascot" />
-      <button id="play_button" style={{ height: '64dp' }} tabIndex="0">¡Jugar!</button>
+      <button id="play_button" tabIndex="0">¡Jugar!</button>
     </div>
   );
 };
