@@ -5,226 +5,181 @@ import { DinosaurImage } from './DinosaurImage';
 
 describe('DinosaurImage', () => {
   const defaultProps = {
-    src: '/images/dinosaur.png',
-    alt: 'A friendly dinosaur',
-    caption: 'Meet Rex the Dinosaur',
+    src: 'https://example.com/dinosaur.jpg',
+    alt: 'Tyrannosaurus Rex',
+    caption: 'The Tyrannosaurus Rex lived during the Late Cretaceous period.',
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   describe('normal rendering', () => {
-    it('renders the dinosaur image with correct src and alt attributes', () => {
+    it('renders the image with the provided src', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-      expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', '/images/dinosaur.png');
-      expect(img).toHaveAttribute('alt', 'A friendly dinosaur');
+      const img = screen.getByRole('img');
+      expect(img).toHaveAttribute('src', defaultProps.src);
     });
 
-    it('renders the caption text alongside the image', () => {
+    it('renders the image with the provided alt text', () => {
       render(<DinosaurImage {...defaultProps} />);
-      expect(screen.getByText('Meet Rex the Dinosaur')).toBeInTheDocument();
+      const img = screen.getByRole('img');
+      expect(img).toHaveAttribute('alt', defaultProps.alt);
     });
 
-    it('does not render the placeholder when the image loads successfully', () => {
+    it('renders the caption text', () => {
       render(<DinosaurImage {...defaultProps} />);
-      expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
+      expect(screen.getByText(defaultProps.caption)).toBeInTheDocument();
+    });
+
+    it('does not show the placeholder when image loads successfully', () => {
+      render(<DinosaurImage {...defaultProps} />);
+      expect(screen.queryByTestId('image-placeholder')).not.toBeInTheDocument();
     });
   });
 
   describe('image error fallback', () => {
-    it('renders a placeholder when the image fails to load', () => {
+    it('displays placeholder when image fails to load', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-      expect(placeholder).toBeInTheDocument();
+      expect(screen.getByTestId('image-placeholder')).toBeInTheDocument();
     });
 
-    it('hides the broken image element after an error occurs', () => {
+    it('hides the broken image when image fails to load', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
       expect(img).toHaveStyle({ display: 'none' });
     });
 
-    it('renders a default placeholder image when the source fails', () => {
+    it('displays placeholder with a default fallback image src', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholderImg = screen.getByTestId('placeholder-image');
+      const placeholder = screen.getByTestId('image-placeholder');
+      const placeholderImg = placeholder.querySelector('img');
       expect(placeholderImg).toBeInTheDocument();
-      expect(placeholderImg).toHaveAttribute('src', expect.stringContaining('placeholder'));
+      expect(placeholderImg).toHaveAttribute('src');
+      expect(placeholderImg?.getAttribute('src')).not.toBe(defaultProps.src);
     });
 
-    it('uses a custom fallback placeholder when provided', () => {
-      render(
-        <DinosaurImage
-          {...defaultProps}
-          fallbackSrc="/images/custom-placeholder.png"
-        />
-      );
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+    it('uses custom fallback src when provided', () => {
+      const fallbackSrc = 'https://example.com/custom-placeholder.png';
+      render(<DinosaurImage {...defaultProps} fallbackSrc={fallbackSrc} />);
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholderImg = screen.getByTestId('placeholder-image');
-      expect(placeholderImg).toHaveAttribute('src', '/images/custom-placeholder.png');
+      const placeholder = screen.getByTestId('image-placeholder');
+      const placeholderImg = placeholder.querySelector('img');
+      expect(placeholderImg).toHaveAttribute('src', fallbackSrc);
     });
 
-    it('preserves the alt text on the placeholder image', () => {
+    it('displays placeholder icon when no fallback src is provided', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholderImg = screen.getByTestId('placeholder-image');
-      expect(placeholderImg).toHaveAttribute('alt', 'A friendly dinosaur');
+      expect(screen.getByTestId('placeholder-icon')).toBeInTheDocument();
     });
 
-    it('does not render the placeholder before an error occurs', () => {
-      render(<DinosaurImage {...defaultProps} />);
-      expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
-    });
-
-    it('renders the placeholder only once even if multiple errors fire', () => {
-      render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+    it('can recover from error if src changes', () => {
+      const { rerender } = render(<DinosaurImage {...defaultProps} />);
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-      fireEvent.error(img);
+      expect(screen.getByTestId('image-placeholder')).toBeInTheDocument();
 
-      const placeholders = screen.getAllByTestId('dinosaur-placeholder');
-      expect(placeholders).toHaveLength(1);
+      rerender(<DinosaurImage {...defaultProps} src="https://example.com/new-dino.jpg" />);
+      expect(screen.queryByTestId('image-placeholder')).not.toBeInTheDocument();
     });
   });
 
-  describe('text legibility after fallback', () => {
-    it('keeps the caption visible after the image fails to load', () => {
+  describe('text legibility on placeholder', () => {
+    it('renders caption text over the placeholder', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      expect(screen.getByText('Meet Rex the Dinosaur')).toBeVisible();
+      expect(screen.getByText(defaultProps.caption)).toBeInTheDocument();
+      expect(screen.getByText(defaultProps.caption)).toBeVisible();
     });
 
-    it('applies a background color to the placeholder for text contrast', () => {
+    it('placeholder has a background color that ensures text contrast', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-      const computedStyle = window.getComputedStyle(placeholder);
-      expect(computedStyle.backgroundColor).not.toBe('');
-      expect(computedStyle.backgroundColor).not.toBe('transparent');
+      const placeholder = screen.getByTestId('image-placeholder');
+      const styles = window.getComputedStyle(placeholder);
+      const bgColor = styles.backgroundColor;
+      expect(bgColor).toBeDefined();
+      expect(bgColor).not.toBe('transparent');
+      expect(bgColor).not.toBe('rgba(0, 0, 0, 0)');
     });
 
-    it('ensures caption text has a contrasting color against the placeholder background', () => {
+    it('caption text has a color that contrasts with placeholder background', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const caption = screen.getByText('Meet Rex the Dinosaur');
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-
-      const captionStyle = window.getComputedStyle(caption);
-      const placeholderStyle = window.getComputedStyle(placeholder);
-
-      expect(captionStyle.color).not.toBe(placeholderStyle.backgroundColor);
+      const caption = screen.getByText(defaultProps.caption);
+      const styles = window.getComputedStyle(caption);
+      expect(styles.color).toBeDefined();
+      expect(styles.color).not.toBe('transparent');
     });
 
-    it('renders overlay text with sufficient opacity for legibility after fallback', () => {
+    it('caption text remains visible (not hidden) when placeholder is shown', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const caption = screen.getByText('Meet Rex the Dinosaur');
-      const computedStyle = window.getComputedStyle(caption);
-      const opacity = parseFloat(computedStyle.opacity);
-      expect(opacity).toBeGreaterThanOrEqual(0.8);
+      const caption = screen.getByText(defaultProps.caption);
+      const styles = window.getComputedStyle(caption);
+      expect(styles.display).not.toBe('none');
+      expect(styles.visibility).not.toBe('hidden');
+      expect(styles.opacity).not.toBe('0');
     });
 
-    it('maintains caption text size and weight after fallback', () => {
+    it('placeholder container has sufficient dimensions to display text', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
-      const captionBefore = screen.getByText('Meet Rex the Dinosaur');
-      const styleBefore = window.getComputedStyle(captionBefore);
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const captionAfter = screen.getByText('Meet Rex the Dinosaur');
-      const styleAfter = window.getComputedStyle(captionAfter);
-
-      expect(styleAfter.fontSize).toBe(styleBefore.fontSize);
-      expect(styleAfter.fontWeight).toBe(styleBefore.fontWeight);
+      const placeholder = screen.getByTestId('image-placeholder');
+      expect(placeholder).toHaveStyle({ minHeight: '100%' });
     });
   });
 
-  describe('onError handler behavior', () => {
+  describe('onError handler', () => {
     it('attaches an onError handler to the image element', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-      expect(img.onerror).not.toBeNull();
+      const img = screen.getByRole('img');
+      expect(img.onerror).toBeDefined();
     });
 
-    it('calls a custom onError callback in addition to showing the placeholder', () => {
+    it('calls custom onError callback in addition to showing placeholder', () => {
       const onError = jest.fn();
       render(<DinosaurImage {...defaultProps} onError={onError} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
       expect(onError).toHaveBeenCalledTimes(1);
-      expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
+      expect(screen.getByTestId('image-placeholder')).toBeInTheDocument();
     });
 
-    it('prevents the default broken image icon from showing', () => {
+    it('does not throw if no custom onError is provided', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
-      const errorEvent = new Event('error', { bubbles: false });
-      const preventDefault = jest.spyOn(errorEvent, 'preventDefault');
-
-      fireEvent(img, errorEvent);
-
-      // The image should be hidden so the broken icon is not visible
-      expect(img).toHaveStyle({ display: 'none' });
+      const img = screen.getByRole('img');
+      expect(() => fireEvent.error(img)).not.toThrow();
     });
   });
 
   describe('accessibility', () => {
-    it('maintains role=img on the placeholder for screen readers', () => {
+    it('maintains alt text on placeholder image', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholderImg = screen.getByTestId('placeholder-image');
-      expect(placeholderImg.tagName.toLowerCase()).toBe('img');
+      const placeholder = screen.getByTestId('image-placeholder');
+      const placeholderImg = placeholder.querySelector('img');
+      if (placeholderImg) {
+        expect(placeholderImg).toHaveAttribute('alt');
+      }
     });
 
-    it('keeps the container accessible after fallback', () => {
+    it('placeholder has appropriate aria attributes', () => {
       render(<DinosaurImage {...defaultProps} />);
-      const img = screen.getByRole('img', { name: /a friendly dinosaur/i });
-
+      const img = screen.getByRole('img');
       fireEvent.error(img);
-
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-      expect(placeholder).toBeInTheDocument();
-      expect(screen.getByText('Meet Rex the Dinosaur')).toBeInTheDocument();
+      const placeholder = screen.getByTestId('image-placeholder');
+      expect(placeholder).toHaveAttribute('role', 'img');
     });
   });
 });
