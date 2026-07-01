@@ -4,7 +4,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 
@@ -22,7 +24,8 @@ class FunFactScreenTest {
                 onNextClicked = {}
             )
         }
-        composeTestRule.onNodeWithText("Did you know? The T-Rex had the strongest bite of any land animal.").assertExists()
+        composeTestRule.onNodeWithText("Did you know? The T-Rex had the strongest bite of any land animal.")
+            .assertIsDisplayed()
     }
 
     @Test
@@ -34,7 +37,8 @@ class FunFactScreenTest {
                 onNextClicked = {}
             )
         }
-        composeTestRule.onNodeWithContentDescription("Dinosaur Image").assertExists()
+        composeTestRule.onNodeWithContentDescription("Dinosaur Image")
+            .assertIsDisplayed()
     }
 
     @Test
@@ -46,6 +50,8 @@ class FunFactScreenTest {
                 onNextClicked = {}
             )
         }
-        composeTestRule.onNodeWithTag("NextButton").assertHeightIsAtLeast(48.dp)
+        composeTestRule.onNodeWithTag("nextButton")
+            .assertIsDisplayed()
+            .assertHeightIsAtLeast(48.dp)
     }
 }
