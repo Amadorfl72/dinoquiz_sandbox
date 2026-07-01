@@ -8,6 +8,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showFunFact, setShowFunFact] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
   const navigate = useNavigate();
   const happyAudio = new Audio(happySound);
 
@@ -21,6 +22,7 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
     
     if (correct) {
       happyAudio.play();
+      setShowAnimation(true);
       setTimeout(() => {
         setShowFunFact(true);
       }, 1000);
@@ -53,6 +55,13 @@ const QuizQuestion = ({ question, onAnswerSelected }) => {
       {showFeedback && (
         <div className={`feedback ${isCorrect ? 'happy' : 'neutral'}`}>
           {isCorrect ? '¡Correcto! 🎉' : `La respuesta correcta es: ${question.correctAnswer}`}
+        </div>
+      )}
+      
+      {showAnimation && isCorrect && (
+        <div className="positive-animation" data-testid="positive-animation">
+          {/* Animation would be rendered here */}
+          <span role="img" aria-label="celebration">🎉</span>
         </div>
       )}
       
