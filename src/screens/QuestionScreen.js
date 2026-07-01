@@ -37,8 +37,8 @@ export default function QuestionScreen({ route }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.questionText}>{question.text}</Text>
+    <View style={styles.container} testID="question-screen">
+      <Text style={styles.questionText} testID="question-text">{question.text}</Text>
       {question.options.map((option, index) => (
         <TouchableOpacity
           key={index}
@@ -48,6 +48,7 @@ export default function QuestionScreen({ route }) {
           ]}
           onPress={() => !selectedAnswer && handleAnswer(option)}
           disabled={!!selectedAnswer}
+          testID={`answer-option-${option}`}
         >
           <Text style={styles.optionText}>{option}</Text>
         </TouchableOpacity>
