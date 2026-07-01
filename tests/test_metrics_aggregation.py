@@ -7,8 +7,8 @@ def test_aggregate_time_to_answer_distribution():
     Expected histogram metric for time_to_answer_ms but received null.
     """
     events = [
-        {"event_type": "question_answered", "duration_ms": 1200},
-        {"event_type": "question_answered", "duration_ms": 3400},
+        {"event_type": "question_answered", "time_to_answer_ms": 1200},
+        {"event_type": "question_answered", "time_to_answer_ms": 3400},
     ]
     
     aggregate_time_to_answer_events(events)
@@ -30,7 +30,7 @@ def test_aggregate_time_to_answer_distribution_maps_duration_field():
     TRIOFSND-22: Ensure the duration field is correctly mapped to the histogram.
     """
     events = [
-        {"event_type": "question_answered", "duration_ms": 5000},
+        {"event_type": "question_answered", "time_to_answer_ms": 5000},
     ]
     
     aggregate_time_to_answer_events(events)
