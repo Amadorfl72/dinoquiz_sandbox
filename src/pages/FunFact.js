@@ -7,10 +7,10 @@ export default function FunFact() {
   const navigate = useNavigate();
 
   return (
-    <div className="fun-fact">
-      <h2>¡Dato Curioso!</h2>
+    <div className="fun-fact" data-testid="fun-fact-screen">
+      <h2 data-testid="fun-fact-heading">¡Dato Curioso!</h2>
       <img src={state.image} alt="Dinosaur" />
-      <p>{state.funFact}</p>
+      <p data-testid="fun-fact-text">{state.funFact}</p>
       <button onClick={() => navigate('/next-question')}>
         Siguiente
       </button>
