@@ -10,8 +10,19 @@ describe('getTop5WorstPerformingQuestions', () => {
       { questionId: '5', accuracy: 0.6, totalAttempts: 25 }
     ];
 
-    jest.spyOn(db.collection('analytics'), 'aggregate').mockReturnValueOnce({
-      toArray: jest.fn().mockResolvedValueOnce(mockQuestions)
+    jest.spyOn(db.collection('analytics'), 'aggregate').mockImplementation((pipeline) => {
+      // Verify pipeline has $limit:5
+      const limitStage = pipeline.find(stage => '$limit' in stage);
+      expect(limitStage).toBeDefined();
+      expect(limitStage.$limit).toBe(5);
+      
+      // Verify pipeline has $sort
+      const sortStage = pipeline.find(stage => '$sort' in stage);
+      expect(sortStage).toBeDefined();
+      
+      return {
+        toArray: jest.fn().mockResolvedValueOnce(mockQuestions)
+      };
     });
 
     const result = await getTop5WorstPerformingQuestions();
@@ -34,8 +45,11 @@ describe('getTop5WorstPerformingQuestions', () => {
       { questionId: '3', accuracy: 0.4, totalAttempts: 20 }
     ];
 
-    jest.spyOn(db.collection('analytics'), 'aggregate').mockReturnValueOnce({
-      toArray: jest.fn().mockResolvedValueOnce(mockQuestions.filter(q => q.totalAttempts >= 10))
+    jest.spyOn(db.collection('analytics'), 'aggregate').mockImplementation((pipeline) => {
+      const filtered = mockQuestions.filter(q => q.totalAttempts >= 10);
+      return {
+        toArray: jest.fn().mockResolvedValueOnce(filtered)
+      };
     });
 
     const result = await getTop5WorstPerformingQuestions();
