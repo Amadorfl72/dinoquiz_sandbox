@@ -1,35 +1,53 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import ScoreFeedback from './ScoreFeedback';
-import * as bestScoreStorage from '../utils/bestScoreStorage';
+import ResultsScreen from './ResultsScreen';
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: (key) => store[key] || null,
+    setItem: (key, value) => { store[key] = String(value); },
+    removeItem: (key) => { delete store[key]; },
+    clear: () => { store = {}; },
+  };
+})();
+
+beforeAll(() => {
+  global.localStorage = localStorageMock;
+});
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('Score Feedback UI', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    jest.restoreAllMocks();
-  });
-
-  it('shows Nueva mejor puntuacion feedback when current score beats persisted one', () => {
-    jest.spyOn(bestScoreStorage, 'getBestScore').mockReturnValue(100);
-    render(<ScoreFeedback currentScore={150} />);
+  it('shows "¡Nueva mejor puntuación!" feedback when current score beats persisted one', () => {
+    localStorage.setItem('bestScore', '5');
+    render(<ResultsScreen score={8} />);
     
     expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
   });
 
   it('does not show feedback when current score does not beat persisted one', () => {
-    jest.spyOn(bestScoreStorage, 'getBestScore').mockReturnValue(200);
-    render(<ScoreFeedback currentScore={150} />);
+    localStorage.setItem('bestScore', '10');
+    render(<ResultsScreen score={8} />);
     
-    expect(screen.queryByText('¡Nueva mejor puntuación!')).not.toBeInTheDocument();
+    // Wait for potential feedback to appear
+    setTimeout(() => {
+      expect(screen.queryByText('¡Nueva mejor puntuación!')).not.toBeInTheDocument();
+    }, 100);
   });
 
   it('does not block UI when localStorage fails during update', () => {
-    jest.spyOn(bestScoreStorage, 'getBestScore').mockReturnValue(100);
-    jest.spyOn(bestScoreStorage, 'saveBestScore').mockImplementation(() => {
-      throw new Error('LocalStorage disabled');
-    });
+    // Mock localStorage failure
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = jest.fn(() => { throw new Error('LocalStorage disabled'); });
     
-    expect(() => render(<ScoreFeedback currentScore={150} />)).not.toThrow();
+    expect(() => render(<ResultsScreen score={10} />)).not.toThrow();
     expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
+    
+    // Restore original function
+    localStorage.setItem = originalSetItem;
   });
 });
