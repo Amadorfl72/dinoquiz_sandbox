@@ -1,85 +1,84 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import GameFlow from '../GameFlow';
-import { GameProvider } from '../../context/GameContext';
 
-// Mock child components to isolate GameFlow routing logic
-jest.mock('../../screens/FunFactScreen', () => ({ onNext }) => (
-  <div data-testid="fun-fact-screen">
-    <button data-testid="next-button" onClick={onNext}>Next</button>
-  </div>
-));
+jest.mock('../FunFactScreen', () => {
+  const { Text, TouchableOpacity } = require('react-native');
+  return ({ onNext }) => (
+    <TouchableOpacity testID="fun-fact-next-button" onPress={onNext}>
+      <Text>Next</Text>
+    </TouchableOpacity>
+  );
+});
 
-jest.mock('../../screens/QuestionScreen', () => ({ onAnswer }) => (
-  <div data-testid="question-screen">
-    <button data-testid="answer-correct-btn" onClick={() => onAnswer(true)}>Correct</button>
-    <button data-testid="answer-incorrect-btn" onClick={() => onAnswer(false)}>Incorrect</button>
-  </div>
-));
+jest.mock('../QuestionScreen', () => {
+  const { Text, TouchableOpacity } = require('react-native');
+  return ({ onAnswer }) => (
+    <>
+      <TouchableOpacity testID="correct-answer-button" onPress={() => onAnswer(true)}>
+        <Text>Correct Answer</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="incorrect-answer-button" onPress={() => onAnswer(false)}>
+        <Text>Incorrect Answer</Text>
+      </TouchableOpacity>
+    </>
+  );
+});
 
-jest.mock('../../screens/ResultsScreen', () => () => (
-  <div data-testid="results-screen" />
-));
+jest.mock('../ResultsScreen', () => {
+  const { Text } = require('react-native');
+  return () => <Text>Results</Text>;
+});
 
-describe('TRIOFSND-28: Integrate Fun Fact screen into game flow', () => {
-  const mockQuestions = [
-    { id: 1, text: 'Question 1', funFact: 'Fact 1' },
-    { id: 2, text: 'Question 2', funFact: 'Fact 2' }
-  ];
-
-  const renderGameFlow = (questions = mockQuestions) => {
-    return render(
-      <GameProvider initialQuestions={questions}>
-        <GameFlow />
-      </GameProvider>
-    );
-  };
-
-  test('should transition to Fun Fact screen after a correct answer', () => {
-    renderGameFlow();
+describe('GameFlow', () => {
+  it('navigates to Fun Fact screen after a correct answer', async () => {
+    const { getByTestId, queryByTestId } = render(<GameFlow totalQuestions={3} />);
     
-    expect(screen.getByTestId('question-screen')).toBeInTheDocument();
+    fireEvent.press(getByTestId('correct-answer-button'));
     
-    fireEvent.click(screen.getByTestId('answer-correct-btn'));
-    
-    expect(screen.getByTestId('fun-fact-screen')).toBeInTheDocument();
-    expect(screen.queryByTestId('question-screen')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByTestId('fun-fact-next-button')).toBeTruthy();
+      expect(queryByTestId('correct-answer-button')).toBeNull();
+    });
   });
 
-  test('should transition to Fun Fact screen after an incorrect answer', () => {
-    renderGameFlow();
+  it('navigates to Fun Fact screen after an incorrect answer', async () => {
+    const { getByTestId, queryByTestId } = render(<GameFlow totalQuestions={3} />);
     
-    expect(screen.getByTestId('question-screen')).toBeInTheDocument();
+    fireEvent.press(getByTestId('incorrect-answer-button'));
     
-    fireEvent.click(screen.getByTestId('answer-incorrect-btn'));
-    
-    expect(screen.getByTestId('fun-fact-screen')).toBeInTheDocument();
-    expect(screen.queryByTestId('question-screen')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByTestId('fun-fact-next-button')).toBeTruthy();
+      expect(queryByTestId('incorrect-answer-button')).toBeNull();
+    });
   });
 
-  test('should route to the next question when Next is clicked and it is not the last question', () => {
-    renderGameFlow();
+  it('navigates to the next question when Next is pressed on Fun Fact screen', async () => {
+    const { getByTestId, queryByTestId } = render(<GameFlow totalQuestions={3} />);
     
-    fireEvent.click(screen.getByTestId('answer-correct-btn'));
-    expect(screen.getByTestId('fun-fact-screen')).toBeInTheDocument();
+    fireEvent.press(getByTestId('correct-answer-button'));
+    await waitFor(() => expect(getByTestId('fun-fact-next-button')).toBeTruthy());
     
-    fireEvent.click(screen.getByTestId('next-button'));
+    fireEvent.press(getByTestId('fun-fact-next-button'));
     
-    expect(screen.getByTestId('question-screen')).toBeInTheDocument();
-    expect(screen.queryByTestId('fun-fact-screen')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByTestId('correct-answer-button')).toBeTruthy();
+      expect(queryByTestId('fun-fact-next-button')).toBeNull();
+    });
   });
 
-  test('should route to the results screen when Next is clicked and it is the last question', () => {
-    const singleQuestion = [mockQuestions[0]];
-    renderGameFlow(singleQuestion);
+  it('navigates to the Results screen when Next is pressed on the last question', async () => {
+    const { getByTestId, getByText, queryByTestId } = render(<GameFlow totalQuestions={1} />);
     
-    fireEvent.click(screen.getByTestId('answer-incorrect-btn'));
-    expect(screen.getByTestId('fun-fact-screen')).toBeInTheDocument();
+    fireEvent.press(getByTestId('correct-answer-button'));
+    await waitFor(() => expect(getByTestId('fun-fact-next-button')).toBeTruthy());
     
-    fireEvent.click(screen.getByTestId('next-button'));
+    fireEvent.press(getByTestId('fun-fact-next-button'));
     
-    expect(screen.getByTestId('results-screen')).toBeInTheDocument();
-    expect(screen.queryByTestId('fun-fact-screen')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByText('Results')).toBeTruthy();
+      expect(queryByTestId('fun-fact-next-button')).toBeNull();
+      expect(queryByTestId('correct-answer-button')).toBeNull();
+    });
   });
 });
