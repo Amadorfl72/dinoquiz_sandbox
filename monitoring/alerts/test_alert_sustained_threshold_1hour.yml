@@ -1,0 +1,13 @@
+name: "TTI p95 > 2s sustained for 1 hour"
+description: "Alert when Time To Interactive (p95) exceeds 2 seconds for a sustained period"
+condition: >
+  max_over_time(
+    avg(probe_duration_seconds{quantile="0.95"} > 2)
+    [60m:1m]
+  ) == 1
+for: 60m
+labels:
+  severity: warning
+annotations:
+  summary: "TTI p95 > 2s sustained for 1 hour"
+  description: "{{ $value }}% of requests had TTI p95 > 2s for the last 60 minutes"
