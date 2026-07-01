@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   },
   replayButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 12,
+    paddingVertical: 16, // Increased from 12 to ensure minimum 48dp height
     paddingHorizontal: 24,
     borderRadius: 8,
     minHeight: 48,
