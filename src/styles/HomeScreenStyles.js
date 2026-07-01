@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 30,
     minHeight: 64,
+    height: 64,
     minWidth: 200,
     justifyContent: 'center',
     alignItems: 'center',
