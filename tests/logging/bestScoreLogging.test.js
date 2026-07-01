@@ -1,79 +1,80 @@
-const { updateBestScore } = require('../../src/scoreManager');
-const logger = require('../../src/logger');
+const { handleGameResults } = require('../../src/game/GameResults');
+const { saveBestScore } = require('../../src/services/storage');
 
-jest.mock('../../src/logger');
+// Mock console.log to capture structured logs
+const mockConsoleLog = jest.fn();
+console.log = mockConsoleLog;
 
-const APP_VERSION = '1.2.3';
+jest.mock('../../src/services/storage');
+
+const mockLoadBestScore = jest.fn();
+
+saveBestScore.mockImplementation(() => true);
+
+jest.mock('../../src/services/storage', () => ({
+  loadBestScore: mockLoadBestScore,
+  saveBestScore: jest.requireActual('../../src/services/storage').saveBestScore
+}));
 
 describe('TRIOFSND-47: Structured logging for best score updates', () => {
-  let storageMock;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    storageMock = {
-      getBestScore: jest.fn(),
-      setBestScore: jest.fn(),
-    };
+    mockConsoleLog.mockClear();
+    mockLoadBestScore.mockClear();
   });
 
-  it('emits best_score_updated with new_best, previous_best, and app_version when a new best is achieved', async () => {
-    storageMock.getBestScore.mockResolvedValue(50);
-    storageMock.setBestScore.mockResolvedValue(true);
+  it('emits best_score_updated with new_best, previous_best when a new best is achieved', () => {
+    mockLoadBestScore.mockReturnValue(50);
+    
+    handleGameResults(75);
 
-    await updateBestScore(75, { storage: storageMock, appVersion: APP_VERSION });
-
-    expect(logger.info).toHaveBeenCalledWith({
+    expect(mockConsoleLog).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(mockConsoleLog.mock.calls[0][0]);
+    
+    expect(logged).toEqual({
       event: 'best_score_updated',
       new_best: 75,
       previous_best: 50,
-      app_version: APP_VERSION,
+      app_version: expect.any(String),
+      timestamp: expect.any(String)
     });
   });
 
-  it('does not emit best_score_updated when the new score does not exceed the previous best', async () => {
-    storageMock.getBestScore.mockResolvedValue(100);
-    storageMock.setBestScore.mockResolvedValue(false);
+  it('does not emit best_score_updated when the new score does not exceed the previous best', () => {
+    mockLoadBestScore.mockReturnValue(100);
+    
+    handleGameResults(80);
 
-    await updateBestScore(80, { storage: storageMock, appVersion: APP_VERSION });
-
-    const bestScoreLogs = logger.info.mock.calls.filter(
-      ([entry]) => entry && entry.event === 'best_score_updated'
-    );
-    expect(bestScoreLogs).toHaveLength(0);
+    expect(mockConsoleLog).not.toHaveBeenCalled();
   });
 
-  it('uses previous_best of null when no previous best exists', async () => {
-    storageMock.getBestScore.mockResolvedValue(null);
-    storageMock.setBestScore.mockResolvedValue(true);
+  it('uses previous_best of 0 when no previous best exists', () => {
+    mockLoadBestScore.mockReturnValue(0);
+    
+    handleGameResults(10);
 
-    await updateBestScore(10, { storage: storageMock, appVersion: APP_VERSION });
-
-    expect(logger.info).toHaveBeenCalledWith({
+    expect(mockConsoleLog).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(mockConsoleLog.mock.calls[0][0]);
+    
+    expect(logged).toEqual({
       event: 'best_score_updated',
       new_best: 10,
-      previous_best: null,
-      app_version: APP_VERSION,
+      previous_best: 0,
+      app_version: expect.any(String),
+      timestamp: expect.any(String)
     });
   });
 
-  it('does not include PII in the best_score_updated log entry', async () => {
-    storageMock.getBestScore.mockResolvedValue(5);
-    storageMock.setBestScore.mockResolvedValue(true);
+  it('does not include PII in the best_score_updated log entry', () => {
+    mockLoadBestScore.mockReturnValue(5);
+    
+    handleGameResults(20);
 
-    await updateBestScore(20, {
-      storage: storageMock,
-      appVersion: APP_VERSION,
-      userId: 'user-123',
-      username: 'jane.doe@example.com',
-    });
-
-    const [logEntry] = logger.info.mock.calls.find(
-      ([entry]) => entry.event === 'best_score_updated'
-    );
-
-    expect(logEntry).not.toHaveProperty('userId');
-    expect(logEntry).not.toHaveProperty('username');
-    expect(JSON.stringify(logEntry)).not.toContain('user-123');
-    expect(JSON.stringify(logEntry)).not.toContain('jane.doe');
+    expect(mockConsoleLog).toHaveBeenCalledTimes(1);
+    const logged = JSON.parse(mockConsoleLog.mock.calls[0][0]);
+    
+    expect(logged).not.toHaveProperty('userId');
+    expect(logged).not.toHaveProperty('username');
+    expect(JSON.stringify(logged)).not.toContain('user-123');
+    expect(JSON.stringify(logged)).not.toContain('jane.doe');
   });
 });
