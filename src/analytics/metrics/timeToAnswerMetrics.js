@@ -14,13 +14,15 @@ export const aggregateTimeToAnswerMetrics = (events) => {
         '3-5s': 0,
         '5-10s': 0,
         '10s+': 0
-      }
+      },
+      count: 0,
+      sum: 0
     };
   }
 
   const validEvents = events.filter(e => e && typeof e.time_to_answer_ms === 'number');
 
-  return aggregateMetrics({
+  const result = aggregateMetrics({
     events: validEvents,
     metricField: 'time_to_answer_ms',
     buckets: [
@@ -31,4 +33,17 @@ export const aggregateTimeToAnswerMetrics = (events) => {
       { range: [10001, Infinity], label: '10s+' }
     ]
   });
+
+  // Ensure histogram is never null
+  if (!result.histogram) {
+    result.histogram = {
+      '0-1s': 0,
+      '1-3s': 0,
+      '3-5s': 0,
+      '5-10s': 0,
+      '10s+': 0
+    };
+  }
+
+  return result;
 };
