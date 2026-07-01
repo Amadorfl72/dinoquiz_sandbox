@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@react-navigation/native';
 import './QuizQuestion.css';
 
 export default function QuizQuestion({ question, options, correctAnswer, funFact, image, onAnswer }) {
@@ -53,7 +53,7 @@ export default function QuizQuestion({ question, options, correctAnswer, funFact
       </div>
       {showFeedback && !isCorrect && (
         <div className="feedback-message" data-testid="incorrect-feedback-message">
-          <p>¡Buen intento! La respuesta correcta es {correctAnswer}. ¡Sigue aprendiendo!</p>
+          <p>¡Casi! La respuesta correcta es {correctAnswer}. ¡Sigamos aprendiendo juntos!</p>
         </div>
       )}
     </div>
