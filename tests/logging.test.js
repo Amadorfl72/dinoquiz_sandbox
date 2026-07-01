@@ -1,20 +1,20 @@
 const logger = require('../src/logger');
-const scoreService = require('../src/scoreService');
+const gameService = require('../src/gameService');
 
 jest.mock('../src/logger');
 
-describe('TRIOFSND-47: Structured logging for best score and storage events', () => {
+describe('TRIOFSND-47: Structured Logging', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('best_score_updated event', () => {
-    it('should emit structured log when best score is updated', () => {
+  describe('Best Score Events', () => {
+    it('should emit structured log for best_score_updated', () => {
       const newBest = 150;
       const previousBest = 100;
       const appVersion = '1.2.3';
 
-      scoreService.updateBestScore(newBest, previousBest, appVersion);
+      gameService.updateBestScore(newBest, previousBest, appVersion);
 
       expect(logger.info).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -26,34 +26,37 @@ describe('TRIOFSND-47: Structured logging for best score and storage events', ()
       );
     });
 
-    it('should not include PII in the best_score_updated log', () => {
-      const newBest = 150;
-      const previousBest = 100;
-      const appVersion = '1.2.3';
-      const userContext = { userId: 'user-123', email: 'test@example.com' };
+    it('should not emit best_score_updated if score is not a new best', () => {
+      gameService.updateBestScore(50, 100, '1.2.3');
 
-      scoreService.updateBestScore(newBest, previousBest, appVersion, userContext);
+      const bestScoreLogs = logger.info.mock.calls.filter(
+        call => call[0]?.event === 'best_score_updated'
+      );
+      expect(bestScoreLogs.length).toBe(0);
+    });
 
-      const logCall = logger.info.mock.calls[0][0];
-      const logString = JSON.stringify(logCall);
+    it('should not include PII in best_score_updated log', () => {
+      gameService.updateBestScore(150, 100, '1.2.3', { username: 'player1', email: 'test@test.com' });
+
+      const logCall = logger.info.mock.calls.find(
+        call => call[0]?.event === 'best_score_updated'
+      );
       
-      expect(logCall).not.toHaveProperty('userId');
-      expect(logCall).not.toHaveProperty('email');
-      expect(logString).not.toContain('user-123');
-      expect(logString).not.toContain('test@example.com');
+      expect(logCall).toBeDefined();
+      const logPayload = logCall[0];
+      expect(JSON.stringify(logPayload)).not.toMatch(/player1|test@test.com/);
+      expect(logPayload).not.toHaveProperty('username');
+      expect(logPayload).not.toHaveProperty('email');
     });
   });
 
-  describe('storage_failure event', () => {
-    it('should emit structured log when storage operation fails', async () => {
-      const operation = 'save_score';
+  describe('Storage Failure Events', () => {
+    it('should emit structured log for storage_failure', () => {
+      const operation = 'save_game';
       const error = new Error('QuotaExceededError');
       const appVersion = '1.2.3';
 
-      // Mocking the internal storage call to throw an error
-      jest.spyOn(scoreService, 'persistScore').mockRejectedValueOnce(error);
-
-      await expect(scoreService.saveScore(150, appVersion)).rejects.toThrow();
+      gameService.handleStorageFailure(operation, error, appVersion);
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -65,23 +68,23 @@ describe('TRIOFSND-47: Structured logging for best score and storage events', ()
       );
     });
 
-    it('should not include PII in the storage_failure log', async () => {
-      const operation = 'save_score';
-      const error = new Error('NetworkError');
+    it('should not include PII in storage_failure log', () => {
+      const operation = 'save_game';
+      const error = new Error('QuotaExceededError');
       const appVersion = '1.2.3';
-      const userContext = { userId: 'user-456', email: 'test@example.com' };
+      const userData = { userId: '12345', ip: '192.168.1.1' };
 
-      jest.spyOn(scoreService, 'persistScore').mockRejectedValueOnce(error);
+      gameService.handleStorageFailure(operation, error, appVersion, userData);
 
-      await expect(scoreService.saveScore(150, appVersion, userContext)).rejects.toThrow();
+      const logCall = logger.error.mock.calls.find(
+        call => call[0]?.event === 'storage_failure'
+      );
 
-      const logCall = logger.error.mock.calls[0][0];
-      const logString = JSON.stringify(logCall);
-
-      expect(logCall).not.toHaveProperty('userId');
-      expect(logCall).not.toHaveProperty('email');
-      expect(logString).not.toContain('user-456');
-      expect(logString).not.toContain('test@example.com');
+      expect(logCall).toBeDefined();
+      const logPayload = logCall[0];
+      expect(JSON.stringify(logPayload)).not.toMatch(/12345|192.168.1.1/);
+      expect(logPayload).not.toHaveProperty('userId');
+      expect(logPayload).not.toHaveProperty('ip');
     });
   });
 });
