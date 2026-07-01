@@ -1,0 +1,28 @@
+.fun-fact {
+  text-align: center;
+  padding: 20px;
+}
+
+.fun-fact h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.fun-fact p {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.fun-fact button {
+  padding: 15px 30px;
+  font-size: 18px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.fun-fact button:hover {
+  background-color: #218838;
+}
