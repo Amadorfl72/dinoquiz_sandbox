@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "question": "What is the capital of France?",
+    "options": ["London", "Paris", "Tokyo", "Berlin"],
+    "correctAnswer": "Paris",
+    "funFact": "Paris is known as the City of Light."
+  },
+  {
+    "id": 2,
+    "question": "What is the capital of Japan?",
+    "options": ["Seoul", "Beijing", "Tokyo", "Bangkok"],
+    "correctAnswer": "Tokyo",
+    "funFact": "Tokyo is the most populous metropolitan area in the world."
+  }
+]
