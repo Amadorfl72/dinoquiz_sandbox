@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   smallDeviceButton: {
-    minHeight: 56,
+    minHeight: 48,
     minWidth: '100%',
-    padding: 16,
+    padding: 12,
   },
   text: {
     fontSize: 18,
