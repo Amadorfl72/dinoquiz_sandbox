@@ -1,53 +1,75 @@
 import json
-import datetime
+import logging
+from datetime import datetime
+
 import pytest
-from unittest.mock import patch
 
-from app.event_logger import log_app_open, log_game_started
+import structured_logging
 
-@pytest.fixture
-def mock_logger():
-    with patch('app.event_logger.logger') as mock:
-        yield mock
 
-def test_log_app_open_is_valid_json(mock_logger):
-    log_app_open(app_version="1.0.0", locale="en-US")
-    mock_logger.info.assert_called_once()
-    log_message = mock_logger.info.call_args[0][0]
-    json.loads(log_message)
+def get_log_json(caplog):
+    """Helper to extract and parse the JSON log message."""
+    assert len(caplog.records) == 1, "Expected exactly one log record."
+    record = caplog.records[0]
+    return json.loads(record.message)
 
-def test_log_app_open_contains_required_fields(mock_logger):
-    log_app_open(app_version="1.0.0", locale="en-US")
-    log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message);
-    
-    assert log_data.get("event") == "app_open"
-    assert "timestamp" in log_data
-    assert log_data.get("app_version") == "1.0.0"
-    assert log_data.get("locale") == "en-US"
 
-def test_log_game_started_is_valid_json(mock_logger):
-    log_game_started(app_version="1.0.0", locale="en-US")
-    mock_logger.info.assert_called_once()
-    log_message = mock_logger.info.call_args[0][0]
-    json.loads(log_message)
+def test_log_app_open_outputs_valid_json(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_app_open(app_version="1.0.0", locale="en-US")
+    data = get_log_json(caplog)
+    assert isinstance(data, dict)
 
-def test_log_game_started_contains_required_fields(mock_logger):
-    log_game_started(app_version="2.0.0", locale="fr-FR")
-    log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message);
-    
-    assert log_data.get("event") == "game_started"
-    assert "timestamp" in log_data
-    assert log_data.get("app_version") == "2.0.0"
-    assert log_data.get("locale") == "fr-FR"
 
-def test_timestamp_is_iso_format(mock_logger):
-    log_app_open(app_version="1.0.0", locale="en-US")
-    log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message);
-    
-    try:
-        datetime.datetime.fromisoformat(log_data["timestamp"])
-    except (ValueError, KeyError):
-        pytest.fail("Timestamp is missing or not in valid ISO format")
+def test_log_app_open_has_correct_event(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_app_open(app_version="1.0.0", locale="en-US")
+    data = get_log_json(caplog)
+    assert data["event"] == "app_open"
+
+
+def test_log_app_open_has_required_fields(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_app_open(app_version="1.0.0", locale="en-US")
+    data = get_log_json(caplog)
+    assert "timestamp" in data
+    assert data["app_version"] == "1.0.0"
+    assert data["locale"] == "en-US"
+
+
+def test_log_app_open_timestamp_is_iso_format(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_app_open(app_version="1.0.0", locale="en-US")
+    data = get_log_json(caplog)
+    # Should not raise ValueError if valid ISO format
+    datetime.fromisoformat(data["timestamp"])
+
+
+def test_log_game_started_outputs_valid_json(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_game_started(app_version="1.2.3", locale="fr-FR")
+    data = get_log_json(caplog)
+    assert isinstance(data, dict)
+
+
+def test_log_game_started_has_correct_event(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_game_started(app_version="1.2.3", locale="fr-FR")
+    data = get_log_json(caplog)
+    assert data["event"] == "game_started"
+
+
+def test_log_game_started_has_required_fields(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_game_started(app_version="1.2.3", locale="fr-FR")
+    data = get_log_json(caplog)
+    assert "timestamp" in data
+    assert data["app_version"] == "1.2.3"
+    assert data["locale"] == "fr-FR"
+
+
+def test_log_game_started_timestamp_is_iso_format(caplog):
+    caplog.set_level(logging.INFO)
+    structured_logging.log_game_started(app_version="1.2.3", locale="fr-FR")
+    data = get_log_json(caplog)
+    datetime.fromisoformat(data["timestamp"])
