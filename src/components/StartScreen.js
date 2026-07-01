@@ -10,7 +10,12 @@ const StartScreen = ({ onStartGame }) => {
         style={styles.dinosaurImage}
         accessibilityLabel="Illustration of a friendly dinosaur"
       />
-      <TouchableOpacity style={styles.playButton} onPress={onStartGame}>
+      <TouchableOpacity 
+        style={styles.playButton} 
+        onPress={onStartGame}
+        accessibilityRole="button"
+        accessibilityLabel="Start game"
+      >
         <Text style={styles.playButtonText}>¡Jugar!</Text>
       </TouchableOpacity>
     </View>
