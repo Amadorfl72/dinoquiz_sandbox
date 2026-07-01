@@ -9,7 +9,7 @@ import { postToAnalytics } from './api';
 export const logGameCompleted = async (score, durationMs) => {
   try {
     const eventData = {
-      event_type: 'game_completed',
+      event: 'game_completed',
       timestamp: new Date().toISOString(),
       data: {
         score,
