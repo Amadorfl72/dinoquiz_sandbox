@@ -17,7 +17,7 @@ const analytics = getAnalytics(app);
 const logGameStarted = (questionIds) => {
   logEvent(analytics, 'partida_iniciada', {
     timestamp: new Date().toISOString(),
-    question_ids: questionIds.slice(0, 10) // Log first 10 question IDs
+    question_ids: questionIds.slice(0, 10)
   });
 };
 
