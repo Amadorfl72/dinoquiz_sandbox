@@ -1,18 +1,20 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app # Assuming the FastAPI app is defined in app/main.py
+
+# Assuming the FastAPI application instance is named `app` in `main.py`
+from main import app
 
 client = TestClient(app)
 
 VALID_PAYLOAD = {
     "score": 1500,
     "duration_ms": 120000,
-    "app_version": "1.2.3"
+    "app_version": "1.0.4"
 }
 
-def test_ingest_game_completed_valid():
+def test_ingest_game_completed_valid_payload():
     response = client.post("/events/game_completed", json=VALID_PAYLOAD)
-    assert response.status_code in [200, 201, 202]
+    assert response.status_code == 202
 
 def test_ingest_game_completed_missing_score():
     payload = VALID_PAYLOAD.copy()
@@ -46,7 +48,20 @@ def test_ingest_game_completed_invalid_duration_ms_type():
 
 def test_ingest_game_completed_invalid_app_version_type():
     payload = VALID_PAYLOAD.copy()
-    payload["app_version"] = 123
+    payload["app_version"] = 104
+    response = client.post("/events/game_completed", json=payload)
+    assert response.status_code == 422
+
+def test_ingest_game_completed_negative_score():
+    payload = VALID_PAYLOAD.copy()
+    payload["score"] = -10
+    response = client.post("/events/game_completed", json=payload)
+    # Assuming negative scores are invalid, or adjust to 202 if they are allowed
+    assert response.status_code == 422
+
+def test_ingest_game_completed_negative_duration():
+    payload = VALID_PAYLOAD.copy()
+    payload["duration_ms"] = -5000
     response = client.post("/events/game_completed", json=payload)
     assert response.status_code == 422
 
@@ -54,16 +69,8 @@ def test_ingest_game_completed_empty_payload():
     response = client.post("/events/game_completed", json={})
     assert response.status_code == 422
 
-def test_ingest_game_completed_negative_score():
+def test_ingest_game_completed_extra_fields_ignored():
     payload = VALID_PAYLOAD.copy()
-    payload["score"] = -10
+    payload["user_id"] = "abc-123"
     response = client.post("/events/game_completed", json=payload)
-    # Depending on business logic, negative score might be invalid
-    assert response.status_code in [201, 202, 422]
-
-def test_ingest_game_completed_negative_duration():
-    payload = VALID_PAYLOAD.copy()
-    payload["duration_ms"] = -500
-    response = client.post("/events/game_completed", json=payload)
-    # Depending on business logic, negative duration might be invalid
-    assert response.status_code in [201, 202, 422]
+    assert response.status_code == 202
