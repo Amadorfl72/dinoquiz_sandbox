@@ -1,80 +1,79 @@
 import pytest
 import json
 from unittest.mock import patch
-from question_service import QuestionService, QuestionBankValidationError
-
-VALID_BANK = [
-    {"id": i, "text": f"Question {i}", "options": ["A", "B", "C"], "answer": "A"}
-    for i in range(1, 16)
-]
-
-INVALID_JSON_CONTENT = "{'id': 1, 'text': 'Question 1'}"
-
-MISSING_FIELD_BANK = [
-    {"id": 1, "text": "Question 1", "options": ["A", "B", "C"], "answer": "A"},
-    {"id": 2, "text": "Question 2", "options": ["A", "B", "C"]}
-]
-
-FEW_QUESTIONS_BANK = [
-    {"id": 1, "text": "Question 1", "options": ["A", "B", "C"], "answer": "A"},
-    {"id": 2, "text": "Question 2", "options": ["A", "B", "C"], "answer": "B"}
-]
+from question_service import QuestionService
 
 @pytest.fixture
-def valid_bank_file(tmp_path):
-    file = tmp_path / "valid_bank.json"
-    file.write_text(json.dumps(VALID_BANK))
-    return str(file)
+def valid_bank():
+    return [{"id": i, "question": f"Question {i}", "answer": f"Answer {i}"} for i in range(1, 21)]
+
+@pytest.fixture
+def valid_bank_file(tmp_path, valid_bank):
+    file_path = tmp_path / "bank.json"
+    with open(file_path, 'w') as f:
+        json.dump(valid_bank, f)
+    return str(file_path)
+
+@pytest.fixture
+def small_bank_file(tmp_path):
+    questions = [{"id": i, "question": f"Question {i}", "answer": f"Answer {i}"} for i in range(1, 6)]
+    file_path = tmp_path / "small_bank.json"
+    with open(file_path, 'w') as f:
+        json.dump(questions, f)
+    return str(file_path)
 
 @pytest.fixture
 def invalid_json_file(tmp_path):
-    file = tmp_path / "invalid.json"
-    file.write_text(INVALID_JSON_CONTENT)
-    return str(file)
+    file_path = tmp_path / "invalid.json"
+    with open(file_path, 'w') as f:
+        f.write("{invalid json: }")
+    return str(file_path)
 
 @pytest.fixture
-def missing_field_file(tmp_path):
-    file = tmp_path / "missing_field.json"
-    file.write_text(json.dumps(MISSING_FIELD_BANK))
-    return str(file)
+def missing_fields_file(tmp_path):
+    questions = [{"id": 1, "question": "Question 1"}]
+    file_path = tmp_path / "missing_fields.json"
+    with open(file_path, 'w') as f:
+        json.dump(questions, f)
+    return str(file_path)
 
-@pytest.fixture
-def few_questions_file(tmp_path):
-    file = tmp_path / "few_questions.json"
-    file.write_text(json.dumps(FEW_QUESTIONS_BANK))
-    return str(file)
-
-def test_loads_and_validates_valid_bank(valid_bank_file):
+def test_load_valid_json_bank(valid_bank_file):
     service = QuestionService(valid_bank_file)
-    assert service.is_loaded() is True
+    assert service is not None
 
-def test_raises_error_on_invalid_json(invalid_json_file):
-    with pytest.raises(QuestionBankValidationError):
+def test_invalid_json_raises_error(invalid_json_file):
+    with pytest.raises(ValueError):
         QuestionService(invalid_json_file)
 
-def test_raises_error_on_missing_fields(missing_field_file):
-    with pytest.raises(QuestionBankValidationError):
-        QuestionService(missing_field_file)
+def test_missing_fields_raises_error(missing_fields_file):
+    with pytest.raises(ValueError):
+        QuestionService(missing_fields_file)
 
-def test_selects_exactly_10_questions(valid_bank_file):
+def test_select_exactly_10_questions(valid_bank_file):
     service = QuestionService(valid_bank_file)
-    questions = service.get_random_questions()
-    assert len(questions) == 10
+    session_questions = service.get_session_questions()
+    assert len(session_questions) == 10
 
-def test_selected_questions_are_unique(valid_bank_file):
+def test_no_repetition_in_selection(valid_bank_file):
     service = QuestionService(valid_bank_file)
-    questions = service.get_random_questions()
-    ids = [q["id"] for q in questions]
+    session_questions = service.get_session_questions()
+    ids = [q["id"] for q in session_questions]
     assert len(ids) == len(set(ids))
 
-def test_raises_error_when_not_enough_questions(few_questions_file):
-    service = QuestionService(few_questions_file)
+def test_not_enough_questions_raises_error(small_bank_file):
     with pytest.raises(ValueError):
-        service.get_random_questions()
+        QuestionService(small_bank_file)
 
-def test_random_selection_uses_random_sample(valid_bank_file):
+def test_randomness_of_selection(valid_bank_file):
+    service = QuestionService(valid_bank_file)
     with patch('random.sample') as mock_sample:
-        mock_sample.return_value = VALID_BANK[:10]
-        service = QuestionService(valid_bank_file)
-        service.get_random_questions()
+        mock_sample.return_value = [{"id": i} for i in range(10)]
+        service.get_session_questions()
         mock_sample.assert_called_once()
+
+def test_session_questions_are_from_bank(valid_bank_file, valid_bank):
+    service = QuestionService(valid_bank_file)
+    session_questions = service.get_session_questions()
+    bank_ids = {q["id"] for q in valid_bank}
+    for q in session_questions:
+        assert q["id"] in bank_ids
