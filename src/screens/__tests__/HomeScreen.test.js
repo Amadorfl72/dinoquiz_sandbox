@@ -22,10 +22,10 @@ describe('TRIOFSND-52: ¡Jugar! Button Navigation and Event Logging', () => {
     expect(screen.getByText('¡Jugar!')).toBeTruthy();
   });
 
-  it('should navigate to the Game screen on press', () => {
+  it('should navigate to the GameScreen on press', () => {
     render(<HomeScreen navigation={mockNavigation} appOpenTime={Date.now()} />);
     fireEvent.press(screen.getByText('¡Jugar!'));
-    expect(mockNavigate).toHaveBeenCalledWith('Game');
+    expect(mockNavigate).toHaveBeenCalledWith('GameScreen');
   });
 
   it('should trigger first_tap_jugar event with timestamp since app_open', () => {
