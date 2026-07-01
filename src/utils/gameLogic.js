@@ -5,8 +5,17 @@ let currentQuestionIndex = 0;
 let score = 0;
 
 const selectNewQuestions = () => {
-  const shuffled = [...questions].sort(() => 0.5 - Math.random());
-  currentQuestions = shuffled.slice(0, 10);
+  // Create a copy of the questions array to avoid mutating the original
+  const questionPool = [...questions];
+  const selectedQuestions = [];
+  
+  // Select 10 unique questions randomly
+  while (selectedQuestions.length < 10 && questionPool.length > 0) {
+    const randomIndex = Math.floor(Math.random() * questionPool.length);
+    selectedQuestions.push(questionPool.splice(randomIndex, 1)[0]);
+  }
+  
+  currentQuestions = selectedQuestions;
   return currentQuestions;
 };
 
