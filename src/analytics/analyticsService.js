@@ -24,8 +24,16 @@ const sanitizeParams = (params) => {
   return sanitized;
 };
 
+const validatePII = (params) => {
+  const piiFields = ['email', 'user_id', 'ip_address'];
+  return piiFields.some(field => params.hasOwnProperty(field));
+};
+
 const trackEvent = (eventName, eventParams = {}) => {
   try {
+    if (validatePII(eventParams)) {
+      throw new Error('PII detected in event parameters');
+    }
     const safeParams = sanitizeParams(eventParams);
     
     if (process.env.NODE_ENV === 'production') {
@@ -35,6 +43,7 @@ const trackEvent = (eventName, eventParams = {}) => {
     }
   } catch (error) {
     console.error('[Analytics Tracking Error]', error);
+    throw error;
   }
 };
 
@@ -43,10 +52,12 @@ export const trackAppOpen = (isFirstOpen) => {
   trackEvent('app_open', { first_apertura: isFirstOpen });
 };
 
-export const trackTooltipShown = () => {
-  trackEvent('tooltip_shown');
+export const trackTooltipShown = (tooltipId) => {
+  if (!tooltipId) return;
+  trackEvent('tooltip_shown', { tooltip_id: tooltipId });
 };
 
-export const trackTooltipDismissed = () => {
-  trackEvent('tooltip_dismissed');
+export const trackTooltipDismissed = (tooltipId) => {
+  if (!tooltipId) return;
+  trackEvent('tooltip_dismissed', { tooltip_id: tooltipId });
 };
