@@ -6,8 +6,20 @@ import { aggregateMetrics } from '../firebase/analytics';
  * @returns {Object} Aggregated metrics with histogram distribution
  */
 export const aggregateTimeToAnswerMetrics = (events) => {
+  if (!events || !Array.isArray(events)) {
+    return {
+      histogram: {
+        '0-1s': 0,
+        '1-3s': 0,
+        '3-5s': 0,
+        '5-10s': 0,
+        '10s+': 0
+      }
+    };
+  }
+
   return aggregateMetrics({
-    events,
+    events: events.filter(e => e && typeof e.time_to_answer_ms === 'number'),
     metricField: 'time_to_answer_ms',
     buckets: [
       { range: [0, 1000], label: '0-1s' },
