@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   },
   replayButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 8,
     minHeight: 48,
