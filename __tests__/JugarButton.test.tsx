@@ -33,7 +33,7 @@ describe('TRIOFSND-52: ¡Jugar! Button Navigation and Event Logging', () => {
 
     fireEvent.press(jugarButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith('Game');
+    expect(mockNavigate).toHaveBeenCalledWith('GameScreen');
   });
 
   it('logs the first_tap_jugar analytics event with timestamp since app_open', () => {
@@ -42,9 +42,11 @@ describe('TRIOFSND-52: ¡Jugar! Button Navigation and Event Logging', () => {
 
     fireEvent.press(jugarButton);
 
-    expect(logEvent).toHaveBeenCalledWith('first_tap_jugar', expect.any(Number));
+    expect(logEvent).toHaveBeenCalledWith('first_tap_jugar', {
+      timestamp_since_app_open: expect.any(Number)
+    });
     
-    const loggedTimestamp = (logEvent as jest.Mock).mock.calls[0][1];
+    const loggedTimestamp = (logEvent as jest.Mock).mock.calls[0][1].timestamp_since_app_open;
     // The timestamp should be roughly the time elapsed since app open (around 5000ms)
     expect(loggedTimestamp).toBeGreaterThanOrEqual(5000);
     expect(loggedTimestamp).toBeLessThan(6000);
