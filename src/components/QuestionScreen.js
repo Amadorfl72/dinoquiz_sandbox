@@ -3,15 +3,22 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const QuestionScreen = ({ question, options, dinosaurImage, onOptionSelect }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.questionText}>{question}</Text>
-      <Image source={dinosaurImage} style={styles.dinosaurImage} />
+    <View style={styles.container} testID="questionScreen">
+      <Text style={styles.questionText} testID="questionStatement">{question}</Text>
+      <Image 
+        source={dinosaurImage} 
+        style={styles.dinosaurImage} 
+        accessibilityLabel="Dinosaur"
+        testID="dinosaurImage"
+      />
       <View style={styles.optionsContainer}>
         {options.map((option, index) => (
           <TouchableOpacity
             key={index}
             style={styles.optionButton}
             onPress={() => onOptionSelect(option)}
+            testID="answerButton"
+            accessibilityRole="button"
           >
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
