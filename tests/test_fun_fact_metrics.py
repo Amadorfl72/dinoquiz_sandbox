@@ -1,69 +1,37 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-# Assuming the implementation is in app.metrics.fun_facts
-from app.metrics.fun_facts import record_fun_fact_viewed
+# Assuming the fix is implemented in app.services.fun_fact_service
+from app.services.fun_fact_service import view_fun_fact
 
-@pytest.fixture
-def mock_logger():
-    with patch('app.metrics.fun_facts.logger') as mock:
-        yield mock
+def test_fun_fact_viewed_metric_incremented():
+    """Test that fun_fact_viewed metric is incremented and logged when a fun fact is viewed."""
+    with patch('app.services.fun_fact_service.metrics_client') as mock_metrics, \
+         patch('app.services.fun_fact_service.logger') as mock_logger, \
+         patch('app.services.fun_fact_service.get_fun_fact_from_db', return_value={'id': 42, 'fact': 'Cats sleep 70% of their lives.'}):
+        
+        view_fun_fact(user_id=1, fun_fact_id=42)
+        
+        # Verify metric was incremented
+        mock_metrics.increment.assert_called_once_with('fun_fact_viewed', 1)
+        
+        # Verify logging occurred
+        mock_logger.info.assert_called_once_with(
+            'Fun fact viewed', 
+            extra={'user_id': 1, 'fun_fact_id': 42}
+        )
 
-@pytest.fixture
-def mock_metrics():
-    with patch('app.metrics.fun_facts.metrics_client') as mock:
-        yield mock
-
-def test_record_fun_fact_viewed_logs_and_increments_metric(mock_logger, mock_metrics):
-    user_id = "user-123"
-    fun_fact_id = "fact-456"
-    
-    record_fun_fact_viewed(user_id=user_id, fun_fact_id=fun_fact_id)
-    
-    # Verify metric increment
-    mock_metrics.increment.assert_called_once_with('fun_fact_viewed')
-    
-    # Verify logging
-    mock_logger.info.assert_called_once()
-    log_call_args = mock_logger.info.call_args
-    # Assuming structured logging
-    log_data = log_call_args.kwargs
-    assert log_data.get('event') == 'fun_fact_viewed'
-    assert log_data.get('user_id') == user_id
-    assert log_data.get('fun_fact_id') == fun_fact_id
-
-def test_record_fun_fact_viewed_handles_missing_user_id(mock_logger, mock_metrics):
-    fun_fact_id = "fact-456"
-    
-    record_fun_fact_viewed(user_id=None, fun_fact_id=fun_fact_id)
-    
-    mock_metrics.increment.assert_called_once_with('fun_fact_viewed')
-    mock_logger.info.assert_called_once()
-    log_data = mock_logger.info.call_args.kwargs
-    assert log_data.get('event') == 'fun_fact_viewed'
-    assert log_data.get('user_id') is None
-    assert log_data.get('fun_fact_id') == fun_fact_id
-
-def test_record_fun_fact_viewed_handles_missing_fun_fact_id(mock_logger, mock_metrics):
-    user_id = "user-123"
-    
-    record_fun_fact_viewed(user_id=user_id, fun_fact_id=None)
-    
-    mock_metrics.increment.assert_called_once_with('fun_fact_viewed')
-    mock_logger.info.assert_called_once()
-    log_data = mock_logger.info.call_args.kwargs
-    assert log_data.get('event') == 'fun_fact_viewed'
-    assert log_data.get('user_id') == user_id
-    assert log_data.get('fun_fact_id') is None
-
-def test_record_fun_fact_viewed_metric_tags(mock_logger, mock_metrics):
-    user_id = "user-123"
-    fun_fact_id = "fact-456"
-    
-    record_fun_fact_viewed(user_id=user_id, fun_fact_id=fun_fact_id)
-    
-    # If the metric implementation supports tags, ensure they are passed correctly
-    # This depends on the specific metrics client used, but we check for a common pattern
-    assert mock_metrics.increment.called
-    call_args = mock_metrics.increment.call_args
-    assert call_args.args[0] == 'fun_fact_viewed' or call_args.kwargs.get('metric') == 'fun_fact_viewed'
+def test_fun_fact_viewed_metric_not_incremented_on_failure():
+    """Test that metric is not incremented if viewing fails."""
+    with patch('app.services.fun_fact_service.get_fun_fact_from_db', side_effect=Exception('DB Error')), \
+         patch('app.services.fun_fact_service.metrics_client') as mock_metrics, \
+         patch('app.services.fun_fact_service.logger') as mock_logger:
+        
+        with pytest.raises(Exception):
+            view_fun_fact(user_id=1, fun_fact_id=42)
+            
+        mock_metrics.increment.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            'Failed to view fun fact',
+            extra={'user_id': 1, 'fun_fact_id': 42}
+        )
