@@ -5,7 +5,8 @@ const calculateAverageSuccessRatio = (questionStats) => {
 };
 
 const getTimeToAnswerDistribution = (questionStats) => {
-  const durations = questionStats.map(stat => stat.timeToAnswerMs);
+  const durations = questionStats.map(stat => stat.timeToAnswerMs).filter(Boolean);
+  if (durations.length === 0) return null;
   return {
     min: Math.min(...durations),
     max: Math.max(...durations),
