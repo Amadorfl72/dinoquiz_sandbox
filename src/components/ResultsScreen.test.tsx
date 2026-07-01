@@ -1,23 +1,56 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import ResultsScreen from './ResultsScreen';
-import * as gameCompletedLogger from '../logging/gameCompletedLogger';
+import { render, screen } from '@testing-library/react';
+import { logGameCompleted } from '../../logging/gameCompleted';
+import { ResultsScreen } from '../ResultsScreen';
 
-jest.mock('../logging/gameCompletedLogger');
+jest.mock('../../logging/gameCompleted');
 
-describe('TRIOFSND-36: ResultsScreen game_completed Logging', () => {
-  it('should call logGameCompleted with score, duration_ms, and app_version upon reaching the results screen', () => {
-    const mockLogGameCompleted = jest.spyOn(gameCompletedLogger, 'logGameCompleted');
-    
-    const gameData = {
-      score: 2000,
-      duration_ms: 300000,
-      app_version: '2.0.0',
-    };
+describe('ResultsScreen', () => {
+  const mockLogGameCompleted = logGameCompleted as jest.MockedFunction<typeof logGameCompleted>;
 
-    render(<ResultsScreen {...gameData} />);
+  afterEach(() => {
+    mockLogGameCompleted.mockReset();
+  });
 
+  const defaultProps = {
+    score: 2000,
+    duration_ms: 150000,
+    appVersion: '2.0.1',
+  };
+
+  it('renders the results screen with the final score', () => {
+    render(<ResultsScreen {...defaultProps} />);
+    expect(screen.getByText(/2,000/)).toBeInTheDocument();
+  });
+
+  it('emits the game_completed event on mount', () => {
+    render(<ResultsScreen {...defaultProps} />);
     expect(mockLogGameCompleted).toHaveBeenCalledTimes(1);
-    expect(mockLogGameCompleted).toHaveBeenCalledWith(gameData);
+  });
+
+  it('passes score, duration_ms, and app_version to the logging function', () => {
+    render(<ResultsScreen {...defaultProps} />);
+    expect(mockLogGameCompleted).toHaveBeenCalledWith({
+      score: 2000,
+      duration_ms: 150000,
+      app_version: '2.0.1',
+    });
+  });
+
+  it('does not emit the event more than once when re-rendering with the same props', () => {
+    const { rerender } = render(<ResultsScreen {...defaultProps} />);
+    rerender(<ResultsScreen {...defaultProps} />);
+    expect(mockLogGameCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits the event again if the score changes', () => {
+    const { rerender } = render(<ResultsScreen {...defaultProps} />);
+    rerender(<ResultsScreen {...defaultProps} score={2500} />);
+    expect(mockLogGameCompleted).toHaveBeenCalledTimes(2);
+    expect(mockLogGameCompleted).toHaveBeenLastCalledWith({
+      score: 2500,
+      duration_ms: 150000,
+      app_version: '2.0.1',
+    });
   });
 });
