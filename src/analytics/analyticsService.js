@@ -25,7 +25,7 @@ const sanitizeParams = (params) => {
 };
 
 const validatePII = (params) => {
-  const piiFields = ['email', 'user_id', 'ip_address'];
+  const piiFields = ['email', 'user_id', 'ip_address', 'name'];
   return piiFields.some(field => params.hasOwnProperty(field));
 };
 
