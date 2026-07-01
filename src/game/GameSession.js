@@ -4,15 +4,14 @@ class GameSession {
       throw new Error('GameSession requires exactly 10 questions');
     }
     
-    // Check for duplicate question IDs
     const questionIds = questions.map(q => q.id);
     if (new Set(questionIds).size !== questionIds.length) {
       throw new Error('Duplicate question IDs found');
     }
     
-    this.questions = questions;
+    this.questions = Object.freeze([...questions]);
     this.currentQuestionIndex = 0;
-    this.selectedQuestions = [...questions]; // Use all provided questions
+    this.selectedQuestions = [...questions];
     this.score = 0;
     this.streak = 0;
     this.maxStreak = 0;
@@ -34,9 +33,7 @@ class GameSession {
     if (isCorrect) {
       this.score += 1;
       this.streak += 1;
-      if (this.streak > this.maxStreak) {
-        this.maxStreak = this.streak;
-      }
+      this.maxStreak = Math.max(this.maxStreak, this.streak);
     } else {
       this.streak = 0;
     }
@@ -55,17 +52,17 @@ class GameSession {
   }
 
   isGameOver() {
-    return this.currentQuestionIndex >= this.selectedQuestions.length - 1;
+    return this.currentQuestionIndex >= this.selectedQuestions.length;
   }
 
   getResults() {
     const stars = this.score <= 3 ? 1 : this.score <= 6 ? 2 : 3;
-    return {
+    return Object.freeze({
       score: this.score,
       maxStreak: this.maxStreak,
       stars: stars,
       seenFacts: this.seenFacts.size
-    };
+    });
   }
 
   getShownQuestionIds() {
