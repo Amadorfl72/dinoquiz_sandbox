@@ -20,7 +20,8 @@ fun FunFactScreen(funFact: String, dinosaurImageResId: Int, onNextClicked: () ->
     ) {
         Text(
             text = funFact,
-            fontSize = 20.sp
+            fontSize = 20.sp,
+            modifier = Modifier.testTag("funFactText")
         )
         Spacer(modifier = Modifier.height(16.dp))
         Image(
@@ -29,13 +30,15 @@ fun FunFactScreen(funFact: String, dinosaurImageResId: Int, onNextClicked: () ->
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp)
+                .testTag("dinosaurImage")
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = onNextClicked,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .heightIn(min = 48.dp)
+                .testTag("nextButton")
         ) {
             Text(text = "Next")
         }
