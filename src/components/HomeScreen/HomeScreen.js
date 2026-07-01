@@ -10,8 +10,8 @@ export default function HomeScreen() {
 
   const handleJugarPress = () => {
     const timeSinceAppOpen = Date.now() - getAppOpenTime();
-    logAnalyticsEvent('first_tap_jugar', { timestamp: timeSinceAppOpen });
-    navigation.navigate('Game');
+    logAnalyticsEvent('first_tap_jugar', { timestamp_since_app_open: timeSinceAppOpen });
+    navigation.navigate('GameScreen');
   };
 
   return (
