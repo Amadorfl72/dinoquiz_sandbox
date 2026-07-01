@@ -42,7 +42,7 @@ class QuestionService {
     });
   }
 
-  getRandomQuestions(count = 10) {
+  selectQuestionsForSession(count = 10) {
     if (count > this.questions.length) {
       throw new Error(`Requested ${count} questions but only ${this.questions.length} available`);
     }
