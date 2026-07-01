@@ -19,6 +19,7 @@ describe('HomeScreen Component - TRIOFSND-50', () => {
   it('renders the dinosaur mascot illustration with accessibility attributes', () => {
     const mascot = screen.getByRole('image', { name: /Mascota de DinoQuiz/i });
     expect(mascot).toBeInTheDocument();
+    expect(mascot).toHaveAttribute('id', 'dino_mascot');
   });
 
   it('renders the ¡Jugar! button with proper accessibility attributes', () => {
@@ -26,6 +27,7 @@ describe('HomeScreen Component - TRIOFSND-50', () => {
     expect(button).toBeInTheDocument();
     expect(button).toHaveAccessibleName('Botón para empezar a jugar');
     expect(button).toHaveAttribute('accessibilityHint', 'Presiona para comenzar una nueva partida');
+    expect(button).toHaveAttribute('focusable', 'true');
   });
 
   it('navigates to Quiz screen when button is pressed', async () => {
@@ -37,7 +39,7 @@ describe('HomeScreen Component - TRIOFSND-50', () => {
 
   it('meets accessibility standards for button dimensions', () => {
     const button = screen.getByRole('button', { name: /Botón para empezar a jugar/i });
-    expect(button).toHaveStyle({ minHeight: '64px', minWidth: '200px' });
+    expect(button).toHaveStyle({ minHeight: '64px', height: '64px', minWidth: '200px' });
   });
 
   it('has sufficient text contrast (WCAG AA)', () => {
