@@ -63,6 +63,7 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
     
     const messageEl = document.getElementById('best-score-message');
     expect(messageEl.style.display).toBe('none');
+    expect(messageEl.textContent).toBe('');
   });
 
   test('4) Disabled localStorage doesn\'t block game and shows no error', () => {
@@ -78,5 +79,9 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
       recordScore(300);
       getBestScore();
     }).not.toThrow();
+    
+    const messageEl = document.getElementById('best-score-message');
+    expect(messageEl.style.display).toBe('none');
+    expect(messageEl.textContent).toBe('');
   });
 });
