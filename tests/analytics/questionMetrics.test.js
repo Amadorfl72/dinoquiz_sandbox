@@ -3,11 +3,11 @@ import { getTop5WorstPerformingQuestions } from '../../src/analytics/questionMet
 describe('getTop5WorstPerformingQuestions', () => {
   it('should return exactly 5 questions when available', async () => {
     const mockQuestions = [
-      { questionId: '1', accuracy: 0.2, totalAttempts: 15 },
-      { questionId: '2', accuracy: 0.3, totalAttempts: 12 },
+      { questionId: '1', accuracy: 0.6, totalAttempts: 25 },
+      { questionId: '2', accuracy: 0.5, totalAttempts: 18 },
       { questionId: '3', accuracy: 0.4, totalAttempts: 20 },
-      { questionId: '4', accuracy: 0.5, totalAttempts: 18 },
-      { questionId: '5', accuracy: 0.6, totalAttempts: 25 }
+      { questionId: '4', accuracy: 0.3, totalAttempts: 12 },
+      { questionId: '5', accuracy: 0.2, totalAttempts: 15 }
     ];
 
     jest.spyOn(db.collection('analytics'), 'aggregate').mockImplementation((pipeline) => {
