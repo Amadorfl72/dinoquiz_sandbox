@@ -3,103 +3,109 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DinosaurImage } from './DinosaurImage';
 
-describe('DinosaurImage Integration - Image Fallback Placeholder (TRIOFSND-27)', () => {
-  it('full flow: image loads, fails, shows placeholder, and text remains legible', async () => {
+describe('DinosaurImage Integration', () => {
+  it('full flow: renders image, handles error, shows placeholder with legible text', async () => {
     const { container } = render(
-      <div data-testid='dino-section'>
-        <h2 data-testid='section-title'>Meet Our Dinosaur</h2>
-        <DinosaurImage
-          src='https://broken-url.example.com/dino.png'
-          alt='T-Rex illustration'
-          width={400}
-          height={300}
-        />
-        <p data-testid='description'>
-          The Tyrannosaurus Rex was one of the largest meat-eating dinosaurs.
-        </p>
-      </div>
+      <DinosaurImage
+        src="/images/trex.png"
+        alt="T-Rex"
+        caption="The mighty Tyrannosaurus Rex"
+      />
     );
 
-    // Initially, the image should be present and placeholder should not be visible
-    const image = screen.getByAltText('T-Rex illustration');
-    expect(image).toBeInTheDocument();
+    // Initially the image is visible
+    const img = screen.getByRole('img', { name: /t-rex/i });
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/images/trex.png');
+
+    // Caption is visible
+    expect(screen.getByText('The mighty Tyrannosaurus Rex')).toBeInTheDocument();
+
+    // No placeholder yet
     expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
 
-    // Text should be legible initially
-    const title = screen.getByTestId('section-title');
-    const description = screen.getByTestId('description');
-    expect(title).toBeVisible();
-    expect(description).toBeVisible();
-
     // Simulate image load failure
-    fireEvent.error(image);
+    fireEvent.error(img);
 
-    // Placeholder should now be visible
-    await waitFor(() => {
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-      expect(placeholder).toBeInTheDocument();
-      expect(placeholder).toBeVisible();
-    });
-
-    // The broken image should be hidden
-    expect(image).toHaveStyle({ display: 'none' });
-
-    // Text should still be legible after placeholder is shown
-    expect(title).toBeVisible();
-    expect(description).toBeVisible();
-
-    // The section container should still be intact
-    const section = screen.getByTestId('dino-section');
-    expect(section).toContainElement(title);
-    expect(section).toContainElement(description);
-    expect(section).toContainElement(screen.getByTestId('dinosaur-placeholder'));
-  });
-
-  it('handles network-level image failure gracefully', async () => {
-    render(<DinosaurImage src='https://nonexistent.example.com/dino.jpg' alt='Stegosaurus' />);
-    const image = screen.getByAltText('Stegosaurus');
-
-    // Simulate a network error (error event)
-    fireEvent.error(image);
-
+    // Placeholder appears
     await waitFor(() => {
       expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
     });
 
-    // Ensure no unhandled error is thrown in the DOM
+    // Original image is hidden
+    expect(img).toHaveStyle({ display: 'none' });
+
+    // Placeholder image is rendered
+    const placeholderImg = screen.getByTestId('placeholder-image');
+    expect(placeholderImg).toBeInTheDocument();
+    expect(placeholderImg).toHaveAttribute('alt', 'T-Rex');
+
+    // Caption remains visible and legible
+    const caption = screen.getByText('The mighty Tyrannosaurus Rex');
+    expect(caption).toBeVisible();
+
+    // Placeholder has a background for contrast
     const placeholder = screen.getByTestId('dinosaur-placeholder');
-    expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toBeVisible();
+    const placeholderStyle = window.getComputedStyle(placeholder);
+    expect(placeholderStyle.backgroundColor).not.toBe('transparent');
+    expect(placeholderStyle.backgroundColor).not.toBe('');
   });
 
-  it('handles corrupted image data failure gracefully', async () => {
-    render(<DinosaurImage src='data:invalid-base64-data' alt='Triceratops' />);
-    const image = screen.getByAltText('Triceratops');
-
-    fireEvent.error(image);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
-    });
-  });
-
-  it('preserves layout integrity when placeholder replaces broken image', async () => {
-    const { container } = render(
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <DinosaurImage src='https://broken.example.com/dino.png' alt='Brontosaurus' width={500} height={350} />
-        <div data-testid='content-below'>Important content below the image</div>
-      </div>
+  it('handles rapid successive errors gracefully', async () => {
+    render(
+      <DinosaurImage
+        src="/images/broken.png"
+        alt="Broken Dino"
+        caption="Caption text"
+      />
     );
 
-    const image = screen.getByAltText('Brontosaurus');
-    fireEvent.error(image);
+    const img = screen.getByRole('img', { name: /broken dino/i });
+
+    // Fire multiple errors rapidly
+    fireEvent.error(img);
+    fireEvent.error(img);
+    fireEvent.error(img);
 
     await waitFor(() => {
       expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
     });
 
-    // Content below should still be visible and not pushed off-screen
-    const contentBelow = screen.getByTestId('content-below');
-    expect(contentBelow).toBeVisible();
+    // Only one placeholder
+    const placeholders = screen.getAllByTestId('dinosaur-placeholder');
+    expect(placeholders).toHaveLength(1);
+
+    // Text still legible
+    expect(screen.getByText('Caption text')).toBeVisible();
+  });
+
+  it('recovers if a new valid src is provided after an error', () => {
+    const { rerender } = render(
+      <DinosaurImage
+        src="/images/broken.png"
+        alt="Dino"
+        caption="Caption"
+      />
+    );
+
+    const img = screen.getByRole('img', { name: /dino/i });
+    fireEvent.error(img);
+
+    expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
+
+    // Rerender with a new source
+    rerender(
+      <DinosaurImage
+        src="/images/valid.png"
+        alt="Dino"
+        caption="Caption"
+      />
+    );
+
+    // Placeholder should be gone, new image visible
+    expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
+    const newImg = screen.getByRole('img', { name: /dino/i });
+    expect(newImg).toHaveAttribute('src', '/images/valid.png');
+    expect(newImg).not.toHaveStyle({ display: 'none' });
   });
 });
