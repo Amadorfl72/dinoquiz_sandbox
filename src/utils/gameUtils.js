@@ -3,13 +3,22 @@ export const selectRandomQuestions = (questions, count) => {
     throw new Error('Not enough questions in the pool');
   }
   
-  // Fisher-Yates shuffle algorithm for better randomness
-  const shuffled = [...questions];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  // Secure random selection using crypto API
+  const selectedIndices = new Set();
+  const crypto = window.crypto || window.msCrypto;
+  
+  while (selectedIndices.size < count) {
+    const randomValue = new Uint32Array(1);
+    crypto.getRandomValues(randomValue);
+    const index = randomValue[0] % questions.length;
+    selectedIndices.add(index);
   }
-  return shuffled.slice(0, count);
+  
+  return Array.from(selectedIndices).map(i => {
+    const question = {...questions[i]};
+    question.options = shuffleAnswers(question);
+    return question;
+  });
 };
 
 export const shuffleAnswers = (question) => {
@@ -17,10 +26,16 @@ export const shuffleAnswers = (question) => {
     throw new Error('Invalid question object');
   }
   
+  // Secure shuffle using Fisher-Yates with crypto API
   const answers = [...question.answers];
+  const crypto = window.crypto || window.msCrypto;
+  
   for (let i = answers.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const randomValue = new Uint32Array(1);
+    crypto.getRandomValues(randomValue);
+    const j = randomValue[0] % (i + 1);
     [answers[i], answers[j]] = [answers[j], answers[i]];
   }
+  
   return answers;
 };
