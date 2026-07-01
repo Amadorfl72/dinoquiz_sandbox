@@ -1,0 +1,54 @@
+{
+  "title": "DinoQuiz - Observability Dashboard",
+  "panels": [
+    {
+      "title": "TTI p95",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(frontend_tti_seconds_bucket[5m])) by (le))",
+          "legend": "TTI p95"
+        }
+      ],
+      "thresholds": [
+        {
+          "value": 2,
+          "color": "red",
+          "alert": true
+        }
+      ]
+    },
+    {
+      "title": "Time between app_open and first_tap_jugar",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "avg(time() - frontend_events_timestamp{event=\"first_tap_jugar\"}) - avg(time() - frontend_events_timestamp{event=\"app_open\"})",
+          "legend": "App Open to First Tap Jugar"
+        }
+      ]
+    },
+    {
+      "title": "User Funnel",
+      "type": "funnel",
+      "targets": [
+        {
+          "expr": "count(frontend_events_total{event=\"app_open\"})",
+          "legend": "app_open"
+        },
+        {
+          "expr": "count(frontend_events_total{event=\"pantalla_inicio\"})",
+          "legend": "pantalla_inicio"
+        },
+        {
+          "expr": "count(frontend_events_total{event=\"tap_jugar\"})",
+          "legend": "tap_jugar"
+        },
+        {
+          "expr": "count(frontend_events_total{event=\"partida_iniciada\"})",
+          "legend": "partida_iniciada"
+        }
+      ]
+    }
+  ]
+}
