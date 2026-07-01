@@ -17,11 +17,11 @@ export default function ResultsScreen({ score }) {
       const success = storage.set('bestScore', score);
       if (success) {
         setBestScore(score);
-        setShowNewBest(true);
-        
-        // Hide feedback after 3 seconds
-        setTimeout(() => setShowNewBest(false), 3000);
       }
+      setShowNewBest(true);
+      
+      // Hide feedback after 3 seconds
+      setTimeout(() => setShowNewBest(false), 3000);
     }
   }, [score]);
 
