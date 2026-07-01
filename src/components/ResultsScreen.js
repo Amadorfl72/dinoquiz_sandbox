@@ -8,8 +8,13 @@ const ResultsScreen = ({ route }) => {
 
   React.useEffect(() => {
     const loadBestScore = async () => {
-      const storedBestScore = await getBestScore();
-      setBestScore(storedBestScore);
+      try {
+        const storedBestScore = await getBestScore();
+        setBestScore(storedBestScore);
+      } catch (error) {
+        console.error('Failed to load best score:', error);
+        setBestScore(0);
+      }
     };
     loadBestScore();
   }, []);
@@ -17,12 +22,18 @@ const ResultsScreen = ({ route }) => {
   const isNewRecord = currentScore > bestScore;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="results-screen">
       <Text style={styles.title}>¡Partida Terminada!</Text>
-      <Text style={styles.score}>Tu puntuación: {currentScore}/10</Text>
-      <Text style={styles.bestScore}>Mejor puntuación: {bestScore}/10</Text>
+      <Text style={styles.score} testID="current-score">Tu puntuación: {currentScore}/10</Text>
+      <Text 
+        style={styles.bestScore} 
+        testID="best-score"
+        accessibilityLabel={`Mejor puntuación: ${bestScore} de 10`}
+      >
+        Mejor puntuación: {bestScore}/10
+      </Text>
       {isNewRecord && (
-        <Text style={styles.newRecord}>¡Nuevo récord! 🎉</Text>
+        <Text style={styles.newRecord} testID="new-record-indicator">¡Nuevo récord! 🎉</Text>
       )}
       {/* Rest of the results screen UI */}
     </View>
