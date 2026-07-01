@@ -7,17 +7,21 @@ const ResultsScreen = ({ route }) => {
   const { score } = route.params;
   const navigation = useNavigation();
 
-  const handlePlayAgain = () => {
-    const newQuestions = selectNewQuestions();
-    const gameState = resetGame(newQuestions);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Question', params: { 
-        currentQuestion: gameState.currentQuestions[0],
-        currentQuestionIndex: gameState.currentQuestionIndex,
-        score: gameState.score
-      } }],
-    });
+  const handlePlayAgain = async () => {
+    try {
+      const newQuestions = await selectNewQuestions();
+      const gameState = resetGame(newQuestions);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Question', params: { 
+          currentQuestion: gameState.currentQuestions[0],
+          currentQuestionIndex: gameState.currentQuestionIndex,
+          score: gameState.score
+        } }],
+      });
+    } catch (error) {
+      console.error('Error resetting game:', error);
+    }
   };
 
   const stars = Math.min(3, Math.floor(score / 3.34) + 1);
@@ -29,7 +33,7 @@ const ResultsScreen = ({ route }) => {
   const message = motivationalMessages[stars - 1];
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityLabel="Pantalla de resultados">
       <Text style={styles.title}>Tu puntuación: {score}/10</Text>
       <Text style={styles.stars}>{'⭐'.repeat(stars)}</Text>
       <Text style={styles.message}>{message}</Text>
@@ -37,6 +41,7 @@ const ResultsScreen = ({ route }) => {
         title="Volver a jugar"
         onPress={handlePlayAgain}
         accessibilityLabel="Volver a jugar"
+        testID="volver-a-jugar-btn"
       />
     </View>
   );
