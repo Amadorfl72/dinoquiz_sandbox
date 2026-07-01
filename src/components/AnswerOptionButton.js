@@ -20,6 +20,7 @@ const AnswerOptionButton = ({ option, onPress, isSelected, isCorrect }) => {
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`Answer option: ${option}`}
+      hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
     >
       <Text style={styles.text}>{option}</Text>
     </TouchableOpacity>
