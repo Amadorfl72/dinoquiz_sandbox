@@ -1,5 +1,5 @@
 const CACHE_NAME = 'dinoquiz-v1';
-const urlsToCache = [
+const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/styles/main.css',
@@ -13,14 +13,47 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        return cache.addAll(PRECACHE_URLS);
+      })
   );
 });
 
 self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Cache-first strategy for static assets
+  if (PRECACHE_URLS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then(cachedResponse => {
+        return cachedResponse || fetch(request);
+      })
+    );
+    return;
+  }
+
+  // Network-first strategy for questions JSON
+  if (url.pathname === '/data/questions.json') {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(request, responseClone));
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // Default: network with cache fallback
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(request)
+      .catch(() => caches.match(request))
   );
 });
 
