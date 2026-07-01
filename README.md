@@ -7,3 +7,4 @@ Los agentes crean ramas `feat/...` desde `main` y abren PRs.
 - Updated Node.js version in GitHub Actions to 24
 - Fixed maskable icon purpose in manifest.json
 - Optimized performance metrics testing
+- Resolved security issues with Node.js version
