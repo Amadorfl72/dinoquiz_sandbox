@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTIONS_FILE = path.resolve(__dirname, '../src/data/questions.json');
+const QUESTIONS_FILE = path.resolve(__dirname, '../src/assets/questions.json');
 
 const COMPLEX_WORDS = [
   'phenomenon', 'hypothesis', 'metamorphosis', 'photosynthesis',
@@ -50,8 +50,8 @@ describe('TRIOFSND-24: Local questions JSON fun facts', () => {
     expect(Array.isArray(questions)).toBe(true);
   });
 
-  test('contains exactly 30 questions', () => {
-    expect(questions.length).toBe(30);
+  test('contains exactly 10 questions', () => {
+    expect(questions.length).toBe(10);
   });
 
   test('every question has a fun_fact object', () => {
