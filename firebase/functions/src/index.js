@@ -51,8 +51,6 @@ const checkForDropOffAlerts = functions.https.onCall(async (data, context) => {
       });
     }
     
-    // Drop-off calculation would require session tracking
-    // This is a simplified version
     const nextQuestionEvents = await admin.firestore()
       .collection('question_events')
       .where('previous_question_id', '==', questionId)
