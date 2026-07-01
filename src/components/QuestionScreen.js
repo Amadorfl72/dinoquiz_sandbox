@@ -5,13 +5,20 @@ const QuestionScreen = ({ question, options, dinosaurImage, onSelect }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.questionText}>{question}</Text>
-      <Image source={dinosaurImage} style={styles.dinosaurImage} />
+      <Image 
+        source={dinosaurImage} 
+        style={styles.dinosaurImage} 
+        testID="dinosaur-image"
+        accessibilityLabel="Illustration of the dinosaur"
+      />
       <View style={styles.optionsContainer}>
         {options.map((option, index) => (
           <TouchableOpacity
             key={index}
             style={styles.optionButton}
             onPress={() => onSelect(option)}
+            accessibilityRole="button"
+            testID="answer-option-button"
           >
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
@@ -27,12 +34,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#F5F5F5',
   },
   questionText: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    color: '#333',
   },
   dinosaurImage: {
     width: 200,
@@ -49,6 +58,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   optionText: {
     color: 'white',
