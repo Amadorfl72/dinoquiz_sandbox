@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { AnswerOption } from '../AnswerOption';
+import AnswerOption from '../AnswerOption';
 
 describe('AnswerOption Component - Double Tap Debounce', () => {
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe('AnswerOption Component - Double Tap Debounce', () => {
 
   it('prevents multiple answers if the same option is tapped twice quickly', () => {
     const handleAnswer = jest.fn();
-    render(<AnswerOption optionId="A" onAnswer={handleAnswer} debounceTime={500} />);
+    render(<AnswerOption option="A" onAnswer={handleAnswer} debounceTime={500} />);
 
     const button = screen.getByRole('button');
 
@@ -32,7 +32,7 @@ describe('AnswerOption Component - Double Tap Debounce', () => {
 
   it('allows answering again after the debounce time', () => {
     const handleAnswer = jest.fn();
-    render(<AnswerOption optionId="A" onAnswer={handleAnswer} debounceTime={500} />);
+    render(<AnswerOption option="A" onAnswer={handleAnswer} debounceTime={500} />);
 
     const button = screen.getByRole('button');
 
