@@ -7,7 +7,8 @@
 }
 
 #play_button {
-  font-size: 24sp;
+  font-size: 24px;
+  min-height: 64px;
   padding: 16px;
   background-color: #4CAF50;
   color: white;
