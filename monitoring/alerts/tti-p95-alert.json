@@ -1,0 +1,9 @@
+{
+  "name": "TTI p95 Alert",
+  "query": "histogram_quantile(0.95, sum(rate(frontend_tti_seconds_bucket[60m])) by (le))",
+  "condition": ">",
+  "threshold": 2.0,
+  "duration_minutes": 60,
+  "severity": "critical",
+  "description": "TTI p95 has been above 2 seconds for the last hour"
+}
