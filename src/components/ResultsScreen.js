@@ -7,9 +7,10 @@ const ResultsScreen = ({ score, bestScore }) => {
   useEffect(() => {
     if (score > bestScore) {
       setShowNewBestScore(true);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setShowNewBestScore(false);
       }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [score, bestScore]);
 
@@ -18,7 +19,7 @@ const ResultsScreen = ({ score, bestScore }) => {
       <h1>Resultados</h1>
       <p>Puntuación: {score}</p>
       {showNewBestScore && (
-        <div className="new-best-score-feedback">
+        <div className="new-best-score-feedback" role="status" aria-live="polite">
           ¡Nueva mejor puntuación!
         </div>
       )}
