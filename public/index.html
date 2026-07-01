@@ -4,21 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#4CAF50">
+  <meta name="description" content="DinoQuiz - Aprende sobre dinosaurios jugando">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DinoQuiz">
+  
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <link rel="preload" href="/styles/main.css" as="style">
+  <link rel="preload" href="/assets/images/dino-mascot.png" as="image">
+  
   <title>DinoQuiz</title>
-  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    /* Critical CSS inlined for fast initial render */
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    
+    h1 {
+      color: #4CAF50;
+      font-size: 3rem;
+    }
+    
+    img {
+      max-width: 300px;
+      margin: 20px 0;
+    }
+    
+    #playButton {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 24px;
+      margin: 20px 0;
+      cursor: pointer;
+      border-radius: 12px;
+      min-height: 64px;
+      min-width: 200px;
+    }
+    
+    #playButton:active {
+      transform: scale(0.98);
+    }
+  </style>
+  <link rel="stylesheet" href="/styles/main.css" media="print" onload="this.media='all'">
 </head>
 <body>
   <div id="app">
     <h1>DinoQuiz</h1>
-    <img src="/assets/images/dino-mascot.png" alt="Dino mascot">
+    <img src="/assets/images/dino-mascot.png" alt="Dinosaurio mascota de DinoQuiz">
     <button id="playButton">¡Jugar!</button>
   </div>
-  <script src="/scripts/main.js"></script>
+  <script src="/scripts/main.js" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
       });
     }
   </script>
