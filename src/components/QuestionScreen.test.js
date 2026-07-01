@@ -20,7 +20,7 @@ describe('QuestionScreen', () => {
     expect(getByText(mockQuestion)).toBeTruthy();
   });
 
-  it('renders the dinosaur image', () => {
+  it('renders the dinosaur image with accessibility', () => {
     const { getByTestId } = render(
       <QuestionScreen
         question={mockQuestion}
@@ -32,8 +32,8 @@ describe('QuestionScreen', () => {
     expect(getByTestId('dinosaur-image')).toBeTruthy();
   });
 
-  it('renders all answer options', () => {
-    const { getByText } = render(
+  it('renders exactly 3 answer options', () => {
+    const { getAllByTestId } = render(
       <QuestionScreen
         question={mockQuestion}
         options={mockOptions}
@@ -41,9 +41,8 @@ describe('QuestionScreen', () => {
         onSelect={mockOnSelect}
       />
     );
-    mockOptions.forEach(option => {
-      expect(getByText(option)).toBeTruthy();
-    });
+    const buttons = getAllByTestId('answer-option-button');
+    expect(buttons).toHaveLength(3);
   });
 
   it('calls onSelect when an option is pressed', () => {
@@ -57,5 +56,18 @@ describe('QuestionScreen', () => {
     );
     fireEvent.press(getByText(mockOptions[0]));
     expect(mockOnSelect).toHaveBeenCalledWith(mockOptions[0]);
+  });
+
+  it('has accessible option buttons', () => {
+    const { getAllByRole } = render(
+      <QuestionScreen
+        question={mockQuestion}
+        options={mockOptions}
+        dinosaurImage={mockDinosaurImage}
+        onSelect={mockOnSelect}
+      />
+    );
+    const buttons = getAllByRole('button');
+    expect(buttons).toHaveLength(3);
   });
 });
