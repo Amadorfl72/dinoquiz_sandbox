@@ -1,5 +1,5 @@
 // Increment cache version when updating assets
-const CACHE_NAME = 'dinoquiz-v1.1';
+const CACHE_NAME = 'dinoquiz-v1.2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -40,37 +40,14 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim(); // Take control of all clients immediately
 });
 
-// Fetch event - implement network-first strategy with cache fallback
+// Fetch event - implement cache-first strategy for better performance
 self.addEventListener('fetch', (event) => {
   // For non-GET requests, use network only
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // For same-origin requests, use network-first strategy
-  if (new URL(event.request.url).origin === self.location.origin) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // If response is valid, cache it
-          if (response && response.status === 200 && response.type === 'basic') {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try cache
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
-
-  // For cross-origin requests, use cache-first strategy
+  // Use cache-first strategy for all requests for better performance
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -78,8 +55,25 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        // Otherwise fetch from network
-        return fetch(event.request);
+        // Otherwise fetch from network and cache the response
+        return fetch(event.request)
+          .then((networkResponse) => {
+            // Check if we received a valid response
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+
+            // Clone the response to put in cache
+            const responseToCache = networkResponse.clone();
+            
+            // Cache the response for future use
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return networkResponse;
+          });
       })
   );
 });
