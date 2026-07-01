@@ -1,29 +1,51 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import ResultsScreen from './ResultsScreen';
-import * as loggingService from '../services/loggingService';
+import { logEvent } from '../utils/logging';
 
-jest.mock('../services/loggingService');
+jest.mock('../utils/logging');
 
-describe('ResultsScreen', () => {
+describe('TRIOFSND-36: Implement Client-Side game_completed Logging', () => {
+  const mockScore = 1500;
+  const mockDurationMs = 120000;
+  const mockAppVersion = '1.0.0';
+
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.REACT_APP_VERSION = mockAppVersion;
   });
 
-  it('should emit game_completed event upon reaching the results screen', () => {
-    const props = {
-      score: 150,
-      durationMs: 45000,
-      appVersion: '1.2.3'
-    };
+  afterEach(() => {
+    delete process.env.REACT_APP_VERSION;
+  });
 
-    render(<ResultsScreen {...props} />);
+  it('should emit game_completed event with score, duration_ms, and app_version upon rendering the results screen', () => {
+    render(<ResultsScreen score={mockScore} durationMs={mockDurationMs} />);
 
-    expect(loggingService.logGameCompleted).toHaveBeenCalledTimes(1);
-    expect(loggingService.logGameCompleted).toHaveBeenCalledWith(
-      props.score,
-      props.durationMs,
-      props.appVersion
-    );
+    expect(logEvent).toHaveBeenCalledTimes(1);
+    expect(logEvent).toHaveBeenCalledWith('game_completed', {
+      score: mockScore,
+      duration_ms: mockDurationMs,
+      app_version: mockAppVersion
+    });
+  });
+
+  it('should not emit game_completed event multiple times on component re-render', () => {
+    const { rerender } = render(<ResultsScreen score={mockScore} durationMs={mockDurationMs} />);
+    
+    // Re-render the component with the same props
+    rerender(<ResultsScreen score={mockScore} durationMs={mockDurationMs} />);
+
+    expect(logEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle zero score correctly', () => {
+    render(<ResultsScreen score={0} durationMs={mockDurationMs} />);
+
+    expect(logEvent).toHaveBeenCalledWith('game_completed', {
+      score: 0,
+      duration_ms: mockDurationMs,
+      app_version: mockAppVersion
+    });
   });
 });
