@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import './QuizQuestion.css';
 
 export default function QuizQuestion({ question, options, correctAnswer, funFact, image, onAnswer }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const navigate = useNavigate();
+  const navigation = useNavigation();
 
   const handleOptionClick = (option) => {
     if (selectedOption !== null) return; // Prevent multiple selections
@@ -22,7 +22,7 @@ export default function QuizQuestion({ question, options, correctAnswer, funFact
     
     // Transition to fun fact screen after a delay
     setTimeout(() => {
-      navigate('/fun-fact', { state: { funFact, image } });
+      navigation.navigate('FunFact', { funFact, image });
     }, 3000);
   };
 
