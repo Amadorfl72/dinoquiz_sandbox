@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Button } from 'react-native';
 import { compareScores, updateBestScore, getStars } from '../utils/scoreUtils';
+import { saveBestScore } from '../storage/localStorage';
 
 const ResultsScreen = ({ route, navigation }) => {
   const { currentScore, bestScore } = route.params;
@@ -8,7 +9,7 @@ const ResultsScreen = ({ route, navigation }) => {
   const updatedBestScore = updateBestScore(currentScore, bestScore);
   const stars = getStars(currentScore);
 
-  // Save updated best score to local storage here
+  saveBestScore(updatedBestScore);
 
   return (
     <View>
