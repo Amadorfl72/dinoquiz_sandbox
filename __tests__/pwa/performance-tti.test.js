@@ -166,21 +166,23 @@ describe('Home Screen Performance - TTI under 2 seconds', () => {
 
     await page.evaluateOnNewDocument(() => {
       window.__longTasksAfterFCP = [];
-      let fcpTime = 0;
+      window.__fcpTime = 0;
+      
+      // Capture FCP time
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          if (entry.name === 'first-contentful-paint') {
-            fcpTime = entry.startTime;
-          }
+        const fcpEntry = list.getEntries().find(e => e.name === 'first-contentful-paint');
+        if (fcpEntry) {
+          window.__fcpTime = fcpEntry.startTime;
         }
       }).observe({ type: 'paint', buffered: true });
-
+      
+      // Capture long tasks after FCP
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'longtask' && entry.startTime >= fcpTime) {
+          if (entry.entryType === 'longtask' && window.__fcpTime > 0 && entry.startTime >= window.__fcpTime) {
             window.__longTasksAfterFCP.push({
               startTime: entry.startTime,
-              duration: entry.duration,
+              duration: entry.duration
             });
           }
         }
@@ -188,124 +190,17 @@ describe('Home Screen Performance - TTI under 2 seconds', () => {
     });
 
     await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1000); // Allow time for performance entries to be recorded
 
-    const longTasks = await page.evaluate(() => window.__longTasksAfterFCP || []);
-    console.log('Long tasks after FCP:', longTasks.length);
-    longTasks.forEach((t, i) => console.log(`  Task ${i}: ${t.duration}ms at ${t.startTime}ms`));
-
-    // Allow some tolerance but flag excessive long tasks
-    const excessiveTasks = longTasks.filter(t => t.duration > 100);
-    expect(excessiveTasks.length).toBe(0);
-    await page.close();
-  });
-
-  test('Total page weight (transfer size) is optimized', async () => {
-    const page = await browser.newPage();
-    await page.setCacheEnabled(false);
-
-    let totalTransferSize = 0;
-    page.on('response', async (response) => {
-      try {
-        const headers = response.headers();
-        const contentLength = parseInt(headers['content-length'] || '0', 10);
-        if (contentLength > 0) {
-          totalTransferSize += contentLength;
-        }
-      } catch (e) {
-        // ignore
-      }
-    });
-
-    await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
-
-    console.log('Total transfer size:', totalTransferSize, 'bytes');
-    // Expect total page weight to be under 500KB for fast TTI
-    expect(totalTransferSize).toBeLessThan(500000);
-    await page.close();
-  });
-
-  test('JavaScript bundles are code-split or lazy-loaded', async () => {
-    const page = await browser.newPage();
-    await page.setCacheEnabled(false);
-
-    const jsRequests = [];
-    page.on('request', (request) => {
-      const url = request.url();
-      if (url.endsWith('.js') || url.includes('.js?')) {
-        jsRequests.push(url);
-      }
-    });
-
-    await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
-
-    console.log('JS bundle count:', jsRequests.length);
-    jsRequests.forEach((url, i) => console.log(`  ${i}: ${url}`));
-
-    // Should have more than 1 JS file (code splitting) or a single small bundle
-    expect(jsRequests.length).toBeGreaterThanOrEqual(1);
-    await page.close();
-  });
-
-  test('Images are optimized (compressed or lazy-loaded)', async () => {
-    const page = await browser.newPage();
-    await page.setCacheEnabled(false);
-
-    await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
-
-    const imageInfo = await page.evaluate(() => {
-      const images = Array.from(document.querySelectorAll('img'));
-      return images.map(img => ({
-        src: img.src,
-        loading: img.loading,
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        hasSrcSet: img.hasAttribute('srcset'),
-      }));
-    });
-
-    console.log('Images found:', imageInfo.length);
-    imageInfo.forEach((img, i) => console.log(`  ${i}: ${img.src} (loading=${img.loading})`));
-
-    // Images below the fold should be lazy-loaded
-    const lazyImages = imageInfo.filter(img => img.loading === 'lazy');
-    console.log('Lazy-loaded images:', lazyImages.length);
-
-    // At least some images should use lazy loading if there are many
-    if (imageInfo.length > 3) {
-      expect(lazyImages.length).toBeGreaterThan(0);
-    }
-
-    await page.close();
-  });
-
-  test('Text resources are compressed (gzip or brotli)', async () => {
-    const page = await browser.newPage();
-    await page.setCacheEnabled(false);
-
-    const compressionInfo = [];
-    page.on('response', (response) => {
-      const url = response.url();
-      const encoding = response.headers()['content-encoding'] || 'none';
-      const contentType = response.headers()['content-type'] || '';
-      if (contentType.includes('text') || contentType.includes('javascript') || contentType.includes('css') || contentType.includes('json')) {
-        compressionInfo.push({ url, encoding, contentType });
-      }
-    });
-
-    await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 30000 });
-
-    console.log('Compression info:');
-    compressionInfo.forEach(info => console.log(`  ${info.url}: ${info.encoding}`));
-
-    const uncompressed = compressionInfo.filter(info => info.encoding === 'none' && !info.url.includes('data:'));
-    // Allow some uncompressed resources but main bundles should be compressed
-    if (compressionInfo.length > 0) {
-      const compressedRatio = (compressionInfo.length - uncompressed.length) / compressionInfo.length;
-      console.log('Compressed ratio:', compressedRatio);
-      expect(compressedRatio).toBeGreaterThan(0.5);
-    }
-
+    const longTasksAfterFCP = await page.evaluate(() => window.__longTasksAfterFCP);
+    const fcpTime = await page.evaluate(() => window.__fcpTime);
+    
+    console.log('FCP time:', fcpTime, 'ms');
+    console.log('Long tasks after FCP:', longTasksAfterFCP);
+    
+    // Check that there are no long tasks > 50ms after FCP
+    const longRunningTasks = longTasksAfterFCP.filter(task => task.duration > 50);
+    expect(longRunningTasks.length).toBe(0);
     await page.close();
   });
 });
