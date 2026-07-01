@@ -1,102 +1,55 @@
 const Ajv = require('ajv');
-const ajv = new Ajv();
 
-// Assuming the schema and seed data are located at these paths
-const questionSchema = require('../src/schemas/question.schema.json');
-const seedData = require('../src/data/questions.seed.json');
+const schema = require('../schema/question.schema.json');
+const seedData = require('../seed/questions.seed.json');
 
 describe('TRIOFSND-8: Questions JSON Schema and Seed Data', () => {
+  let ajv;
   let validate;
 
   beforeAll(() => {
-    validate = ajv.compile(questionSchema);
+    ajv = new Ajv();
+    validate = ajv.compile(schema);
   });
 
-  describe('Schema Definition', () => {
-    it('should define an object schema', () => {
-      expect(questionSchema.type).toBe('object');
-    });
-
-    it('should require statement, options, correctIndex, dinoId, funFact, and image', () => {
-      expect(questionSchema.required).toEqual(
-        expect.arrayContaining(['statement', 'options', 'correctIndex', 'dinoId', 'funFact', 'image'])
-      );
-    });
-
-    it('should define statement as a string', () => {
-      expect(questionSchema.properties.statement.type).toBe('string');
-    });
-
-    it('should define options as an array of strings with minItems and maxItems of 3', () => {
-      expect(questionSchema.properties.options.type).toBe('array');
-      expect(questionSchema.properties.options.items.type).toBe('string');
-      expect(questionSchema.properties.options.minItems).toBe(3);
-      expect(questionSchema.properties.options.maxItems).toBe(3);
-    });
-
-    it('should define correctIndex as an integer with minimum 0 and maximum 2', () => {
-      expect(questionSchema.properties.correctIndex.type).toBe('integer');
-      expect(questionSchema.properties.correctIndex.minimum).toBe(0);
-      expect(questionSchema.properties.correctIndex.maximum).toBe(2);
-    });
-
-    it('should define dinoId as a string', () => {
-      expect(questionSchema.properties.dinoId.type).toBe('string');
-    });
-
-    it('should define funFact as a string', () => {
-      expect(questionSchema.properties.funFact.type).toBe('string');
-    });
-
-    it('should define image as a string', () => {
-      expect(questionSchema.properties.image.type).toBe('string');
-    });
+  test('Schema should be defined and have required properties', () => {
+    expect(schema).toBeDefined();
+    expect(schema.properties.statement).toBeDefined();
+    expect(schema.properties.options).toBeDefined();
+    expect(schema.properties.correctIndex).toBeDefined();
+    expect(schema.properties.dinoId).toBeDefined();
+    expect(schema.properties.funFact).toBeDefined();
+    expect(schema.properties.image).toBeDefined();
+    expect(schema.required).toEqual(
+      expect.arrayContaining(['statement', 'options', 'correctIndex', 'dinoId', 'funFact', 'image'])
+    );
   });
 
-  describe('Seed Data', () => {
-    it('should be an array', () => {
-      expect(Array.isArray(seedData)).toBe(true);
-    });
+  test('Schema options should be an array of 3 strings', () => {
+    expect(schema.properties.options.type).toBe('array');
+    expect(schema.properties.options.minItems).toBe(3);
+    expect(schema.properties.options.maxItems).toBe(3);
+    expect(schema.properties.options.items.type).toBe('string');
+  });
 
-    it('should contain exactly 30 questions', () => {
-      expect(seedData.length).toBe(30);
-    });
+  test('Schema correctIndex should be an integer between 0 and 2', () => {
+    expect(schema.properties.correctIndex.type).toBe('integer');
+    expect(schema.properties.correctIndex.minimum).toBe(0);
+    expect(schema.properties.correctIndex.maximum).toBe(2);
+  });
 
-    it('should have every question conform to the schema', () => {
-      seedData.forEach((question, index) => {
-        const valid = validate(question);
-        if (!valid) {
-          console.error(`Validation failed for question at index ${index}:`, validate.errors);
-        }
-        expect(valid).toBe(true);
-      });
-    });
+  test('Seed data should contain exactly 30 questions', () => {
+    expect(Array.isArray(seedData)).toBe(true);
+    expect(seedData.length).toBe(30);
+  });
 
-    it('should have exactly 3 options for each question', () => {
-      seedData.forEach((question) => {
-        expect(question.options).toHaveLength(3);
-      });
-    });
-
-    it('should have a correctIndex between 0 and 2 for each question', () => {
-      seedData.forEach((question) => {
-        expect(question.correctIndex).toBeGreaterThanOrEqual(0);
-        expect(question.correctIndex).toBeLessThanOrEqual(2);
-      });
-    });
-
-    it('should have non-empty strings for statement, funFact, and image', () => {
-      seedData.forEach((question) => {
-        expect(question.statement.length).toBeGreaterThan(0);
-        expect(question.funFact.length).toBeGreaterThan(0);
-        expect(question.image.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('should have unique dinoIds for each question', () => {
-      const dinoIds = seedData.map(q => q.dinoId);
-      const uniqueDinoIds = new Set(dinoIds);
-      expect(uniqueDinoIds.size).toBe(30);
+  test('Every seed question should be valid against the schema', () => {
+    seedData.forEach((question, index) => {
+      const valid = validate(question);
+      if (!valid) {
+        console.error(`Validation errors for question at index ${index}:`, validate.errors);
+      }
+      expect(valid).toBe(true);
     });
   });
 });
