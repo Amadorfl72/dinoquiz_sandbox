@@ -1,5 +1,6 @@
 .play-again-button {
   min-height: 48px;
+  height: 48px;
   padding: 12px 24px;
   font-size: 18px;
   border-radius: 8px;
