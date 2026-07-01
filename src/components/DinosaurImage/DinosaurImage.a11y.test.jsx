@@ -41,12 +41,13 @@ describe('TRIOFSND-27: DinosaurImage accessibility', () => {
   it('overlay text has appropriate aria attributes when placeholder is shown', () => {
     render(
       <DinosaurImage src="/images/broken.png" alt="A dinosaur">
-        <span data-testid="overlay-text" role="text">Dino World</span>
+        <span data-testid="overlay-text">Dino World</span>
       </DinosaurImage>
     );
     const img = screen.getByRole('img', { name: /dinosaur/i });
     fireEvent.error(img);
     const overlayText = screen.getByTestId('overlay-text');
-    expect(overlayText).toHaveAttribute('role', 'text');
+    // span elements should not have role=text, removing the role attribute is better
+    expect(overlayText).not.toHaveAttribute('role', 'text');
   });
 });
