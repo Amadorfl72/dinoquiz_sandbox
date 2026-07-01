@@ -9,10 +9,14 @@ const analyticsMiddleware = (store) => (next) => (action) => {
         }
         break;
       case 'TOOLTIP_SHOWN':
-        trackTooltipShown();
+        if (action.payload?.tooltipId) {
+          trackTooltipShown(action.payload.tooltipId);
+        }
         break;
       case 'TOOLTIP_DISMISSED':
-        trackTooltipDismissed();
+        if (action.payload?.tooltipId) {
+          trackTooltipDismissed(action.payload.tooltipId);
+        }
         break;
       default:
         break;
