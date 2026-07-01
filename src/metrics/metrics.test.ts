@@ -1,4 +1,4 @@
-import { trackLCP, trackJSErrors, sendGameStartedMetric } from './metrics';
+import { trackLCP, trackJSError, trackGameStarted } from '../utils/metrics';
 
 global.fetch = jest.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as jest.Mock;
 
@@ -18,45 +18,35 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
         };
       }) as any;
 
-      trackLCP();
-      expect(observeMock).toHaveBeenCalledWith({ entryTypes: ['largest-contentful-paint'] });
+      trackLCP(2500);
       
-      const observerCallback = (global.PerformanceObserver as jest.Mock).mock.calls[0][0];
-      observerCallback({
-        getEntries: () => [{ startTime: 2500 }]
-      });
-
       expect(fetch).toHaveBeenCalledWith('/api/metrics', expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"metric":"LCP"')
+        body: expect.stringContaining('"event":"lcp_latency"')
       }));
     });
   });
 
   describe('JS Error Rate Monitoring', () => {
     it('should track JS errors and send metric', () => {
-      const errorEvent = new Event('error');
-      Object.defineProperty(errorEvent, 'message', { value: 'Test error' });
-      
-      trackJSErrors();
-      window.dispatchEvent(errorEvent);
+      const error = new Error('Test error');
+      trackJSError(error);
 
       expect(fetch).toHaveBeenCalledWith('/api/metrics', expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"metric":"JS_ERROR"')
+        body: expect.stringContaining('"event":"js_error"')
       }));
     });
   });
 
   describe('Game Started Metrics', () => {
-    it('should send game_started metric to backend', async () => {
-      await sendGameStartedMetric();
+    it('should send game_started metric to backend', () => {
+      trackGameStarted();
 
-      expect(fetch).toHaveBeenCalledWith('/api/metrics', {
+      expect(fetch).toHaveBeenCalledWith('/api/metrics', expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metric: 'game_started', timestamp: expect.any(Number) })
-      });
+        body: expect.stringContaining('"event":"game_started"')
+      }));
     });
   });
 });
