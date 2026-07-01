@@ -15,22 +15,24 @@ describe('TRIOFSND-30: Trigger fun_fact_viewed event on screen load', () => {
   });
 
   it('emits the fun_fact_viewed structured log when the Fun Fact screen is rendered', () => {
-    render(<FunFactScreen />);
+    render(<FunFactScreen route={{ params: { funFact: 'Test fact', dinosaurName: 'T-Rex', factId: '123' } }} />);
 
     expect(logger.log).toHaveBeenCalledTimes(1);
     expect(logger.log).toHaveBeenCalledWith(
+      'fun_fact_viewed',
       expect.objectContaining({
-        event: 'fun_fact_viewed',
+        dinosaur_name: 'T-Rex',
+        fact_id: '123'
       })
     );
   });
 
   it('emits the fun_fact_viewed event only once on mount, even with re-renders', () => {
-    const { rerender } = render(<FunFactScreen />);
+    const { rerender } = render(<FunFactScreen route={{ params: { funFact: 'Test fact', dinosaurName: 'T-Rex', factId: '123' } }} />);
     
     expect(logger.log).toHaveBeenCalledTimes(1);
 
-    rerender(<FunFactScreen />);
+    rerender(<FunFactScreen route={{ params: { funFact: 'Test fact', dinosaurName: 'T-Rex', factId: '123' } }} />);
     
     expect(logger.log).toHaveBeenCalledTimes(1);
   });
