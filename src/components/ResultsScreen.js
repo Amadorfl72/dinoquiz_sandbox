@@ -9,10 +9,14 @@ const ResultsScreen = ({ route }) => {
 
   const handlePlayAgain = () => {
     const newQuestions = selectNewQuestions();
-    resetGame(newQuestions);
+    const gameState = resetGame(newQuestions);
     navigation.reset({
       index: 0,
-      routes: [{ name: 'Question', params: { currentQuestionIndex: 0 } }],
+      routes: [{ name: 'Question', params: { 
+        currentQuestion: gameState.currentQuestions[0],
+        currentQuestionIndex: gameState.currentQuestionIndex,
+        score: gameState.score
+      } }],
     });
   };
 
