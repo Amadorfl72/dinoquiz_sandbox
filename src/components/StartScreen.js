@@ -3,18 +3,20 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const StartScreen = ({ onStartGame }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>DinoQuiz</Text>
+    <View style={styles.container} testID="start-screen">
+      <Text style={styles.title} accessibilityRole="header">DinoQuiz</Text>
       <Image
         source={require('../assets/dinosaur.png')}
         style={styles.dinosaurImage}
         accessibilityLabel="Illustration of a friendly dinosaur"
+        testID="dinosaur-image"
       />
       <TouchableOpacity 
         style={styles.playButton} 
         onPress={onStartGame}
         accessibilityRole="button"
         accessibilityLabel="Start game"
+        testID="play-button"
       >
         <Text style={styles.playButtonText}>¡Jugar!</Text>
       </TouchableOpacity>
