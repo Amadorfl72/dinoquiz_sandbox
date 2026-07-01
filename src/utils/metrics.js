@@ -12,11 +12,14 @@ const analytics = initializeAnalytics();
 export const trackLCP = (lcpValue) => {
   if (analytics.isRestrictedMode()) return;
   
-  analytics.sendEvent({
-    event: 'performance_metric',
-    metric_name: 'lcp',
-    value: lcpValue,
-    unit: 'ms'
+  fetch(METRICS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'lcp_latency',
+      value: lcpValue,
+      timestamp: new Date().toISOString()
+    })
   });
 };
 
@@ -27,11 +30,16 @@ export const trackLCP = (lcpValue) => {
 export const trackJSError = (error) => {
   if (analytics.isRestrictedMode()) return;
   
-  analytics.sendEvent({
-    event: 'js_error',
-    error_message: error.message,
-    stack_trace: error.stack,
-    location: window.location.href
+  fetch(METRICS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'js_error',
+      error_message: error.message,
+      stack_trace: error.stack,
+      location: window.location.href,
+      timestamp: new Date().toISOString()
+    })
   });
 };
 
@@ -41,9 +49,13 @@ export const trackJSError = (error) => {
 export const trackGameStarted = () => {
   if (analytics.isRestrictedMode()) return;
   
-  analytics.sendEvent({
-    event: 'game_started',
-    timestamp: new Date().toISOString()
+  fetch(METRICS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'game_started',
+      timestamp: new Date().toISOString()
+    })
   });
 };
 
