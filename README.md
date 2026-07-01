@@ -6,3 +6,4 @@ Los agentes crean ramas `feat/...` desde `main` y abren PRs.
 ## Security Updates
 - Updated Node.js version to 24 in GitHub Actions workflows
 - Fixed security issues identified by semgrep
+- Resolved deprecated Node.js 20 references
