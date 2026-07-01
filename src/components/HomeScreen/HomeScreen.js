@@ -14,6 +14,7 @@ export default function HomeScreen() {
         accessible={true}
         accessibilityLabel="Jugar"
         accessibilityRole="button"
+        testID="play-button"
       >
         <Text style={styles.playButtonText}>¡Jugar!</Text>
       </TouchableOpacity>
