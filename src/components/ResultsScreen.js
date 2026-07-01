@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import strings from '../strings.json';
 
 export default function ResultsScreen({ score, onReplay }) {
   const totalQuestions = 10;
@@ -10,20 +11,33 @@ export default function ResultsScreen({ score, onReplay }) {
   };
 
   const getMotivationalMessage = (score) => {
-    if (score <= 3) return '¡Sigue intentándolo! ¡Los dinosaurios también practicaron mucho!';
-    if (score <= 6) return '¡Buen trabajo! Cada vez sabes más sobre dinosaurios.';
-    if (score <= 8) return '¡Excelente! Eres casi un paleontólogo profesional.';
-    return '¡Increíble! ¡Eres un experto en dinosaurios!';
+    if (score <= 3) return strings.resultsScreen.messages.low;
+    if (score <= 6) return strings.resultsScreen.messages.medium;
+    if (score <= 8) return strings.resultsScreen.messages.high;
+    return strings.resultsScreen.messages.perfect;
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Resultados</Text>
-      <Text style={styles.score}>Has acertado {score}/{totalQuestions}</Text>
+    <View style={styles.container} testID="results-screen">
+      <Text style={styles.title}>{strings.resultsScreen.title}</Text>
+      <Text style={styles.score}>
+        {strings.resultsScreen.score.replace('{score}', score)}
+      </Text>
       <Text style={styles.stars}>{getStars(score)}</Text>
-      <Text style={styles.message}>{getMotivationalMessage(score)}</Text>
-      <TouchableOpacity style={styles.replayButton} onPress={onReplay} testID="play-again-button">
-        <Text style={styles.replayButtonText}>Volver a jugar</Text>
+      <Text 
+        style={styles.message}
+        testID="motivating-message"
+      >
+        {getMotivationalMessage(score)}
+      </Text>
+      <TouchableOpacity 
+        style={styles.replayButton} 
+        onPress={onReplay} 
+        testID="play-again-button"
+        accessibilityLabel={strings.resultsScreen.replayButton}
+        accessibilityRole="button"
+      >
+        <Text style={styles.replayButtonText}>{strings.resultsScreen.replayButton}</Text>
       </TouchableOpacity>
     </View>
   );
