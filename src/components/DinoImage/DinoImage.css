@@ -11,3 +11,9 @@
   max-height: 100%;
   object-fit: contain;
 }
+
+.dino-image[data-testid="dino-placeholder"] {
+  border: 2px dashed #ccc;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
