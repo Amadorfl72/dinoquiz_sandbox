@@ -1,0 +1,27 @@
+{
+  "title": "DinoQuiz - User Funnel Dashboard",
+  "panels": [
+    {
+      "title": "User Funnel (app_open -> pantalla_inicio -> tap_jugar -> partida_iniciada)",
+      "type": "funnel",
+      "steps": [
+        {
+          "name": "app_open",
+          "query": "count(sum(frontend_events_total{event=\"app_open\"}) by (instance))"
+        },
+        {
+          "name": "pantalla_inicio",
+          "query": "count(sum(frontend_events_total{event=\"pantalla_inicio\"}) by (instance))"
+        },
+        {
+          "name": "tap_jugar",
+          "query": "count(sum(frontend_events_total{event=\"tap_jugar\"}) by (instance))"
+        },
+        {
+          "name": "partida_iniciada",
+          "query": "count(sum(frontend_events_total{event=\"partida_iniciada\"}) by (instance))"
+        }
+      ]
+    }
+  ]
+}
