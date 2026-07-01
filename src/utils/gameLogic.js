@@ -4,7 +4,7 @@ let currentQuestions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 
-const selectNewQuestions = () => {
+const selectNewQuestions = async () => {
   // Create a copy of the questions array to avoid mutating the original
   const questionPool = [...questions];
   const selectedQuestions = [];
@@ -20,7 +20,7 @@ const selectNewQuestions = () => {
 };
 
 const resetGame = (newQuestions) => {
-  currentQuestions = newQuestions || selectNewQuestions();
+  currentQuestions = newQuestions || [];
   currentQuestionIndex = 0;
   score = 0;
   return {
