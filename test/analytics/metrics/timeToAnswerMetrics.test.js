@@ -32,4 +32,26 @@ describe('aggregateTimeToAnswerMetrics', () => {
       '10s+': 0
     });
   });
+
+  it('handles null/undefined events', () => {
+    const result = aggregateTimeToAnswerMetrics(null);
+    expect(result.histogram).toEqual({
+      '0-1s': 0,
+      '1-3s': 0,
+      '3-5s': 0,
+      '5-10s': 0,
+      '10s+': 0
+    });
+  });
+
+  it('filters out events without time_to_answer_ms', () => {
+    const mockEvents = [
+      {},
+      { time_to_answer_ms: 1500 },
+      { wrong_field: 2000 }
+    ];
+
+    const result = aggregateTimeToAnswerMetrics(mockEvents);
+    expect(result.histogram['1-3s']).toBe(1);
+  });
 });
