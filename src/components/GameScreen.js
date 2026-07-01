@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { selectRandomQuestions, shuffleAnswers } from '../utils/gameUtils';
+import { selectRandomQuestions } from '../utils/gameUtils';
 import questions from '../data/questions.json';
 
 const GameScreen = ({ onGameStart }) => {
   const [currentQuestions, setCurrentQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [shuffledAnswers, setShuffledAnswers] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     startNewGame();
@@ -16,13 +16,11 @@ const GameScreen = ({ onGameStart }) => {
       const selectedQuestions = selectRandomQuestions(questions, 10);
       setCurrentQuestions(selectedQuestions);
       setCurrentQuestionIndex(0);
-      if (selectedQuestions.length > 0) {
-        setShuffledAnswers(shuffleAnswers(selectedQuestions[0]));
-      }
+      setError(null);
       onGameStart();
-    } catch (error) {
-      console.error('Game initialization failed:', error);
-      // Handle error state appropriately
+    } catch (err) {
+      console.error('Game initialization failed:', err);
+      setError('No se pudieron cargar las preguntas. Inténtalo de nuevo.');
     }
   };
 
@@ -34,7 +32,6 @@ const GameScreen = ({ onGameStart }) => {
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < currentQuestions.length) {
       setCurrentQuestionIndex(nextIndex);
-      setShuffledAnswers(shuffleAnswers(currentQuestions[nextIndex]));
     } else {
       // Handle game end logic here
     }
@@ -42,17 +39,25 @@ const GameScreen = ({ onGameStart }) => {
 
   return (
     <div>
-      {currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length ? (
+      {error ? (
+        <div className="error-message">{error}</div>
+      ) : currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length ? (
         <div>
           <h2>{currentQuestions[currentQuestionIndex].question}</h2>
           <div>
-            {shuffledAnswers.map((answer, index) => (
-              <button key={index} onClick={() => handleAnswerSelect(answer)}>
+            {currentQuestions[currentQuestionIndex].options.map((answer, index) => (
+              <button 
+                key={index} 
+                onClick={() => handleAnswerSelect(answer)}
+                className="answer-button"
+              >
                 {answer}
               </button>
             ))}
           </div>
-          <button onClick={handleNextQuestion}>Siguiente</button>
+          <button onClick={handleNextQuestion} className="next-button">
+            Siguiente
+          </button>
         </div>
       ) : (
         <div>No hay preguntas disponibles</div>
