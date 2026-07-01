@@ -29,7 +29,9 @@ describe('QuestionScreen', () => {
         onSelect={mockOnSelect}
       />
     );
-    expect(getByTestId('dinosaur-image')).toBeTruthy();
+    const image = getByTestId('dinosaur-image');
+    expect(image).toBeTruthy();
+    expect(image.props.accessibilityRole).toBe('image');
   });
 
   it('renders exactly 3 answer options', () => {
@@ -41,7 +43,7 @@ describe('QuestionScreen', () => {
         onSelect={mockOnSelect}
       />
     );
-    const buttons = getAllByTestId('answer-option-button');
+    const buttons = getAllByTestId(/answer-option-button/);
     expect(buttons).toHaveLength(3);
   });
 
@@ -58,8 +60,8 @@ describe('QuestionScreen', () => {
     expect(mockOnSelect).toHaveBeenCalledWith(mockOptions[0]);
   });
 
-  it('has accessible option buttons', () => {
-    const { getAllByRole } = render(
+  it('has accessible option buttons with proper roles and labels', () => {
+    const { getAllByRole, getAllByLabelText } = render(
       <QuestionScreen
         question={mockQuestion}
         options={mockOptions}
@@ -69,10 +71,14 @@ describe('QuestionScreen', () => {
     );
     const buttons = getAllByRole('button');
     expect(buttons).toHaveLength(3);
+    
+    mockOptions.forEach((option, index) => {
+      expect(getAllByLabelText(`Answer option ${index + 1}: ${option}`)).toBeTruthy();
+    });
   });
 
-  it('has proper accessibility labels for options', () => {
-    const { getAllByLabelText } = render(
+  it('has minimum touchable dimensions for accessibility', () => {
+    const { getAllByTestId } = render(
       <QuestionScreen
         question={mockQuestion}
         options={mockOptions}
@@ -80,8 +86,10 @@ describe('QuestionScreen', () => {
         onSelect={mockOnSelect}
       />
     );
-    mockOptions.forEach(option => {
-      expect(getAllByLabelText(`Answer option: ${option}`)).toBeTruthy();
+    const buttons = getAllByTestId(/answer-option-button/);
+    buttons.forEach(button => {
+      expect(button.props.style.minHeight).toBe(48);
+      expect(button.props.style.minWidth).toBe('80%');
     });
   });
 });
