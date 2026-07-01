@@ -1,51 +1,58 @@
 import json
 import pytest
-import logging
-from io import StringIO
-from app.logger import StructuredLogger
+from unittest.mock import patch
+from datetime import datetime
 
-@pytest.fixture
-def logger_setup():
-    log_stream = StringIO()
-    handler = logging.StreamHandler(log_stream)
-    handler.setFormatter(logging.Formatter('%(message)s'))
-    
-    logger = StructuredLogger()
-    logger.logger.addHandler(handler)
-    logger.logger.setLevel(logging.INFO)
-    
-    return logger, log_stream
+import logging_utils
 
-def get_last_log(log_stream):
-    log_output = log_stream.getvalue().strip().split('\n')[-1]
-    return json.loads(log_output)
 
-def test_app_open_event(logger_setup):
-    logger, log_stream = logger_setup
-    logger.app_open(app_version="1.0.0", locale="en-US")
-    
-    log_data = get_last_log(log_stream)
-    
-    assert log_data["event"] == "app_open"
-    assert "timestamp" in log_data
-    assert log_data["app_version"] == "1.0.0"
-    assert log_data["locale"] == "en-US"
+def test_log_app_open_structure():
+    with patch('logging_utils.logger') as mock_logger:
+        logging_utils.log_app_open(app_version="1.0.0", locale="en-US")
+        mock_logger.info.assert_called_once()
+        log_call = mock_logger.info.call_args[0][0]
+        log_data = json.loads(log_call)
+        
+        assert log_data["event"] == "app_open"
+        assert "timestamp" in log_data
+        assert log_data["app_version"] == "1.0.0"
+        assert log_data["locale"] == "en-US"
 
-def test_game_started_event(logger_setup):
-    logger, log_stream = logger_setup
-    logger.game_started(app_version="1.0.0", locale="fr-FR")
-    
-    log_data = get_last_log(log_stream)
-    
-    assert log_data["event"] == "game_started"
-    assert "timestamp" in log_data
-    assert log_data["app_version"] == "1.0.0"
-    assert log_data["locale"] == "fr-FR"
 
-def test_json_structure_validity(logger_setup):
-    logger, log_stream = logger_setup
-    logger.app_open(app_version="1.0.0", locale="en-US")
-    
-    # Should not raise JSONDecodeError
-    log_data = get_last_log(log_stream)
-    assert isinstance(log_data, dict)
+def test_log_game_started_structure():
+    with patch('logging_utils.logger') as mock_logger:
+        logging_utils.log_game_started(app_version="1.0.0", locale="en-US")
+        mock_logger.info.assert_called_once()
+        log_call = mock_logger.info.call_args[0][0]
+        log_data = json.loads(log_call)
+        
+        assert log_data["event"] == "game_started"
+        assert "timestamp" in log_data
+        assert log_data["app_version"] == "1.0.0"
+        assert log_data["locale"] == "en-US"
+
+
+def test_timestamp_is_valid_iso_format():
+    with patch('logging_utils.logger') as mock_logger:
+        logging_utils.log_app_open(app_version="1.0.0", locale="en-US")
+        log_call = mock_logger.info.call_args[0][0]
+        log_data = json.loads(log_call)
+        
+        # Check if timestamp is valid ISO format
+        datetime.fromisoformat(log_data["timestamp"])
+
+
+def test_log_app_open_is_valid_json():
+    with patch('logging_utils.logger') as mock_logger:
+        logging_utils.log_app_open(app_version="2.1.3", locale="fr-FR")
+        log_call = mock_logger.info.call_args[0][0]
+        # Should not raise json.JSONDecodeError
+        json.loads(log_call)
+
+
+def test_log_game_started_is_valid_json():
+    with patch('logging_utils.logger') as mock_logger:
+        logging_utils.log_game_started(app_version="2.1.3", locale="fr-FR")
+        log_call = mock_logger.info.call_args[0][0]
+        # Should not raise json.JSONDecodeError
+        json.loads(log_call)
