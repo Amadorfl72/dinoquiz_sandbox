@@ -1,24 +1,24 @@
 import GameSession from './GameSession';
 
 describe('GameSession', () => {
-  const mockQuestions = [
-    { id: 1, text: 'Question 1', options: ['A', 'B', 'C'], correctAnswer: 'A', fact: 'Fact 1' },
-    { id: 2, text: 'Question 2', options: ['A', 'B', 'C'], correctAnswer: 'B', fact: 'Fact 2' },
-    { id: 3, text: 'Question 3', options: ['A', 'B', 'C'], correctAnswer: 'C', fact: 'Fact 3' },
-    { id: 4, text: 'Question 4', options: ['A', 'B', 'C'], correctAnswer: 'A', fact: 'Fact 4' },
-    { id: 5, text: 'Question 5', options: ['A', 'B', 'C'], correctAnswer: 'B', fact: 'Fact 5' },
-    { id: 6, text: 'Question 6', options: ['A', 'B', 'C'], correctAnswer: 'C', fact: 'Fact 6' },
-    { id: 7, text: 'Question 7', options: ['A', 'B', 'C'], correctAnswer: 'A', fact: 'Fact 7' },
-    { id: 8, text: 'Question 8', options: ['A', 'B', 'C'], correctAnswer: 'B', fact: 'Fact 8' },
-    { id: 9, text: 'Question 9', options: ['A', 'B', 'C'], correctAnswer: 'C', fact: 'Fact 9' },
-    { id: 10, text: 'Question 10', options: ['A', 'B', 'C'], correctAnswer: 'A', fact: 'Fact 10' },
-    { id: 11, text: 'Question 11', options: ['A', 'B', 'C'], correctAnswer: 'B', fact: 'Fact 11' },
-    { id: 12, text: 'Question 12', options: ['A', 'B', 'C'], correctAnswer: 'C', fact: 'Fact 12' }
-  ];
+  const mockQuestions = Array.from({ length: 10 }, (_, i) => ({
+    id: `q${i + 1}`,
+    text: `Question ${i + 1}`,
+    options: ['A', 'B', 'C'],
+    correctAnswer: 'A',
+    fact: `Fact ${i + 1}`
+  }));
 
-  it('selects 10 random questions', () => {
-    const gameSession = new GameSession(mockQuestions);
-    expect(gameSession.selectedQuestions.length).toBe(10);
+  it('requires exactly 10 questions', () => {
+    expect(() => new GameSession([])).toThrow(/10 questions/);
+    expect(() => new GameSession(mockQuestions.slice(0, 9))).toThrow(/10 questions/);
+    expect(() => new GameSession([...mockQuestions, mockQuestions[0]])).toThrow(/10 questions/);
+  });
+
+  it('rejects duplicate question IDs', () => {
+    const badQuestions = [...mockQuestions];
+    badQuestions[5] = { ...badQuestions[5], id: badQuestions[0].id };
+    expect(() => new GameSession(badQuestions)).toThrow(/duplicate/);
   });
 
   it('tracks current question index', () => {
@@ -50,6 +50,12 @@ describe('GameSession', () => {
     expect(gameSession.seenFacts.size).toBe(1);
   });
 
+  it('prevents answering the same question twice', () => {
+    const gameSession = new GameSession(mockQuestions);
+    gameSession.answerQuestion(true);
+    expect(() => gameSession.answerQuestion(true)).toThrow(/already answered/);
+  });
+
   it('determines game over state', () => {
     const gameSession = new GameSession(mockQuestions);
     for (let i = 0; i < 9; i++) {
@@ -69,5 +75,13 @@ describe('GameSession', () => {
     expect(results.stars).toBe(1);
     expect(results.maxStreak).toBe(3);
     expect(results.seenFacts).toBe(4);
+  });
+
+  it('tracks shown question IDs', () => {
+    const gameSession = new GameSession(mockQuestions);
+    gameSession.answerQuestion(true);
+    gameSession.nextQuestion();
+    gameSession.answerQuestion(false);
+    expect(gameSession.getShownQuestionIds()).toEqual([mockQuestions[0].id, mockQuestions[1].id]);
   });
 });
