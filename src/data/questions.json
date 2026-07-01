@@ -144,99 +144,99 @@
     "image": "pachycephalosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran velocidad y agilidad?",
-    "options": ["Velociraptor", "Ankylosaurus", "Stegosaurus"],
-    "correctIndex": 0,
-    "dinoId": "velociraptor",
-    "funFact": "Los Velociraptors tenían plumas, aunque no podían volar.",
-    "image": "velociraptor.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y poder?",
-    "options": ["Tyrannosaurus Rex", "Triceratops", "Pteranodon"],
-    "correctIndex": 0,
-    "dinoId": "trex",
-    "funFact": "El T-Rex tenía una de las mordidas más fuertes de cualquier animal terrestre que haya existido.",
-    "image": "trex.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran cuello y cola larga?",
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cola larga?",
     "options": ["Diplodocus", "Tyrannosaurus Rex", "Velociraptor"],
     "correctIndex": 0,
     "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía usar su cola como un látigo para defenderse de los depredadores.",
+    "funFact": "El Diplodocus podía usar su cola como un látigo para defenderse.",
     "image": "diplodocus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran cresta y pico sin dientes?",
-    "options": ["Parasaurolophus", "Triceratops", "Ankylosaurus"],
+    "statement": "¿Qué dinosaurio es conocido por su gran velocidad y agilidad?",
+    "options": ["Compsognathus", "Triceratops", "Ankylosaurus"],
     "correctIndex": 0,
-    "dinoId": "parasaurolophus",
-    "funFact": "La cresta del Parasaurolophus podría haber sido usada para producir sonidos.",
-    "image": "parasaurolophus.png"
+    "dinoId": "compsognathus",
+    "funFact": "El Compsognathus era uno de los dinosaurios más pequeños, del tamaño de un pollo.",
+    "image": "compsognathus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y patas delanteras más largas que las traseras?",
-    "options": ["Brachiosaurus", "Stegosaurus", "Velociraptor"],
+    "statement": "¿Qué dinosaurio es conocido por su gran cuello y patas delanteras más largas que las traseras?",
+    "options": ["Brachiosaurus", "Stegosaurus", "Tyrannosaurus Rex"],
     "correctIndex": 0,
     "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurus podía comer más de 200 kg de plantas cada día.",
+    "funFact": "El Brachiosaurus pasaba la mayor parte del tiempo comiendo hojas de los árboles.",
     "image": "brachiosaurus.png"
   },
   {
     "statement": "¿Qué dinosaurio es conocido por su gran armadura y cola con mazo?",
-    "options": ["Ankylosaurus", "Triceratops", "Pteranodon"],
+    "options": ["Ankylosaurus", "Triceratops", "Velociraptor"],
     "correctIndex": 0,
     "dinoId": "ankylosaurus",
     "funFact": "La armadura del Ankylosaurus estaba hecha de placas óseas llamadas osteodermos.",
     "image": "ankylosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por sus tres cuernos y volante óseo?",
-    "options": ["Triceratops", "Stegosaurus", "Brachiosaurus"],
+    "statement": "¿Qué dinosaurio es conocido por su gran cresta y pico sin dientes?",
+    "options": ["Parasaurolophus", "Tyrannosaurus Rex", "Stegosaurus"],
     "correctIndex": 0,
-    "dinoId": "triceratops",
-    "funFact": "El volante óseo del Triceratops podría haber sido usado para impresionar a otros dinosaurios.",
-    "image": "triceratops.png"
+    "dinoId": "parasaurolophus",
+    "funFact": "La cresta del Parasaurolophus podría haber sido usada para producir sonidos.",
+    "image": "parasaurolophus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por sus placas óseas y cola con púas?",
-    "options": ["Stegosaurus", "Ankylosaurus", "Tyrannosaurus Rex"],
-    "correctIndex": 0,
-    "dinoId": "stegosaurus",
-    "funFact": "El cerebro del Stegosaurus era del tamaño de una nuez, muy pequeño para su cuerpo.",
-    "image": "stegosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ferocidad?",
-    "options": ["Tyrannosaurus Rex", "Triceratops", "Brachiosaurus"],
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ser uno de los últimos dinosaurios en existir?",
+    "options": ["Tyrannosaurus Rex", "Brachiosaurus", "Triceratops"],
     "correctIndex": 0,
     "dinoId": "trex",
-    "funFact": "El T-Rex tenía un sentido del olfato muy desarrollado, lo que lo ayudaba a encontrar presas.",
+    "funFact": "El T-Rex vivió hasta el final de la era de los dinosaurios, hace unos 65 millones de años.",
     "image": "trex.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran velocidad y garras afiladas?",
-    "options": ["Velociraptor", "Stegosaurus", "Ankylosaurus"],
+    "statement": "¿Qué dinosaurio es conocido por su gran cuello y ser uno de los animales más grandes que han existido?",
+    "options": ["Argentinosaurus", "Velociraptor", "Stegosaurus"],
     "correctIndex": 0,
-    "dinoId": "velociraptor",
-    "funFact": "Los Velociraptors probablemente cazaban en grupos para derribar presas más grandes.",
-    "image": "velociraptor.png"
+    "dinoId": "argentinosaurus",
+    "funFact": "El Argentinosaurus podía medir hasta 35 metros de largo y pesar más de 70 toneladas.",
+    "image": "argentinosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran cuello y tamaño enorme?",
-    "options": ["Brachiosaurus", "Triceratops", "Tyrannosaurus Rex"],
+    "statement": "¿Qué dinosaurio es conocido por su gran velocidad y ser un cazador en manada?",
+    "options": ["Deinonychus", "Triceratops", "Ankylosaurus"],
     "correctIndex": 0,
-    "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurus podía alcanzar hojas a más de 9 metros de altura gracias a su largo cuello.",
-    "image": "brachiosaurus.png"
+    "dinoId": "deinonychus",
+    "funFact": "El Deinonychus tenía una gran garra en cada pie que usaba para cazar.",
+    "image": "deinonychus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran armadura y cola con mazo?",
-    "options": ["Ankylosaurus", "Stegosaurus", "Velociraptor"],
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ser un herbívoro pacífico?",
+    "options": ["Apatosaurus", "Tyrannosaurus Rex", "Velociraptor"],
     "correctIndex": 0,
-    "dinoId": "ankylosaurus",
-    "funFact": "El mazo en la cola del Ankylosaurus podía romper los huesos de cualquier depredador que lo atacara.",
-    "image": "ankylosaurus.png"
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus también es conocido como Brontosaurus, aunque son especies diferentes.",
+    "image": "apatosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ser un depredador temible?",
+    "options": ["Spinosaurus", "Triceratops", "Stegosaurus"],
+    "correctIndex": 0,
+    "dinoId": "spinosaurus",
+    "funFact": "El Spinosaurus era más grande que el T-Rex y probablemente pasaba mucho tiempo en el agua.",
+    "image": "spinosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ser un herbívoro con cuello largo?",
+    "options": ["Camarasaurus", "Tyrannosaurus Rex", "Velociraptor"],
+    "correctIndex": 0,
+    "dinoId": "camarasaurus",
+    "funFact": "El Camarasaurus tenía cámaras de aire en sus vértebras que lo hacían más ligero.",
+    "image": "camarasaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y ser un depredador de Sudamérica?",
+    "options": ["Giganotosaurus", "Triceratops", "Ankylosaurus"],
+    "correctIndex": 0,
+    "dinoId": "giganotosaurus",
+    "funFact": "El Giganotosaurus era incluso más grande que el T-Rex y cazaba en manada.",
+    "image": "giganotosaurus.png"
   }
 ]
