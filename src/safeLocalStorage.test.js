@@ -33,19 +33,22 @@ describe('safeLocalStorage', () => {
   describe('setItem', () => {
     it('should set item in localStorage successfully', () => {
       const spy = jest.spyOn(window.localStorage, 'setItem');
-      safeLocalStorage.setItem('testKey', 'testValue');
+      const result = safeLocalStorage.setItem('testKey', 'testValue');
       expect(spy).toHaveBeenCalledWith('testKey', 'testValue');
+      expect(result).toBe(true);
       expect(window.localStorage.getItem('testKey')).toBe('testValue');
     });
 
     it('should not throw on QuotaExceededError', () => {
       mockLocalStorageWithError('QuotaExceededError');
       expect(() => safeLocalStorage.setItem('testKey', 'testValue')).not.toThrow();
+      expect(safeLocalStorage.setItem('testKey', 'testValue')).toBe(false);
     });
 
     it('should not throw on SecurityError (private mode)', () => {
       mockLocalStorageWithError('SecurityError');
       expect(() => safeLocalStorage.setItem('testKey', 'testValue')).not.toThrow();
+      expect(safeLocalStorage.setItem('testKey', 'testValue')).toBe(false);
     });
   });
 
