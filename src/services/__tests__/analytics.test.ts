@@ -27,4 +27,14 @@ describe('Analytics - fun_fact_viewed', () => {
     
     expect(getMetric('fun_fact_viewed')).toBe(1);
   });
+
+  it('should throw error when question_id is missing', () => {
+    expect(() => logFunFactViewed('', 't_rex')).toThrow('question_id and dino_id are required');
+    expect(() => logFunFactViewed(null as any, 't_rex')).toThrow('question_id and dino_id are required');
+  });
+
+  it('should throw error when dino_id is missing', () => {
+    expect(() => logFunFactViewed('q_123', '')).toThrow('question_id and dino_id are required');
+    expect(() => logFunFactViewed('q_123', null as any)).toThrow('question_id and dino_id are required');
+  });
 });
