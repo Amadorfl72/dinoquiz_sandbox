@@ -1,0 +1,26 @@
+[
+  {
+    "id": "q1",
+    "text": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "options": ["Triceratops", "Tyrannosaurus Rex", "Velociraptor", "Stegosaurus"],
+    "correctOption": 1,
+    "funFact": "El T-Rex podía medir hasta 12 metros de largo y pesar más de 8 toneladas.",
+    "dinoImage": "t-rex.png"
+  },
+  {
+    "id": "q2",
+    "text": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "options": ["Triceratops", "Brachiosaurus", "Ankylosaurus", "Pteranodon"],
+    "correctOption": 0,
+    "funFact": "El Triceratops usaba sus cuernos para defenderse de depredadores como el T-Rex.",
+    "dinoImage": "triceratops.png"
+  },
+  {
+    "id": "q3",
+    "text": "¿Qué dinosaurio podía volar?",
+    "options": ["Velociraptor", "Pteranodon", "Stegosaurus", "Ankylosaurus"],
+    "correctOption": 1,
+    "funFact": "El Pteranodon no era realmente un dinosaurio, sino un reptil volador llamado pterosaurio.",
+    "dinoImage": "pteranodon.png"
+  }
+]
