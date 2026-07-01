@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { logGameStarted, logBankLoadValidation } from '../utils/analytics';
-import { checkForDropOffAlerts } from '../utils/metrics';
+import { getCurrentAlerts } from '../utils/metrics';
 import QuestionScreen from './QuestionScreen';
 import ResultsScreen from './ResultsScreen';
 
@@ -28,10 +28,15 @@ const GameManager = ({ questions }) => {
     // Log game start with question IDs
     logGameStarted(selectedQuestions.map(q => q.id));
     
-    // Check for any drop-off or hit percentage alerts
+    // Load alerts once at game start (not checking periodically during gameplay)
     const loadAlerts = async () => {
-      const alerts = await checkForDropOffAlerts();
-      setAlerts(alerts);
+      try {
+        const result = await getCurrentAlerts();
+        setAlerts(result.alerts);
+      } catch (error) {
+        console.error('Failed to load alerts:', error);
+        // Continue without alerts if there's an error
+      }
     };
     
     loadAlerts();
@@ -68,6 +73,7 @@ const GameManager = ({ questions }) => {
       <QuestionScreen 
         question={gameQuestions[currentQuestionIndex]} 
         onAnswer={handleAnswer} 
+        previousQuestionId={currentQuestionIndex > 0 ? gameQuestions[currentQuestionIndex - 1].id : null}
       />
       
       <div className="progress">
