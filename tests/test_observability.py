@@ -1,83 +1,87 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime
-import sys
-import os
-
-# Add src to path to import from our modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'utils'))
-
-# Mock Firebase modules
-sys.modules['firebase/app'] = MagicMock()
-sys.modules['firebase/analytics'] = MagicMock()
-sys.modules['firebase/functions'] = MagicMock()
-
-import analytics
-import metrics
+import observability
 
 @pytest.fixture
-def mock_firebase_analytics():
-    with patch('analytics.logEvent') as mock_log:
-        yield mock_log
+def reset_metrics():
+    observability.metrics_store = {
+        'questions': {},
+        'drop_offs': {}
+    }
+    yield
+    observability.metrics_store = {
+        'questions': {},
+        'drop_offs': {}
+    }
 
-@pytest.fixture
-def mock_https_callable():
-    with patch('metrics.httpsCallable') as mock_https:
-        mock_callable = MagicMock()
-        mock_https.return_value = mock_callable
-        yield mock_callable
-
-def test_log_partida_iniciada(mock_firebase_analytics):
-    question_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+def test_log_partida_iniciada(caplog):
+    timestamp = datetime.utcnow().isoformat()
+    ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     
-    analytics.logGameStarted(question_ids)
+    observability.log_partida_iniciada(timestamp, ids)
     
-    mock_firebase_analytics.assert_called_once()
-    call_args = mock_firebase_analytics.call_args[0]
-    assert call_args[1] == 'partida_iniciada'
-    assert 'timestamp' in call_args[2]
-    assert call_args[2]['question_ids'] == question_ids
+    assert any('partida_iniciada' in record.message for record in caplog.records)
+    assert any(timestamp in record.message for record in caplog.records)
+    for q_id in ids:
+        assert any(str(q_id) in record.message for record in caplog.records)
 
-def test_log_pregunta_respondida(mock_firebase_analytics):
+def test_log_pregunta_respondida(caplog):
     question_id = 42
-    is_hit = True
-    response_time_ms = 1500
-    previous_question_id = 41
+    hit = True
+    time_taken = 5.2
     
-    analytics.logQuestionAnswered(question_id, is_hit, response_time_ms, previous_question_id)
+    observability.log_pregunta_respondida(question_id, hit, time_taken)
     
-    mock_firebase_analytics.assert_called_once()
-    call_args = mock_firebase_analytics.call_args[0]
-    assert call_args[1] == 'pregunta_respondida'
-    assert call_args[2]['question_id'] == question_id
-    assert call_args[2]['is_hit'] == is_hit
-    assert call_args[2]['response_time_ms'] == response_time_ms
-    assert call_args[2]['previous_question_id'] == previous_question_id
+    assert any('pregunta_respondida' in record.message for record in caplog.records)
+    assert any(str(question_id) in record.message for record in caplog.records)
+    assert any(str(hit) in record.message for record in caplog.records)
+    assert any(str(time_taken) in record.message for record in caplog.records)
 
-def test_log_bank_load_validation_success(mock_firebase_analytics):
-    analytics.logBankLoadValidation(is_valid=True)
+def test_log_bank_load_validation(caplog):
+    status = 'success'
+    details = 'Loaded 100 questions'
     
-    mock_firebase_analytics.assert_called_once()
-    call_args = mock_firebase_analytics.call_args[0]
-    assert call_args[1] == 'bank_load_validation'
-    assert call_args[2]['is_valid'] == True
+    observability.log_bank_load_validation(status, details)
+    
+    assert any('bank_load_validation' in record.message for record in caplog.records)
+    assert any(status in record.message for record in caplog.records)
+    assert any(details in record.message for record in caplog.records)
 
-def test_log_bank_load_validation_failure(mock_firebase_analytics):
-    error_msg = "Not enough questions"
-    analytics.logBankLoadValidation(is_valid=False, errorMessage=error_msg)
+def test_metrics_hit_percentage(reset_metrics):
+    observability.record_question_metric(1, True)
+    observability.record_question_metric(1, True)
+    observability.record_question_metric(1, False)
     
-    mock_firebase_analytics.assert_called_once()
-    call_args = mock_firebase_analytics.call_args[0]
-    assert call_args[1] == 'bank_load_validation'
-    assert call_args[2]['is_valid'] == False
-    assert call_args[2]['error_message'] == error_msg
+    hit_rate = observability.get_hit_rate(1)
+    assert hit_rate == pytest.approx(66.66, rel=1e-2)
 
-def test_get_current_alerts(mock_https_callable):
-    mock_result = MagicMock()
-    mock_result.data = {'alerts': [{'id': '1', 'type': 'low_hit_percentage'}]}
-    mock_https_callable.return_value = MagicMock(return_value=mock_result)
+def test_metrics_drop_off(reset_metrics):
+    observability.record_drop_off(1, total_started=100, dropped=6)
     
-    result = metrics.getCurrentAlerts()
+    drop_off_rate = observability.get_drop_off_rate(1)
+    assert drop_off_rate == 6.0
+
+def test_alert_high_drop_off(reset_metrics):
+    observability.record_drop_off(1, total_started=100, dropped=6) # 6% drop-off
     
-    assert isinstance(result, MagicMock)  # We're testing the callable is returned correctly
-    mock_https_callable.assert_called_once()
+    alerts = observability.check_alerts()
+    assert any(alert['type'] == 'high_drop_off' and alert['question_id'] == 1 for alert in alerts)
+
+def test_alert_low_hit_rate(reset_metrics):
+    observability.record_question_metric(2, True)
+    observability.record_question_metric(2, False)
+    observability.record_question_metric(2, False)
+    observability.record_question_metric(2, False) # 25% hit rate
+    
+    alerts = observability.check_alerts()
+    assert any(alert['type'] == 'low_hit_rate' and alert['question_id'] == 2 for alert in alerts)
+
+def test_no_alert_when_metrics_normal(reset_metrics):
+    observability.record_question_metric(3, True)
+    observability.record_question_metric(3, True)
+    observability.record_question_metric(3, False) # 66% hit rate
+    observability.record_drop_off(3, total_started=100, dropped=2) # 2% drop-off
+    
+    alerts = observability.check_alerts()
+    assert len(alerts) == 0
