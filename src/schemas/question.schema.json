@@ -6,34 +6,41 @@
   "properties": {
     "statement": {
       "description": "The question statement",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "options": {
       "description": "The answer options",
       "type": "array",
       "minItems": 3,
-      "maxItems": 4,
+      "maxItems": 3,
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1
       }
     },
     "correctIndex": {
       "description": "The index of the correct answer in the options array",
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "maximum": 2
     },
     "dinoId": {
       "description": "The identifier of the dinosaur related to the question",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "funFact": {
       "description": "A fun fact about the dinosaur",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "image": {
       "description": "The filename of the dinosaur image",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     }
   },
-  "required": ["statement", "options", "correctIndex", "dinoId", "funFact", "image"]
+  "required": ["statement", "options", "correctIndex", "dinoId", "funFact", "image"],
+  "additionalProperties": false
 }
