@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import './ResultsScreen.css';
 
-const ResultsScreen = ({ score, bestScore }) => {
+const ResultsScreen = ({ score, bestScore, isNewBestScore, onPlayAgain, onExit }) => {
   const [showNewBestScore, setShowNewBestScore] = useState(false);
 
   useEffect(() => {
-    if (score > bestScore) {
+    if (isNewBestScore) {
       setShowNewBestScore(true);
       const timer = setTimeout(() => {
         setShowNewBestScore(false);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [score, bestScore]);
+  }, [isNewBestScore]);
 
   return (
     <div className="results-screen">
@@ -23,7 +23,7 @@ const ResultsScreen = ({ score, bestScore }) => {
           ¡Nueva mejor puntuación!
         </div>
       )}
-      <button>Volver a jugar</button>
+      <button onClick={onPlayAgain}>Volver a jugar</button>
     </div>
   );
 };
