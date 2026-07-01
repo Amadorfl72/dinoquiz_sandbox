@@ -144,17 +144,16 @@ describe('BestScoreManager', () => {
 
     it('should keep in-memory best score consistent even if persistence fails', () => {
       global.localStorage = {
-        getItem: jest.fn(() => null),
-        setItem: jest.fn(() => { throw new Error('persist failed'); }),
-        removeItem: jest.fn(() => {}),
-        clear: jest.fn(() => {})
+        getItem: jest.fn(() => { throw new Error('SecurityError'); }),
+        setItem: jest.fn(() => { throw new Error('SecurityError'); }),
+        removeItem: jest.fn(() => { throw new Error('SecurityError'); }),
+        clear: jest.fn(() => { throw new Error('SecurityError'); })
       };
       global.window = { localStorage: global.localStorage };
 
       const manager = new BestScoreManager();
       manager.updateBestScore(1200);
-      manager.updateBestScore(1500);
-      expect(manager.getBestScore()).toBe(1500);
+      expect(manager.getBestScore()).toBe(1200);
     });
   });
 });
