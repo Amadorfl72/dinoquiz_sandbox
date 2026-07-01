@@ -19,7 +19,7 @@ def test_log_app_open_is_valid_json(mock_logger):
 def test_log_app_open_contains_required_fields(mock_logger):
     log_app_open(app_version="1.0.0", locale="en-US")
     log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message)
+    log_data = json.loads(log_message);
     
     assert log_data.get("event") == "app_open"
     assert "timestamp" in log_data
@@ -35,7 +35,7 @@ def test_log_game_started_is_valid_json(mock_logger):
 def test_log_game_started_contains_required_fields(mock_logger):
     log_game_started(app_version="2.0.0", locale="fr-FR")
     log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message)
+    log_data = json.loads(log_message);
     
     assert log_data.get("event") == "game_started"
     assert "timestamp" in log_data
@@ -45,7 +45,7 @@ def test_log_game_started_contains_required_fields(mock_logger):
 def test_timestamp_is_iso_format(mock_logger):
     log_app_open(app_version="1.0.0", locale="en-US")
     log_message = mock_logger.info.call_args[0][0]
-    log_data = json.loads(log_message)
+    log_data = json.loads(log_message);
     
     try:
         datetime.datetime.fromisoformat(log_data["timestamp"])
