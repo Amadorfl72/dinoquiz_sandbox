@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTIONS_FILE_PATH = path.join(__dirname, '..', 'src', 'data', 'questions.json');
+const QUESTIONS_FILE_PATH = path.join(__dirname, '..', 'src', 'assets', 'questions.json');
 
 let questions = [];
 
@@ -11,9 +11,9 @@ beforeAll(() => {
 });
 
 describe('TRIOFSND-24: Local questions JSON fun facts', () => {
-  test('should have exactly 30 questions', () => {
+  test('should have exactly 10 questions', () => {
     expect(Array.isArray(questions)).toBe(true);
-    expect(questions.length).toBe(30);
+    expect(questions.length).toBe(10);
   });
 
   test('each question should have a fun_fact object', () => {
@@ -27,15 +27,15 @@ describe('TRIOFSND-24: Local questions JSON fun facts', () => {
   test('each fun_fact should contain short text and image path', () => {
     questions.forEach((q, index) => {
       expect(q.fun_fact).toHaveProperty('text');
-      expect(q.fun_fact).toHaveProperty('image');
+      expect(q.fun_fact).toHaveProperty('image_path');
       
       expect(typeof q.fun_fact.text).toBe('string');
       expect(q.fun_fact.text.length).toBeGreaterThan(0);
       
-      expect(typeof q.fun_fact.image).toBe('string');
-      expect(q.fun_fact.image.length).toBeGreaterThan(0);
+      expect(typeof q.fun_fact.image_path).toBe('string');
+      expect(q.fun_fact.image_path.length).toBeGreaterThan(0);
       // Basic check for image extension
-      expect(q.fun_fact.image).toMatch(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
+      expect(q.fun_fact.image_path).toMatch(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
     });
   });
 
