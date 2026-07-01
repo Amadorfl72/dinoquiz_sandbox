@@ -1,63 +1,57 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import HomeScreen from '../src/screens/HomeScreen';
-import * as analytics from '../src/services/analytics';
-import { useNavigation } from '@react-navigation/native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import {HomeScreen } from '../src/screens/HomeScreen';
+import { navigate } from '../src/navigation/NavigationService';
+import { logEvent } from '../src/analytics/AnalyticsService';
 
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: jest.fn(),
+jest.mock('../src/navigation/NavigationService', () => ({
+  navigate: jest.fn(),
 }));
 
-jest.mock('../src/services/analytics', () => ({
+jest.mock('../src/analytics/AnalyticsService', () => ({
   logEvent: jest.fn(),
-  getAppOpenTime: jest.fn(),
 }));
 
-describe('TRIOFSND-52: Wire ¡Jugar! Button Navigation and Event Logging', () => {
-  const mockNavigate = jest.fn();
-
+describe('TRIOFSND-52: ¡Jugar! Button Navigation and Event Logging', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useNavigation.mockReturnValue({ navigate: mockNavigate });
+    // Simulate app_open timestamp at render time
+    Date.now = jest.fn(() => 1000);
   });
 
-  it('should render the ¡Jugar! button', () => {
-    const { getByText } = render(<HomeScreen />);
-    expect(getByText('¡Jugar!')).toBeTruthy();
-  });
-
-  it('should navigate to the GameScreen when ¡Jugar! is pressed', () => {
+  it('navigates to the game screen when ¡Jugar! is pressed', () => {
     const { getByText } = render(<HomeScreen />);
     const jugarButton = getByText('¡Jugar!');
+
     fireEvent.press(jugarButton);
-    expect(mockNavigate).toHaveBeenCalledWith('GameScreen');
+
+    expect(navigate).toHaveBeenCalledWith('GameScreen');
   });
 
-  it('should trigger first_tap_jugar analytics event on press', () => {
-    const { getByText } = render(<HomeScreen />);
-    const jugarButton = getByText('¡Jugar!');
-    fireEvent.press(jugarButton);
-    expect(analytics.logEvent).toHaveBeenCalledWith('first_tap_jugar', expect.any(Object));
-  });
-
-  it('should include timestamp since app_open in the first_tap_jugar event', () => {
-    const appOpenTime = 100000;
-    const tapTime = 105000;
-    const expectedTimestamp = tapTime - appOpenTime;
-
-    analytics.getAppOpenTime.mockReturnValue(appOpenTime);
-    
-    const realDateNow = Date.now;
-    global.Date.now = jest.fn(() => tapTime);
+  it('triggers first_tap_jugar analytics event with timestamp since app_open', async () => {
+    // Simulate 2500ms passing since app_open
+    Date.now = jest.fn(() => 3500);
 
     const { getByText } = render(<HomeScreen />);
     const jugarButton = getByText('¡Jugar!');
+
     fireEvent.press(jugarButton);
 
-    expect(analytics.logEvent).toHaveBeenCalledWith('first_tap_jugar', {
-      timestamp_since_app_open: expectedTimestamp
+    await waitFor(() => {
+      expect(logEvent).toHaveBeenCalledWith('first_tap_jugar', {
+        timestamp_since_app_open: 2500,
+      });
     });
+  });
 
-    global.Date.now = realDateNow;
+  it('only triggers first_tap_jugar once on multiple presses', () => {
+    Date.now = jest.fn(() => 2000);
+    const { getByText } = render(<HomeScreen />);
+    const jugarButton = getByText('¡Jugar!');
+
+    fireEvent.press(jugarButton);
+    fireEvent.press(jugarButton);
+
+    expect(logEvent).toHaveBeenCalledTimes(1);
   });
 });
