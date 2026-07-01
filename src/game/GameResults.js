@@ -5,8 +5,11 @@ export function handleGameResults(currentScore) {
   const previousBest = loadBestScore();
   
   if (currentScore > previousBest) {
-    saveBestScore(currentScore);
-    logBestScoreUpdated(currentScore, previousBest);
+    const saveResult = saveBestScore(currentScore);
+    // Only log if save was successful
+    if (saveResult) {
+      logBestScoreUpdated(currentScore, previousBest);
+    }
   }
   
   // Rest of the results handling logic
