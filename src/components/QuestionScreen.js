@@ -19,6 +19,7 @@ const QuestionScreen = ({ question, options, dinosaurImage, onSelect }) => {
             onPress={() => onSelect(option)}
             accessibilityRole="button"
             testID="answer-option-button"
+            accessibilityLabel={`Answer option: ${option}`}
           >
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
