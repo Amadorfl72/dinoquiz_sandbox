@@ -12,6 +12,7 @@ export default function HomeScreen({ navigation }) {
         style={styles.mascot} 
         accessibilityLabel="Mascota de DinoQuiz, un dinosaurio amigable"
         accessibilityRole="image"
+        testID="dino_mascot"
       />
       <TouchableOpacity 
         style={styles.playButton}
@@ -21,6 +22,7 @@ export default function HomeScreen({ navigation }) {
         accessibilityHint="Presiona para comenzar una nueva partida"
         activeOpacity={0.7}
         focusable={true}
+        testID="play_button"
       >
         <Text style={styles.playButtonText} accessibilityRole="text">¡Jugar!</Text>
       </TouchableOpacity>
