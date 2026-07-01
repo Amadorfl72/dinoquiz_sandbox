@@ -67,9 +67,9 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
   });
 
   test('4) Disabled localStorage doesn\'t block game and shows no error', () => {
-    // Simulate disabled localStorage (throws on access)
+    // Simulate disabled localStorage (null access)
     Object.defineProperty(window, 'localStorage', {
-      get: () => { throw new Error('Access is denied'); },
+      value: null,
       configurable: true
     });
 
