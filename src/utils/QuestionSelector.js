@@ -1,10 +1,17 @@
 class QuestionSelector {
   constructor(questions) {
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error('Questions must be a non-empty array');
+    }
     this.questions = questions;
     this.usedQuestions = new Set();
   }
 
   getRandomQuestions(count) {
+    if (typeof count !== 'number' || count <= 0) {
+      throw new Error('Count must be a positive number');
+    }
+
     if (count > this.questions.length) {
       throw new Error('Not enough questions available');
     }
