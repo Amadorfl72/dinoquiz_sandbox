@@ -37,8 +37,9 @@ describe('DinosaurImage Accessibility - Placeholder Fallback (TRIOFSND-27)', () 
     // Should have role img or contain an element with role img
     const hasImgRole =
       placeholder.getAttribute('role') === 'img' ||
-      placeholder.querySelector('[role="img"]');
-    expect(hasImgRole || placeholder.querySelector('img')).toBeTruthy();
+      placeholder.querySelector('[role="img"]') ||
+      placeholder.querySelector('img');
+    expect(hasImgRole).toBeTruthy();
   });
 
   it('ensures text contrast is maintained in placeholder for legibility', () => {
