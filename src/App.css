@@ -1,0 +1,12 @@
+.offline-first-load-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 16px;
+  text-align: center;
+  font-size: 18px;
+  z-index: 1000;
+}
