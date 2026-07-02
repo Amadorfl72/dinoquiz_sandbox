@@ -58,4 +58,25 @@ describe('TRIOFSND-36: ResultsScreen', () => {
 
     expect(getByText(/Score: 100/)).toBeInTheDocument();
   });
+
+  it('re-logs when props change', () => {
+    const logSpy = jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockResolvedValue(undefined);
+
+    const { rerender } = render(
+      <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ResultsScreen score={200} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(logSpy).toHaveBeenCalledTimes(2);
+    expect(logSpy).toHaveBeenLastCalledWith(200, 5000, '1.0.0');
+
+    logSpy.mockRestore();
+  });
 });
