@@ -9,7 +9,7 @@ const FunFactScreen = ({ route }) => {
     analyticsLogger.emit({ 
       event: 'fun_fact_viewed'
     });
-  }, [funFact]);
+  }, []);
 
   return (
     <View testID="fun-fact-screen">
