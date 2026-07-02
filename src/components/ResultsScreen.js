@@ -1,79 +1,45 @@
-import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { resetGameState } from '../utils/gameUtils';
+import React, { useState, useEffect } from 'react';
+import { isNewBestScore, setBestScore } from '../utils/score';
+import { strings } from '../strings';
 
-export default function ResultsScreen({ route }) {
-  const { score, questions } = route.params;
-  const navigation = useNavigation();
+const ResultsScreen = ({ score, onRestart }) => {
+  const [showNewBestFeedback, setShowNewBestFeedback] = useState(false);
 
-  const resetGame = () => {
-    // Reset game state and select new questions
-    resetGameState(
-      (newQuestions) => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Question', params: { questionIndex: 0 } }],
-        });
-      },
-      questions
-    );
-  };
+  useEffect(() => {
+    if (isNewBestScore(score)) {
+      try {
+        setBestScore(score);
+        setShowNewBestFeedback(true);
+        
+        // Hide feedback after 3 seconds
+        const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.warn('Failed to persist best score:', error);
+      }
+    }
+  }, [score]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>¡Resultados!</Text>
-      <Text style={styles.score}>Puntuación: {score}/10</Text>
+    <div className="results-screen">
+      <h2>{strings.resultsTitle}</h2>
+      <p>{strings.resultsScore.replace('{score}', score)}</p>
       
-      {/* Stars display based on score */}
-      <View style={styles.starsContainer}>
-        {[...Array(Math.min(Math.floor(score / 3.34) + 1, 3))].map((_, i) => (
-          <Text key={i} style={styles.star}>⭐</Text>
-        ))}
-      </View>
+      {showNewBestFeedback && (
+        <div className="new-best-feedback">
+          {strings.newBestScore}
+        </div>
+      )}
       
-      <Text style={styles.message}>
-        {score < 4 ? '¡Buen intento! Sigue aprendiendo.' : 
-         score < 7 ? '¡Bien hecho! Sabes mucho sobre dinosaurios.' : 
-         '¡Increíble! Eres un experto en dinosaurios.'}
-      </Text>
-      
-      <Button 
-        title="Volver a jugar" 
-        onPress={resetGame}
-        accessibilityLabel="Volver a jugar con nuevas preguntas"
-      />
-    </View>
+      <button 
+        className="play-again-button" 
+        onClick={onRestart}
+        aria-label={strings.playAgain}
+      >
+        {strings.playAgain}
+      </button>
+    </div>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  score: {
-    fontSize: 20,
-    marginBottom: 20,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  star: {
-    fontSize: 30,
-    marginHorizontal: 5,
-  },
-  message: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-});
+export default ResultsScreen;
