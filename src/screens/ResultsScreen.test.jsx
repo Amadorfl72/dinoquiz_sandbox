@@ -1,21 +1,31 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import ResultsScreen from './ResultsScreen';
-import * as gameLogger from '../services/gameLogger';
+import ResultsScreen from '../components/ResultsScreen';
+import * as gameCompletedLogger from '../logging';
 
-jest.mock('../services/gameLogger');
+jest.mock('../logging');
 
 describe('ResultsScreen', () => {
   it('should log game_completed event upon reaching the results screen', () => {
     const mockProps = {
       score: 200,
       duration_ms: 60000,
-      app_version: '2.0.0'
+      app_version: '2.0.0',
     };
 
-    render(<ResultsScreen {...mockProps} />);
+    render(
+      <ResultsScreen
+        score={mockProps.score}
+        durationMs={mockProps.duration_ms}
+        appVersion={mockProps.app_version}
+      />
+    );
 
-    expect(gameLogger.logGameCompleted).toHaveBeenCalledTimes(1);
-    expect(gameLogger.logGameCompleted).toHaveBeenCalledWith(mockProps);
+    expect(gameCompletedLogger.logGameCompleted).toHaveBeenCalledTimes(1);
+    expect(gameCompletedLogger.logGameCompleted).toHaveBeenCalledWith(
+      mockProps.score,
+      mockProps.duration_ms,
+      mockProps.app_version
+    );
   });
 });
