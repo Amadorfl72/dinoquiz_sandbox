@@ -18,7 +18,7 @@ describe('logGameCompleted', () => {
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/v1/events',
+      '/api/logs',
       expect.objectContaining({
         method: 'POST',
         headers: {
