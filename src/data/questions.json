@@ -1,0 +1,84 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the largest dinosaur?",
+      "options": ["T-Rex", "Brachiosaurus", "Velociraptor"],
+      "correct_answer": "Brachiosaurus",
+      "fun_fact": "The Brachiosaurus could reach up to 85 feet in length.",
+      "image_path": "assets/images/brachiosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 2,
+      "question": "Which dinosaur had three horns?",
+      "options": ["Triceratops", "Stegosaurus", "Ankylosaurus"],
+      "correct_answer": "Triceratops",
+      "fun_fact": "The Triceratops had a large frill to protect its neck.",
+      "image_path": "assets/images/triceratops_fun_fact_1.png"
+    },
+    {
+      "id": 3,
+      "question": "What dinosaur is known for its plates?",
+      "options": ["Stegosaurus", "Velociraptor", "Pteranodon"],
+      "correct_answer": "Stegosaurus",
+      "fun_fact": "The Stegosaurus had 17 plates along its back.",
+      "image_path": "assets/images/stegosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 4,
+      "question": "Which dinosaur was a fast runner?",
+      "options": ["Velociraptor", "T-Rex", "Brachiosaurus"],
+      "correct_answer": "Velociraptor",
+      "fun_fact": "The Velociraptor could run up to 40 mph.",
+      "image_path": "assets/images/velociraptor_fun_fact_1.png"
+    },
+    {
+      "id": 5,
+      "question": "What dinosaur had a long neck?",
+      "options": ["Brachiosaurus", "Triceratops", "Stegosaurus"],
+      "correct_answer": "Brachiosaurus",
+      "fun_fact": "The Brachiosaurus could reach leaves high in trees.",
+      "image_path": "assets/images/brachiosaurus_fun_fact_2.png"
+    },
+    {
+      "id": 6,
+      "question": "Which dinosaur had a clubbed tail?",
+      "options": ["Ankylosaurus", "Pteranodon", "Velociraptor"],
+      "correct_answer": "Ankylosaurus",
+      "fun_fact": "The Ankylosaurus used its tail as a weapon.",
+      "image_path": "assets/images/ankylosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 7,
+      "question": "What dinosaur could fly?",
+      "options": ["Pteranodon", "T-Rex", "Brachiosaurus"],
+      "correct_answer": "Pteranodon",
+      "fun_fact": "The Pteranodon had a wingspan of up to 33 feet.",
+      "image_path": "assets/images/pteranodon_fun_fact_1.png"
+    },
+    {
+      "id": 8,
+      "question": "Which dinosaur was heavily armored?",
+      "options": ["Ankylosaurus", "Stegosaurus", "Velociraptor"],
+      "correct_answer": "Ankylosaurus",
+      "fun_fact": "The Ankylosaurus had bony plates covering its body.",
+      "image_path": "assets/images/ankylosaurus_fun_fact_2.png"
+    },
+    {
+      "id": 9,
+      "question": "What dinosaur is known for its size?",
+      "options": ["T-Rex", "Brachiosaurus", "Velociraptor"],
+      "correct_answer": "T-Rex",
+      "fun_fact": "The T-Rex could weigh up to 9 tons.",
+      "image_path": "assets/images/trex_fun_fact_1.png"
+    },
+    {
+      "id": 10,
+      "question": "Which dinosaur had a crest on its head?",
+      "options": ["Pteranodon", "Triceratops", "Stegosaurus"],
+      "correct_answer": "Pteranodon",
+      "fun_fact": "The Pteranodon's crest helped with balance.",
+      "image_path": "assets/images/pteranodon_fun_fact_2.png"
+    }
+  ]
+}
