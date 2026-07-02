@@ -1,17 +1,23 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { resetGameState } from '../utils/gameUtils';
 
 export default function ResultsScreen({ route }) {
-  const { score } = route.params;
+  const { score, questions } = route.params;
   const navigation = useNavigation();
 
   const resetGame = () => {
     // Reset game state and select new questions
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Question', params: { questionIndex: 0 } }],
-    });
+    resetGameState(
+      (newQuestions) => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Question', params: { questionIndex: 0 } }],
+        });
+      },
+      questions
+    );
   };
 
   return (
