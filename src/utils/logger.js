@@ -1,19 +1,23 @@
-import { logEvent } from 'firebase/analytics';
+const logStructured = (payload) => {
+  console.log(JSON.stringify(payload));
+};
 
-const logBestScoreUpdated = (newBest, previousBest, appVersion) => {
-  logEvent('best_score_updated', {
-    newBest,
-    previousBest,
-    appVersion
+const logBestScoreUpdated = (new_best, previous_best, app_version) => {
+  logStructured({
+    event: 'best_score_updated',
+    new_best,
+    previous_best,
+    app_version
   });
 };
 
-const logStorageFailure = (operation, errorType, appVersion) => {
-  logEvent('storage_failure', {
+const logStorageFailure = (operation, error_type, app_version) => {
+  logStructured({
+    event: 'storage_failure',
     operation,
-    errorType,
-    appVersion
+    error_type,
+    app_version
   });
 };
 
-export { logBestScoreUpdated, logStorageFailure };
+export { logStructured, logBestScoreUpdated, logStorageFailure };
