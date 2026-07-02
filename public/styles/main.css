@@ -9,6 +9,7 @@ body {
 h1 {
   font-size: 2.5rem;
   color: #4CAF50;
+  font-display: swap;
 }
 
 #play-button {
@@ -20,8 +21,15 @@ h1 {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  min-height: 64px;
+  min-width: 120px;
 }
 
 #play-button:hover {
   background-color: #45a049;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
