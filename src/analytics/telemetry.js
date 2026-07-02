@@ -2,7 +2,7 @@
 
 export const Telemetry = {
   // Track replay events
-  logReplayClicked: (previousScore) => {
+  logReplayClicked: function(previousScore) {
     const event = {
       name: 'replay_clicked',
       timestamp: new Date().toISOString(),
@@ -12,7 +12,7 @@ export const Telemetry = {
   },
 
   // Track game started with replay trigger
-  logGameStarted: (trigger) => {
+  logGameStarted: function(trigger) {
     const event = {
       name: 'game_started',
       timestamp: new Date().toISOString(),
@@ -22,14 +22,14 @@ export const Telemetry = {
   },
 
   // Calculate and emit replay rate within 5 minutes
-  calculateReplayRate: () => {
+  calculateReplayRate: function() {
     const replayRate = this._calculateRate('replay');
     this._emitMetric('replay_rate', replayRate, { window_minutes: 5 });
     return replayRate;
   },
 
   // Private method to send events to analytics backend
-  _sendEvent: (event) => {
+  _sendEvent: function(event) {
     // Implementation for actual analytics backend
     if (window.analytics) {
       window.analytics.track(event.name, {
@@ -42,7 +42,7 @@ export const Telemetry = {
   },
 
   // Private method to emit metrics
-  _emitMetric: (name, value, attributes) => {
+  _emitMetric: function(name, value, attributes) {
     if (window.analytics) {
       window.analytics.metric(name, value, attributes);
     }
@@ -50,7 +50,7 @@ export const Telemetry = {
   },
 
   // Private method to calculate rate
-  _calculateRate: (trigger) => {
+  _calculateRate: function(trigger) {
     // In a real implementation, this would query the analytics backend
     // for events in the last 5 minutes and calculate the rate
     const now = new Date();
