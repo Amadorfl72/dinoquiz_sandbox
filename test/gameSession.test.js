@@ -1,4 +1,4 @@
-const GameSession = require('../src/gameSession');
+const GameSession = require('../src/game/GameSession');
 
 describe('GameSession State Management', () => {
   let questions;
@@ -10,17 +10,17 @@ describe('GameSession State Management', () => {
   });
 
   it('should initialize session with exactly 10 selected questions', () => {
-    expect(session.selectedQuestions).toHaveLength(10);
+    expect(session.questions).toHaveLength(10);
   });
 
   it('should start with current question index at 0', () => {
-    expect(session.currentIndex).toBe(0);
+    expect(session.currentQuestionIndex).toBe(0);
   });
 
   it('should advance current question index on next()', () => {
-    const initialIndex = session.currentIndex;
+    const initialIndex = session.currentQuestionIndex;
     session.next();
-    expect(session.currentIndex).toBe(initialIndex + 1);
+    expect(session.currentQuestionIndex).toBe(initialIndex + 1);
   });
 
   it('should not repeat previously shown questions', () => {
