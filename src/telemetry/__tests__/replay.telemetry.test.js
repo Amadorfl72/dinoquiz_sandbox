@@ -39,6 +39,12 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       const event = sendEventSpy.mock.calls[0][0];
       expect(event.previous_score).toBe(0);
     });
+
+    it('debe registrar replay_clicked con previous_score negativo', () => {
+      Telemetry.logReplayClicked.call(Telemetry, -25);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.previous_score).toBe(-25);
+    });
   });
 
   describe('Event: game_started', () => {
@@ -60,6 +66,12 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       const event = sendEventSpy.mock.calls[0][0];
       const parsed = new Date(event.timestamp);
       expect(parsed.toString()).not.toBe('Invalid Date');
+    });
+
+    it('debe registrar game_started con trigger distinto cuando se pasa otro valor', () => {
+      Telemetry.logGameStarted.call(Telemetry, 'new_game');
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.trigger).toBe('new_game');
     });
   });
 
@@ -86,6 +98,15 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       Telemetry.calculateReplayRate.call(Telemetry);
 
       expect(emitMetricSpy.mock.calls[0][2]).toEqual({ window_minutes: 5 });
+    });
+
+    it('debe retornar el mismo valor que emite en la métrica', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.65);
+      const emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
+
+      const rate = Telemetry.calculateReplayRate.call(Telemetry);
+
+      expect(emitMetricSpy.mock.calls[0][1]).toBe(rate);
     });
   });
 });
