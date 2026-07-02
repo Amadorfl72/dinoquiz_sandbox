@@ -2,9 +2,15 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
 import AnswerOption from './AnswerOption';
 
-jest.useFakeTimers();
-
 describe('AnswerOption', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('calls onSelect only once when clicked multiple times quickly', () => {
     const onSelect = jest.fn();
     const option = { id: '1', text: 'Test Option', isCorrect: true };
