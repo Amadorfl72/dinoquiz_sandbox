@@ -4,10 +4,20 @@ import dinosaurIllustration from '../assets/dinosaur.png';
 
 const StartScreen = ({ onStartGame }) => {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="StartScreen">
       <Text style={styles.title}>DinoQuiz</Text>
-      <Image source={dinosaurIllustration} style={styles.dinosaurImage} />
-      <TouchableOpacity style={styles.playButton} onPress={onStartGame}>
+      <Image 
+        source={dinosaurIllustration} 
+        style={styles.dinosaurImage}
+        accessibilityLabel="Dinosaurio"
+        testID="DinosaurIllustration"
+      />
+      <TouchableOpacity 
+        style={styles.playButton} 
+        onPress={onStartGame}
+        accessibilityLabel="¡Jugar!"
+        testID="PlayButton"
+      >
         <Text style={styles.playButtonText}>¡Jugar!</Text>
       </TouchableOpacity>
     </View>
