@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTIONS_JSON_PATH = path.resolve(__dirname, '../data/questions.json');
+const QUESTIONS_JSON_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 let rawData;
 let questions;
@@ -160,9 +160,11 @@ describe('TRIOFSND-24: Local questions JSON with fun facts', () => {
     });
   });
 
-  test('image_path does not contain spaces or special characters that break paths', () => {
+  test('image_path values point to existing files', () => {
     questions.forEach((q, idx) => {
-      expect(q.fun_fact.image_path).not.toMatch(/\s/);
+      const imgPath = q.fun_fact.image_path;
+      const fullPath = path.resolve(__dirname, '..', imgPath);
+      expect(fs.existsSync(fullPath)).toBe(true);
     });
   });
 });
