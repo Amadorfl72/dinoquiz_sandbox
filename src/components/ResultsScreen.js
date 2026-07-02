@@ -18,7 +18,7 @@ const ResultsScreen = ({ score, onReplay }) => {
     <View style={styles.container}>
       <Text style={styles.scoreText}>Has acertado {score}/10</Text>
       <Text style={styles.messageText}>{getMotivationalMessage(score)}</Text>
-      <View style={styles.replayButton}>
+      <View style={styles.replayButtonContainer}>
         <Button title="Volver a jugar" onPress={onReplay} />
       </View>
     </View>
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     textAlign: 'center',
   },
-  replayButton: {
+  replayButtonContainer: {
     minWidth: 200,
     minHeight: 48,
   },
