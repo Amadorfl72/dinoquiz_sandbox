@@ -1,17 +1,27 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
 
 const QuestionScreen = ({ question, options, dinosaurImage, onOptionSelect }) => {
+  // Convert 48dp to pixels for React Native
+  const buttonSize = Math.round(Dimensions.get('window').width * 0.15); // Approximately 48dp on most devices
+  
   return (
     <View style={styles.container}>
       <Text style={styles.questionText}>{question}</Text>
-      <Image source={dinosaurImage} style={styles.dinosaurImage} />
+      <Image 
+        source={dinosaurImage} 
+        style={styles.dinosaurImage} 
+        accessibilityLabel="Dinosaur illustration"
+        testID="dinosaur-image"
+      />
       <View style={styles.optionsContainer}>
-        {options.map((option, index) => (
+        {options.slice(0, 3).map((option, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.optionButton}
+            style={[styles.optionButton, { minHeight: buttonSize, minWidth: buttonSize }]}
             onPress={() => onOptionSelect(option)}
+            accessibilityRole="button"
+            accessibilityLabel={`Answer option: ${option}`}
           >
             <Text style={styles.optionText}>{option}</Text>
           </TouchableOpacity>
@@ -40,13 +50,13 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     width: '100%',
+    alignItems: 'center',
   },
   optionButton: {
     backgroundColor: '#4CAF50',
     padding: 15,
     marginVertical: 10,
     borderRadius: 5,
-    minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
