@@ -4,12 +4,12 @@ const calculateMetrics = (logs) => {
   const successRatios = {};
   logs.forEach(log => {
     if (log.event === 'question_answered') {
-      if (!successRatios[log.questionId]) {
-        successRatios[log.questionId] = { correct: 0, total: 0 };
+      if (!successRatios[log.question_id]) {
+        successRatios[log.question_id] = { correct: 0, total: 0 };
       }
-      successRatios[log.questionId].total++;
-      if (log.isCorrect) {
-        successRatios[log.questionId].correct++;
+      successRatios[log.question_id].total++;
+      if (log.success) {
+        successRatios[log.question_id].correct++;
       }
     }
   });
@@ -17,12 +17,12 @@ const calculateMetrics = (logs) => {
   // Calculate distribution of time_to_answer_ms
   const timeDistributions = logs
     .filter(log => log.event === 'question_answered')
-    .map(log => log.timeToAnswerMs);
+    .map(log => log.time_to_answer_ms);
 
   // Identify top 5 worst performing questions
   const worstQuestions = Object.entries(successRatios)
     .map(([questionId, { correct, total }]) => ({
-      questionId,
+      question_id: questionId,
       successRatio: correct / total
     }))
     .sort((a, b) => a.successRatio - b.successRatio)
