@@ -1,3 +1,8 @@
+.dinosaur-image-container {
+  position: relative;
+  display: inline-block;
+}
+
 .dinosaur-image {
   max-width: 100%;
   height: auto;
@@ -7,5 +12,17 @@
 }
 
 .dinosaur-image[data-testid="dinosaur-placeholder"] {
-  background-color: #e0e0e0;
+  background-color: #333;
+}
+
+.caption-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
 }
