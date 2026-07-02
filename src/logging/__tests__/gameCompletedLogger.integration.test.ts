@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
-import { logGameCompleted } from '../logging';
+import { logGameCompleted } from '../../logging';
 
 const server = setupServer(
   http.post('/api/logs', async ({ request }) => {
@@ -25,6 +25,16 @@ describe('logGameCompleted integration', () => {
       http.post('/api/logs', () =>
         HttpResponse.json({ error: 'unavailable' }, { status: 503 })
       )
+    );
+
+    await expect(
+      logGameCompleted(500, 30000, '3.1.0')
+    ).resolves.not.toThrow();
+  });
+
+  it('handles network errors gracefully', async () => {
+    server.use(
+      http.post('/api/logs', () => HttpResponse.error())
     );
 
     await expect(
