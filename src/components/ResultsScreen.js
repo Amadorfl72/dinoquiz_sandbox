@@ -22,7 +22,6 @@ const ResultsScreen = ({ score, onReplay }) => {
         <Button 
           title="Volver a jugar" 
           onPress={onReplay} 
-          style={styles.replayButton}
         />
       </View>
     </View>
@@ -47,9 +46,6 @@ const styles = StyleSheet.create({
   },
   replayButtonContainer: {
     minWidth: 200,
-    minHeight: 48,
-  },
-  replayButton: {
     minHeight: 48,
   },
 });
