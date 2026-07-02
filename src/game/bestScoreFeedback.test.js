@@ -84,4 +84,11 @@ describe('Best Score Feedback (TRIOFSND-33)', () => {
     expect(() => render(<ResultsScreen score={6} onRestart={() => {}} />)).not.toThrow();
     expect(screen.getByText(strings.resultsTitle)).toBeInTheDocument();
   });
+
+  it('does not show new-best feedback when setBestScore throws', () => {
+    isNewBestScore.mockReturnValue(true);
+    setBestScore.mockImplementation(() => { throw new Error('Storage failure'); });
+    render(<ResultsScreen score={6} onRestart={() => {}} />);
+    expect(screen.queryByText(strings.newBestScore)).not.toBeInTheDocument();
+  });
 });
