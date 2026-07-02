@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getPerformance } from 'firebase/performance';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import alertRules from './alertRules.json';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -13,22 +15,93 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const perf = getPerformance(app);
+const functions = getFunctions(app);
+
+// Track question performance metrics
+const questionStats = {};
 
 const Metrics = {
   trackQuestionPerformance: (questionId, isHit) => {
-    // This would be configured in Firebase Analytics dashboard
-    // to calculate % hit rate per question
+    if (!questionStats[questionId]) {
+      questionStats[questionId] = {
+        hits: 0,
+        attempts: 0,
+        lastHitRate: 0
+      };
+    }
+    
+    questionStats[questionId].attempts++;
+    if (isHit) questionStats[questionId].hits++;
+    
+    const hitRate = (questionStats[questionId].hits / questionStats[questionId].attempts) * 100;
+    questionStats[questionId].lastHitRate = hitRate;
+    
+    // Check for low hit rate alert
+    if (hitRate < 40) {
+      this.triggerAlert('low_hit_rate', {
+        question_id: questionId,
+        hit_rate: hitRate
+      });
+    }
   },
 
   trackDropOffRate: (questionId, isDropOff) => {
-    // Configured in Firebase Analytics to track
-    // question-to-question drop-off rates
+    if (!questionStats[questionId]) {
+      questionStats[questionId] = {
+        dropOffs: 0,
+        views: 0,
+        lastDropOffRate: 0
+      };
+    }
+    
+    questionStats[questionId].views++;
+    if (isDropOff) questionStats[questionId].dropOffs++;
+    
+    const dropOffRate = (questionStats[questionId].dropOffs / questionStats[questionId].views) * 100;
+    questionStats[questionId].lastDropOffRate = dropOffRate;
+    
+    // Check for high drop-off alert
+    if (dropOffRate > 5) {
+      this.triggerAlert('high_drop_off', {
+        question_id: questionId,
+        drop_off_rate: dropOffRate
+      });
+    }
+  },
+
+  triggerAlert: (alertType, data) => {
+    const alertConfig = alertRules.alerts.find(a => a.name === alertType);
+    if (!alertConfig) return;
+    
+    const sendAlert = httpsCallable(functions, 'sendAlert');
+    sendAlert({
+      type: alertType,
+      config: alertConfig,
+      data: data
+    }).catch(error => {
+      console.error('Error triggering alert:', error);
+    });
   },
 
   setupAlerts: () => {
-    // Configure alerts in Firebase for:
-    // - Drop-off rate >5% for any question
-    // - Hit rate <40% for any question
+    // Initialize periodic checks for alert conditions
+    setInterval(() => {
+      Object.entries(questionStats).forEach(([questionId, stats]) => {
+        if (stats.lastHitRate < 40) {
+          this.triggerAlert('low_hit_rate', {
+            question_id: questionId,
+            hit_rate: stats.lastHitRate
+          });
+        }
+        
+        if (stats.lastDropOffRate > 5) {
+          this.triggerAlert('high_drop_off', {
+            question_id: questionId,
+            drop_off_rate: stats.lastDropOffRate
+          });
+        }
+      });
+    }, 300000); // Check every 5 minutes
   }
 };
 
