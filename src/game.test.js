@@ -46,9 +46,9 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
     expect(messageElement.style.display).not.toBe('none');
   });
 
-  test('no debería actualizar ni mostrar el mensaje si la puntuación es 0 y no hay previa', () => {
+  test('debería actualizar la mejor puntuación y mostrar el mensaje si no existe una previa y la puntuación es 0', () => {
     endGame(0);
-    expect(localStorage.getItem('bestScore')).toBe(null);
-    expect(messageElement.style.display).toBe('none');
+    expect(localStorage.getItem('bestScore')).toBe('0');
+    expect(messageElement.style.display).not.toBe('none');
   });
 });
