@@ -37,6 +37,16 @@ def test_ingest_invalid_log_type(aggregator):
     with pytest.raises(ValueError):
         aggregator.ingest(log)
 
+def test_feedback_shown_does_not_affect_question_stats(aggregator):
+    log = {
+        "event_type": "feedback_shown",
+        "question_id": "q1",
+        "user_id": "u1",
+        "feedback_type": "correct"
+    }
+    aggregator.ingest(log)
+    assert aggregator.question_stats == {}
+
 def test_average_success_ratio(aggregator):
     logs = [
         {"event_type": "question_answered", "question_id": "q1", "success": True, "time_to_answer_ms": 100},
