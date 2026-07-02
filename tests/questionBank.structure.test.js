@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTION_BANK_PATH = path.resolve(__dirname, '../data/questionBank.json');
+const QUESTION_BANK_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 let questionBank;
 
@@ -13,6 +13,8 @@ beforeAll(() => {
 describe('TRIOFSND-57: Question Bank Structural Integrity', () => {
   test('each question object has exactly the expected keys', () => {
     const expectedKeys = [
+      'id',
+      'dinosaur',
       'statement',
       'options',
       'correctAnswer',
@@ -28,6 +30,8 @@ describe('TRIOFSND-57: Question Bank Structural Integrity', () => {
 
   test('no question has extra or missing fields', () => {
     const expectedFields = new Set([
+      'id',
+      'dinosaur',
       'statement',
       'options',
       'correctAnswer',
@@ -89,5 +93,17 @@ describe('TRIOFSND-57: Question Bank Structural Integrity', () => {
       const last = q.statement.trim().slice(-1);
       expect(['?', '.']).toContain(last);
     });
+  });
+
+  test('id is a positive integer for every question', () => {
+    questionBank.forEach((q) => {
+      expect(Number.isInteger(q.id)).toBe(true);
+      expect(q.id).toBeGreaterThan(0);
+    });
+  });
+
+  test('ids are sequential from 1 to 40', () => {
+    const ids = questionBank.map((q) => q.id).sort((a, b) => a - b);
+    expect(ids).toEqual(Array.from({ length: 40 }, (_, i) => i + 1));
   });
 });
