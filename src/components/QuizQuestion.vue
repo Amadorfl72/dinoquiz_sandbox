@@ -1,66 +1,79 @@
 <template>
   <div class="quiz-question">
     <h2>{{ question.text }}</h2>
-    <img :src="question.image" alt="Dinosaur image" />
+    <img :src="question.image" :alt="question.altText" />
     <div class="options">
       <button
         v-for="(option, index) in question.options"
         :key="index"
-        @click="handleAnswer(option)"
+        @click="selectOption(index)"
+        :class="{
+          'correct': showCorrectAnswer && index === question.correctIndex,
+          'incorrect': showIncorrectFeedback && selectedOption === index && index !== question.correctIndex
+        }"
       >
         {{ option }}
       </button>
     </div>
-    <transition name="fade">
-      <div v-if="showFeedback" class="feedback">
-        <p>{{ feedbackMessage }}</p>
-        <div v-if="showAnimation" class="animation-container">
-          <!-- Animation will be triggered here -->
-        </div>
-      </div>
-    </transition>
+    <div v-if="showFeedback" class="feedback">
+      <p v-if="isCorrect">{{ correctFeedback }}</p>
+      <p v-else>{{ incorrectFeedback }} {{ question.options[question.correctIndex] }}</p>
+      <p class="fun-fact">{{ question.funFact }}</p>
+      <button @click="nextQuestion">Siguiente</button>
+    </div>
   </div>
 </template>
 
 <script>
-import { useAnimation } from '@/hooks/useAnimation';
-import { playSound } from '@/utils/SoundManager';
+import { ref } from 'vue';
 
 export default {
   props: {
     question: {
       type: Object,
       required: true
+    },
+    correctFeedback: {
+      type: String,
+      default: '¡Correcto!'
+    },
+    incorrectFeedback: {
+      type: String,
+      default: '¡Casi! La respuesta correcta es:'
     }
   },
-  setup() {
-    const { triggerAnimation } = useAnimation();
-    return { triggerAnimation };
-  },
-  data() {
-    return {
-      showFeedback: false,
-      feedbackMessage: '',
-      showAnimation: false
+  setup(props, { emit }) {
+    const selectedOption = ref(null);
+    const isCorrect = ref(false);
+    const showFeedback = ref(false);
+    const showCorrectAnswer = ref(false);
+    const showIncorrectFeedback = ref(false);
+
+    const selectOption = (index) => {
+      if (showFeedback.value) return;
+
+      selectedOption.value = index;
+      isCorrect.value = index === props.question.correctIndex;
+      showFeedback.value = true;
+      showCorrectAnswer.value = !isCorrect.value;
+      showIncorrectFeedback.value = !isCorrect.value;
+
+      emit('answer-selected', isCorrect.value);
     };
-  },
-  methods: {
-    async handleAnswer(option) {
-      if (option === this.question.correctAnswer) {
-        this.feedbackMessage = '¡Correcto! ' + this.question.funFact;
-        await playSound('happy_sound');
-        this.showFeedback = true;
-        this.showAnimation = true;
-        this.triggerAnimation('positive_animation');
-        setTimeout(() => {
-          this.$emit('show-fun-fact', this.question.funFact);
-        }, 4000); // Transition after 4 seconds
-      } else {
-        this.feedbackMessage = 'La respuesta correcta es: ' + this.question.correctAnswer;
-        playSound('neutral_sound');
-        this.showFeedback = true;
-      }
-    }
+
+    const nextQuestion = () => {
+      emit('next-question');
+    };
+
+    return {
+      selectedOption,
+      isCorrect,
+      showFeedback,
+      showCorrectAnswer,
+      showIncorrectFeedback,
+      selectOption,
+      nextQuestion
+    };
   }
 };
 </script>
@@ -69,22 +82,46 @@ export default {
 .quiz-question {
   text-align: center;
 }
+
 .options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
 }
+
+button {
+  padding: 12px;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+
+button.correct {
+  background-color: #4CAF50;
+  animation: pulse 0.5s;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+}
+
+button.incorrect {
+  background-color: #f44336;
+}
+
 .feedback {
   margin-top: 20px;
 }
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s;
+
+.fun-fact {
+  font-style: italic;
+  margin: 10px 0;
 }
-.fade-enter, .fade-leave-to {
-  opacity: 0;
-}
-.animation-container {
-  margin-top: 20px;
-  height: 100px;
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 </style>
