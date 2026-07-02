@@ -19,13 +19,24 @@ export const shuffleQuestionOptions = (question) => {
   // Create a copy of the options array to avoid mutating the original
   const optionsCopy = [...question.options];
   
-  // Find the correct option before shuffling
-  const correctOption = optionsCopy.find(option => option.isCorrect);
+  // Store the original index of the correct option
+  const correctIndex = optionsCopy.findIndex(option => option.isCorrect);
 
   // Shuffle the options array
   for (let i = optionsCopy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [optionsCopy[i], optionsCopy[j]] = [optionsCopy[j], optionsCopy[i]];
+  }
+
+  // Find the new index of the correct option after shuffling
+  const newCorrectIndex = optionsCopy.findIndex(option => option.isCorrect);
+  
+  // If the correct option moved, update the isCorrect flags
+  if (newCorrectIndex !== correctIndex) {
+    // Reset all isCorrect flags
+    optionsCopy.forEach(option => option.isCorrect = false);
+    // Set the correct flag on the option that was originally correct
+    optionsCopy[newCorrectIndex].isCorrect = true;
   }
 
   return {
