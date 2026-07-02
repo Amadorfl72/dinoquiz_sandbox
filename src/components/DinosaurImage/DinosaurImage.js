@@ -5,7 +5,7 @@ import './DinosaurImage.css';
 const DinosaurImage = ({ src, alt }) => {
   const handleImageError = (e) => {
     e.target.src = placeholderImage;
-    e.target.alt = 'Placeholder image';
+    e.target.setAttribute('data-testid', 'dinosaur-placeholder');
   };
 
   return (
