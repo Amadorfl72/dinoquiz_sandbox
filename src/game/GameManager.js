@@ -15,7 +15,8 @@ export class GameManager {
   }
 
   replayGame() {
-    Telemetry.logReplayClicked(this.currentScore);
+    // Only log the game started event with replay trigger
+    // This avoids duplicate events and correctly measures replay rate
     this.startGame('replay');
   }
 }
