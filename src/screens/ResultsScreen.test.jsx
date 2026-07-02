@@ -28,4 +28,14 @@ describe('ResultsScreen', () => {
       mockProps.app_version
     );
   });
+
+  it('should display the score, duration, and app version', () => {
+    const { getByText } = render(
+      <ResultsScreen score={200} durationMs={60000} appVersion="2.0.0" />
+    );
+
+    expect(getByText(/Score: 200/)).toBeInTheDocument();
+    expect(getByText(/Duration: 60000 ms/)).toBeInTheDocument();
+    expect(getByText(/App Version: 2.0.0/)).toBeInTheDocument();
+  });
 });
