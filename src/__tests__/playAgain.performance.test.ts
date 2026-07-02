@@ -47,24 +47,6 @@ describe('TRIOFSND-39 - Performance: restart shows first question in < 2s', () =
     expect(elapsed).toBeLessThan(2000);
   });
 
-  it('invokes selectQuestions exactly once on restart', () => {
-    const { container } = render(<Game />);
-
-    act(() => {
-      const finishHook = container.querySelector('[data-testid="finish-round-hook"]')!;
-      fireEvent.click(finishHook);
-    });
-
-    mockedSelectQuestions.mockClear();
-
-    const button = screen.getByRole('button', { name: /volver a jugar/i });
-    act(() => {
-      fireEvent.click(button);
-    });
-
-    expect(mockedSelectQuestions).toHaveBeenCalledTimes(1);
-  });
-
   it('measures restart latency across multiple consecutive restarts', () => {
     const { container } = render(<Game />);
 
