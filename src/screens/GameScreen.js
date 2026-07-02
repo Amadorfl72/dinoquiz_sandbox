@@ -10,9 +10,17 @@ export default function GameScreen({ navigation }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
 
-  useEffect(() => {
+  const resetGame = () => {
     initializeGame(questionsData, setQuestions, setCurrentQuestionIndex, setScore);
-  }, []);
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      resetGame();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const handleAnswer = (isCorrect) => {
     if (isCorrect) {
