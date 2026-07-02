@@ -4,17 +4,19 @@ import { debounce } from '../utils/debounce';
 const AnswerOption = ({ option, onSelect, isSelected, isCorrect }) => {
   const lastSelectedOptionId = useRef(null);
 
-  const handleSelect = debounce(() => {
+  const handleSelect = useRef(debounce((opt) => {
     if (!isSelected) {
-      onSelect(option);
-      lastSelectedOptionId.current = option.id;
+      onSelect(opt);
+      lastSelectedOptionId.current = opt.id;
     }
-  }, 300);
+  }, 300)).current;
 
   const handleClick = () => {
     if (option.id === lastSelectedOptionId.current) {
-      handleSelect();
+      // If clicking the same option again, use debounced handler
+      handleSelect(option);
     } else {
+      // If clicking a different option, call onSelect directly
       onSelect(option);
       lastSelectedOptionId.current = option.id;
     }
