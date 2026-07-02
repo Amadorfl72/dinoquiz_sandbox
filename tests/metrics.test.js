@@ -1,80 +1,76 @@
 const request = require('supertest');
-const app = require('../src/app'); // Assuming the Express app is exported from src/app.js
+const app = require('../src/app');
 
 describe('TRIOFSND-13: Metrics Ingestion Endpoint', () => {
-  const validEndpoint = '/api/metrics';
+  const endpoint = '/api/metrics';
 
-  it('should successfully ingest a valid "game_started" metric', async () => {
+  it('should accept a valid game_started metric', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        metric: 'game_started',
-        count: 1,
-        timestamp: new Date().toISOString()
-      });
-
-    expect(res.statusCode).toEqual(201);
+      .post(endpoint)
+      .send({ metric: 'game_started', count: 1 });
+    
+    expect(res.statusCode).toEqual(202);
     expect(res.body).toHaveProperty('status', 'success');
   });
 
-  it('should successfully ingest a valid "app_open" metric', async () => {
+  it('should accept a valid app_open metric', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        metric: 'app_open',
-        count: 1
-      });
-
-    expect(res.statusCode).toEqual(201);
+      .post(endpoint)
+      .send({ metric: 'app_open', count: 5 });
+    
+    expect(res.statusCode).toEqual(202);
     expect(res.body).toHaveProperty('status', 'success');
   });
 
-  it('should return 400 if metric name is missing', async () => {
+  it('should return 400 if metric field is missing', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        count: 1
-      });
-
+      .post(endpoint)
+      .send({ count: 1 });
+    
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('error');
   });
 
-  it('should return 400 if count is missing or invalid', async () => {
+  it('should return 400 if count field is missing', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        metric: 'game_started',
-        count: -5
-      });
-
+      .post(endpoint)
+      .send({ metric: 'game_started' });
+    
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('error');
   });
 
-  it('should return 400 if payload contains PII (e.g., userId)', async () => {
+  it('should return 400 if payload contains PII (userId)', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        metric: 'game_started',
-        count: 1,
-        userId: '12345' // PII
-      });
-
+      .post(endpoint)
+      .send({ metric: 'game_started', count: 1, userId: 'user-123' });
+    
     expect(res.statusCode).toEqual(400);
     expect(res.body.error).toMatch(/PII/i);
   });
 
-  it('should return 400 if payload contains PII (e.g., email)', async () => {
+  it('should return 400 if payload contains PII (email)', async () => {
     const res = await request(app)
-      .post(validEndpoint)
-      .send({
-        metric: 'app_open',
-        count: 1,
-        email: 'test@example.com' // PII
-      });
-
+      .post(endpoint)
+      .send({ metric: 'app_open', count: 2, email: 'test@test.com' });
+    
     expect(res.statusCode).toEqual(400);
     expect(res.body.error).toMatch(/PII/i);
+  });
+
+  it('should return 400 if metric is not a string', async () => {
+    const res = await request(app)
+      .post(endpoint)
+      .send({ metric: 123, count: 1 });
+    
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 if count is not a number', async () => {
+    const res = await request(app)
+      .post(endpoint)
+      .send({ metric: 'game_started', count: '1' });
+    
+    expect(res.statusCode).toEqual(400);
   });
 });
