@@ -46,9 +46,9 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
     fireEvent.click(nextButton);
     expect(nextButton).toBeDisabled();
 
-    // Fast-forward time by 500ms (assuming debounce is 500ms)
+    // Fast-forward time by 1000ms (debounce is 1000ms)
     act(() => {
-      jest.advanceTimersByTime(500);
+      jest.advanceTimersByTime(1000);
     });
 
     expect(nextButton).toBeEnabled();
@@ -63,7 +63,7 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
     fireEvent.click(nextButton);
     
     act(() => {
-      jest.advanceTimersByTime(500);
+      jest.advanceTimersByTime(1000);
     });
 
     expect(nextButton).toBeEnabled();
