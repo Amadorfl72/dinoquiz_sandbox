@@ -91,4 +91,47 @@ describe('TRIOFSND-24: Fun fact data integrity', () => {
     const uniquePaths = new Set(imagePaths);
     expect(uniquePaths.size).toBe(imagePaths.length);
   });
+
+  test('every fun_fact text is a non-empty string', () => {
+    questions.forEach((q, idx) => {
+      expect(q.fun_fact).toHaveProperty('text');
+      expect(typeof q.fun_fact.text).toBe('string');
+      expect(q.fun_fact.text.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  test('every fun_fact image_path is a non-empty string', () => {
+    questions.forEach((q, idx) => {
+      expect(q.fun_fact).toHaveProperty('image_path');
+      expect(typeof q.fun_fact.image_path).toBe('string');
+      expect(q.fun_fact.image_path.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  test('image_path values have a valid image file extension', () => {
+    const validExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
+    questions.forEach((q, idx) => {
+      const ext = path.extname(q.fun_fact.image_path).toLowerCase();
+      expect(validExtensions).toContain(ext);
+    });
+  });
+
+  test('fun_fact text ends with proper punctuation', () => {
+    questions.forEach((q, idx) => {
+      const lastChar = q.fun_fact.text.trim().slice(-1);
+      expect(['.', '!', '?']).toContain(lastChar);
+    });
+  });
+
+  test('fun_fact text has at least 10 characters (meaningful content)', () => {
+    questions.forEach((q, idx) => {
+      expect(q.fun_fact.text.trim().length).toBeGreaterThanOrEqual(10);
+    });
+  });
+
+  test('fun_fact text is reasonably short (max 300 characters)', () => {
+    questions.forEach((q, idx) => {
+      expect(q.fun_fact.text.length).toBeLessThanOrEqual(300);
+    });
+  });
 });
