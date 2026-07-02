@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTION_BANK_PATH = path.resolve(__dirname, '../data/questionBank.json');
+const QUESTION_BANK_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 const VALID_DINOSAURS = [
   'T-Rex',
@@ -31,6 +31,7 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
     questionBank.forEach((question, index) => {
       // Validate top-level keys
       const expectedKeys = [
+        'id',
         'dinosaur',
         'statement',
         'options',
@@ -44,6 +45,9 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
       });
 
       // Validate types
+      expect(typeof question.id).toBe('number');
+      expect(question.id).toBeGreaterThan(0);
+
       expect(typeof question.dinosaur).toBe('string');
       expect(VALID_DINOSAURS).toContain(question.dinosaur);
 
@@ -79,6 +83,7 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
 
   test('no extra unexpected fields in questions', () => {
     const allowedKeys = new Set([
+      'id',
       'dinosaur',
       'statement',
       'options',
@@ -90,6 +95,16 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
       Object.keys(question).forEach((key) => {
         expect(allowedKeys.has(key)).toBe(true);
       });
+    });
+  });
+
+  test('all ids are unique positive integers', () => {
+    const ids = questionBank.map((q) => q.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+    ids.forEach((id) => {
+      expect(Number.isInteger(id)).toBe(true);
+      expect(id).toBeGreaterThan(0);
     });
   });
 });
