@@ -1,4 +1,4 @@
-const { endGame } = require('./game');
+const { endGame } = require('./js/gameLogic');
 
 describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
   let messageElement;
