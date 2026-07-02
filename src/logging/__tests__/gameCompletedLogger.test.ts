@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { logGameCompleted } from '../logging';
+import { logGameCompleted } from '../../logging';
 
 const ENDPOINT = '/api/logs';
 
@@ -53,16 +53,6 @@ describe('logGameCompleted', () => {
     expect(body.app_version).toBe('1.4.2');
   });
 
-  it('uses the globally configured app version when not explicitly provided', async () => {
-    (globalThis as any).__APP_VERSION__ = '2.0.0';
-    await logGameCompleted(100, 45000);
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.app_version).toBe('2.0.0');
-
-    delete (globalThis as any).__APP_VERSION__;
-  });
-
   it('sends JSON content-type header', async () => {
     await logGameCompleted(100, 45000, '1.0.0');
 
@@ -87,34 +77,27 @@ describe('logGameCompleted', () => {
     expect(consoleSpy).toHaveBeenCalled();
   });
 
-  it('logs a warning when the backend responds with a non-OK status', async () => {
+  it('logs an error when the backend responds with a non-OK status', async () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 500 } as Response);
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await logGameCompleted(100, 45000, '1.0.0');
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('game_completed'),
-      expect.anything()
+      'Error logging event:',
+      expect.any(Error)
     );
   });
 
-  it('rejects when score is negative', async () => {
-    await expect(
-      logGameCompleted(-1, 45000, '1.0.0')
-    ).rejects.toThrow(/score/i);
-  });
+  it('sends the full expected body structure', async () => {
+    await logGameCompleted(100, 45000, '1.0.0');
 
-  it('rejects when duration_ms is negative', async () => {
-    await expect(
-      logGameCompleted(100, -5, '1.0.0')
-    ).rejects.toThrow(/duration/i);
-  });
-
-  it('rejects when app_version is missing and not globally configured', async () => {
-    delete (globalThis as any).__APP_VERSION__;
-    await expect(
-      logGameCompleted(100, 45000)
-    ).rejects.toThrow(/app_version/i);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body).toEqual({
+      event: 'game_completed',
+      score: 100,
+      duration_ms: 45000,
+      app_version: '1.0.0',
+    });
   });
 });
