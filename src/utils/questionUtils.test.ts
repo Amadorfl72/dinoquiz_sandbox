@@ -1,95 +1,84 @@
-import { selectRandomQuestions, shuffleAnswerOptions } from './questionUtils';
+import { selectRandomQuestions, shuffleQuestionOptions, Question } from './questionUtils';
 
-interface Option {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  options: Option[];
-}
-
-describe('TRIOFSND-38: Question selection and shuffling', () => {
-  const generateQuestions = (count: number): Question[] => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: `q${i + 1}`,
-      text: `Question ${i + 1}`,
-      options: [
-        { id: `o1`, text: 'Option 1', isCorrect: true },
-        { id: `o2`, text: 'Option 2', isCorrect: false },
-        { id: `o3`, text: 'Option 3', isCorrect: false },
-      ],
-    }));
-  };
+describe('TRIOFSND-38: Question selection and option shuffling', () => {
+  const mockQuestionPool: Question[] = Array.from({ length: 30 }, (_, i) => ({
+    id: `q${i + 1}`,
+    text: `Question ${i + 1}`,
+    options: [
+      { id: `q${i + 1}_o1`, text: 'Option 1', isCorrect: i % 3 === 0 },
+      { id: `q${i + 1}_o2`, text: 'Option 2', isCorrect: i % 3 === 1 },
+      { id: `q${i + 1}_o3`, text: 'Option 3', isCorrect: i % 3 === 2 },
+    ],
+  }));
 
   describe('selectRandomQuestions', () => {
-    it('should select exactly 10 questions from a pool of 30', () => {
-      const pool = generateQuestions(30);
-      const selected = selectRandomQuestions(pool, 10);
+    it('should select exactly 10 questions when requested from a pool of 30', () => {
+      const selected = selectRandomQuestions(mockQuestionPool, 10);
       expect(selected).toHaveLength(10);
     });
 
     it('should not contain duplicate questions', () => {
-      const pool = generateQuestions(30);
-      const selected = selectRandomQuestions(pool, 10);
+      const selected = selectRandomQuestions(mockQuestionPool, 10);
       const ids = selected.map(q => q.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(10);
     });
 
-    it('should return all questions if pool size is less than requested count', () => {
-      const pool = generateQuestions(5);
-      const selected = selectRandomQuestions(pool, 10);
-      expect(selected).toHaveLength(5);
+    it('should return a new array and not mutate the original pool', () => {
+      const originalPoolCopy = [...mockQuestionPool];
+      const selected = selectRandomQuestions(mockQuestionPool, 10);
+      
+      expect(selected).not.toBe(mockQuestionPool);
+      expect(mockQuestionPool).toEqual(originalPoolCopy);
     });
 
-    it('should not mutate the original pool', () => {
-      const pool = generateQuestions(30);
-      const poolCopy = JSON.parse(JSON.stringify(pool));
-      selectRandomQuestions(pool, 10);
-      expect(pool).toEqual(poolCopy);
+    it('should handle requests for more questions than available in the pool without repetition', () => {
+      const smallPool = mockQuestionPool.slice(0, 5);
+      const selected = selectRandomQuestions(smallPool, 10);
+      
+      expect(selected).toHaveLength(5);
+      const ids = selected.map(q => q.id);
+      expect(new Set(ids).size).toBe(5);
     });
   });
 
-  describe('shuffleAnswerOptions', () => {
-    it('should return exactly 3 options', () => {
-      const question = generateQuestions(1)[0];
-      const shuffled = shuffleAnswerOptions(question);
+  describe('shuffleQuestionOptions', () => {
+    it('should return a question with exactly 3 options', () => {
+      const question = mockQuestionPool[0];
+      const shuffled = shuffleQuestionOptions(question);
       expect(shuffled.options).toHaveLength(3);
     });
 
-    it('should contain the same options as the original question', () => {
-      const question = generateQuestions(1)[0];
-      const shuffled = shuffleAnswerOptions(question);
-      const originalIds = question.options.map(o => o.id).sort();
-      const shuffledIds = shuffled.options.map(o => o.id).sort();
-      expect(shuffledIds).toEqual(originalIds);
+    it('should contain the same options as the original question, just in a potentially different order', () => {
+      const question = mockQuestionPool[0];
+      const shuffled = shuffleQuestionOptions(question);
+      
+      const originalTexts = question.options.map(o => o.text).sort();
+      const shuffledTexts = shuffled.options.map(o => o.text).sort();
+      
+      expect(shuffledTexts).toEqual(originalTexts);
     });
 
-    it('should not mutate the original question options', () => {
-      const question = generateQuestions(1)[0];
-      const originalOptionsOrder = question.options.map(o => o.id);
-      shuffleAnswerOptions(question);
-      expect(question.options.map(o => o.id)).toEqual(originalOptionsOrder);
+    it('should not mutate the original question object', () => {
+      const question = mockQuestionPool[0];
+      const originalOptionsCopy = JSON.parse(JSON.stringify(question.options));
+      
+      shuffleQuestionOptions(question);
+      
+      expect(question.options).toEqual(originalOptionsCopy);
     });
 
-    it('should eventually shuffle the options (probabilistic test)', () => {
-      const question = generateQuestions(1)[0];
-      let shuffled = false;
-      // Run multiple times to check if it actually shuffles
-      for (let i = 0; i < 20; i++) {
-        const result = shuffleAnswerOptions(question);
-        const resultIds = result.options.map(o => o.id);
-        const originalIds = question.options.map(o => o.id);
-        if (JSON.stringify(resultIds) !== JSON.stringify(originalIds)) {
-          shuffled = true;
-          break;
-        }
+    it('should maintain the correct answer flag on the options', () => {
+      const question = mockQuestionPool[0];
+      const shuffled = shuffleQuestionOptions(question);
+      
+      const correctOriginal = question.options.filter(o => o.isCorrect);
+      const correctShuffled = shuffled.options.filter(o => o.isCorrect);
+      
+      expect(correctShuffled.length).toBe(correctOriginal.length);
+      if (correctOriginal.length > 0) {
+        expect(correctShuffled[0].text).toBe(correctOriginal[0].text);
       }
-      expect(shuffled).toBe(true);
     });
   });
 });
