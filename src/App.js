@@ -1,15 +1,33 @@
-import React from 'react';
-import Tooltip from './components/Tooltip';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import { checkOfflineFirstLoad } from './utils/offlineFirstLoad';
+import OfflineFirstLoadMessage from './components/OfflineFirstLoadMessage';
+import StartScreen from './components/StartScreen';
+import QuizScreen from './components/QuizScreen';
+import sessionService from './services/sessionService';
 
-function App() {
+const App = () => {
+  const [gameState, setGameState] = useState('start');
+  const [isOfflineFirstLoad, setIsOfflineFirstLoad] = useState(false);
+
+  useEffect(() => {
+    setIsOfflineFirstLoad(checkOfflineFirstLoad());
+    sessionService.resetGame();
+  }, []);
+
+  const handleStartGame = () => {
+    setGameState('quiz');
+  };
+
+  if (isOfflineFirstLoad) {
+    return <OfflineFirstLoadMessage />;
+  }
+
   return (
-    <div className="App">
-      <h1>DinoQuiz</h1>
-      <button id="jugar-button">¡Jugar!</button>
-      <Tooltip targetId="jugar-button" />
+    <div>
+      {gameState === 'start' && <StartScreen onStartGame={handleStartGame} />}
+      {gameState === 'quiz' && <QuizScreen />}
     </div>
   );
-}
+};
 
 export default App;
