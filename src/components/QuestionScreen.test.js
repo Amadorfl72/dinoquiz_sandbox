@@ -32,8 +32,8 @@ describe('QuestionScreen', () => {
     expect(getByTestId('dinosaur-image')).toBeTruthy();
   });
 
-  it('renders all options as buttons', () => {
-    const { getByText } = render(
+  it('renders exactly three large touchable buttons', () => {
+    const { getAllByRole } = render(
       <QuestionScreen
         question={mockQuestion}
         options={mockOptions}
@@ -41,9 +41,8 @@ describe('QuestionScreen', () => {
         onOptionSelect={mockOnOptionSelect}
       />
     );
-    mockOptions.forEach(option => {
-      expect(getByText(option)).toBeTruthy();
-    });
+    const buttons = getAllByRole('button');
+    expect(buttons.length).toBe(3);
   });
 
   it('calls onOptionSelect when an option is pressed', () => {
@@ -57,5 +56,18 @@ describe('QuestionScreen', () => {
     );
     fireEvent.press(getByText(mockOptions[0]));
     expect(mockOnOptionSelect).toHaveBeenCalledWith(mockOptions[0]);
+  });
+
+  it('does not render any timer or countdown elements', () => {
+    const { queryByText } = render(
+      <QuestionScreen
+        question={mockQuestion}
+        options={mockOptions}
+        dinosaurImage={mockDinosaurImage}
+        onOptionSelect={mockOnOptionSelect}
+      />
+    );
+    expect(queryByText(/timer/i)).toBeNull();
+    expect(queryByText(/countdown/i)).toBeNull();
   });
 });
