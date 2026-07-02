@@ -21,7 +21,7 @@ describe('TRIOFSND-39: Reinicio de partida al pulsar "Volver a jugar"', () => {
   const TestWrapper = () => {
     const { currentScreen, currentQuestion } = useGame();
     if (currentScreen === 'results') {
-      return <ResultsScreen />;
+      return <ResultsScreen score={5} />;
     }
     return <div data-testid="question-screen">{currentQuestion?.text}</div>;
   };
