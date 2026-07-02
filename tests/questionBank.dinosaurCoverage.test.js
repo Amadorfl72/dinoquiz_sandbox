@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTION_BANK_PATH = path.resolve(__dirname, '../data/questionBank.json');
+const QUESTION_BANK_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 const REQUIRED_DINOSAURS = [
   'T-Rex',
@@ -21,10 +21,7 @@ beforeAll(() => {
 });
 
 function countQuestionsForDino(dino) {
-  return questionBank.filter((q) => {
-    const text = `${q.statement} ${q.options.join(' ')} ${q.funFact}`.toLowerCase();
-    return text.includes(dino.toLowerCase());
-  }).length;
+  return questionBank.filter((q) => q.dinosaur === dino).length;
 }
 
 describe('TRIOFSND-57: Dinosaur Coverage Distribution', () => {
@@ -66,7 +63,12 @@ describe('TRIOFSND-57: Dinosaur Coverage Distribution', () => {
       (sum, dino) => sum + countQuestionsForDino(dino),
       0
     );
-    // Each question should match at least one dinosaur, so total >= 40
-    expect(total).toBeGreaterThanOrEqual(40);
+    expect(total).toBe(40);
+  });
+
+  test('every question has a dinosaur field matching one of the required dinosaurs', () => {
+    questionBank.forEach((q) => {
+      expect(REQUIRED_DINOSAURS).toContain(q.dinosaur);
+    });
   });
 });
