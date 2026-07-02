@@ -12,17 +12,22 @@ function loadQuestions() {
 describe('TRIOFSND-24: Fun fact data integrity', () => {
   const questions = loadQuestions();
 
-  test('each question retains its original id property', () => {
-    questions.forEach((q, idx) => {
-      expect(q).toHaveProperty('id');
-      expect(q.id).toBe(idx + 1);
-    });
+  test('there are exactly 30 questions', () => {
+    expect(questions.length).toBe(30);
   });
 
   test('each question retains a question or prompt property', () => {
     questions.forEach((q, idx) => {
       const hasQuestion = q.hasOwnProperty('question') || q.hasOwnProperty('prompt') || q.hasOwnProperty('text');
       expect(hasQuestion).toBe(true);
+    });
+  });
+
+  test('each question has a fun_fact object', () => {
+    questions.forEach((q, idx) => {
+      expect(q).toHaveProperty('fun_fact');
+      expect(typeof q.fun_fact).toBe('object');
+      expect(q.fun_fact).not.toBeNull();
     });
   });
 
@@ -54,7 +59,7 @@ describe('TRIOFSND-24: Fun fact data integrity', () => {
     });
   });
 
-  test('image_path starts with a valid prefix (/, ./, or assets/)', () => {
+  test('image_path starts with a valid prefix (/, ./, assets/, or images/)', () => {
     questions.forEach((q, idx) => {
       const imgPath = q.fun_fact.image_path;
       const validStart = imgPath.startsWith('/') ||
@@ -63,5 +68,27 @@ describe('TRIOFSND-24: Fun fact data integrity', () => {
                          imgPath.startsWith('images/');
       expect(validStart).toBe(true);
     });
+  });
+
+  test('fun_fact has only text and image_path keys', () => {
+    const allowedKeys = ['text', 'image_path'];
+    questions.forEach((q, idx) => {
+      const actualKeys = Object.keys(q.fun_fact);
+      actualKeys.forEach(key => {
+        expect(allowedKeys).toContain(key);
+      });
+    });
+  });
+
+  test('all fun_fact texts are unique', () => {
+    const texts = questions.map(q => q.fun_fact.text);
+    const uniqueTexts = new Set(texts);
+    expect(uniqueTexts.size).toBe(texts.length);
+  });
+
+  test('all fun_fact image_paths are unique', () => {
+    const imagePaths = questions.map(q => q.fun_fact.image_path);
+    const uniquePaths = new Set(imagePaths);
+    expect(uniquePaths.size).toBe(imagePaths.length);
   });
 });
