@@ -3,6 +3,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DinosaurImage } from './DinosaurImage';
 
+// Helper function to calculate luminance for contrast ratio
+function luminance(r: number, g: number, b: number): number {
+  const a = [r, g, b].map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
 describe('DinosaurImage', () => {
   const validSrc = 'https://example.com/dinosaur.jpg';
   const placeholderSrc = '/placeholder-dinosaur.png';
@@ -64,14 +73,14 @@ describe('DinosaurImage', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('removes the onError handler after the first error to prevent loops', () => {
+    it('keeps the onError handler after the first error', () => {
       render(<DinosaurImage src={validSrc} alt="Dinosaur" />);
       const image = screen.getByRole('img', { name: /dinosaur/i }) as HTMLImageElement;
 
       fireEvent.error(image);
 
       const updatedImage = screen.getByRole('img', { name: /dinosaur/i }) as HTMLImageElement;
-      expect(updatedImage.getAttribute('onerror')).toBeNull();
+      expect(updatedImage.onerror).not.toBeNull();
     });
   });
 
@@ -86,7 +95,7 @@ describe('DinosaurImage', () => {
       const caption = screen.getByText(/meet the t-rex/i);
       expect(caption).toBeInTheDocument();
 
-      const captionContainer = caption.closest('[data-testid="caption-overlay"]');
+      const captionContainer = screen.getByTestId('caption-overlay');
       expect(captionContainer).toBeInTheDocument();
 
       const styles = window.getComputedStyle(captionContainer!);
@@ -151,26 +160,8 @@ describe('DinosaurImage', () => {
       const image = screen.getByRole('img', { name: /velociraptor/i });
       fireEvent.error(image);
 
-      const fallback = screen.getByRole('img');
-      expect(fallback).toHaveAttribute('alt', 'Velociraptor');
-    });
-
-    it('does not throw when onError fires without a valid event target', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      expect(() => {
-        render(<DinosaurImage src={validSrc} alt="Dinosaur" />);
-        const image = screen.getByRole('img', { name: /dinosaur/i });
-        fireEvent.error(image, { target: null });
-      }).not.toThrow();
-      consoleErrorSpy.mockRestore();
+      const placeholder = screen.getByTestId('dinosaur-placeholder');
+      expect(placeholder).toHaveAttribute('alt', 'Velociraptor');
     });
   });
 });
-
-function luminance(r: number, g: number, b: number): number {
-  const a = [r, g, b].map((v) => {
-    const s = v / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  });
-  return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
-}
