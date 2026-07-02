@@ -40,6 +40,7 @@ export default {
       if (isCorrect) {
         this.score++;
       }
+      // Explicitly ensure no score deduction for incorrect answers
     },
     nextQuestion() {
       if (this.currentQuestionIndex < this.questions.length - 1) {
