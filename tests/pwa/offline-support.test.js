@@ -37,7 +37,7 @@ describe('TRIOFSND-53: Offline Support', () => {
 
       // Verify no critical error page is shown
       const bodyText = await page.textContent('body');
-      expect(bodyText).not.toContain('This site can\'t be reached');
+      expect(bodyText).not.toContain("This site can't be reached");
       expect(bodyText).not.toContain('ERR_INTERNET_DISCONNECTED');
       expect(bodyText).not.toContain('No internet');
     } finally {
