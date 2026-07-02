@@ -17,6 +17,23 @@ describe('TRIOFSND-24: Fun facts structure validation', () => {
     expect(uniqueSet.size).toBe(imagePaths.length);
   });
 
+  it('expected Set size to equal array length for image_paths', () => {
+    const imagePaths = questions.map((q) => q.image_path);
+    const uniqueSet = new Set(imagePaths);
+    expect(uniqueSet.size).toBe(30);
+    expect(imagePaths.length).toBe(30);
+  });
+
+  it('duplicate image_paths are not detected across questions', () => {
+    const imagePaths = questions.map((q) => q.image_path);
+    const counts = {};
+    imagePaths.forEach((p) => {
+      counts[p] = (counts[p] || 0) + 1;
+    });
+    const duplicates = Object.entries(counts).filter(([, count]) => count > 1);
+    expect(duplicates).toEqual([]);
+  });
+
   it('each question has required fields', () => {
     questions.forEach((q, index) => {
       expect(q).toHaveProperty('id', `Question at index ${index} missing id`);
