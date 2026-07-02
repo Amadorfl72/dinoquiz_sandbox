@@ -7,10 +7,9 @@ const FunFactScreen = ({ route }) => {
 
   useEffect(() => {
     analyticsLogger.emit({ 
-      event: 'fun_fact_viewed',
-      fact_id: funFact.id 
+      event: 'fun_fact_viewed'
     });
-  }, [funFact.id]);
+  }, [funFact]);
 
   return (
     <View testID="fun-fact-screen">
