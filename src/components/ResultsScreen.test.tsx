@@ -16,7 +16,7 @@ describe('ResultsScreen', () => {
 
   it('renders the correct message for score range 0-3', () => {
     render(<ResultsScreen score={2} onReplay={mockOnReplay} />);
-    expect(screen.getByText(/¡Sigue intentándolo!/i)).toBeInTheDocument();
+    expect(screen.getByText(/¡No te rindas!/i)).toBeInTheDocument();
   });
 
   it('renders the correct message for score range 4-6', () => {
@@ -26,12 +26,12 @@ describe('ResultsScreen', () => {
 
   it('renders the correct message for score range 7-8', () => {
     render(<ResultsScreen score={8} onReplay={mockOnReplay} />);
-    expect(screen.getByText(/¡Excelente!/i)).toBeInTheDocument();
+    expect(screen.getByText(/¡Muy bien!/i)).toBeInTheDocument();
   });
 
   it('renders the correct message for score range 9-10', () => {
     render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
-    expect(screen.getByText(/¡Increíble!/i)).toBeInTheDocument();
+    expect(screen.getByText(/¡Excelente!/i)).toBeInTheDocument();
   });
 
   it('renders a prominent "Volver a jugar" button with minimum height of 48px', () => {
