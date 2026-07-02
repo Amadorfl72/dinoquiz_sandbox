@@ -14,23 +14,39 @@ const calculateMetrics = (logs) => {
     }
   });
 
-  // Calculate distribution of time_to_answer_ms
+  // Convert to simple ratio values to match Python implementation
+  const successRatioValues = {};
+  for (const [questionId, stats] of Object.entries(successRatios)) {
+    successRatioValues[questionId] = stats.correct / stats.total;
+  }
+
+  // Calculate time distribution statistics to match Python implementation
   const timeDistributions = logs
     .filter(log => log.event_type === 'question_answered')
     .map(log => log.time_to_answer_ms);
+    
+  let timeDistributionStats = {};
+  if (timeDistributions.length > 0) {
+    timeDistributionStats = {
+      min: Math.min(...timeDistributions),
+      max: Math.max(...timeDistributions),
+      avg: timeDistributions.reduce((a, b) => a + b, 0) / timeDistributions.length,
+      count: timeDistributions.length
+    };
+  }
 
   // Identify top 5 worst performing questions
   const worstQuestions = Object.entries(successRatios)
     .map(([questionId, { correct, total }]) => ({
       question_id: questionId,
-      successRatio: correct / total
+      success_ratio: correct / total
     }))
-    .sort((a, b) => a.successRatio - b.successRatio)
+    .sort((a, b) => a.success_ratio - b.success_ratio)
     .slice(0, 5);
 
   return {
-    successRatios,
-    timeDistributions,
+    successRatios: successRatioValues,
+    timeDistributions: timeDistributionStats,
     worstQuestions
   };
 };
