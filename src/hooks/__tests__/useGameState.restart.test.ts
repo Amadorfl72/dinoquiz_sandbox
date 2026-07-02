@@ -67,4 +67,46 @@ describe('TRIOFSND-39 - useGameState restart flow', () => {
     expect(result.current.answeredQuestions).toEqual([]);
     expect(result.current.score).toBe(0);
   });
+
+  it('restart flow (resetGameState + startNewRound) completes in under 2 seconds', () => {
+    const { result } = renderHook(() => useGameState());
+
+    act(() => {
+      result.current.answerQuestion('q1', 'a', true);
+      result.current.answerQuestion('q2', 'b', true);
+    });
+
+    const start = performance.now();
+
+    act(() => {
+      result.current.resetGameState();
+      result.current.startNewRound();
+    });
+
+    const elapsed = performance.now() - start;
+
+    expect(elapsed).toBeLessThan(2000);
+    expect(result.current.score).toBe(0);
+    expect(result.current.currentQuestion).toEqual(sampleQuestions[0]);
+  });
+
+  it('startNewRound can be called multiple times without state leakage', () => {
+    const { result } = renderHook(() => useGameState());
+
+    act(() => {
+      result.current.startNewRound();
+    });
+
+    const firstQuestions = result.current.questions;\n
+    act(() => {
+      result.current.answerQuestion('q1', 'a', true);
+      result.current.resetGameState();
+      result.current.startNewRound();
+    });
+
+    expect(mockedSelectQuestions).toHaveBeenCalledTimes(2);
+    expect(result.current.score).toBe(0);
+    expect(result.current.answeredQuestions).toEqual([]);
+    expect(result.current.currentQuestionIndex).toBe(0);
+  });
 });
