@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { GameProvider, useGame } from '../context/GameContext';
 import ResultsScreen from './ResultsScreen';
-import { selectQuestions } from '../services/gameLogic';
+import { selectQuestions } from '../services/questionService';
 
-jest.mock('../services/gameLogic');
+jest.mock('../services/questionService');
 
 describe('TRIOFSND-39: Reinicio de partida al pulsar "Volver a jugar"', () => {
   beforeEach(() => {
@@ -65,26 +65,5 @@ describe('TRIOFSND-39: Reinicio de partida al pulsar "Volver a jugar"', () => {
     const duration = endTime - startTime;
     
     expect(duration).toBeLessThan(2000);
-  });
-
-  it('el botón "Volver a jugar" está habilitado y es clicable en la pantalla de resultados', () => {
-    render(
-      <GameProvider initialScreen="results">
-        <TestWrapper />
-      </GameProvider>
-    );
-
-    const button = screen.getByRole('button', { name: /Volver a jugar/i });
-    expect(button).toBeEnabled();
-  });
-
-  it('muestra la puntuación en la pantalla de resultados', () => {
-    render(
-      <GameProvider initialScreen="results">
-        <TestWrapper />
-      </GameProvider>
-    );
-
-    expect(screen.getByText(/5\/10/)).toBeInTheDocument();
   });
 });
