@@ -145,27 +145,17 @@
     "correct_answer": "Pachycephalosaurus",
     "image_path": "assets/images/pachycephalosaurus.png",
     "fun_fact": {
-      "text": "El Pachycephalosaurus usaba su cabeza para pelear con otros dinosaurios.",
+      "text": "El Pachycephalosaurus usaba su cabeza gruesa para pelear con otros dinosaurios.",
       "image_path": "assets/images/pachycephalosaurus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía dientes en forma de hoja?",
-    "options": ["Iguanodon", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Iguanodon",
-    "image_path": "assets/images/iguanodon.png",
-    "fun_fact": {
-      "text": "El Iguanodon podía caminar en dos o cuatro patas.",
-      "image_path": "assets/images/iguanodon_fun_fact.png"
-    }
-  },
-  {
-    "question": "¿Qué dinosaurio tenía garras largas y afiladas?",
+    "question": "¿Qué dinosaurio tenía garras grandes en sus patas delanteras?",
     "options": ["Therizinosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
     "correct_answer": "Therizinosaurus",
     "image_path": "assets/images/therizinosaurus.png",
     "fun_fact": {
-      "text": "El Therizinosaurus usaba sus garras para cortar plantas.",
+      "text": "El Therizinosaurus usaba sus garras largas para alcanzar hojas y defenderse.",
       "image_path": "assets/images/therizinosaurus_fun_fact.png"
     }
   },
@@ -185,18 +175,48 @@
     "correct_answer": "Parasaurolophus",
     "image_path": "assets/images/parasaurolophus.png",
     "fun_fact": {
-      "text": "El Parasaurolophus usaba su cresta para hacer sonidos fuertes.",
+      "text": "El Parasaurolophus usaba su cresta para hacer sonidos y comunicarse.",
       "image_path": "assets/images/parasaurolophus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía un cuerpo grande y patas gruesas?",
-    "options": ["Apatosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Apatosaurus",
-    "image_path": "assets/images/apatosaurus.png",
+    "question": "¿Qué dinosaurio tenía un cuerpo pequeño y plumas?",
+    "options": ["Microraptor", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Microraptor",
+    "image_path": "assets/images/microraptor.png",
     "fun_fact": {
-      "text": "El Apatosaurus podía comer hojas de los árboles más altos.",
-      "image_path": "assets/images/apatosaurus_fun_fact.png"
+      "text": "El Microraptor podía planear de árbol en árbol usando sus cuatro alas.",
+      "image_path": "assets/images/microraptor_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía un pico ancho y plano?",
+    "options": ["Hadrosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Hadrosaurus",
+    "image_path": "assets/images/hadrosaurus.png",
+    "fun_fact": {
+      "text": "El Hadrosaurus podía masticar plantas con sus cientos de dientes pequeños.",
+      "image_path": "assets/images/hadrosaurus_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía una armadura de hueso en su espalda?",
+    "options": ["Ankylosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Ankylosaurus",
+    "image_path": "assets/images/ankylosaurus.png",
+    "fun_fact": {
+      "text": "El Ankylosaurus era como un tanque viviente con su armadura y cola huesuda.",
+      "image_path": "assets/images/ankylosaurus_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía dientes afilados como cuchillos?",
+    "options": ["Allosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Allosaurus",
+    "image_path": "assets/images/allosaurus.png",
+    "fun_fact": {
+      "text": "El Allosaurus cazaba dinosaurios grandes con sus dientes afilados y garras.",
+      "image_path": "assets/images/allosaurus_fun_fact.png"
     }
   },
   {
@@ -205,48 +225,38 @@
     "correct_answer": "Pachycephalosaurus",
     "image_path": "assets/images/pachycephalosaurus.png",
     "fun_fact": {
-      "text": "El Pachycephalosaurus tenía una cabeza muy dura para proteger su cerebro.",
+      "text": "El Pachycephalosaurus podía golpear cosas con su cabeza dura sin lastimarse.",
       "image_path": "assets/images/pachycephalosaurus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía un pico y podía correr rápido?",
-    "options": ["Gallimimus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Gallimimus",
-    "image_path": "assets/images/gallimimus.png",
+    "question": "¿Qué dinosaurio tenía garras curvas en sus patas?",
+    "options": ["Deinonychus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Deinonychus",
+    "image_path": "assets/images/deinonychus.png",
     "fun_fact": {
-      "text": "El Gallimimus era uno de los dinosaurios más rápidos.",
-      "image_path": "assets/images/gallimimus_fun_fact.png"
+      "text": "El Deinonychus usaba sus garras para agarrar a sus presas con fuerza.",
+      "image_path": "assets/images/deinonychus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía una armadura en todo su cuerpo?",
-    "options": ["Ankylosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Ankylosaurus",
-    "image_path": "assets/images/ankylosaurus.png",
-    "fun_fact": {
-      "text": "El Ankylosaurus estaba tan protegido que pocos depredadores podían lastimarlo.",
-      "image_path": "assets/images/ankylosaurus_fun_fact.png"
-    }
-  },
-  {
-    "question": "¿Qué dinosaurio tenía una cola larga y delgada?",
+    "question": "¿Qué dinosaurio tenía un cuello largo y vivía en tierra?",
     "options": ["Diplodocus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
     "correct_answer": "Diplodocus",
     "image_path": "assets/images/diplodocus.png",
     "fun_fact": {
-      "text": "El Diplodocus usaba su cola como un látigo para defenderse.",
+      "text": "El Diplodocus podía usar su cola larga como un látigo para defenderse.",
       "image_path": "assets/images/diplodocus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía una cabeza pequeña y un cuello muy largo?",
-    "options": ["Mamenchisaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Mamenchisaurus",
-    "image_path": "assets/images/mamenchisaurus.png",
+    "question": "¿Qué dinosaurio tenía un pico como un pato?",
+    "options": ["Edmontosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Edmontosaurus",
+    "image_path": "assets/images/edmontosaurus.png",
     "fun_fact": {
-      "text": "El Mamenchisaurus tenía el cuello más largo de todos los dinosaurios.",
-      "image_path": "assets/images/mamenchisaurus_fun_fact.png"
+      "text": "El Edmontosaurus podía comer plantas duras gracias a su pico fuerte.",
+      "image_path": "assets/images/edmontosaurus_fun_fact.png"
     }
   },
   {
@@ -260,43 +270,63 @@
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía un cuerpo pequeño y podía correr muy rápido?",
+    "question": "¿Qué dinosaurio tenía un cuerpo pequeño y podía correr rápido?",
     "options": ["Compsognathus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
     "correct_answer": "Compsognathus",
     "image_path": "assets/images/compsognathus.png",
     "fun_fact": {
-      "text": "El Compsognathus era uno de los dinosaurios más pequeños.",
+      "text": "El Compsognathus era uno de los dinosaurios más pequeños, del tamaño de un pollo.",
       "image_path": "assets/images/compsognathus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía un pico y vivía en manadas?",
-    "options": ["Hadrosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Hadrosaurus",
-    "image_path": "assets/images/hadrosaurus.png",
+    "question": "¿Qué dinosaurio tenía una cola larga y delgada?",
+    "options": ["Coelophysis", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Coelophysis",
+    "image_path": "assets/images/coelophysis.png",
     "fun_fact": {
-      "text": "El Hadrosaurus podía caminar en dos o cuatro patas.",
-      "image_path": "assets/images/hadrosaurus_fun_fact.png"
+      "text": "El Coelophysis era ligero y rápido, perfecto para cazar insectos y lagartijas.",
+      "image_path": "assets/images/coelophysis_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía una armadura y vivía en el agua?",
-    "options": ["Nodosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Nodosaurus",
-    "image_path": "assets/images/nodosaurus.png",
+    "question": "¿Qué dinosaurio tenía un cuello largo y vivía en manadas?",
+    "options": ["Apatosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Apatosaurus",
+    "image_path": "assets/images/apatosaurus.png",
     "fun_fact": {
-      "text": "El Nodosaurus estaba cubierto de placas óseas para protegerse.",
-      "image_path": "assets/images/nodosaurus_fun_fact.png"
+      "text": "El Apatosaurus podía usar su cola larga para hacer ruidos fuertes y comunicarse.",
+      "image_path": "assets/images/apatosaurus_fun_fact.png"
     }
   },
   {
-    "question": "¿Qué dinosaurio tenía una cabeza grande y vivía en el agua?",
-    "options": ["Spinosaurus", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
-    "correct_answer": "Spinosaurus",
-    "image_path": "assets/images/spinosaurus.png",
+    "question": "¿Qué dinosaurio tenía un cuerpo grande y patas gruesas?",
+    "options": ["Iguanodon", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Iguanodon",
+    "image_path": "assets/images/iguanodon.png",
     "fun_fact": {
-      "text": "El Spinosaurus era más grande que el T-Rex y vivía en el agua.",
-      "image_path": "assets/images/spinosaurus_fun_fact.png"
+      "text": "El Iguanodon podía caminar en dos o cuatro patas según lo necesitara.",
+      "image_path": "assets/images/iguanodon_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía un pico y vivía cerca del agua?",
+    "options": ["Maiasaura", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Maiasaura",
+    "image_path": "assets/images/maiasaura.png",
+    "fun_fact": {
+      "text": "El Maiasaura significa 'lagarto buena madre' porque cuidaba de sus crías.",
+      "image_path": "assets/images/maiasaura_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía una cabeza con tres cuernos y un volante?",
+    "options": ["Triceratops", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Triceratops",
+    "image_path": "assets/images/triceratops.png",
+    "fun_fact": {
+      "text": "El Triceratops podía usar su volante para protegerse el cuello de los depredadores.",
+      "image_path": "assets/images/triceratops_fun_fact.png"
     }
   }
 ]
