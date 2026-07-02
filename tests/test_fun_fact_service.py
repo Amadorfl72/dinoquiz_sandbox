@@ -25,12 +25,6 @@ def test_fun_fact_viewed_logging(mock_logger, mock_metrics_client):
 
     logFunFactViewed(question_id, dino_id, app_version)
 
-    expected_payload = {
-        "event": "fun_fact_viewed",
-        "question_id": question_id,
-        "dino_id": dino_id,
-        "app_version": app_version
-    }
     mock_logger.assert_called_once_with(question_id, dino_id, app_version)
 
 
