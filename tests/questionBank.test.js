@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTION_BANK_PATH = path.resolve(__dirname, '../data/questionBank.json');
+const QUESTION_BANK_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 const REQUIRED_DINOSAURS = [
   'T-Rex',
@@ -13,7 +13,15 @@ const REQUIRED_DINOSAURS = [
   'Pteranodon',
 ];
 
-const REQUIRED_FIELDS = ['statement', 'options', 'correctAnswer', 'funFact', 'imageReference', 'dinosaur'];
+const REQUIRED_FIELDS = [
+  'id',
+  'dinosaur',
+  'statement',
+  'options',
+  'correctAnswer',
+  'funFact',
+  'imageReference',
+];
 
 let questionBank;
 
@@ -24,7 +32,7 @@ beforeAll(() => {
 
 describe('TRIOFSND-57: Local JSON Question Bank', () => {
   describe('File existence and validity', () => {
-    test('should have a questionBank.json file in the data directory', () => {
+    test('should have a questions.json file in the src/assets directory', () => {
       expect(fs.existsSync(QUESTION_BANK_PATH)).toBe(true);
     });
 
@@ -52,6 +60,19 @@ describe('TRIOFSND-57: Local JSON Question Bank', () => {
           expect(question[field]).not.toBeNull();
         });
       });
+    });
+
+    test('each question should have a numeric id', () => {
+      questionBank.forEach((question, index) => {
+        expect(typeof question.id).toBe('number');
+        expect(question.id).toBeGreaterThan(0);
+      });
+    });
+
+    test('all ids should be unique', () => {
+      const ids = questionBank.map((q) => q.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(ids.length);
     });
 
     test('each question should have a non-empty statement string', () => {
