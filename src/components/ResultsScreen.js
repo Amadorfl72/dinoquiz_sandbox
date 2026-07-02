@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { isNewBestScore, setBestScore } from '../utils/score';
+import { isNewBestScore, setBestScore, getBestScore } from '../utils/score';
 import { strings } from '../strings';
 import { logGameCompleted } from '../logging';
 
@@ -29,6 +29,7 @@ const ResultsScreen = ({ score, durationMs, appVersion, onRestart }) => {
     <div className="results-screen">
       <h2>{strings.resultsTitle}</h2>
       <p>{strings.resultsScore.replace('{score}', score)}</p>
+      <p className="best-score">Tu mejor puntuación: {getBestScore()}</p>
 
       {showNewBestFeedback && (
         <div className="new-best-feedback">
