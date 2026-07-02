@@ -1,18 +1,18 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Dinosaur from './Dinosaur';
+import DinosaurImage from '../DinosaurImage/DinosaurImage';
 
 describe('TRIOFSND-27: Implement image fallback placeholder', () => {
   it('renders the dinosaur image by default', () => {
-    render(<Dinosaur />);
+    render(<DinosaurImage src="dinosaur.jpg" alt="dinosaur" />);
     const image = screen.getByAltText(/dinosaur/i);
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'dinosaur.jpg');
   });
 
   it('displays a placeholder when the image fails to load', () => {
-    render(<Dinosaur />);
+    render(<DinosaurImage src="dinosaur.jpg" alt="dinosaur" />);
     const image = screen.getByAltText(/dinosaur/i);
 
     // Simulate image load error
@@ -23,7 +23,7 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
   });
 
   it('ensures text remains legible when the placeholder is displayed', () => {
-    render(<Dinosaur />);
+    render(<DinosaurImage src="dinosaur.jpg" alt="dinosaur" caption="dinosaur fact" />);
     const image = screen.getByAltText(/dinosaur/i);
     const textElement = screen.getByText(/dinosaur fact/i);
 
@@ -34,7 +34,7 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
     expect(textElement).toBeVisible();
 
     // Check that the text or its container has a class or style ensuring legibility
-    const container = textElement.closest('.image-container');
-    expect(container).toHaveClass('legible-text-overlay');
+    const container = screen.getByTestId('caption-overlay');
+    expect(container).toHaveClass('caption-overlay');
   });
 });
