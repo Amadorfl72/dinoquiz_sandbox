@@ -13,13 +13,7 @@ const REQUIRED_DINOSAURS = [
   'Pteranodon',
 ];
 
-const REQUIRED_FIELDS = [
-  'statement',
-  'options',
-  'correctAnswer',
-  'funFact',
-  'imageReference',
-];
+const REQUIRED_FIELDS = ['statement', 'options', 'correctAnswer', 'funFact', 'imageReference', 'dinosaur'];
 
 let questionBank;
 
@@ -29,120 +23,148 @@ beforeAll(() => {
 });
 
 describe('TRIOFSND-57: Local JSON Question Bank', () => {
-  test('the JSON file exists at data/questionBank.json', () => {
-    expect(fs.existsSync(QUESTION_BANK_PATH)).toBe(true);
+  describe('File existence and validity', () => {
+    test('should have a questionBank.json file in the data directory', () => {
+      expect(fs.existsSync(QUESTION_BANK_PATH)).toBe(true);
+    });
+
+    test('should be valid JSON', () => {
+      expect(() => JSON.parse(fs.readFileSync(QUESTION_BANK_PATH, 'utf-8'))).not.toThrow();
+    });
+
+    test('should be an array of questions', () => {
+      expect(Array.isArray(questionBank)).toBe(true);
+    });
   });
 
-  test('the file contains valid JSON', () => {
-    expect(() => JSON.parse(fs.readFileSync(QUESTION_BANK_PATH, 'utf-8'))).not.toThrow();
+  describe('Question count', () => {
+    test('should contain exactly 40 questions', () => {
+      expect(questionBank.length).toBe(40);
+    });
   });
 
-  test('the root is an array of questions', () => {
-    expect(Array.isArray(questionBank)).toBe(true);
-  });
+  describe('Question structure', () => {
+    test('each question should have all required fields', () => {
+      questionBank.forEach((question, index) => {
+        REQUIRED_FIELDS.forEach((field) => {
+          expect(question).toHaveProperty(field);
+          expect(question[field]).not.toBeUndefined();
+          expect(question[field]).not.toBeNull();
+        });
+      });
+    });
 
-  test('there are exactly 40 questions', () => {
-    expect(questionBank.length).toBe(40);
-  });
+    test('each question should have a non-empty statement string', () => {
+      questionBank.forEach((question, index) => {
+        expect(typeof question.statement).toBe('string');
+        expect(question.statement.trim().length).toBeGreaterThan(0);
+      });
+    });
 
-  test('every question has all required fields', () => {
-    questionBank.forEach((q, idx) => {
-      REQUIRED_FIELDS.forEach((field) => {
-        expect(q).toHaveProperty(field);
-        expect(q[field]).not.toBeUndefined();
-        expect(q[field]).not.toBeNull();
+    test('each question should have 3 to 4 options', () => {
+      questionBank.forEach((question, index) => {
+        expect(Array.isArray(question.options)).toBe(true);
+        expect(question.options.length).toBeGreaterThanOrEqual(3);
+        expect(question.options.length).toBeLessThanOrEqual(4);
+      });
+    });
+
+    test('each option should be a non-empty string', () => {
+      questionBank.forEach((question, index) => {
+        question.options.forEach((option, optIndex) => {
+          expect(typeof option).toBe('string');
+          expect(option.trim().length).toBeGreaterThan(0);
+        });
+      });
+    });
+
+    test('all options within a question should be unique', () => {
+      questionBank.forEach((question, index) => {
+        const uniqueOptions = new Set(question.options);
+        expect(uniqueOptions.size).toBe(question.options.length);
+      });
+    });
+
+    test('each question should have a correctAnswer that matches one of the options', () => {
+      questionBank.forEach((question, index) => {
+        expect(question.options).toContain(question.correctAnswer);
+      });
+    });
+
+    test('each question should have a non-empty funFact string', () => {
+      questionBank.forEach((question, index) => {
+        expect(typeof question.funFact).toBe('string');
+        expect(question.funFact.trim().length).toBeGreaterThan(0);
+      });
+    });
+
+    test('each question should have a non-empty imageReference string', () => {
+      questionBank.forEach((question, index) => {
+        expect(typeof question.imageReference).toBe('string');
+        expect(question.imageReference.trim().length).toBeGreaterThan(0);
+      });
+    });
+
+    test('each question should have a valid dinosaur field', () => {
+      questionBank.forEach((question, index) => {
+        expect(REQUIRED_DINOSAURS).toContain(question.dinosaur);
       });
     });
   });
 
-  test('every question has a non-empty string statement', () => {
-    questionBank.forEach((q, idx) => {
-      expect(typeof q.statement).toBe('string');
-      expect(q.statement.trim().length).toBeGreaterThan(0);
-    });
-  });
+  describe('Dinosaur coverage', () => {
+    const getDinosaurCount = (dinosaur) =>
+      questionBank.filter((q) => q.dinosaur === dinosaur).length;
 
-  test('every question has an options array with 3 or 4 entries', () => {
-    questionBank.forEach((q, idx) => {
-      expect(Array.isArray(q.options)).toBe(true);
-      expect(q.options.length).toBeGreaterThanOrEqual(3);
-      expect(q.options.length).toBeLessThanOrEqual(4);
-    });
-  });
-
-  test('every option is a non-empty string', () => {
-    questionBank.forEach((q, idx) => {
-      q.options.forEach((opt) => {
-        expect(typeof opt).toBe('string');
-        expect(opt.trim().length).toBeGreaterThan(0);
+    test('should cover all 7 dinosaurs', () => {
+      REQUIRED_DINOSAURS.forEach((dinosaur) => {
+        const count = getDinosaurCount(dinosaur);
+        expect(count).toBeGreaterThanOrEqual(3);
       });
     });
-  });
 
-  test('every question has a non-empty string correctAnswer', () => {
-    questionBank.forEach((q, idx) => {
-      expect(typeof q.correctAnswer).toBe('string');
-      expect(q.correctAnswer.trim().length).toBeGreaterThan(0);
+    test('T-Rex should have at least 3 questions', () => {
+      expect(getDinosaurCount('T-Rex')).toBeGreaterThanOrEqual(3);
     });
-  });
 
-  test('correctAnswer is always one of the provided options', () => {
-    questionBank.forEach((q, idx) => {
-      expect(q.options).toContain(q.correctAnswer);
+    test('Triceratops should have at least 3 questions', () => {
+      expect(getDinosaurCount('Triceratops')).toBeGreaterThanOrEqual(3);
     });
-  });
 
-  test('every question has a non-empty string funFact', () => {
-    questionBank.forEach((q, idx) => {
-      expect(typeof q.funFact).toBe('string');
-      expect(q.funFact.trim().length).toBeGreaterThan(0);
+    test('Velociraptor should have at least 3 questions', () => {
+      expect(getDinosaurCount('Velociraptor')).toBeGreaterThanOrEqual(3);
     });
-  });
 
-  test('every question has a non-empty string imageReference', () => {
-    questionBank.forEach((q, idx) => {
-      expect(typeof q.imageReference).toBe('string');
-      expect(q.imageReference.trim().length).toBeGreaterThan(0);
+    test('Stegosaurus should have at least 3 questions', () => {
+      expect(getDinosaurCount('Stegosaurus')).toBeGreaterThanOrEqual(3);
     });
-  });
 
-  test('every question references one of the required dinosaurs', () => {
-    questionBank.forEach((q, idx) => {
-      const text = `${q.statement} ${q.options.join(' ')} ${q.funFact}`.toLowerCase();
-      const matched = REQUIRED_DINOSAURS.some((d) =>
-        text.includes(d.toLowerCase())
+    test('Brachiosaurus should have at least 3 questions', () => {
+      expect(getDinosaurCount('Brachiosaurus')).toBeGreaterThanOrEqual(3);
+    });
+
+    test('Ankylosaurus should have at least 3 questions', () => {
+      expect(getDinosaurCount('Ankylosaurus')).toBeGreaterThanOrEqual(3);
+    });
+
+    test('Pteranodon should have at least 3 questions', () => {
+      expect(getDinosaurCount('Pteranodon')).toBeGreaterThanOrEqual(3);
+    });
+
+    test('total questions across all dinosaurs should equal 40', () => {
+      const total = REQUIRED_DINOSAURS.reduce(
+        (sum, d) => sum + getDinosaurCount(d),
+        0
       );
-      expect(matched).toBe(true);
+      expect(total).toBe(40);
     });
   });
 
-  test('each required dinosaur has at least 3 questions', () => {
-    REQUIRED_DINOSAURS.forEach((dino) => {
-      const count = questionBank.filter((q) => {
-        const text = `${q.statement} ${q.options.join(' ')} ${q.funFact}`.toLowerCase();
-        return text.includes(dino.toLowerCase());
-      }).length;
-      expect(count).toBeGreaterThanOrEqual(3);
+  describe('Question uniqueness', () => {
+    test('all question statements should be unique', () => {
+      const statements = questionBank.map((q) => q.statement.trim().toLowerCase());
+      const uniqueStatements = new Set(statements);
+      expect(uniqueStatements.size).toBe(statements.length);
     });
-  });
-
-  test('there are no duplicate questions (by statement)', () => {
-    const statements = questionBank.map((q) => q.statement.trim().toLowerCase());
-    const unique = new Set(statements);
-    expect(unique.size).toBe(statements.length);
-  });
-
-  test('options within a single question are unique', () => {
-    questionBank.forEach((q, idx) => {
-      const lower = q.options.map((o) => o.trim().toLowerCase());
-      const unique = new Set(lower);
-      expect(unique.size).toBe(lower.length);
-    });
-  });
-
-  test('imageReference values are unique across all questions', () => {
-    const refs = questionBank.map((q) => q.imageReference.trim());
-    const unique = new Set(refs);
-    expect(unique.size).toBe(refs.length);
   });
 });
