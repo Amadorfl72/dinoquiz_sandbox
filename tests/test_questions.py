@@ -82,6 +82,15 @@ def test_image_paths_no_duplicates_explicit():
     assert len(duplicates) == 0, f"Duplicate image_paths found: {set(duplicates)}"
 
 
+def test_image_paths_follow_naming_pattern():
+    """All image_paths should follow the assets/images/<dinosaur>_fun_fact_<n>.png pattern."""
+    import re
+    pattern = re.compile(r'^assets/images/[a-z_]+_fun_fact_\d+\.png$')
+    for i, q in enumerate(questions):
+        assert pattern.match(q['image_path']), \
+            f"Question at index {i} image_path '{q['image_path']}' does not match expected pattern"
+
+
 def test_required_fields_present():
     required_fields = ['id', 'question', 'options', 'correct_answer', 'fun_fact', 'image_path']
     for i, q in enumerate(questions):
