@@ -7,17 +7,28 @@
   <link rel="manifest" href="/manifest.json">
   <title>DinoQuiz</title>
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="preload" href="/images/dino-mascot.png" as="image">
+  <link rel="preload" href="/styles/main.css" as="style">
+  <link rel="preload" href="/scripts/main.js" as="script">
 </head>
 <body>
   <div id="app">
     <h1>DinoQuiz</h1>
-    <img src="/images/dino-mascot.png" alt="Dino Mascot">
+    <img src="/images/dino-mascot.png" alt="Dino Mascot" loading="eager">
     <button id="play-button">¡Jugar!</button>
   </div>
-  <script src="/scripts/main.js"></script>
+  <script src="/scripts/main.js" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js');
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
     }
   </script>
 </body>
