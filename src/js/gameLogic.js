@@ -1,15 +1,17 @@
 function endGame(currentScore) {
-  const bestScore = localStorage.getItem('bestScore') || 0;
+  const bestScore = parseInt(localStorage.getItem('bestScore') || '0', 10);
   if (currentScore > bestScore) {
-    localStorage.setItem('bestScore', currentScore);
+    localStorage.setItem('bestScore', currentScore.toString());
     showNewHighScoreMessage();
   }
 }
 
 function showNewHighScoreMessage() {
   const messageElement = document.getElementById('new-best-score-message');
-  messageElement.style.display = 'block';
-  setTimeout(() => {
-    messageElement.style.display = 'none';
-  }, 3000);
+  if (messageElement) {
+    messageElement.style.display = 'block';
+    setTimeout(() => {
+      messageElement.style.display = 'none';
+    }, 3000);
+  }
 }
