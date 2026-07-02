@@ -64,4 +64,11 @@ describe('logGameCompleted', () => {
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+
+  it('should use the event name game_completed', async () => {
+    await logGameCompleted(100, 5000, '1.0.0');
+
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.event).toBe('game_completed');
+  });
 });
