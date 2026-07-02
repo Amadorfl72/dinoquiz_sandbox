@@ -16,6 +16,7 @@ const DinoImage = ({ src, alt }) => {
           src={placeholderImage} 
           alt={`Placeholder for ${alt}`} 
           className="dino-image"
+          data-testid="dino-placeholder"
         />
       ) : (
         <img 
