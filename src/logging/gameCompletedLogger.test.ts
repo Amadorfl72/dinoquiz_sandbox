@@ -1,4 +1,4 @@
-import { logGameCompleted } from '../logging';
+import { logGameCompleted } from '../../logging';
 
 describe('TRIOFSND-36: logGameCompleted', () => {
   const originalFetch = global.fetch;
@@ -52,6 +52,8 @@ describe('TRIOFSND-36: logGameCompleted', () => {
 
     (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-    await expect(logGameCompleted(payload.score, payload.duration_ms, payload.app_version)).resolves.not.toThrow();
+    await expect(
+      logGameCompleted(payload.score, payload.duration_ms, payload.app_version)
+    ).resolves.not.toThrow();
   });
 });
