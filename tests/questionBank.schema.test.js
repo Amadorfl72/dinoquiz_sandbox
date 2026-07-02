@@ -27,9 +27,9 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
 
   test('JSON should conform to expected schema', () => {
     expect(Array.isArray(questionBank)).toBe(true);
+    expect(questionBank.length).toBe(40);
 
     questionBank.forEach((question, index) => {
-      // Validate top-level keys
       const expectedKeys = [
         'id',
         'dinosaur',
@@ -44,7 +44,6 @@ describe('TRIOFSND-57: JSON Schema Validation', () => {
         expect(actualKeys).toContain(key);
       });
 
-      // Validate types
       expect(typeof question.id).toBe('number');
       expect(question.id).toBeGreaterThan(0);
 
