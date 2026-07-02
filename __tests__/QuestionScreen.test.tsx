@@ -1,6 +1,6 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import QuestionScreen from '../src/screens/QuestionScreen';
+import { render, fireEvent } from '@testing-library/react-native';
+import QuestionScreen from '../src/components/QuestionScreen';
 
 describe('QuestionScreen', () => {
   const mockQuestion = {
@@ -30,5 +30,28 @@ describe('QuestionScreen', () => {
     expect(getByText('T-Rex')).toBeTruthy();
     expect(getByText('Brachiosaurus')).toBeTruthy();
     expect(getByText('Velociraptor')).toBeTruthy();
+  });
+
+  it('calls onAnswerSelected with the option when an option button is pressed', () => {
+    const onAnswerSelected = jest.fn();
+    const { getByText } = render(
+      <QuestionScreen question={mockQuestion} onAnswerSelected={onAnswerSelected} />
+    );
+    fireEvent.press(getByText('Brachiosaurus'));
+    expect(onAnswerSelected).toHaveBeenCalledTimes(1);
+    expect(onAnswerSelected).toHaveBeenCalledWith('Brachiosaurus');
+  });
+
+  it('renders each option as a button', () => {
+    const { getByText } = render(<QuestionScreen question={mockQuestion} />);
+    mockQuestion.options.forEach((option) => {
+      const button = getByText(option);
+      expect(button).toBeTruthy();
+    });
+  });
+
+  it('does not crash when onAnswerSelected is not provided', () => {
+    const { getByText } = render(<QuestionScreen question={mockQuestion} />);
+    expect(() => fireEvent.press(getByText('T-Rex'))).not.toThrow();
   });
 });
