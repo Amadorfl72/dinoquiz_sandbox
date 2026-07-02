@@ -1,4 +1,7 @@
 const { initializeGame } = require('../src/utils/gameUtils');
+const { render, screen, fireEvent } = require('@testing-library/react');
+const React = require('react');
+const GameScreen = require('../src/components/GameScreen').default;
 
 describe('TRIOFSND-9: Game Initialization Logic', () => {
   let mockQuestionsPool;
@@ -44,18 +47,12 @@ describe('TRIOFSND-9: Game Initialization Logic', () => {
   });
 
   test('should trigger initialization when "¡Jugar!" is pressed', () => {
-    document.body.innerHTML = '<button id="play-btn">¡Jugar!</button>';
-    const playBtn = document.getElementById('play-btn');
-    const mockCallback = jest.fn();
+    const mockOnGameStart = jest.fn();
+    render(React.createElement(GameScreen, { onGameStart: mockOnGameStart }));
     
-    playBtn.addEventListener('click', () => {
-      const result = initializeGame(mockQuestionsPool);
-      mockCallback(result);
-    });
-
-    playBtn.click();
+    const playButton = screen.getByText('¡Jugar!');
+    fireEvent.click(playButton);
     
-    expect(mockCallback).toHaveBeenCalledTimes(1);
-    expect(mockCallback.mock.calls[0][0]).toHaveLength(10);
+    expect(mockOnGameStart).toHaveBeenCalledTimes(1);
   });
 });
