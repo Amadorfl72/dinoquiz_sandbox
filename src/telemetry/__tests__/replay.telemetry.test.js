@@ -45,6 +45,12 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       const event = sendEventSpy.mock.calls[0][0];
       expect(event.previous_score).toBe(-25);
     });
+
+    it('no debe incluir la propiedad trigger en replay_clicked', () => {
+      Telemetry.logReplayClicked.call(Telemetry, 100);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.trigger).toBeUndefined();
+    });
   });
 
   describe('Event: game_started', () => {
@@ -72,6 +78,12 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       Telemetry.logGameStarted.call(Telemetry, 'new_game');
       const event = sendEventSpy.mock.calls[0][0];
       expect(event.trigger).toBe('new_game');
+    });
+
+    it('no debe incluir previous_score en game_started', () => {
+      Telemetry.logGameStarted.call(Telemetry, 'replay');
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.previous_score).toBeUndefined();
     });
   });
 
@@ -107,6 +119,93 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
       const rate = Telemetry.calculateReplayRate.call(Telemetry);
 
       expect(emitMetricSpy.mock.calls[0][1]).toBe(rate);
+    });
+
+    it('el nombre de la métrica emitida debe ser replay_rate', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.1);
+      const emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
+
+      Telemetry.calculateReplayRate.call(Telemetry);
+
+      expect(emitMetricSpy.mock.calls[0][0]).toBe('replay_rate');
+    });
+  });
+
+  describe('_sendEvent: integración con window.analytics', () => {
+    beforeEach(() => {
+      sendEventSpy.mockRestore();
+    });
+
+    afterEach(() => {
+      delete global.window.analytics;
+    });
+
+    it('debe llamar a window.analytics.track para replay_clicked con previous_score', () => {
+      global.window.analytics = { track: jest.fn(), metric: jest.fn() };
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      Telemetry._sendEvent.call(Telemetry, {
+        name: 'replay_clicked',
+        timestamp: '2024-01-01T00:00:00.000Z',
+        previous_score: 300
+      });
+
+      expect(global.window.analytics.track).toHaveBeenCalledWith('replay_clicked', {
+        timestamp: '2024-01-01T00:00:00.000Z',
+        previous_score: 300
+      });
+      jest.restoreAllMocks();
+    });
+
+    it('debe llamar a window.analytics.track para game_started con trigger', () => {
+      global.window.analytics = { track: jest.fn(), metric: jest.fn() };
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      Telemetry._sendEvent.call(Telemetry, {
+        name: 'game_started',
+        timestamp: '2024-01-01T00:00:00.000Z',
+        trigger: 'replay'
+      });
+
+      expect(global.window.analytics.track).toHaveBeenCalledWith('game_started', {
+        timestamp: '2024-01-01T00:00:00.000Z',
+        trigger: 'replay'
+      });
+      jest.restoreAllMocks();
+    });
+
+    it('no debe lanzar si window.analytics no existe', () => {
+      delete global.window.analytics;
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      expect(() => {
+        Telemetry._sendEvent.call(Telemetry, {
+          name: 'replay_clicked',
+          timestamp: '2024-01-01T00:00:00.000Z',
+          previous_score: 100
+        });
+      }).not.toThrow();
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('_emitMetric: integración con window.analytics', () => {
+    beforeEach(() => {
+      sendEventSpy.mockRestore();
+    });
+
+    afterEach(() => {
+      delete global.window.analytics;
+    });
+
+    it('debe llamar a window.analytics.metric con nombre, valor y atributos', () => {
+      global.window.analytics = { track: jest.fn(), metric: jest.fn() };
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      Telemetry._emitMetric.call(Telemetry, 'replay_rate', 0.5, { window_minutes: 5 });
+
+      expect(global.window.analytics.metric).toHaveBeenCalledWith('replay_rate', 0.5, { window_minutes: 5 });
+      jest.restoreAllMocks();
     });
   });
 });
