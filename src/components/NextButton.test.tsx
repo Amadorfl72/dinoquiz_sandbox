@@ -1,74 +1,71 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { NextButton } from './NextButton';
+import NextButton from './NextButton';
 
-describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
+jest.useFakeTimers();
 
+describe('NextButton - TRIOFSND-29', () => {
   afterEach(() => {
-    jest.useRealTimers();
+    jest.clearAllTimers();
   });
 
-  it('should call onClick only once if clicked multiple times within the debounce period', () => {
-    const mockOnClick = jest.fn();
-    render(<NextButton onClick={mockOnClick} />);
-
-    const nextButton = screen.getByRole('button', { name: /next/i });
-
-    // Click multiple times rapidly
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-    fireEvent.click(nextButton);
-
-    expect(mockOnClick).toHaveBeenCalledTimes(1);
+  it('renders the Next button', () => {
+    const mockOnNext = jest.fn();
+    render(<NextButton onNext={mockOnNext} />);
+    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
   });
 
-  it('should disable the button immediately after click to prevent accidental skipping', () => {
-    const mockOnClick = jest.fn();
-    render(<NextButton onClick={mockOnClick} />);
-
-    const nextButton = screen.getByRole('button', { name: /next/i });
-
-    fireEvent.click(nextButton);
-
-    expect(nextButton).toBeDisabled();
+  it('disables the button immediately after click to prevent accidental skipping', () => {
+    const mockOnNext = jest.fn();
+    render(<NextButton onNext={mockOnNext} />);
+    const button = screen.getByRole('button', { name: /next/i });
+    
+    fireEvent.click(button);
+    
+    expect(button).toBeDisabled();
   });
 
-  it('should re-enable the button after the debounce period', () => {
-    const mockOnClick = jest.fn();
-    render(<NextButton onClick={mockOnClick} />);
-
-    const nextButton = screen.getByRole('button', { name: /next/i });
-
-    fireEvent.click(nextButton);
-    expect(nextButton).toBeDisabled();
-
-    // Fast-forward time by 1000ms (debounce is 1000ms)
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    expect(nextButton).toBeEnabled();
+  it('shows a loading state immediately after click', () => {
+    const mockOnNext = jest.fn();
+    render(<NextButton onNext={mockOnNext} />);
+    const button = screen.getByRole('button', { name: /next/i });
+    
+    fireEvent.click(button);
+    
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
-  it('should allow clicking again after the debounce period', () => {
-    const mockOnClick = jest.fn();
-    render(<NextButton onClick={mockOnClick} />);
-
-    const nextButton = screen.getByRole('button', { name: /next/i });
-
-    fireEvent.click(nextButton);
+  it('re-enables the button after the debounce period', () => {
+    const mockOnNext = jest.fn();
+    render(<NextButton onNext={mockOnNext} />);
+    const button = screen.getByRole('button', { name: /next/i });
+    
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
     
     act(() => {
-      jest.advanceTimersByTime(1000);
+      jest.advanceTimersByTime(500);
     });
+    
+    expect(button).toBeEnabled();
+  });
 
-    expect(nextButton).toBeEnabled();
-
-    fireEvent.click(nextButton);
-    expect(mockOnClick).toHaveBeenCalledTimes(2);
+  it('does not call onNext multiple times if clicked rapidly', () => {
+    const mockOnNext = jest.fn();
+    render(<NextButton onNext={mockOnNext} />);
+    const button = screen.getByRole('button', { name: /next/i });
+    
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    
+    expect(mockOnNext).toHaveBeenCalledTimes(1);
+    
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+    
+    expect(mockOnNext).toHaveBeenCalledTimes(1);
   });
 });
