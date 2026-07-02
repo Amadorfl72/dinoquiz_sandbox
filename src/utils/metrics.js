@@ -5,7 +5,7 @@ export const trackLCP = () => {
   const observer = new PerformanceObserver((list) => {
     const entries = list.getEntries();
     const lastEntry = entries[entries.length - 1];
-    sendMetric('lcp_latency', lastEntry.renderTime || lastEntry.loadTime);
+    sendMetric('lcp_latency', lastEntry.startTime);
   });
   observer.observe({ type: 'largest-contentful-paint', buffered: true });
 };
