@@ -17,7 +17,7 @@
     </div>
     <div v-if="showFeedback" class="feedback">
       <p v-if="isCorrect">{{ correctFeedback }}</p>
-      <p v-else>{{ incorrectFeedback }}</p>
+      <p v-else>{{ incorrectFeedback }} {{ question.options[question.correctIndex] }}</p>
       <p class="fun-fact">{{ question.funFact }}</p>
       <button @click="nextQuestion">Siguiente</button>
     </div>
@@ -103,6 +103,7 @@ button {
 button.correct {
   background-color: #4CAF50;
   animation: pulse 0.5s;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
 }
 
 button.incorrect {
