@@ -11,11 +11,11 @@ const NextButton = ({ onClick }) => {
 
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // 1 second debounce
+    }, 2000); // Increased to 2 seconds debounce for better UX
   };
 
   return (
-    <button onClick={handleClick} disabled={isLoading}>
+    <button onClick={handleClick} disabled={isLoading} aria-label="Next question">
       {isLoading ? 'Loading...' : 'Next'}
     </button>
   );
