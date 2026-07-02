@@ -29,4 +29,11 @@ describe('TRIOFSND-39 - questionService.selectQuestions (invoked on restart)', (
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(2000);
   });
+
+  it('returns questions with unique ids', () => {
+    const questions = selectQuestions();
+    const ids = questions.map((q) => q.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+  });
 });
