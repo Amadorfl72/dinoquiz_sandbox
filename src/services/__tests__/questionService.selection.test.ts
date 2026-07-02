@@ -29,4 +29,10 @@ describe('TRIOFSND-39 - questionService.selectQuestions (invoked on restart)', (
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(2000);
   });
+
+  it('returns the first question accessible as questions[0] for display after restart', () => {
+    const questions = selectQuestions();
+    expect(questions[0]).toBeDefined();
+    expect(questions[0]).toHaveProperty('text');
+  });
 });
