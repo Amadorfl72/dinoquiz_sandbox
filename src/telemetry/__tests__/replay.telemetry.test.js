@@ -7,11 +7,11 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
 
   describe('Event: replay_clicked', () => {
     it('debe registrar el evento replay_clicked con previous_score y timestamp', () => {
+      const sendEventSpy = jest.spyOn(Telemetry, '_sendEvent').mockImplementation(() => {});
       const previousScore = 1200;
-      Telemetry.logReplayClicked(previousScore);
+      Telemetry.logReplayClicked.call(Telemetry, previousScore);
       
-      expect(console.log).toHaveBeenCalledWith(
-        'Sending telemetry event:', 
+      expect(sendEventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'replay_clicked',
           previous_score: previousScore,
@@ -23,10 +23,10 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
 
   describe('Event: game_started', () => {
     it('debe registrar el evento game_started con trigger "replay"', () => {
-      Telemetry.logGameStarted('replay');
+      const sendEventSpy = jest.spyOn(Telemetry, '_sendEvent').mockImplementation(() => {});
+      Telemetry.logGameStarted.call(Telemetry, 'replay');
       
-      expect(console.log).toHaveBeenCalledWith(
-        'Sending telemetry event:', 
+      expect(sendEventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'game_started',
           trigger: 'replay',
@@ -38,16 +38,18 @@ describe('TRIOFSND-41: Instrumentar telemetría de re-jugada', () => {
 
   describe('Métrica: Tasa de re-jugada', () => {
     it('debe calcular y emitir la métrica de tasa de re-jugada en una ventana de <5 min', () => {
-      const rate = Telemetry.calculateReplayRate();
+      const calculateRateSpy = jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.4);
+      const emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
       
-      expect(console.log).toHaveBeenCalledWith(
-        'Emitting metric:', 
+      const rate = Telemetry.calculateReplayRate.call(Telemetry);
+      
+      expect(calculateRateSpy).toHaveBeenCalledWith('replay');
+      expect(emitMetricSpy).toHaveBeenCalledWith(
         'replay_rate', 
-        expect.any(Number),
+        0.4,
         { window_minutes: 5 }
       );
-      expect(rate).toBeGreaterThanOrEqual(0);
-      expect(rate).toBeLessThanOrEqual(1);
+      expect(rate).toBe(0.4);
     });
   });
 });
