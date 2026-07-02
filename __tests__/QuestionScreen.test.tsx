@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { QuestionScreen } from '../src/components/QuestionScreen';
 
 describe('QuestionScreen', () => {
@@ -9,6 +9,10 @@ describe('QuestionScreen', () => {
     options: ['T-Rex', 'Triceratops', 'Stegosaurus'],
     onSelectAnswer: jest.fn(),
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('renders the dinosaur image when imageUri is provided', () => {
     const { getByTestId } = render(<QuestionScreen {...mockProps} />);
@@ -53,5 +57,21 @@ describe('QuestionScreen', () => {
       expect(width).toBeGreaterThanOrEqual(48);
       expect(height).toBeGreaterThanOrEqual(48);
     });
+  });
+
+  it('renders the correct text for each option', () => {
+    const { getByText } = render(<QuestionScreen {...mockProps} />);
+    
+    mockProps.options.forEach(option => {
+      expect(getByText(option)).toBeTruthy();
+    });
+  });
+
+  it('calls onSelectAnswer with the correct option when an answer button is pressed', () => {
+    const { getAllByTestId } = render(<QuestionScreen {...mockProps} />);
+    const buttons = getAllByTestId('answer-option-button');
+    
+    fireEvent.press(buttons[0]);
+    expect(mockProps.onSelectAnswer).toHaveBeenCalledWith(mockProps.options[0]);
   });
 });
