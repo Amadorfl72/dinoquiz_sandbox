@@ -1,6 +1,6 @@
 import { getDeviceInfo } from '../utils/deviceInfo';
 
-const ANALYTICS_ENDPOINT = '/api/analytics';
+const ANALYTICS_ENDPOINT = '/api/analytics/events';
 
 const sendAnalyticsEvent = async (eventType, eventData = {}) => {
   try {
