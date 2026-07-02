@@ -1,10 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Game from './Game';
-import { getRandomQuestions } from '../utils/gameUtils';
+import { getRandomQuestions, resetGameState } from '../utils/gameUtils';
 
 jest.mock('../utils/gameUtils', () => ({
-  getRandomQuestions: jest.fn()
+  getRandomQuestions: jest.fn(),
+  resetGameState: jest.fn()
 }));
 
 describe('TRIOFSND-34: Implement "Volver a jugar" Game Reset Logic', () => {
@@ -26,6 +27,7 @@ describe('TRIOFSND-34: Implement "Volver a jugar" Game Reset Logic', () => {
     fireEvent.click(resetButton);
     
     // Verify game state is reset
+    expect(resetGameState).toHaveBeenCalled();
     expect(screen.getByTestId('score')).toHaveTextContent('0');
     // Verify navigation to the first question (index 0, displayed as 1)
     expect(screen.getByTestId('question-index')).toHaveTextContent('1');
@@ -50,5 +52,8 @@ describe('TRIOFSND-34: Implement "Volver a jugar" Game Reset Logic', () => {
     const uniqueIds = new Set(selectedQuestions.map(q => q.id));
     expect(selectedQuestions.length).toBe(10);
     expect(uniqueIds.size).toBe(10);
+    
+    // Verify game state is reset
+    expect(resetGameState).toHaveBeenCalled();
   });
 });
