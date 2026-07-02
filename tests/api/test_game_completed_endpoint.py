@@ -1,8 +1,8 @@
 import pytest
 import requests
 
-BASE_URL = "http://localhost:8080/api/v1/events"
-ENDPOINT = "/game_completed"
+BASE_URL = "http://localhost:3000/api"
+ENDPOINT = "/events/game_completed"
 
 @pytest.fixture
 def api_url():
