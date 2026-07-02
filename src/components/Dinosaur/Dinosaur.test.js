@@ -32,7 +32,10 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
     fireEvent.error(image);
     fireEvent.error(image);
 
-    expect(image.getAttribute('src')).toContain('placeholder');
+    // After placeholder fails, src is cleared and solid color fallback is applied
+    expect(image).toHaveAttribute('src', '');
+    expect(image).toHaveStyle({ backgroundColor: '#333' });
+    expect(image).toHaveAttribute('data-testid', 'dinosaur-placeholder');
   });
 
   it('ensures text remains legible when the placeholder is displayed', () => {
