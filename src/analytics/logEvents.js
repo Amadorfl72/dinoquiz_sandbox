@@ -1,6 +1,7 @@
 // Logs structured events for question answered and feedback shown
 const logQuestionAnswered = (questionId, isCorrect, timeToAnswerMs) => {
   console.log('question_answered', {
+    event_type: 'question_answered',
     question_id: questionId,
     success: isCorrect,
     time_to_answer_ms: timeToAnswerMs
@@ -9,7 +10,10 @@ const logQuestionAnswered = (questionId, isCorrect, timeToAnswerMs) => {
 };
 
 const logFeedbackShown = (questionId) => {
-  console.log('feedback_shown', { question_id: questionId });
+  console.log('feedback_shown', {
+    event_type: 'feedback_shown',
+    question_id: questionId
+  });
   // TODO: Integrate with analytics service
 };
 
