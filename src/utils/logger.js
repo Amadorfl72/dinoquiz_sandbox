@@ -10,12 +10,13 @@ const logEvent = (eventType, eventData) => {
   };
   
   console.log(JSON.stringify(logEntry));
+  return logEntry;
 };
 
 export const logAppOpen = () => {
-  logEvent('app_open', {});
+  return logEvent('app_open', {});
 };
 
 export const logGameStarted = () => {
-  logEvent('game_started', {});
+  return logEvent('game_started', {});
 };
