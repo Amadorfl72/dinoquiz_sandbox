@@ -1,5 +1,5 @@
 import { logFunFactViewed } from '../src/analytics/logger';
-import { incrementMetric } from '../src/analytics/metrics';
+import {incrementMetric } from '../src/analytics/metrics';
 import Events from '../src/analytics/events';
 
 jest.mock('../src/analytics/metrics');
@@ -61,6 +61,25 @@ describe('logFunFactViewed', () => {
     const callArgs = consoleSpy.mock.calls[0];
     expect(callArgs[1].event).toBe(Events.FUN_FACT_VIEWED);
   });
+
+  test('payload contains exactly the required fields', () => {
+    logFunFactViewed('q100', 'd200', '3.5.1');
+
+    const payload = consoleSpy.mock.calls[0][1];
+    expect(Object.keys(payload).sort()).toEqual(
+      ['app_version', 'dino_id', 'event', 'question_id'].sort()
+    );
+  });
+
+  test('passes through undefined values without throwing', () => {
+    expect(() => logFunFactViewed(undefined, undefined, undefined)).not.toThrow();
+
+    const payload = consoleSpy.mock.calls[0][1];
+    expect(payload.event).toBe('fun_fact_viewed');
+    expect(payload.question_id).toBeUndefined();
+    expect(payload.dino_id).toBeUndefined();
+    expect(payload.app_version).toBeUndefined();
+  });
 });
 
 describe('incrementMetric', () => {
@@ -91,5 +110,17 @@ describe('incrementMetric', () => {
     incrementMetric('fun_fact_viewed');
 
     expect(consoleSpy).toHaveBeenLastCalledWith('[Metrics] fun_fact_viewed: 3');
+  });
+
+  test('tracks different metrics independently', () => {
+    const { incrementMetric } = require('../src/analytics/metrics');
+
+    incrementMetric('fun_fact_viewed');
+    incrementMetric('other_metric');
+    incrementMetric('fun_fact_viewed');
+
+    expect(consoleSpy).toHaveBeenNthCalledWith(1, '[Metrics] fun_fact_viewed: 1');
+    expect(consoleSpy).toHaveBeenNthCalledWith(2, '[Metrics] other_metric: 1');
+    expect(consoleSpy).toHaveBeenNthCalledWith(3, '[Metrics] fun_fact_viewed: 2');
   });
 });
