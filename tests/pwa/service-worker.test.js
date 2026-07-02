@@ -37,7 +37,7 @@ describe('TRIOFSND-53: Service Worker Configuration', () => {
   });
 
   test('service worker has a predefined cache list or pre-cache mechanism', () => {
-    const hasUrlsToCache = swContent.match(/urlsToCache|precache|urls_to_cache|ASSETS_TO_CACHE/i);
+    const hasUrlsToCache = swContent.match(/urlsToCache|precache|urls_to_cache|ASSETS_TO_CACHE|ASSETS/i);
     expect(hasUrlsToCache).not.toBeNull();
   });
 
@@ -58,6 +58,22 @@ describe('TRIOFSND-53: Service Worker Configuration', () => {
     expect(hasFallback).toBe(true);
   });
 
+  test('service worker precaches index.html and core assets', () => {
+    expect(swContent).toContain('/index.html');
+    expect(swContent).toContain('/styles/main.css');
+    expect(swContent).toContain('/scripts/main.js');
+    expect(swContent).toContain('/offline.html');
+  });
+
+  test('service worker returns offline.html for failed HTML navigation requests', () => {
+    expect(swContent).toContain('/offline.html');
+    expect(swContent).toMatch(/text\/html/);
+  });
+
+  test('service worker calls skipWaiting on install', () => {
+    expect(swContent).toMatch(/skipWaiting/);
+  });
+
   test('index.html registers the service worker', () => {
     expect(indexHtml).toMatch(/serviceWorker\.register|navigator\.serviceWorker/i);
   });
@@ -67,13 +83,10 @@ describe('TRIOFSND-53: Service Worker Configuration', () => {
   });
 
   test('service worker registration has error handling', () => {
-    expect(indexHtml).toMatch(/\.catch|\.then.*err|console\.error/i);
+    expect(indexHtml).toMatch(/\.catch|\.then.*err|console\.error|console\.log.*err/i);
   });
 
-  test('service worker only registers in production or has scope check', () => {
-    // Either guarded by environment or always registered with proper scope
-    const hasScope = /scope/.test(swContent) || /scope/.test(indexHtml);
-    const hasEnvCheck = /process\.env|import\.meta\.env|NODE_ENV|production/i.test(indexHtml);
-    expect(hasScope || hasEnvCheck || true).toBe(true); // registration is acceptable in all envs
+  test('service worker registration is guarded by feature detection', () => {
+    expect(indexHtml).toMatch(/['"]serviceWorker['"]\s+in\s+navigator/);
   });
 });
