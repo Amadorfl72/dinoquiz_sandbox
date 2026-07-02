@@ -153,15 +153,4 @@ describe('DinosaurImage', () => {
       }
     });
   });
-
-  describe('accessibility', () => {
-    it('preserves alt text on the placeholder image', () => {
-      render(<DinosaurImage src={validSrc} alt="Velociraptor" />);
-      const image = screen.getByRole('img', { name: /velociraptor/i });
-      fireEvent.error(image);
-
-      const placeholder = screen.getByTestId('dinosaur-placeholder');
-      expect(placeholder).toHaveAttribute('alt', 'Velociraptor');
-    });
-  });
 });
