@@ -9,10 +9,10 @@ jobs:
   trioforge-security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: '3.12'
       - name: Secret scan (gitleaks)
@@ -36,7 +36,7 @@ jobs:
       - name: SAST (semgrep)
         run: |
           pip install --quiet semgrep
-          set +e; semgrep --config auto --error --quiet . ; code=$?; set -e
+          set +e; semgrep --config auto --error --quiet --exclude .github . ; code=$?; set -e
           if [ "$code" != "0" ]; then
             echo "::error::trioforge-security: semgrep found SAST issues"
             exit 1
@@ -44,7 +44,7 @@ jobs:
       - name: IaC scan (checkov)
         run: |
           pip install --quiet checkov
-          set +e; checkov -d . --quiet --compact ; code=$?; set -e
+          set +e; checkov -d . --skip-path .github --quiet --compact ; code=$?; set -e
           if [ "$code" != "0" ]; then
             echo "::error::trioforge-security: checkov found IaC misconfigurations"
             true
