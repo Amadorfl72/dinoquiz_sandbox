@@ -13,7 +13,7 @@ describe('GameSession', () => {
   test('should initialize with 10 unique questions', () => {
     const session = new GameSession(mockQuestions);
     expect(session.questions).toHaveLength(10);
-    
+
     // Check for uniqueness
     const questionIds = session.questions.map(q => q.id);
     const uniqueIds = new Set(questionIds);
@@ -29,7 +29,7 @@ describe('GameSession', () => {
   test('should advance current question index on next()', () => {
     const session = new GameSession(mockQuestions);
     const firstQuestionId = session.getCurrentQuestion().id;
-    
+
     session.next();
     expect(session.currentQuestionIndex).toBe(1);
     expect(session.getCurrentQuestion().id).not.toBe(firstQuestionId);
@@ -38,7 +38,7 @@ describe('GameSession', () => {
   test('should not repeat previously shown questions', () => {
     const session = new GameSession(mockQuestions);
     const seenQuestions = new Set();
-    
+
     for (let i = 0; i < 10; i++) {
       const question = session.getCurrentQuestion();
       expect(seenQuestions.has(question.id)).toBe(false);
@@ -49,12 +49,12 @@ describe('GameSession', () => {
 
   test('should signal session complete after all 10 questions answered', () => {
     const session = new GameSession(mockQuestions);
-    
+
     for (let i = 0; i < 9; i++) {
       expect(session.isComplete()).toBe(false);
       session.next();
     }
-    
+
     // 10th next() should complete
     expect(session.next()).toBe(false);
     expect(session.isComplete()).toBe(true);
