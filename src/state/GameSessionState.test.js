@@ -1,3 +1,6 @@
+// DEPRECATED - Tests for this functionality have been moved to src/game/GameSession.test.ts
+// This file will be removed in a future update
+
 import GameSessionState from './GameSessionState';
 
 describe('GameSessionState', () => {
