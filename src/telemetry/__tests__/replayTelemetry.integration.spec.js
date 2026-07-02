@@ -12,6 +12,10 @@ describe('TRIOFSND-41: Integración de telemetría de re-jugada', () => {
     emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('Flujo completo de re-jugada', () => {
     it('debe registrar el flujo: juego terminado -> replay_clicked -> game_started(replay)', () => {
       const previousScore = 2000;
@@ -26,19 +30,56 @@ describe('TRIOFSND-41: Integración de telemetría de re-jugada', () => {
       gm.replayGame();
 
       const events = sendEventSpy.mock.calls.map(c => c[0]);
-      expect(events).toHaveLength(2);
+      expect(events).toHaveLength(3);
 
-      // Validar replay_clicked
+      // Validar replay_clicked desde el botón
       expect(events[0].name).toBe('replay_clicked');
       expect(events[0].previous_score).toBe(2000);
       expect(events[0].timestamp).toBeDefined();
 
-      // Validar game_started
+      // Validar replay_clicked desde GameManager.replayGame
+      expect(events[1].name).toBe('replay_clicked');
+      expect(events[1].previous_score).toBe(0);
+
+      // Validar game_started con trigger replay
+      expect(events[2].name).toBe('game_started');
+      expect(events[2].trigger).toBe('replay');
+      expect(events[2].timestamp).toBeDefined();
+
+      expect(onClickMock).toHaveBeenCalled();
+    });
+
+    it('GameManager.startGame debe emitir game_started con el trigger recibido', () => {
+      const gm = new GameManager();
+      gm.startGame('replay');
+
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.name).toBe('game_started');
+      expect(event.trigger).toBe('replay');
+    });
+
+    it('GameManager.replayGame debe emitir replay_clicked con el currentScore y luego game_started con trigger replay', () => {
+      const gm = new GameManager();
+      gm.currentScore = 750;
+      gm.replayGame();
+
+      const events = sendEventSpy.mock.calls.map(c => c[0]);
+      expect(events).toHaveLength(2);
+      expect(events[0].name).toBe('replay_clicked');
+      expect(events[0].previous_score).toBe(750);
       expect(events[1].name).toBe('game_started');
       expect(events[1].trigger).toBe('replay');
-      expect(events[1].timestamp).toBeDefined();
-      
-      expect(onClickMock).toHaveBeenCalled();
+    });
+
+    it('ReplayButton debe emitir replay_clicked con el score recibido antes de invocar onClick', () => {
+      const onClickMock = jest.fn();
+      const element = ReplayButton({ score: 320, onClick: onClickMock });
+      element.props.onClick();
+
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.name).toBe('replay_clicked');
+      expect(event.previous_score).toBe(320);
+      expect(onClickMock).toHaveBeenCalledTimes(1);
     });
 
     it('debe calcular y emitir la métrica de tasa de re-jugada', () => {
@@ -47,6 +88,22 @@ describe('TRIOFSND-41: Integración de telemetría de re-jugada', () => {
 
       expect(replayRate).toBe(0.4);
       expect(emitMetricSpy).toHaveBeenCalledWith('replay_rate', 0.4, { window_minutes: 5 });
+    });
+
+    it('flujo end-to-end: replay desde botón + cálculo de métrica', () => {
+      const onClickMock = jest.fn();
+      const element = ReplayButton({ score: 900, onClick: onClickMock });
+      element.props.onClick();
+
+      const gm = new GameManager();
+      gm.startGame('replay');
+
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.5);
+      const rate = Telemetry.calculateReplayRate.call(Telemetry);
+
+      expect(sendEventSpy).toHaveBeenCalledTimes(2);
+      expect(rate).toBe(0.5);
+      expect(emitMetricSpy).toHaveBeenCalledWith('replay_rate', 0.5, { window_minutes: 5 });
     });
   });
 });
