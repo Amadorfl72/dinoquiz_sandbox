@@ -10,6 +10,10 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
     emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('logReplayClicked', () => {
     it('debe emitir el evento replay_clicked con previous_score y timestamp', () => {
       const previousScore = 1500;
@@ -46,6 +50,16 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
         expect(call[0].name).toBe('replay_clicked');
       });
     });
+
+    it('cada evento replay_clicked debe tener un timestamp distinto o válido', () => {
+      Telemetry.logReplayClicked.call(Telemetry, 10);
+      Telemetry.logReplayClicked.call(Telemetry, 20);
+
+      const ts1 = sendEventSpy.mock.calls[0][0].timestamp;
+      const ts2 = sendEventSpy.mock.calls[1][0].timestamp;
+      expect(new Date(ts1).getTime()).not.toBeNaN();
+      expect(new Date(ts2).getTime()).not.toBeNaN();
+    });
   });
 
   describe('logGameStarted', () => {
@@ -71,6 +85,13 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
       expect(event.trigger).not.toBe('replay');
       expect(event.trigger).toBe('new_game');
     });
+
+    it('debe emitir game_started con trigger undefined si no se pasa argumento', () => {
+      Telemetry.logGameStarted.call(Telemetry, undefined);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.name).toBe('game_started');
+      expect(event.trigger).toBeUndefined();
+    });
   });
 
   describe('Secuencia de eventos de re-jugada', () => {
@@ -84,6 +105,15 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
       expect(events[0].previous_score).toBe(1200);
       expect(events[1].name).toBe('game_started');
       expect(events[1].trigger).toBe('replay');
+    });
+
+    it('el orden de los eventos debe respetar el orden de invocación', () => {
+      Telemetry.logGameStarted.call(Telemetry, 'replay');
+      Telemetry.logReplayClicked.call(Telemetry, 500);
+
+      const events = sendEventSpy.mock.calls.map(c => c[0]);
+      expect(events[0].name).toBe('game_started');
+      expect(events[1].name).toBe('replay_clicked');
     });
   });
 
@@ -104,6 +134,24 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
       jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.5);
       Telemetry.calculateReplayRate.call(Telemetry);
       expect(emitMetricSpy).toHaveBeenCalledWith('replay_rate', 0.5, { window_minutes: 5 });
+    });
+
+    it('debe invocar _calculateRate con el trigger "replay"', () => {
+      const calculateRateSpy = jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.3);
+      Telemetry.calculateReplayRate.call(Telemetry);
+      expect(calculateRateSpy).toHaveBeenCalledWith('replay');
+    });
+
+    it('debe retornar el mismo valor que emite en la métrica', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.7);
+      const rate = Telemetry.calculateReplayRate.call(Telemetry);
+      expect(emitMetricSpy.mock.calls[0][1]).toBe(rate);
+    });
+
+    it('debe emitir exactamente una métrica por invocación', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.4);
+      Telemetry.calculateReplayRate.call(Telemetry);
+      expect(emitMetricSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
