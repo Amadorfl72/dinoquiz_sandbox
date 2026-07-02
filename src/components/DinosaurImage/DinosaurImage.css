@@ -1,0 +1,7 @@
+.dinosaur-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
