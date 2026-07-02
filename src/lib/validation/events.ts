@@ -14,7 +14,7 @@ export function validateGameCompletedEvent(eventData: any): ValidationResult {
     errors.push('duration_ms must be a positive number');
   }
   
-  if (typeof eventData.app_version !== 'string' || !eventData.app_version) {
+  if (typeof eventData.app_version !== 'string' || !eventData.app_version.trim()) {
     errors.push('app_version must be a non-empty string');
   }
   
