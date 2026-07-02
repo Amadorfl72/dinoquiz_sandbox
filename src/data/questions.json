@@ -79,6 +79,166 @@
       "correct_answer": "Pteranodon",
       "fun_fact": "The Pteranodon's crest helped with balance.",
       "image_path": "assets/images/pteranodon_fun_fact_2.png"
+    },
+    {
+      "id": 11,
+      "question": "What dinosaur had the strongest bite?",
+      "options": ["T-Rex", "Spinosaurus", "Allosaurus"],
+      "correct_answer": "T-Rex",
+      "fun_fact": "The T-Rex had a bite force of about 12,800 pounds.",
+      "image_path": "assets/images/trex_fun_fact_2.png"
+    },
+    {
+      "id": 12,
+      "question": "Which dinosaur had a beak like a parrot?",
+      "options": ["Triceratops", "Pachycephalosaurus", "Protoceratops"],
+      "correct_answer": "Triceratops",
+      "fun_fact": "The Triceratops used its beak to clip plants.",
+      "image_path": "assets/images/triceratops_fun_fact_2.png"
+    },
+    {
+      "id": 13,
+      "question": "What dinosaur had spikes on its tail?",
+      "options": ["Stegosaurus", "Ankylosaurus", "Kentrosaurus"],
+      "correct_answer": "Stegosaurus",
+      "fun_fact": "The Stegosaurus could swing its spiked tail for defense.",
+      "image_path": "assets/images/stegosaurus_fun_fact_2.png"
+    },
+    {
+      "id": 14,
+      "question": "Which dinosaur was likely covered in feathers?",
+      "options": ["Velociraptor", "T-Rex", "Brachiosaurus"],
+      "correct_answer": "Velociraptor",
+      "fun_fact": "The Velociraptor may have used feathers for warmth or display.",
+      "image_path": "assets/images/velociraptor_fun_fact_2.png"
+    },
+    {
+      "id": 15,
+      "question": "What dinosaur had nostrils on top of its head?",
+      "options": ["Brachiosaurus", "Diplodocus", "Apatosaurus"],
+      "correct_answer": "Brachiosaurus",
+      "fun_fact": "The Brachiosaurus's high nostrils may have helped it breathe while eating.",
+      "image_path": "assets/images/brachiosaurus_fun_fact_3.png"
+    },
+    {
+      "id": 16,
+      "question": "Which dinosaur had the thickest skull?",
+      "options": ["Pachycephalosaurus", "Triceratops", "Ankylosaurus"],
+      "correct_answer": "Pachycephalosaurus",
+      "fun_fact": "The Pachycephalosaurus had a skull up to 10 inches thick.",
+      "image_path": "assets/images/pachycephalosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 17,
+      "question": "What dinosaur had the longest claws?",
+      "options": ["Therizinosaurus", "Velociraptor", "Deinonychus"],
+      "correct_answer": "Therizinosaurus",
+      "fun_fact": "The Therizinosaurus had claws up to 3 feet long.",
+      "image_path": "assets/images/therizinosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 18,
+      "question": "Which dinosaur was the first to be discovered?",
+      "options": ["Iguanodon", "Megalosaurus", "Hylaeosaurus"],
+      "correct_answer": "Megalosaurus",
+      "fun_fact": "The Megalosaurus was the first dinosaur to be scientifically described in 1824.",
+      "image_path": "assets/images/megalosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 19,
+      "question": "What dinosaur had the most teeth?",
+      "options": ["Hadrosaurus", "Nigersaurus", "Diplodocus"],
+      "correct_answer": "Nigersaurus",
+      "fun_fact": "The Nigersaurus had over 500 teeth arranged in rows.",
+      "image_path": "assets/images/nigersaurus_fun_fact_1.png"
+    },
+    {
+      "id": 20,
+      "question": "Which dinosaur was the smallest?",
+      "options": ["Compsognathus", "Microraptor", "Parvicursor"],
+      "correct_answer": "Parvicursor",
+      "fun_fact": "The Parvicursor was only about 12 inches long.",
+      "image_path": "assets/images/parvicursor_fun_fact_1.png"
+    },
+    {
+      "id": 21,
+      "question": "What dinosaur lived the longest?",
+      "options": ["Brachiosaurus", "Stegosaurus", "T-Rex"],
+      "correct_answer": "Brachiosaurus",
+      "fun_fact": "The Brachiosaurus could live up to 100 years.",
+      "image_path": "assets/images/brachiosaurus_fun_fact_4.png"
+    },
+    {
+      "id": 22,
+      "question": "Which dinosaur had the longest neck?",
+      "options": ["Mamenchisaurus", "Diplodocus", "Brachiosaurus"],
+      "correct_answer": "Mamenchisaurus",
+      "fun_fact": "The Mamenchisaurus's neck was about 30 feet long.",
+      "image_path": "assets/images/mamenchisaurus_fun_fact_1.png"
+    },
+    {
+      "id": 23,
+      "question": "What dinosaur had the most powerful tail?",
+      "options": ["Diplodocus", "Apatosaurus", "Brontosaurus"],
+      "correct_answer": "Diplodocus",
+      "fun_fact": "The Diplodocus could whip its tail at supersonic speeds.",
+      "image_path": "assets/images/diplodocus_fun_fact_1.png"
+    },
+    {
+      "id": 24,
+      "question": "Which dinosaur had the largest eyes?",
+      "options": ["T-Rex", "Stegosaurus", "Struthiomimus"],
+      "correct_answer": "Struthiomimus",
+      "fun_fact": "The Struthiomimus had eyes about 3 inches in diameter.",
+      "image_path": "assets/images/struthiomimus_fun_fact_1.png"
+    },
+    {
+      "id": 25,
+      "question": "What dinosaur was the fastest swimmer?",
+      "options": ["Spinosaurus", "Plesiosaurus", "Ichthyosaurus"],
+      "correct_answer": "Ichthyosaurus",
+      "fun_fact": "The Ichthyosaurus could swim up to 25 mph.",
+      "image_path": "assets/images/ichthyosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 26,
+      "question": "Which dinosaur had the most complex brain?",
+      "options": ["Troodon", "Velociraptor", "T-Rex"],
+      "correct_answer": "Troodon",
+      "fun_fact": "The Troodon had one of the largest brain-to-body ratios of any dinosaur.",
+      "image_path": "assets/images/troodon_fun_fact_1.png"
+    },
+    {
+      "id": 27,
+      "question": "What dinosaur had the most unusual crest?",
+      "options": ["Parasaurolophus", "Corythosaurus", "Lambeosaurus"],
+      "correct_answer": "Parasaurolophus",
+      "fun_fact": "The Parasaurolophus's crest may have been used to make sounds.",
+      "image_path": "assets/images/parasaurolophus_fun_fact_1.png"
+    },
+    {
+      "id": 28,
+      "question": "Which dinosaur was the first to be named?",
+      "options": ["Iguanodon", "Megalosaurus", "Hylaeosaurus"],
+      "correct_answer": "Megalosaurus",
+      "fun_fact": "The Megalosaurus was named in 1824 by William Buckland.",
+      "image_path": "assets/images/megalosaurus_fun_fact_2.png"
+    },
+    {
+      "id": 29,
+      "question": "What dinosaur had the most armor?",
+      "options": ["Ankylosaurus", "Stegosaurus", "Euoplocephalus"],
+      "correct_answer": "Ankylosaurus",
+      "fun_fact": "The Ankylosaurus had armor plates and a club tail for defense.",
+      "image_path": "assets/images/ankylosaurus_fun_fact_3.png"
+    },
+    {
+      "id": 30,
+      "question": "Which dinosaur was the most common?",
+      "options": ["Triceratops", "Hadrosaurus", "Iguanodon"],
+      "correct_answer": "Hadrosaurus",
+      "fun_fact": "The Hadrosaurus was so common it's called the 'cow of the Cretaceous'.",
+      "image_path": "assets/images/hadrosaurus_fun_fact_1.png"
     }
   ]
 }
