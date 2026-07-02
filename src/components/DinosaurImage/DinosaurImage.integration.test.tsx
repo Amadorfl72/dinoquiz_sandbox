@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { DinosaurImage } from './DinosaurImage';
+import DinosaurImage from './DinosaurImage';
 
 describe('DinosaurImage – Integration', () => {
   it('shows placeholder and keeps caption visible end-to-end', async () => {
