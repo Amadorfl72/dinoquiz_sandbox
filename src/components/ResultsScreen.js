@@ -2,11 +2,10 @@ import React from 'react';
 import { Button } from './Button';
 import { resetGameState, selectQuestions } from '../utils/gameLogic';
 
-const ResultsScreen = ({ score, onRestart }) => {
+const ResultsScreen = ({ score }) => {
   const handleRestart = () => {
     resetGameState();
     selectQuestions();
-    onRestart();
   };
 
   return (
