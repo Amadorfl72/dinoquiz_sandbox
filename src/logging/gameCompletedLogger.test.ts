@@ -1,4 +1,4 @@
-import { logGameCompleted } from './gameCompletedLogger';
+import { logGameCompleted } from '../logging';
 
 describe('TRIOFSND-36: logGameCompleted', () => {
   const originalFetch = global.fetch;
@@ -25,11 +25,11 @@ describe('TRIOFSND-36: logGameCompleted', () => {
       json: () => Promise.resolve({ success: true }),
     });
 
-    await logGameCompleted(payload);
+    await logGameCompleted(payload.score, payload.duration_ms, payload.app_version);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/events',
+      '/api/logs',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,6 +52,6 @@ describe('TRIOFSND-36: logGameCompleted', () => {
 
     (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-    await expect(logGameCompleted(payload)).resolves.not.toThrow();
+    await expect(logGameCompleted(payload.score, payload.duration_ms, payload.app_version)).resolves.not.toThrow();
   });
 });
