@@ -49,4 +49,19 @@ describe('logGameCompleted', () => {
       logGameCompleted(gameData.score, gameData.duration_ms, gameData.app_version)
     ).resolves.not.toThrow();
   });
+
+  it('should not throw if backend responds with non-OK status', async () => {
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({ ok: false, status: 500 })
+    );
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      logGameCompleted(100, 5000, '1.0.0')
+    ).resolves.not.toThrow();
+
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 });
