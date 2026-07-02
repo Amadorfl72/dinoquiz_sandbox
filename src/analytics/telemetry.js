@@ -30,21 +30,35 @@ export const Telemetry = {
 
   // Private method to send events to analytics backend
   _sendEvent: (event) => {
-    // Implementation for actual analytics backend would go here
-    // For now we'll just log to console for testing
+    // Implementation for actual analytics backend
+    if (window.analytics) {
+      window.analytics.track(event.name, {
+        timestamp: event.timestamp,
+        ...(event.previous_score !== undefined && { previous_score: event.previous_score }),
+        ...(event.trigger && { trigger: event.trigger })
+      });
+    }
     console.log('Telemetry event:', event);
   },
 
   // Private method to emit metrics
   _emitMetric: (name, value, attributes) => {
+    if (window.analytics) {
+      window.analytics.metric(name, value, attributes);
+    }
     console.log('Telemetry metric:', name, value, attributes);
   },
 
   // Private method to calculate rate
   _calculateRate: (trigger) => {
-    // Mock implementation - would query analytics backend in real app
-    const totalGames = 10; // Would be dynamic
-    const replayGames = 4; // Would be dynamic
+    // In a real implementation, this would query the analytics backend
+    // for events in the last 5 minutes and calculate the rate
+    const now = new Date();
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+    
+    // Mock implementation - would be dynamic in real app
+    const totalGames = 10; 
+    const replayGames = 4; 
     return replayGames / totalGames;
   }
 };
