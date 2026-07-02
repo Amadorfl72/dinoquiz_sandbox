@@ -1,7 +1,7 @@
 import { logEvent } from './analytics';
 
-const logGameCompleted = (score, durationMs, appVersion) => {
-  logEvent('game_completed', {
+const logGameCompleted = async (score, durationMs, appVersion) => {
+  await logEvent('game_completed', {
     score,
     duration_ms: durationMs,
     app_version: appVersion
