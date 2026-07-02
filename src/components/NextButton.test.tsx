@@ -12,9 +12,9 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
     jest.useRealTimers();
   });
 
-  it('should call onNext only once if clicked multiple times within the debounce period', () => {
-    const mockOnNext = jest.fn();
-    render(<NextButton onNext={mockOnNext} />);
+  it('should call onClick only once if clicked multiple times within the debounce period', () => {
+    const mockOnClick = jest.fn();
+    render(<NextButton onClick={mockOnClick} />);
 
     const nextButton = screen.getByRole('button', { name: /next/i });
 
@@ -23,12 +23,12 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
     fireEvent.click(nextButton);
     fireEvent.click(nextButton);
 
-    expect(mockOnNext).toHaveBeenCalledTimes(1);
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
   it('should disable the button immediately after click to prevent accidental skipping', () => {
-    const mockOnNext = jest.fn();
-    render(<NextButton onNext={mockOnNext} />);
+    const mockOnClick = jest.fn();
+    render(<NextButton onClick={mockOnClick} />);
 
     const nextButton = screen.getByRole('button', { name: /next/i });
 
@@ -38,8 +38,8 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
   });
 
   it('should re-enable the button after the debounce period', () => {
-    const mockOnNext = jest.fn();
-    render(<NextButton onNext={mockOnNext} />);
+    const mockOnClick = jest.fn();
+    render(<NextButton onClick={mockOnClick} />);
 
     const nextButton = screen.getByRole('button', { name: /next/i });
 
@@ -55,8 +55,8 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
   });
 
   it('should allow clicking again after the debounce period', () => {
-    const mockOnNext = jest.fn();
-    render(<NextButton onNext={mockOnNext} />);
+    const mockOnClick = jest.fn();
+    render(<NextButton onClick={mockOnClick} />);
 
     const nextButton = screen.getByRole('button', { name: /next/i });
 
@@ -69,6 +69,6 @@ describe('NextButton - TRIOFSND-29: Add debounce to Next button', () => {
     expect(nextButton).toBeEnabled();
 
     fireEvent.click(nextButton);
-    expect(mockOnNext).toHaveBeenCalledTimes(2);
+    expect(mockOnClick).toHaveBeenCalledTimes(2);
   });
 });
