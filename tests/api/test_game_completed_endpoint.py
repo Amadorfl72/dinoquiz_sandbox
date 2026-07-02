@@ -11,14 +11,14 @@ def api_url():
 @pytest.fixture
 def valid_payload():
     return {
-        "score": 1500,
+        "score": 7,
         "duration_ms": 300000,
         "app_version": "1.2.3"
     }
 
 def test_ingest_game_completed_success(api_url, valid_payload):
     response = requests.post(api_url, json=valid_payload)
-    assert response.status_code in (200, 201, 202)
+    assert response.status_code == 201
 
 def test_ingest_missing_score(api_url, valid_payload):
     del valid_payload["score"]
@@ -67,10 +67,10 @@ def test_ingest_invalid_app_version_type(api_url, valid_payload):
 def test_ingest_extra_fields_ignored(api_url, valid_payload):
     valid_payload["player_id"] = "abc123"
     response = requests.post(api_url, json=valid_payload)
-    assert response.status_code in (200, 201, 202)
+    assert response.status_code == 201
 
 def test_ingest_zero_values(api_url, valid_payload):
     valid_payload["score"] = 0
     valid_payload["duration_ms"] = 0
     response = requests.post(api_url, json=valid_payload)
-    assert response.status_code in (200, 201, 202)
+    assert response.status_code == 400
