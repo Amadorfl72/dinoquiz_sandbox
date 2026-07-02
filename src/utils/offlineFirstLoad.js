@@ -1,10 +1,10 @@
 // Utility to detect first-time load without connection
 const isFirstLoad = () => {
-  return !localStorage.getItem('hasLoadedBefore');
+  return !localStorage.getItem('gameDownloaded');
 };
 
-const setFirstLoad = () => {
-  localStorage.setItem('hasLoadedBefore', 'true');
+const setGameDownloaded = () => {
+  localStorage.setItem('gameDownloaded', 'true');
 };
 
 const isOnline = () => {
@@ -15,6 +15,8 @@ export const checkOfflineFirstLoad = () => {
   if (isFirstLoad() && !isOnline()) {
     return true;
   }
-  setFirstLoad();
+  if (isOnline()) {
+    setGameDownloaded();
+  }
   return false;
 };
