@@ -2,6 +2,11 @@
 
 This is the backend for the DinoQuiz PWA. It includes an endpoint for receiving anonymous aggregated metrics.
 
+## Security
+
+- All requests are protected with Helmet middleware
+- PII detection in metrics payload
+
 ## Getting Started
 
 1. Clone the repository.
