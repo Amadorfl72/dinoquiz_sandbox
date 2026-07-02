@@ -23,6 +23,7 @@ const ResultsScreen = ({ score, onReplay }) => {
           title="Volver a jugar" 
           onPress={onReplay} 
           style={styles.replayButton}
+          accessibilityLabel="Volver a jugar"
         />
       </View>
     </View>
