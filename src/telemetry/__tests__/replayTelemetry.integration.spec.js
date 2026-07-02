@@ -105,5 +105,16 @@ describe('TRIOFSND-41: Integración de telemetría de re-jugada', () => {
       expect(rate).toBe(0.5);
       expect(emitMetricSpy).toHaveBeenCalledWith('replay_rate', 0.5, { window_minutes: 5 });
     });
+
+    it('GameManager.replayGame con currentScore 0 debe emitir replay_clicked con previous_score 0', () => {
+      const gm = new GameManager();
+      gm.replayGame();
+
+      const events = sendEventSpy.mock.calls.map(c => c[0]);
+      expect(events[0].name).toBe('replay_clicked');
+      expect(events[0].previous_score).toBe(0);
+      expect(events[1].name).toBe('game_started');
+      expect(events[1].trigger).toBe('replay');
+    });
   });
 });
