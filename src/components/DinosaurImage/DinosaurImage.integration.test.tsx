@@ -28,13 +28,14 @@ describe('DinosaurImage – Integration', () => {
 
   it('recovers and shows original image if remounted with a valid src', () => {
     const { rerender } = render(
-      <DinosaurImage src="https://broken.example.com/dino.jpg" alt="Dino" />
+      <DinosaurImage key="broken" src="https://broken.example.com/dino.jpg" alt="Dino" />
     );
 
     fireEvent.error(screen.getByRole('img', { name: /dino/i }));
     expect(screen.getByTestId('dinosaur-placeholder')).toBeInTheDocument();
 
-    rerender(<DinosaurImage src="https://valid.example.com/dino.jpg" alt="Dino" />);
+    // Use a different key to force remount, resetting internal error state
+    rerender(<DinosaurImage key="valid" src="https://valid.example.com/dino.jpg" alt="Dino" />);
 
     const image = screen.getByRole('img', { name: /dino/i }) as HTMLImageElement;
     expect(image.src).toBe('https://valid.example.com/dino.jpg');
