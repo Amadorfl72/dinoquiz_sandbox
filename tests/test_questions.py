@@ -1,6 +1,7 @@
 import json
 import os
 import pytest
+from collections import Counter
 
 
 # Load questions from JSON file
@@ -26,6 +27,32 @@ def test_fun_fact_image_path_is_unique():
     unique_image_paths = set(image_paths)
     assert len(unique_image_paths) == len(image_paths), \
         f"Duplicate fun_fact image_paths found. {len(image_paths)} total, {len(unique_image_paths)} unique."
+
+
+def test_fun_fact_image_path_unique_count_matches_total():
+    """Expected unique image_paths count to equal total count (30)."""
+    image_paths = [q['image_path'] for q in questions]
+    unique_image_paths = set(image_paths)
+    assert len(unique_image_paths) == 30
+    assert len(image_paths) == 30
+
+
+def test_known_duplicate_image_paths_not_present():
+    """Explicitly ensure the duplicate patterns reported in the bug are gone."""
+    known_duplicates = [
+        'assets/images/trex_fun_fact.png',
+        'assets/images/triceratops_fun_fact.png',
+        'assets/images/stegosaurus_fun_fact.png',
+        'assets/images/velociraptor_fun_fact.png',
+        'assets/images/brachiosaurus_fun_fact.png',
+        'assets/images/ankylosaurus_fun_fact.png',
+        'assets/images/pteranodon_fun_fact.png',
+    ]
+    image_paths = [q['image_path'] for q in questions]
+    counts = Counter(image_paths)
+    for path in known_duplicates:
+        assert counts.get(path, 0) <= 1, \
+            f"Known duplicate image_path '{path}' appears {counts.get(path, 0)} times"
 
 
 def test_every_question_has_image_path():
