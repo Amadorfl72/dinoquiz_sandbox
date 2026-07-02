@@ -24,8 +24,10 @@ describe('TRIOFSND-39: Lógica de reinicio de partida', () => {
       screen: 'results'
     };
 
+    jest.spyOn(selectQuestions, 'selectQuestions');
     const newState = restartGame(currentState);
 
+    expect(selectQuestions).toHaveBeenCalledTimes(1);
     expect(newState.questions.length).toBeGreaterThan(0);
     expect(newState.questions[0]).toHaveProperty('id');
     expect(newState.questions[0]).toHaveProperty('text');
