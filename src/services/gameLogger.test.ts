@@ -1,11 +1,10 @@
-import { logGameCompleted } from './gameLogger';
-import { apiClient } from './apiClient';
+import { logGameCompleted } from '../logging';
 
-jest.mock('./apiClient');
+global.fetch = jest.fn(() => Promise.resolve({ ok: true, status: 200 })) as unknown as typeof fetch;
 
 describe('TRIOFSND-36: Client-Side game_completed Logging', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    (fetch as jest.Mock).mockClear();
   });
 
   it('should emit game_completed event with score, duration_ms, and app_version to the backend', async () => {
@@ -15,13 +14,22 @@ describe('TRIOFSND-36: Client-Side game_completed Logging', () => {
       app_version: '1.2.3',
     };
 
-    await logGameCompleted(payload);
+    await logGameCompleted(payload.score, payload.duration_ms, payload.app_version);
 
-    expect(apiClient.post).toHaveBeenCalledTimes(1);
-    expect(apiClient.post).toHaveBeenCalledWith('/api/logs', {
-      event: 'game_completed',
-      ...payload,
-    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/logs',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'game_completed',
+          score: payload.score,
+          duration_ms: payload.duration_ms,
+          app_version: payload.app_version,
+        }),
+      })
+    );
   });
 
   it('should not throw or crash the app if the logging endpoint fails', async () => {
@@ -31,8 +39,10 @@ describe('TRIOFSND-36: Client-Side game_completed Logging', () => {
       app_version: '1.2.3',
     };
 
-    (apiClient.post as jest.Mock).mockRejectedValueOnce(new Error('Network Error'));
+    (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network Error'));
 
-    await expect(logGameCompleted(payload)).resolves.not.toThrow();
+    await expect(
+      logGameCompleted(payload.score, payload.duration_ms, payload.app_version)
+    ).resolves.not.toThrow();
   });
 });
