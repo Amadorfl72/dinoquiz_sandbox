@@ -1,14 +1,15 @@
-import { initObservability, trackGameStarted, getMetrics } from './observability';
+import { trackLCP, trackJSErrors, trackGameStarted } from '../utils/metrics';
+import { sendMetric } from '../utils/api';
+
+jest.mock('../utils/api', () => ({
+  sendMetric: jest.fn(() => Promise.resolve({ ok: true }))
+}));
 
 describe('TRIOFSND-14: Observability and Metrics Integration', () => {
-  let mockFetch;
   let originalPerformanceObserver;
   let originalAddEventListener;
 
   beforeEach(() => {
-    mockFetch = jest.fn(() => Promise.resolve({ ok: true }));
-    global.fetch = mockFetch;
-
     // Mock PerformanceObserver
     originalPerformanceObserver = global.PerformanceObserver;
     global.PerformanceObserver = jest.fn(function(callback) {
@@ -32,61 +33,46 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
 
   describe('LCP Latency Tracking', () => {
     it('should initialize PerformanceObserver for LCP', () => {
-      initObservability();
+      trackLCP();
       expect(global.PerformanceObserver).toHaveBeenCalled();
       const instance = global.PerformanceObserver.mock.instances[0];
-      expect(instance.observe).toHaveBeenCalledWith({ entryTypes: ['largest-contentful-paint'] });
+      expect(instance.observe).toHaveBeenCalledWith({ type: 'largest-contentful-paint', buffered: true });
     });
 
     it('should track LCP latency when entry is recorded', () => {
-      initObservability();
-      const lcpEntry = { startTime: 2500, renderTime: 2500, loadTime: 2500, size: 5000, entryType: 'largest-contentful-paint' };
+      trackLCP();
+      const lcpEntry = { startTime: 2500, size: 5000, entryType: 'largest-contentful-paint' };
       
       // Simulate performance observer callback
       global.PerformanceObserver.mockCallback({
         getEntries: () => [lcpEntry]
       });
 
-      const metrics = getMetrics();
-      expect(metrics.lcp).toBe(2500);
+      expect(sendMetric).toHaveBeenCalledWith('lcp_latency', 2500);
     });
   });
 
   describe('JS Error Rate Monitoring', () => {
-    it('should attach an error event listener to the window', () => {
-      initObservability();
-      expect(global.window.addEventListener).toHaveBeenCalledWith('error', expect.any(Function));
-    });
-
     it('should track JS errors when an error event is fired', () => {
-      initObservability();
-      const errorListener = global.window.addEventListener.mock.calls.find(
-        call => call[0] === 'error'
-      )[1];
+      trackJSErrors();
+      const error = new Error('Test error');
+      window.onerror('Test error', 'test.js', 10, 5, error);
 
-      // Simulate an error event
-      errorListener({ message: 'Test error', filename: 'test.js', lineno: 10, colno: 5, error: new Error('Test') });
-
-      const metrics = getMetrics();
-      expect(metrics.jsErrorCount).toBe(1);
-      expect(metrics.jsErrors[0].message).toBe('Test error');
+      expect(sendMetric).toHaveBeenCalledWith('js_error_rate', {
+        message: 'Test error',
+        source: 'test.js',
+        lineno: 10,
+        colno: 5,
+        error: error
+      });
     });
   });
 
   describe('Game Started Metrics', () => {
-    it('should send game_started metric to the backend endpoint', async () => {
-      initObservability();
-      await trackGameStarted({ gameId: '12345', userId: 'user1' });
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-      const [url, options] = mockFetch.mock.calls[0];
-      expect(url).toBe('/api/metrics');
-      expect(options.method).toBe('POST');
-      expect(JSON.parse(options.body)).toEqual({
-        event: 'game_started',
-        gameId: '12345',
-        userId: 'user1',
-        timestamp: expect.any(Number)
+    it('should send game_started metric to the backend endpoint', () => {
+      trackGameStarted();
+      expect(sendMetric).toHaveBeenCalledWith('game_started', {
+        timestamp: expect.any(String)
       });
     });
   });
