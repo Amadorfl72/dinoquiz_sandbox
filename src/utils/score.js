@@ -1,6 +1,6 @@
 import { storage } from './storage';
 
-const BEST_SCORE_KEY = 'dinoquiz_best_score';
+const BEST_SCORE_KEY = 'triofsnd:bestScore';
 
 export const getBestScore = () => storage.get(BEST_SCORE_KEY, 0);
 
