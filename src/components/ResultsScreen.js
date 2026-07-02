@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { handleScoreUpdate } from '../services/scoreService';
+import { getBestScore } from '../utils/safeWrapper';
 
 export const ResultsScreen = ({ score }) => {
   const [isNewBestScore, setIsNewBestScore] = useState(false);
