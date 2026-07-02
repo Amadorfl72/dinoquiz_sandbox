@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import ResultsScreen from './ResultsScreen';
-import * as gameCompletedLogger from '../logging/gameCompletedLogger';
+import * as gameCompletedLogger from '../logging';
 
 describe('TRIOFSND-36: ResultsScreen', () => {
   it('logs game_completed event upon reaching the results screen', () => {
