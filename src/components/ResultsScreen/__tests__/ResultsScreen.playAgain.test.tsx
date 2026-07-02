@@ -70,4 +70,14 @@ describe('TRIOFSND-39 - ResultsScreen: "Volver a jugar" button', () => {
     expect(mockedSelectQuestions).toHaveBeenCalledBefore(startNewRound);
     expect(startNewRound).toHaveBeenCalledTimes(1);
   });
+
+  it('completes the full restart flow in a single click without additional user interaction', () => {
+    render(<ResultsScreen />);
+    const button = screen.getByRole('button', { name: /volver a jugar/i });
+    fireEvent.click(button);
+    // All three operations should fire from a single click
+    expect(resetGameState).toHaveBeenCalledTimes(1);
+    expect(startNewRound).toHaveBeenCalledTimes(1);
+    expect(mockedSelectQuestions).toHaveBeenCalledTimes(1);
+  });
 });
