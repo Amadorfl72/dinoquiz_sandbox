@@ -4,57 +4,53 @@ import '@testing-library/jest-dom';
 import { ResultsScreen } from './ResultsScreen';
 
 describe('ResultsScreen Component', () => {
-  const mockOnPlayAgain = jest.fn();
+  const mockOnReplay = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders the score correctly as "Has acertado X/10"', () => {
-    render(<ResultsScreen score={7} onPlayAgain={mockOnPlayAgain} />);
+    render(<ResultsScreen score={7} onReplay={mockOnReplay} />);
     expect(screen.getByText(/Has acertado 7\/10/i)).toBeInTheDocument();
   });
 
   it('renders a motivating message for score range 0-3', () => {
-    render(<ResultsScreen score={2} onPlayAgain={mockOnPlayAgain} />);
-    // Assuming the message for 0-3 contains words like 'rindas' or 'practica'
-    expect(screen.getByText(/No te rindas|practica más/i)).toBeInTheDocument();
+    render(<ResultsScreen score={2} onReplay={mockOnReplay} />);
+    expect(screen.getByText(/¡Sigue intentándolo!/i)).toBeInTheDocument();
   });
 
   it('renders a motivating message for score range 4-6', () => {
-    render(<ResultsScreen score={5} onPlayAgain={mockOnPlayAgain} />);
-    // Assuming the message for 4-6 contains words like 'buen trabajo' or 'mejorar'
-    expect(screen.getByText(/Buen trabajo|puedes mejorar/i)).toBeInTheDocument();
+    render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+    expect(screen.getByText(/¡Buen trabajo!/i)).toBeInTheDocument();
   });
 
   it('renders a motivating message for score range 7-8', () => {
-    render(<ResultsScreen score={8} onPlayAgain={mockOnPlayAgain} />);
-    // Assuming the message for 7-8 contains words like 'muy bien' or 'genial'
-    expect(screen.getByText(/Muy bien hecho|genial/i)).toBeInTheDocument();
+    render(<ResultsScreen score={8} onReplay={mockOnReplay} />);
+    expect(screen.getByText(/¡Excelente!/i)).toBeInTheDocument();
   });
 
   it('renders a motivating message for score range 9-10', () => {
-    render(<ResultsScreen score={10} onPlayAgain={mockOnPlayAgain} />);
-    // Assuming the message for 9-10 contains words like 'excelente' or 'experto'
-    expect(screen.getByText(/Excelente|experto/i)).toBeInTheDocument();
+    render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
+    expect(screen.getByText(/¡Increíble!/i)).toBeInTheDocument();
   });
 
   it('renders the "Volver a jugar" button', () => {
-    render(<ResultsScreen score={5} onPlayAgain={mockOnPlayAgain} />);
+    render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
     const button = screen.getByRole('button', { name: /Volver a jugar/i });
     expect(button).toBeInTheDocument();
   });
 
   it('ensures the "Volver a jugar" button has a minimum height of 48px (48dp)', () => {
-    render(<ResultsScreen score={5} onPlayAgain={mockOnPlayAgain} />);
+    render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
     const button = screen.getByRole('button', { name: /Volver a jugar/i });
     expect(button).toHaveStyle({ minHeight: '48px' });
   });
 
-  it('triggers the onPlayAgain callback when the button is clicked', () => {
-    render(<ResultsScreen score={5} onPlayAgain={mockOnPlayAgain} />);
+  it('triggers the onReplay callback when the button is clicked', () => {
+    render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
     const button = screen.getByRole('button', { name: /Volver a jugar/i });
     fireEvent.click(button);
-    expect(mockOnPlayAgain).toHaveBeenCalledTimes(1);
+    expect(mockOnReplay).toHaveBeenCalledTimes(1);
   });
 });
