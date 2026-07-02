@@ -1,0 +1,82 @@
+[
+  {
+    "statement": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "options": ["Triceratops", "T-Rex", "Velociraptor"],
+    "correctIndex": 1,
+    "dinoId": "trex",
+    "funFact": "El T-Rex podía medir hasta 12 metros de largo y pesar más de 8 toneladas.",
+    "image": "trex.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "options": ["Estegosaurio", "Triceratops", "Brachiosaurio"],
+    "correctIndex": 1,
+    "dinoId": "triceratops",
+    "funFact": "El Triceratops usaba sus cuernos para defenderse de depredadores como el T-Rex.",
+    "image": "triceratops.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es famoso por sus placas óseas en la espalda?",
+    "options": ["Velociraptor", "Estegosaurio", "Ankylosaurus"],
+    "correctIndex": 1,
+    "dinoId": "stegosaurus",
+    "funFact": "Las placas del Estegosaurio podrían haber ayudado a regular su temperatura corporal.",
+    "image": "stegosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio podía volar?",
+    "options": ["Pteranodon", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "pteranodon",
+    "funFact": "El Pteranodon no era un dinosaurio, sino un reptil volador que vivió en la misma época.",
+    "image": "pteranodon.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio tenía una cola con un mazo óseo?",
+    "options": ["Ankylosaurus", "Velociraptor", "Brachiosaurio"],
+    "correctIndex": 0,
+    "dinoId": "ankylosaurus",
+    "funFact": "El Ankylosaurus usaba su cola como un martillo para defenderse de los depredadores.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su largo cuello?",
+    "options": ["Velociraptor", "Brachiosaurio", "T-Rex"],
+    "correctIndex": 1,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran velocidad y garras afiladas?",
+    "options": ["Triceratops", "Velociraptor", "Estegosaurio"],
+    "correctIndex": 1,
+    "dinoId": "velociraptor",
+    "funFact": "El Velociraptor era mucho más pequeño de lo que se muestra en las películas, aproximadamente del tamaño de un pavo.",
+    "image": "velociraptor.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio tenía un pico similar al de un pato?",
+    "options": ["Hadrosaurio", "T-Rex", "Ankylosaurus"],
+    "correctIndex": 0,
+    "dinoId": "hadrosaurus",
+    "funFact": "El Hadrosaurio usaba su pico para cortar plantas duras, que luego trituraba con cientos de dientes.",
+    "image": "hadrosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido como el 'lagarto armado'?",
+    "options": ["Ankylosaurus", "Estegosaurio", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "ankylosaurus",
+    "funFact": "El Ankylosaurus tenía una armadura ósea que lo protegía de los depredadores.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su cresta en la cabeza?",
+    "options": ["Parasaurolophus", "Velociraptor", "T-Rex"],
+    "correctIndex": 0,
+    "dinoId": "parasaurolophus",
+    "funFact": "La cresta del Parasaurolophus podría haber sido usada para comunicarse con otros dinosaurios.",
+    "image": "parasaurolophus.png"
+  }
+]
