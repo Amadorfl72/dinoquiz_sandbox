@@ -28,6 +28,14 @@ describe('ResultsScreen', () => {
       render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
       expect(screen.getByText(/Has acertado 10\/10/i)).toBeInTheDocument();
     });
+
+    it('renders the score text for every valid score 0-10', () => {
+      for (let s = 0; s <= 10; s++) {
+        const { unmount } = render(<ResultsScreen score={s} onReplay={mockOnReplay} />);
+        expect(screen.getByText(new RegExp(`Has acertado ${s}/10`, 'i'))).toBeInTheDocument();
+        unmount();
+      }
+    });
   });
 
   describe('Motivating Messages based on Score Ranges', () => {
@@ -90,6 +98,13 @@ describe('ResultsScreen', () => {
       render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
       expect(screen.getByText('¡Excelente! ¡Eres un genio!')).toBeInTheDocument();
     });
+
+    it('renders the motivating message with testID "motivating-message"', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      const message = screen.getByTestId('motivating-message');
+      expect(message).toBeInTheDocument();
+      expect(message.textContent).toBe('¡Buen trabajo! ¡Puedes mejorar!');
+    });
   });
 
   describe('Volver a jugar Button', () => {
@@ -106,6 +121,11 @@ describe('ResultsScreen', () => {
       expect(mockOnReplay).toHaveBeenCalledTimes(1);
     });
 
+    it('does not call onReplay on render', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      expect(mockOnReplay).not.toHaveBeenCalled();
+    });
+
     it('renders the button for every score range', () => {
       [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
         const { unmount } = render(<ResultsScreen score={score} onReplay={mockOnReplay} />);
@@ -113,6 +133,15 @@ describe('ResultsScreen', () => {
         expect(button).toBeInTheDocument();
         unmount();
       });
+    });
+
+    it('calls onReplay each time the button is clicked', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      const button = screen.getByRole('button', { name: /Volver a jugar/i });
+      fireEvent.click(button);
+      fireEvent.click(button);
+      fireEvent.click(button);
+      expect(mockOnReplay).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -146,9 +175,43 @@ describe('ResultsScreen', () => {
     });
 
     it('button container minWidth is at least 48', () => {
-      render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
+      render(<ResultsScreen score={0} onReplay={mockOnReplay} />);
       const style = getReplayButtonContainerStyle();
       expect(style.minWidth).toBeGreaterThanOrEqual(48);
+    });
+
+    it('button container meets sizing requirements for score 10', () => {
+      render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
+      const style = getReplayButtonContainerStyle();
+      expect(assertButtonMinHeight(style)).toBe(true);
+      expect(assertButtonMinWidth(style)).toBe(true);
+    });
+
+    it('button container meets sizing requirements across all score ranges', () => {
+      [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
+        const { unmount } = render(<ResultsScreen score={score} onReplay={mockOnReplay} />);
+        const style = getReplayButtonContainerStyle();
+        expect(assertButtonMinHeight(style)).toBe(true);
+        expect(assertButtonMinWidth(style)).toBe(true);
+        unmount();
+      });
+    });
+  });
+
+  describe('Component Rendering', () => {
+    it('renders without crashing for score 0', () => {
+      expect(() => render(<ResultsScreen score={0} onReplay={mockOnReplay} />)).not.toThrow();
+    });
+
+    it('renders without crashing for score 10', () => {
+      expect(() => render(<ResultsScreen score={10} onReplay={mockOnReplay} />)).not.toThrow();
+    });
+
+    it('renders all three key elements: score, message, and button', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      expect(screen.getByText(/Has acertado 5\/10/i)).toBeInTheDocument();
+      expect(screen.getByTestId('motivating-message')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Volver a jugar/i })).toBeInTheDocument();
     });
   });
 });
