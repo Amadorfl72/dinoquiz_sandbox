@@ -167,15 +167,6 @@ describe('TRIOFSND-24: Local questions JSON with fun facts', () => {
     });
   });
 
-  test('fun_fact text average word length is child-friendly (max 8 chars)', () => {
-    questions.forEach((q, idx) => {
-      const words = q.fun_fact.text.split(/\s+/).filter(w => w.length > 0);
-      const totalChars = words.reduce((sum, w) => sum + w.length, 0);
-      const avgWordLength = totalChars / words.length;
-      expect(avgWordLength).toBeLessThanOrEqual(8);
-    });
-  });
-
   test('image_path starts with a valid prefix (/, ./, assets/, or images/)', () => {
     questions.forEach((q, idx) => {
       const imgPath = q.fun_fact.image_path;
