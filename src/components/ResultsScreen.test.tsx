@@ -66,4 +66,25 @@ describe('TRIOFSND-39: Reinicio de partida al pulsar "Volver a jugar"', () => {
     
     expect(duration).toBeLessThan(2000);
   });
+
+  it('el botón "Volver a jugar" está habilitado y es clicable en la pantalla de resultados', () => {
+    render(
+      <GameProvider initialScreen="results">
+        <TestWrapper />
+      </GameProvider>
+    );
+
+    const button = screen.getByRole('button', { name: /Volver a jugar/i });
+    expect(button).toBeEnabled();
+  });
+
+  it('muestra la puntuación en la pantalla de resultados', () => {
+    render(
+      <GameProvider initialScreen="results">
+        <TestWrapper />
+      </GameProvider>
+    );
+
+    expect(screen.getByText(/5\/10/)).toBeInTheDocument();
+  });
 });
