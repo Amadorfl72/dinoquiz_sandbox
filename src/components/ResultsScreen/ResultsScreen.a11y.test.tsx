@@ -30,7 +30,7 @@ describe('ResultsScreen Accessibility', () => {
     render(<ResultsScreen score={3} onReplay={jest.fn()} />);
     const button = screen.getByRole('button', { name: /Volver a jugar/i });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveAccessibleName({ name: /Volver a jugar/i });
+    expect(button).toHaveAccessibleName(/Volver a jugar/i);
   });
 
   it('motivating message is present and readable by screen readers', () => {
@@ -92,5 +92,36 @@ describe('ResultsScreen Accessibility', () => {
       minWidth: parseInt(computed.minWidth || '0', 10) || 0,
     };
     expect(assertButtonMinWidth(style)).toBe(true);
+  });
+
+  it('score text is visible and readable for all score ranges', () => {
+    [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
+      const { unmount } = render(<ResultsScreen score={score} onReplay={jest.fn()} />);
+      const scoreText = screen.getByText(new RegExp(`Has acertado ${score}/10`, 'i'));
+      expect(scoreText).toBeInTheDocument();
+      expect(scoreText).toBeVisible();
+      unmount();
+    });
+  });
+
+  it('motivating message is visible for all score ranges', () => {
+    [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
+      const { unmount } = render(<ResultsScreen score={score} onReplay={jest.fn()} />);
+      const message = screen.getByTestId('motivating-message');
+      expect(message).toBeVisible();
+      expect(message.textContent).toBeTruthy();
+      unmount();
+    });
+  });
+
+  it('button is visible and accessible for all score ranges', () => {
+    [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
+      const { unmount } = render(<ResultsScreen score={score} onReplay={jest.fn()} />);
+      const button = screen.getByRole('button', { name: /Volver a jugar/i });
+      expect(button).toBeInTheDocument();
+      expect(button).toBeVisible();
+      expect(button).toHaveAccessibleName();
+      unmount();
+    });
   });
 });
