@@ -28,6 +28,15 @@
   },
   {
     "id": 4,
+    "dinosaur": "T-Rex",
+    "statement": "¿Cuántos dedos tenía el T-Rex en cada pata delantera?",
+    "options": ["1", "2", "3", "4"],
+    "correctAnswer": "2",
+    "funFact": "Las patas delanteras del T-Rex eran pequeñas pero muy fuertes, con garras afiladas.",
+    "imageRef": "trex.png"
+  },
+  {
+    "id": 5,
     "dinosaur": "Triceratops",
     "statement": "¿Cuántos cuernos tenía el Triceratops?",
     "options": ["1", "2", "3", "4"],
@@ -36,7 +45,7 @@
     "imageRef": "triceratops.png"
   },
   {
-    "id": 5,
+    "id": 6,
     "dinosaur": "Triceratops",
     "statement": "¿Para qué servía el gran collar óseo del Triceratops?",
     "options": ["Para volar", "Para nadar", "Para protegerse", "Para atraer pareja"],
@@ -45,7 +54,7 @@
     "imageRef": "triceratops.png"
   },
   {
-    "id": 6,
+    "id": 7,
     "dinosaur": "Triceratops",
     "statement": "¿Qué tipo de dinosaurio era el Triceratops?",
     "options": ["Carnívoro", "Herbívoro", "Omnívoro", "Insectívoro"],
@@ -54,7 +63,16 @@
     "imageRef": "triceratops.png"
   },
   {
-    "id": 7,
+    "id": 8,
+    "dinosaur": "Triceratops",
+    "statement": "¿Cómo se llamaba el pico del Triceratops?",
+    "options": ["Rostrum", "Beak", "Pico de loro", "No tenía nombre"],
+    "correctAnswer": "Rostrum",
+    "funFact": "El Triceratops usaba su pico fuerte para cortar plantas duras.",
+    "imageRef": "triceratops.png"
+  },
+  {
+    "id": 9,
     "dinosaur": "Velociraptor",
     "statement": "¿Qué significa el nombre 'Velociraptor'?",
     "options": ["Ladrón veloz", "Cazador grande", "Reptil volador", "Lagarto con plumas"],
@@ -63,7 +81,7 @@
     "imageRef": "velociraptor.png"
   },
   {
-    "id": 8,
+    "id": 10,
     "dinosaur": "Velociraptor",
     "statement": "¿Cómo era el cuerpo del Velociraptor?",
     "options": ["Con plumas", "Con escamas duras", "Con piel lisa", "Con pelo"],
@@ -72,7 +90,7 @@
     "imageRef": "velociraptor.png"
   },
   {
-    "id": 9,
+    "id": 11,
     "dinosaur": "Velociraptor",
     "statement": "¿Cómo cazaba el Velociraptor?",
     "options": ["Solo", "En manada", "Con trampas", "Con veneno"],
@@ -81,7 +99,16 @@
     "imageRef": "velociraptor.png"
   },
   {
-    "id": 10,
+    "id": 12,
+    "dinosaur": "Velociraptor",
+    "statement": "¿Dónde vivían los Velociraptores?",
+    "options": ["En el desierto", "En la selva", "En las montañas", "En Asia"],
+    "correctAnswer": "En Asia",
+    "funFact": "Los fósiles de Velociraptor se han encontrado principalmente en Mongolia y China.",
+    "imageRef": "velociraptor.png"
+  },
+  {
+    "id": 13,
     "dinosaur": "Stegosaurus",
     "statement": "¿Qué tenía el Stegosaurus en su espalda?",
     "options": ["Plumas", "Escamas", "Placas óseas", "Cuernos"],
@@ -90,7 +117,7 @@
     "imageRef": "stegosaurus.png"
   },
   {
-    "id": 11,
+    "id": 14,
     "dinosaur": "Stegosaurus",
     "statement": "¿Qué tenía el Stegosaurus al final de su cola?",
     "options": ["Una garra", "Un martillo", "Un pico", "Púas"],
@@ -99,7 +126,7 @@
     "imageRef": "stegosaurus.png"
   },
   {
-    "id": 12,
+    "id": 15,
     "dinosaur": "Stegosaurus",
     "statement": "¿Qué comía el Stegosaurus?",
     "options": ["Carne", "Plantas", "Peces", "Insectos"],
@@ -108,7 +135,16 @@
     "imageRef": "stegosaurus.png"
   },
   {
-    "id": 13,
+    "id": 16,
+    "dinosaur": "Stegosaurus",
+    "statement": "¿Cuántas placas tenía aproximadamente el Stegosaurus?",
+    "options": ["10-12", "15-17", "20-22", "25-27"],
+    "correctAnswer": "15-17",
+    "funFact": "Las placas del Stegosaurus estaban dispuestas en dos filas alternadas a lo largo de su espalda.",
+    "imageRef": "stegosaurus.png"
+  },
+  {
+    "id": 17,
     "dinosaur": "Brachiosaurus",
     "statement": "¿Qué característica tenía el Brachiosaurus?",
     "options": ["Patas delanteras más largas que las traseras", "Cuernos grandes", "Placas en la espalda", "Garras afiladas"],
@@ -117,7 +153,7 @@
     "imageRef": "brachiosaurus.png"
   },
   {
-    "id": 14,
+    "id": 18,
     "dinosaur": "Brachiosaurus",
     "statement": "¿Cuánto podía pesar un Brachiosaurus adulto?",
     "options": ["10 toneladas", "30 toneladas", "50 toneladas", "70 toneladas"],
@@ -126,7 +162,7 @@
     "imageRef": "brachiosaurus.png"
   },
   {
-    "id": 15,
+    "id": 19,
     "dinosaur": "Brachiosaurus",
     "statement": "¿Qué comía el Brachiosaurus?",
     "options": ["Carne", "Plantas", "Peces", "Insectos"],
@@ -135,7 +171,16 @@
     "imageRef": "brachiosaurus.png"
   },
   {
-    "id": 16,
+    "id": 20,
+    "dinosaur": "Brachiosaurus",
+    "statement": "¿Dónde se han encontrado fósiles de Brachiosaurus?",
+    "options": ["África", "América del Norte", "Europa", "Australia"],
+    "correctAnswer": "América del Norte",
+    "funFact": "El esqueleto más completo de Brachiosaurus se encontró en Colorado, Estados Unidos.",
+    "imageRef": "brachiosaurus.png"
+  },
+  {
+    "id": 21,
     "dinosaur": "Ankylosaurus",
     "statement": "¿Qué protegía el cuerpo del Ankylosaurus?",
     "options": ["Plumas", "Escamas duras y placas óseas", "Piel suave", "Pelaje"],
@@ -144,219 +189,174 @@
     "imageRef": "ankylosaurus.png"
   },
   {
-    "id": 17,
+    "id": 22,
     "dinosaur": "Ankylosaurus",
     "statement": "¿Qué tipo de dinosaurio era el Ankylosaurus?",
     "options": ["Carnívoro", "Herbívoro", "Omnívoro", "Insectívoro"],
     "correctAnswer": "Herbívoro",
-    "funFact": "El Ankylosaurus era como un tanque viviente, muy difícil de atacar para los depredadores.",
+    "funFact": "El Ankylosaurus tenía dientes pequeños en forma de hoja para masticar plantas.",
     "imageRef": "ankylosaurus.png"
-  },
-  {
-    "id": 18,
-    "dinosaur": "Ankylosaurus",
-    "statement": "¿Cómo se defendía el Ankylosaurus?",
-    "options": ["Corriendo rápido", "Escalando árboles", "Golpeando con su cola", "Escupiendo veneno"],
-    "correctAnswer": "Golpeando con su cola",
-    "funFact": "El mazo en la cola del Ankylosaurus podía romper los huesos de sus atacantes.",
-    "imageRef": "ankylosaurus.png"
-  },
-  {
-    "id": 19,
-    "dinosaur": "Pteranodon",
-    "statement": "¿El Pteranodon era un dinosaurio?",
-    "options": ["Sí", "No"],
-    "correctAnswer": "No",
-    "funFact": "El Pteranodon era un reptil volador, no un dinosaurio, aunque vivió en la misma época.",
-    "imageRef": "pteranodon.png"
-  },
-  {
-    "id": 20,
-    "dinosaur": "Pteranodon",
-    "statement": "¿Qué comía el Pteranodon?",
-    "options": ["Plantas", "Carne", "Peces", "Insectos"],
-    "correctAnswer": "Peces",
-    "funFact": "El Pteranodon podía volar largas distancias sobre el mar para pescar.",
-    "imageRef": "pteranodon.png"
-  },
-  {
-    "id": 21,
-    "dinosaur": "Pteranodon",
-    "statement": "¿Qué tenía el Pteranodon en la cabeza?",
-    "options": ["Un cuerno", "Una cresta", "Plumas", "Un pico"],
-    "correctAnswer": "Una cresta",
-    "funFact": "La cresta del Pteranodon podía ayudarle a equilibrarse al volar.",
-    "imageRef": "pteranodon.png"
-  },
-  {
-    "id": 22,
-    "dinosaur": "T-Rex",
-    "statement": "¿Cómo se llaman los brazos pequeños del T-Rex?",
-    "options": ["Brazos", "Patas delanteras", "Miembros anteriores", "Aletas"],
-    "correctAnswer": "Miembros anteriores",
-    "funFact": "Los brazos del T-Rex eran tan cortos que no podían tocarse la boca con ellos.",
-    "imageRef": "trex.png"
   },
   {
     "id": 23,
-    "dinosaur": "Triceratops",
-    "statement": "¿Con qué dinosaurio luchaba a menudo el Triceratops?",
-    "options": ["Velociraptor", "T-Rex", "Stegosaurus", "Brachiosaurus"],
-    "correctAnswer": "T-Rex",
-    "funFact": "Los fósiles muestran que el Triceratops y el T-Rex a menudo luchaban entre sí.",
-    "imageRef": "triceratops.png"
+    "dinosaur": "Ankylosaurus",
+    "statement": "¿Qué tenía el Ankylosaurus en la cola?",
+    "options": ["Una garra", "Un martillo óseo", "Un pico", "Púas"],
+    "correctAnswer": "Un martillo óseo",
+    "funFact": "El martillo de la cola del Ankylosaurus podía romper los huesos de sus atacantes.",
+    "imageRef": "ankylosaurus.png"
   },
   {
     "id": 24,
-    "dinosaur": "Velociraptor",
-    "statement": "¿Dónde se encontraron los primeros fósiles de Velociraptor?",
-    "options": ["América del Norte", "América del Sur", "Asia", "África"],
-    "correctAnswer": "Asia",
-    "funFact": "El Velociraptor vivió en lo que hoy es Mongolia y China.",
-    "imageRef": "velociraptor.png"
+    "dinosaur": "Ankylosaurus",
+    "statement": "¿Cuánto medía aproximadamente un Ankylosaurus?",
+    "options": ["3 metros", "6 metros", "9 metros", "12 metros"],
+    "correctAnswer": "6 metros",
+    "funFact": "El Ankylosaurus era tan ancho como largo, como un tanque viviente.",
+    "imageRef": "ankylosaurus.png"
   },
   {
     "id": 25,
-    "dinosaur": "Stegosaurus",
-    "statement": "¿En qué período vivió el Stegosaurus?",
-    "options": ["Jurásico", "Cretácico", "Triásico", "Paleógeno"],
-    "correctAnswer": "Jurásico",
-    "funFact": "El Stegosaurus vivió hace unos 150 millones de años, durante el período Jurásico.",
-    "imageRef": "stegosaurus.png"
+    "dinosaur": "Pteranodon",
+    "statement": "¿El Pteranodon era un dinosaurio?",
+    "options": ["Sí", "No", "Solo a veces", "Los científicos no están seguros"],
+    "correctAnswer": "No",
+    "funFact": "El Pteranodon era un reptil volador, pero no un dinosaurio, aunque vivió en la misma época.",
+    "imageRef": "pteranodon.png"
   },
   {
     "id": 26,
-    "dinosaur": "Brachiosaurus",
-    "statement": "¿Dónde se encontraron los primeros fósiles de Brachiosaurus?",
-    "options": ["África", "América del Norte", "Europa", "Asia"],
-    "correctAnswer": "América del Norte",
-    "funFact": "El Brachiosaurus fue uno de los dinosaurios más grandes que jamás haya existido.",
-    "imageRef": "brachiosaurus.png"
+    "dinosaur": "Pteranodon",
+    "statement": "¿Qué significa el nombre 'Pteranodon'?",
+    "options": ["Ala sin dientes", "Reptil volador", "Cazador del cielo", "Dragón antiguo"],
+    "correctAnswer": "Ala sin dientes",
+    "funFact": "El Pteranodon no tenía dientes, usaba su pico largo para atrapar peces.",
+    "imageRef": "pteranodon.png"
   },
   {
     "id": 27,
-    "dinosaur": "Ankylosaurus",
-    "statement": "¿En qué período vivió el Ankylosaurus?",
-    "options": ["Jurásico", "Cretácico", "Triásico", "Paleógeno"],
-    "correctAnswer": "Cretácico",
-    "funFact": "El Ankylosaurus vivió hasta el final de la era de los dinosaurios, hace unos 65 millones de años.",
-    "imageRef": "ankylosaurus.png"
+    "dinosaur": "Pteranodon",
+    "statement": "¿Cuánto medía la envergadura de un Pteranodon adulto?",
+    "options": ["3 metros", "6 metros", "9 metros", "12 metros"],
+    "correctAnswer": "6 metros",
+    "funFact": "El Pteranodon tenía huesos huecos para ser más ligero y poder volar mejor.",
+    "imageRef": "pteranodon.png"
   },
   {
     "id": 28,
     "dinosaur": "Pteranodon",
-    "statement": "¿Cuánto podía medir la envergadura de las alas del Pteranodon?",
-    "options": ["2 metros", "5 metros", "7 metros", "10 metros"],
-    "correctAnswer": "7 metros",
-    "funFact": "El Pteranodon podía planear largas distancias sin batir sus alas.",
+    "statement": "¿Dónde vivía el Pteranodon?",
+    "options": ["En el desierto", "En la selva", "Cerca del mar", "En las montañas"],
+    "correctAnswer": "Cerca del mar",
+    "funFact": "El Pteranodon cazaba peces volando sobre el agua y zambulléndose para atraparlos.",
     "imageRef": "pteranodon.png"
   },
   {
     "id": 29,
     "dinosaur": "T-Rex",
-    "statement": "¿Qué sentido tenía más desarrollado el T-Rex?",
-    "options": ["Vista", "Oído", "Olfato", "Gusto"],
-    "correctAnswer": "Olfato",
-    "funFact": "El T-Rex podía oler a sus presas a kilómetros de distancia.",
+    "statement": "¿Cuántos años podía vivir un T-Rex?",
+    "options": ["10-15 años", "20-25 años", "30-35 años", "40-45 años"],
+    "correctAnswer": "30-35 años",
+    "funFact": "Los científicos pueden saber la edad de un T-Rex contando los anillos en sus huesos, como los árboles.",
     "imageRef": "trex.png"
   },
   {
     "id": 30,
     "dinosaur": "Triceratops",
-    "statement": "¿Cuántos dedos tenía cada pata del Triceratops?",
-    "options": ["3", "4", "5", "6"],
-    "correctAnswer": "4",
-    "funFact": "Las patas del Triceratops eran robustas para soportar su gran peso.",
+    "statement": "¿Cuánto podía pesar un Triceratops adulto?",
+    "options": ["2 toneladas", "5 toneladas", "8 toneladas", "11 toneladas"],
+    "correctAnswer": "8 toneladas",
+    "funFact": "El Triceratops era tan pesado como tres coches grandes juntos.",
     "imageRef": "triceratops.png"
   },
   {
     "id": 31,
     "dinosaur": "Velociraptor",
-    "statement": "¿Qué tamaño tenía el Velociraptor?",
-    "options": ["Como un perro grande", "Como un caballo", "Como un elefante", "Como un cocodrilo"],
-    "correctAnswer": "Como un perro grande",
-    "funFact": "El Velociraptor era mucho más pequeño de lo que se muestra en las películas.",
+    "statement": "¿Cuánto pesaba aproximadamente un Velociraptor?",
+    "options": ["5 kg", "15 kg", "25 kg", "35 kg"],
+    "correctAnswer": "15 kg",
+    "funFact": "Aunque era ligero, el Velociraptor era un cazador muy rápido y ágil.",
     "imageRef": "velociraptor.png"
   },
   {
     "id": 32,
     "dinosaur": "Stegosaurus",
-    "statement": "¿Cuántas vértebras tenía el Stegosaurus en su cola?",
-    "options": ["10", "20", "30", "40"],
-    "correctAnswer": "40",
-    "funFact": "La cola del Stegosaurus era muy flexible y poderosa.",
+    "statement": "¿Cuánto medía aproximadamente un Stegosaurus?",
+    "options": ["4 metros", "7 metros", "10 metros", "13 metros"],
+    "correctAnswer": "7 metros",
+    "funFact": "El Stegosaurus era tan largo como un autobús escolar pero tenía un cerebro muy pequeño.",
     "imageRef": "stegosaurus.png"
   },
   {
     "id": 33,
     "dinosaur": "Brachiosaurus",
-    "statement": "¿Cómo respiraba el Brachiosaurus?",
-    "options": ["Por branquias", "Por pulmones", "Por la piel", "Por sacos de aire"],
-    "correctAnswer": "Por pulmones",
-    "funFact": "El Brachiosaurus tenía un sistema respiratorio muy eficiente para su gran tamaño.",
+    "statement": "¿Cuánto medía de alto un Brachiosaurus adulto?",
+    "options": ["5 metros", "10 metros", "15 metros", "20 metros"],
+    "correctAnswer": "15 metros",
+    "funFact": "El Brachiosaurus era tan alto como un edificio de cuatro pisos.",
     "imageRef": "brachiosaurus.png"
   },
   {
     "id": 34,
     "dinosaur": "Ankylosaurus",
-    "statement": "¿Qué forma tenía el cuerpo del Ankylosaurus?",
-    "options": ["Alargado", "Redondo", "Plano", "Cuadrado"],
-    "correctAnswer": "Redondo",
-    "funFact": "El cuerpo del Ankylosaurus estaba diseñado para protegerse de los depredadores.",
+    "statement": "¿Cuándo vivió el Ankylosaurus?",
+    "options": ["Hace 100 millones de años", "Hace 70 millones de años", "Hace 40 millones de años", "Hace 10 millones de años"],
+    "correctAnswer": "Hace 70 millones de años",
+    "funFact": "El Ankylosaurus fue uno de los últimos dinosaurios en existir antes de la extinción.",
     "imageRef": "ankylosaurus.png"
   },
   {
     "id": 35,
     "dinosaur": "Pteranodon",
-    "statement": "¿El Pteranodon tenía dientes?",
-    "options": ["Sí", "No"],
-    "correctAnswer": "No",
-    "funFact": "El Pteranodon tenía un pico largo y afilado para atrapar peces.",
+    "statement": "¿El Pteranodon podía caminar en cuatro patas?",
+    "options": ["Sí", "No", "Solo los bebés", "Los científicos no están seguros"],
+    "correctAnswer": "Sí",
+    "funFact": "Cuando no volaba, el Pteranodon caminaba sobre sus cuatro patas, usando las alas como patas delanteras.",
     "imageRef": "pteranodon.png"
   },
   {
     "id": 36,
     "dinosaur": "T-Rex",
-    "statement": "¿Cuántos dedos tenía cada pata delantera del T-Rex?",
-    "options": ["1", "2", "3", "4"],
-    "correctAnswer": "2",
-    "funFact": "Aunque sus brazos eran pequeños, el T-Rex podía levantar hasta 200 kg con ellos.",
+    "statement": "¿Qué sentido tenía más desarrollado el T-Rex?",
+    "options": ["Vista", "Oído", "Olfato", "Tacto"],
+    "correctAnswer": "Olfato",
+    "funFact": "El T-Rex podía oler a sus presas desde muy lejos, como los buitres modernos.",
     "imageRef": "trex.png"
   },
   {
     "id": 37,
     "dinosaur": "Triceratops",
-    "statement": "¿Qué usaba el Triceratops para cortar las plantas que comía?",
-    "options": ["Dientes", "Pico", "Garras", "Cuernos"],
-    "correctAnswer": "Pico",
-    "funFact": "El Triceratops tenía un pico similar al de un loro para cortar plantas duras.",
+    "statement": "¿Cuántos dientes tenía un Triceratops?",
+    "options": ["100", "300", "500", "700"],
+    "correctAnswer": "500",
+    "funFact": "El Triceratops tenía baterías de dientes que se reemplazaban constantemente, como los tiburones.",
     "imageRef": "triceratops.png"
   },
   {
     "id": 38,
     "dinosaur": "Velociraptor",
-    "statement": "¿Qué usaba el Velociraptor para mantener el equilibrio al correr?",
-    "options": ["Cola", "Alas", "Patas traseras", "Garras"],
-    "correctAnswer": "Cola",
-    "funFact": "La cola del Velociraptor era rígida y le ayudaba a girar rápidamente mientras corría.",
+    "statement": "¿Qué dinosaurio era pariente cercano del Velociraptor?",
+    "options": ["T-Rex", "Triceratops", "Stegosaurus", "Deinonychus"],
+    "correctAnswer": "Deinonychus",
+    "funFact": "El Deinonychus era muy similar al Velociraptor pero más grande y con garras aún más afiladas.",
     "imageRef": "velociraptor.png"
   },
   {
     "id": 39,
     "dinosaur": "Stegosaurus",
-    "statement": "¿Qué función tenían las placas del Stegosaurus?",
-    "options": ["Para volar", "Para nadar", "Para regular la temperatura", "Para atraer pareja"],
-    "correctAnswer": "Para regular la temperatura",
-    "funFact": "Las placas del Stegosaurus podían cambiar de color para absorber o reflejar el calor del sol.",
+    "statement": "¿Qué dinosaurio era el principal depredador del Stegosaurus?",
+    "options": ["T-Rex", "Allosaurus", "Spinosaurus", "Velociraptor"],
+    "correctAnswer": "Allosaurus",
+    "funFact": "El Allosaurus atacaba al Stegosaurus, pero tenía que tener cuidado con su cola con púas.",
     "imageRef": "stegosaurus.png"
   },
   {
     "id": 40,
     "dinosaur": "Brachiosaurus",
-    "statement": "¿Cómo se llamaba el Brachiosaurus más famoso encontrado?",
-    "options": ["Gertie", "Sue", "Dippy", "Giraffatitan"],
-    "correctAnswer": "Giraffatitan",
-    "funFact": "El Giraffatitan era un tipo de Brachiosaurus que vivió en África.",
+    "statement": "¿Por qué el Brachiosaurus mantenía su cuello erguido?",
+    "options": ["Para ver mejor", "Para alcanzar las hojas altas", "Para intimidar", "Para respirar mejor"],
+    "correctAnswer": "Para alcanzar las hojas altas",
+    "funFact": "El Brachiosaurus podía comer hojas que otros dinosaurios no alcanzaban, como las jirafas modernas.",
     "imageRef": "brachiosaurus.png"
   }
 ]
