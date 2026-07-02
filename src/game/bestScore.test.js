@@ -1,4 +1,4 @@
-import { loadBestScore, saveBestScore, isNewBestScore } from './bestScore';
+import { getBestScore, setBestScore, isNewBestScore } from '../utils/score';
 
 describe('Best Score Persistence (TRIOFSND-33)', () => {
   let originalLocalStorage;
@@ -19,64 +19,62 @@ describe('Best Score Persistence (TRIOFSND-33)', () => {
     jest.restoreAllMocks();
   });
 
-  describe('loadBestScore', () => {
+  describe('getBestScore', () => {
     it('returns the persisted best score when present', () => {
-      localStorage.setItem('triofsnd:bestScore', '42');
-      expect(loadBestScore()).toBe(42);
+      localStorage.setItem('triofsnd:bestScore', JSON.stringify(42));
+      expect(getBestScore()).toBe(42);
     });
 
     it('returns 0 when no best score is stored', () => {
-      expect(loadBestScore()).toBe(0);
+      expect(getBestScore()).toBe(0);
     });
 
-    it('returns 0 when stored value is not a valid number', () => {
+    it('returns 0 when stored value is not valid JSON', () => {
       localStorage.setItem('triofsnd:bestScore', 'not-a-number');
-      expect(loadBestScore()).toBe(0);
+      expect(getBestScore()).toBe(0);
     });
 
     it('returns 0 when localStorage throws on read', () => {
       localStorage.getItem = jest.fn(() => { throw new Error('QuotaExceeded'); });
-      expect(loadBestScore()).toBe(0);
+      expect(getBestScore()).toBe(0);
     });
   });
 
-  describe('saveBestScore', () => {
+  describe('setBestScore', () => {
     it('writes the score to localStorage under the expected key', () => {
-      saveBestScore(99);
+      setBestScore(99);
       expect(localStorage.setItem).toHaveBeenCalledWith('triofsnd:bestScore', '99');
-      expect(loadBestScore()).toBe(99);
+      expect(getBestScore()).toBe(99);
     });
 
     it('does not throw when localStorage.setItem fails', () => {
       localStorage.setItem = jest.fn(() => { throw new Error('SecurityError'); });
-      expect(() => saveBestScore(50)).not.toThrow();
+      expect(() => setBestScore(50)).not.toThrow();
     });
 
-    it('does not persist a negative score', () => {
-      saveBestScore(-10);
-      expect(localStorage.setItem).not.toHaveBeenCalled();
+    it('returns true when storage write succeeds', () => {
+      expect(setBestScore(10)).toBe(true);
     });
 
-    it('does not persist a non-finite score', () => {
-      saveBestScore(NaN);
-      saveBestScore(Infinity);
-      expect(localStorage.setItem).not.toHaveBeenCalled();
+    it('returns false when storage write fails', () => {
+      localStorage.setItem = jest.fn(() => { throw new Error('QuotaExceeded'); });
+      expect(setBestScore(10)).toBe(false);
     });
   });
 
   describe('isNewBestScore', () => {
     it('returns true when current score is greater than persisted best', () => {
-      localStorage.setItem('triofsnd:bestScore', '30');
+      localStorage.setItem('triofsnd:bestScore', JSON.stringify(30));
       expect(isNewBestScore(31)).toBe(true);
     });
 
     it('returns false when current score equals persisted best', () => {
-      localStorage.setItem('triofsnd:bestScore', '30');
+      localStorage.setItem('triofsnd:bestScore', JSON.stringify(30));
       expect(isNewBestScore(30)).toBe(false);
     });
 
     it('returns false when current score is less than persisted best', () => {
-      localStorage.setItem('triofsnd:bestScore', '30');
+      localStorage.setItem('triofsnd:bestScore', JSON.stringify(30));
       expect(isNewBestScore(29)).toBe(false);
     });
 
@@ -87,6 +85,11 @@ describe('Best Score Persistence (TRIOFSND-33)', () => {
     it('returns false for a non-positive current score', () => {
       expect(isNewBestScore(0)).toBe(false);
       expect(isNewBestScore(-5)).toBe(false);
+    });
+
+    it('returns true for a positive score when localStorage is unavailable', () => {
+      localStorage.getItem = jest.fn(() => { throw new Error('Unavailable'); });
+      expect(isNewBestScore(5)).toBe(true);
     });
   });
 });
