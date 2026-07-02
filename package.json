@@ -1,0 +1,13 @@
+{
+  "name": "dinoquiz-backend",
+  "version": "1.0.0",
+  "description": "Backend for DinoQuiz PWA",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
