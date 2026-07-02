@@ -1,5 +1,7 @@
 import { storeAnalyticsEvent } from '../storage/analyticsStorage';
 
+const PII_FIELDS = ['email', 'phone', 'address', 'name', 'user_id', 'ip'];
+
 export const handleAnalyticsEvent = async (req, res) => {
   try {
     const { eventType, timestamp, ...eventData } = req.body;
@@ -9,15 +11,25 @@ export const handleAnalyticsEvent = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    // Ensure no PII is being collected
-    const sanitizedData = {
+    // Check for PII in event data
+    const hasPII = PII_FIELDS.some(field => {
+      return field in eventData || 
+             (typeof eventData === 'object' && 
+              Object.values(eventData).some(
+                val => typeof val === 'object' && field in val
+              ));
+    });
+    
+    if (hasPII) {
+      return res.status(400).json({ error: 'Payload contains prohibited PII' });
+    }
+    
+    // Store the event
+    await storeAnalyticsEvent({
       eventType,
       timestamp,
       ...eventData,
-    };
-    
-    // Store the event
-    await storeAnalyticsEvent(sanitizedData);
+    });
     
     res.status(200).json({ success: true });
   } catch (error) {
