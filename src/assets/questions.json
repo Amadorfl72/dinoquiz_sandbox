@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "statement": "¿Cuál es el dinosaurio más grande conocido?",
+    "options": ["T-Rex", "Brachiosaurus", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "Brachiosaurus",
+    "funFact": "El Brachiosaurus podía pesar hasta 80 toneladas.",
+    "imageRef": "brachiosaurus.jpg"
+  },
+  {
+    "id": 2,
+    "statement": "¿Qué dinosaurio tenía placas óseas en su espalda?",
+    "options": ["Triceratops", "Ankylosaurus", "Stegosaurus", "Pteranodon"],
+    "correctAnswer": "Stegosaurus",
+    "funFact": "Las placas del Stegosaurus podían medir hasta 60 cm de altura.",
+    "imageRef": "stegosaurus.jpg"
+  },
+  {
+    "id": 3,
+    "statement": "¿Cuál de estos dinosaurios era carnívoro?",
+    "options": ["Triceratops", "Velociraptor", "Brachiosaurus", "Stegosaurus"],
+    "correctAnswer": "Velociraptor",
+    "funFact": "El Velociraptor tenía una garra en forma de hoz en cada pata.",
+    "imageRef": "velociraptor.jpg"
+  },
+  {
+    "id": 4,
+    "statement": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "options": ["T-Rex", "Triceratops", "Ankylosaurus", "Pteranodon"],
+    "correctAnswer": "Triceratops",
+    "funFact": "El Triceratops podía usar sus cuernos para defenderse de los depredadores.",
+    "imageRef": "triceratops.jpg"
+  },
+  {
+    "id": 5,
+    "statement": "¿Cuál de estos dinosaurios podía volar?",
+    "options": ["Pteranodon", "Velociraptor", "Stegosaurus", "Brachiosaurus"],
+    "correctAnswer": "Pteranodon",
+    "funFact": "El Pteranodon tenía una envergadura de hasta 7 metros.",
+    "imageRef": "pteranodon.jpg"
+  },
+  {
+    "id": 6,
+    "statement": "¿Qué dinosaurio tenía una cola con una maza ósea?",
+    "options": ["Ankylosaurus", "Triceratops", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "Ankylosaurus",
+    "funFact": "La maza en la cola del Ankylosaurus podía romper huesos.",
+    "imageRef": "ankylosaurus.jpg"
+  },
+  {
+    "id": 7,
+    "statement": "¿Cuál es el dinosaurio más famoso por su ferocidad?",
+    "options": ["T-Rex", "Brachiosaurus", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "T-Rex",
+    "funFact": "El T-Rex tenía una mordida que podía ejercer una fuerza de hasta 12.800 libras.",
+    "imageRef": "trex.jpg"
+  },
+  {
+    "id": 8,
+    "statement": "¿Qué dinosaurio tenía un cuello extremadamente largo?",
+    "options": ["Brachiosaurus", "Triceratops", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "Brachiosaurus",
+    "funFact": "El cuello del Brachiosaurus podía medir hasta 9 metros de largo.",
+    "imageRef": "brachiosaurus.jpg"
+  },
+  {
+    "id": 9,
+    "statement": "¿Cuál de estos dinosaurios tenía una cresta en su cabeza?",
+    "options": ["Pteranodon", "Triceratops", "Ankylosaurus", "Stegosaurus"],
+    "correctAnswer": "Pteranodon",
+    "funFact": "La cresta del Pteranodon podía ayudar en el equilibrio durante el vuelo.",
+    "imageRef": "pteranodon.jpg"
+  },
+  {
+    "id": 10,
+    "statement": "¿Qué dinosaurio tenía una armadura ósea en su cuerpo?",
+    "options": ["Ankylosaurus", "Triceratops", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": "Ankylosaurus",
+    "funFact": "La armadura del Ankylosaurus lo protegía de los depredadores.",
+    "imageRef": "ankylosaurus.jpg"
+  }
+]
