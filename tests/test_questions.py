@@ -2,7 +2,7 @@ import json
 import os
 import pytest
 
-QUESTIONS_FILE = os.path.join(os.path.dirname(__file__), '..', 'questions.json')
+QUESTIONS_FILE = os.path.join(os.path.dirname(__file__), '..', 'src', 'assets', 'questions.json')
 
 @pytest.fixture(scope='module')
 def questions_data():
@@ -38,11 +38,20 @@ def test_fun_fact_image_path_is_valid_string(questions_data):
 
 def test_fun_fact_text_vocabulary_is_simple(questions_data):
     # Heuristic for 6-9 years: words shouldn't be too long, text shouldn't be too long
+    simple_words = ["dinosaurio", "grande", "pequeño", "rápido", "lento", "planta", "carne", "agua", "tierra", "volar", "correr", "defender", "proteger", "comer", "beber", "vivir", "manada", "solo", "cazar", "presa", "depredador", "cola", "cabeza", "cuello", "patas", "alas", "dientes", "garras", "cuernos", "placas", "armadura", "temperatura", "sonido", "color", "tamaño", "peso", "altura", "fuerza", "inteligente", "fuerte", "duro", "blando", "afilado", "redondo", "largo", "corto", "ancho", "estrecho", "alto", "bajo"]
     for i, question in enumerate(questions_data):
         text = question.get("fun_fact", {}).get("text", "")
         words = text.split()
         for word in words:
             # Remove basic punctuation
             clean_word = word.strip(".,!?;:\"'()[]{}")
-            assert len(clean_word) <= 12, f"Question {i+1} fun_fact contains a potentially complex word: '{clean_word}'"
+            if clean_word.lower() not in simple_words:
+                assert len(clean_word) <= 12, f"Question {i+1} fun_fact contains a potentially complex word: '{clean_word}'"
         assert len(text) <= 200, f"Question {i+1} fun_fact text is too long for a 6-9 year old."
+
+def test_fun_fact_image_path_exists(questions_data):
+    for i, question in enumerate(questions_data):
+        image_path = question.get("fun_fact", {}).get("image_path", "")
+        if image_path:  # Skip if empty (handled by other tests)
+            full_path = os.path.join(os.path.dirname(__file__), '..', image_path)
+            assert os.path.exists(full_path), f"Question {i+1} fun_fact image_path '{image_path}' does not exist."
