@@ -3,9 +3,9 @@ import { calculateMetrics } from './metrics';
 describe('calculateMetrics', () => {
   it('calculates success ratios per question', () => {
     const logs = [
-      { event: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q1', success: false, time_to_answer_ms: 200 },
-      { event: 'question_answered', question_id: 'q2', success: false, time_to_answer_ms: 300 },
+      { event_type: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q1', success: false, time_to_answer_ms: 200 },
+      { event_type: 'question_answered', question_id: 'q2', success: false, time_to_answer_ms: 300 },
     ];
     const metrics = calculateMetrics(logs);
     expect(metrics.successRatios.q1).toEqual({ correct: 1, total: 2 });
@@ -14,9 +14,9 @@ describe('calculateMetrics', () => {
 
   it('calculates time distributions', () => {
     const logs = [
-      { event: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q1', success: false, time_to_answer_ms: 200 },
-      { event: 'feedback_shown', question_id: 'q1' },
+      { event_type: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q1', success: false, time_to_answer_ms: 200 },
+      { event_type: 'feedback_shown', question_id: 'q1' },
     ];
     const metrics = calculateMetrics(logs);
     expect(metrics.timeDistributions).toEqual([100, 200]);
@@ -24,13 +24,13 @@ describe('calculateMetrics', () => {
 
   it('identifies top 5 worst performing questions', () => {
     const logs = [
-      { event: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q2', success: false, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q3', success: false, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q4', success: false, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q5', success: false, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q6', success: false, time_to_answer_ms: 100 },
-      { event: 'question_answered', question_id: 'q7', success: true, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q2', success: false, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q3', success: false, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q4', success: false, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q5', success: false, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q6', success: false, time_to_answer_ms: 100 },
+      { event_type: 'question_answered', question_id: 'q7', success: true, time_to_answer_ms: 100 },
     ];
     const metrics = calculateMetrics(logs);
     expect(metrics.worstQuestions).toHaveLength(5);
