@@ -133,19 +133,37 @@ def test_fun_fact_text_no_inappropriate_language(questions_data):
     for i, question in enumerate(questions_data):
         text = question.get("fun_fact", {}).get("text", "").lower()
         for word in inappropriate_words:
-            assert word not in text, f"Question {i+1} fun_fact text contains inappropriate word: '{word}'."
+            assert word not in text, f"Question {i+1} fun_fact text contains inappropriate word '{word}'."
 
 
-def test_fun_fact_text_avg_word_length(questions_data):
+def test_fun_fact_text_no_complex_words(questions_data):
+    complex_words = [
+        'phenomenon', 'hypothesis', 'theoretical', 'quantum',
+        'metamorphosis', 'photosynthesis', 'biodiversity',
+        'archaeological', 'paleontological', 'anthropological',
+        'infrastructure', 'bureaucracy', 'institutionalized',
+        'constitutional', 'philosophical', 'psychological',
+        'sociological', 'geopolitical', 'macroeconomic',
+        'microeconomic', 'epidemiological', 'biotechnology',
+        'nanotechnology', 'cryptocurrency', 'blockchain',
+        'algorithmic', 'computational', 'statistical',
+        'methodological', 'conceptualization', 'operationalization',
+        'institutionalization', 'commercialization', 'privatization',
+        'nationalization', 'globalization', 'industrialization',
+        'urbanization', 'modernization', 'standardization',
+        'optimization', 'maximization', 'minimization',
+        'generalization', 'specialization', 'categorization',
+        'classification', 'identification', 'verification',
+        'authentication', 'authorization', 'encryption',
+        'decryption', 'compression', 'decompression'
+    ]
     for i, question in enumerate(questions_data):
-        text = question.get("fun_fact", {}).get("text", "")
-        words = [w for w in text.split() if len(w) > 0]
-        total_chars = sum(len(w) for w in words)
-        avg_word_length = total_chars / len(words) if words else 0
-        assert avg_word_length <= 8, f"Question {i+1} fun_fact text average word length is too high ({avg_word_length:.1f})."
+        text = question.get("fun_fact", {}).get("text", "").lower()
+        for word in complex_words:
+            assert word not in text, f"Question {i+1} fun_fact text contains complex word '{word}'."
 
 
-def test_each_question_has_question_property(questions_data):
+def test_each_question_retains_question_property(questions_data):
     for i, question in enumerate(questions_data):
         has_question = ('question' in question or
                         'prompt' in question or
@@ -153,11 +171,21 @@ def test_each_question_has_question_property(questions_data):
         assert has_question, f"Question {i+1} is missing a question/prompt/text property."
 
 
-def test_no_fun_fact_text_duplicates_question_text(questions_data):
+def test_fun_fact_text_not_duplicate_of_question_text(questions_data):
     question_texts = []
-    for q in questions_data:
-        qt = q.get('question', q.get('prompt', q.get('text', '')))
+    for question in questions_data:
+        qt = question.get('question') or question.get('prompt') or question.get('text') or ''
         question_texts.append(qt.lower().strip())
     for i, question in enumerate(questions_data):
         fact_text = question.get("fun_fact", {}).get("text", "").lower().strip()
         assert fact_text not in question_texts, f"Question {i+1} fun_fact text duplicates a question text."
+
+
+def test_fun_fact_text_avg_word_length(questions_data):
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "")
+        words = [w for w in text.split() if len(w) > 0]
+        if words:
+            total_chars = sum(len(w) for w in words)
+            avg_word_length = total_chars / len(words)
+            assert avg_word_length <= 8, f"Question {i+1} fun_fact avg word length {avg_word_length:.2f} exceeds 8."
