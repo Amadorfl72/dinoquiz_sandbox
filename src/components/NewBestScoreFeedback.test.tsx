@@ -25,7 +25,7 @@ describe('NewBestScoreFeedback', () => {
   it('disappears after a few seconds', () => {
     render(<NewBestScoreFeedback isNewBestScore={true} />);
     expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
-    
+
     act(() => {
       jest.advanceTimersByTime(3000);
     });
@@ -40,12 +40,31 @@ describe('NewBestScoreFeedback', () => {
         <NewBestScoreFeedback isNewBestScore={true} />
       </div>
     );
-    
+
     const feedback = screen.getByText('¡Nueva mejor puntuación!');
     expect(feedback).not.toHaveAttribute('role', 'dialog');
-    
+
     const button = screen.getByText('Next Game');
     button.focus();
     expect(button).toHaveFocus();
+  });
+
+  it('does not render when isNewBestScore transitions from true to false on re-render', () => {
+    const { rerender } = render(<NewBestScoreFeedback isNewBestScore={true} />);
+    expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
+
+    rerender(<NewBestScoreFeedback isNewBestScore={false} />);
+    expect(screen.queryByText('¡Nueva mejor puntuación!')).not.toBeInTheDocument();
+  });
+
+  it('remains visible before the timeout elapses', () => {
+    render(<NewBestScoreFeedback isNewBestScore={true} />);
+    expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(2999);
+    });
+
+    expect(screen.getByText('¡Nueva mejor puntuación!')).toBeInTheDocument();
   });
 });
