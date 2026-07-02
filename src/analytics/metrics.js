@@ -3,7 +3,7 @@ const calculateMetrics = (logs) => {
   // Calculate average success ratio per question
   const successRatios = {};
   logs.forEach(log => {
-    if (log.event === 'question_answered') {
+    if (log.event_type === 'question_answered') {
       if (!successRatios[log.question_id]) {
         successRatios[log.question_id] = { correct: 0, total: 0 };
       }
@@ -16,7 +16,7 @@ const calculateMetrics = (logs) => {
 
   // Calculate distribution of time_to_answer_ms
   const timeDistributions = logs
-    .filter(log => log.event === 'question_answered')
+    .filter(log => log.event_type === 'question_answered')
     .map(log => log.time_to_answer_ms);
 
   // Identify top 5 worst performing questions
