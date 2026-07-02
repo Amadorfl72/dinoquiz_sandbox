@@ -150,6 +150,22 @@ describe('QuestionFeedback component', () => {
 
     expect(logFunFactViewed).toHaveBeenCalledTimes(1);
   });
+
+  test('renders the fun fact heading and paragraph structure', () => {
+    const { container } = render(
+      <QuestionFeedback
+        questionId="q1"
+        dinoId="d1"
+        appVersion="1.0.0"
+        funFact="A fun fact"
+      />
+    );
+
+    const root = container.querySelector('.fun-fact');
+    expect(root).not.toBeNull();
+    expect(root.querySelector('h3').textContent).toBe('¡Dato curioso!');
+    expect(root.querySelector('p').textContent).toBe('A fun fact');
+  });
 });
 
 describe('fun_fact_viewed metric and logging integration', () => {
