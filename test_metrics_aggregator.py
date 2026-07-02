@@ -16,6 +16,9 @@ def test_ingest_question_answered_log(aggregator):
     aggregator.ingest(log)
     assert len(aggregator.logs) == 1
     assert aggregator.logs[0]["event_type"] == "question_answered"
+    assert aggregator.question_stats["q1"]["success"] == 1
+    assert aggregator.question_stats["q1"]["total"] == 1
+    assert aggregator.question_stats["q1"]["times"] == [1200]
 
 def test_ingest_feedback_shown_log(aggregator):
     log = {
