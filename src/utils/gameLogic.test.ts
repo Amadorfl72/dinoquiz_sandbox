@@ -108,4 +108,39 @@ describe('TRIOFSND-39: Lógica de reinicio de partida', () => {
 
     expect(elapsed).toBeLessThan(2000);
   });
+
+  it('restartGame reemplaza las preguntas anteriores con la nueva selección', () => {
+    const oldQuestions = [{ id: 1, text: 'Old question' }];
+    const currentState = {
+      score: 150,
+      currentQuestionIndex: 4,
+      questions: oldQuestions,
+      screen: 'results',
+    };
+
+    const newState = restartGame(currentState);
+
+    expect(newState.questions).not.toBe(oldQuestions);
+    expect(newState.questions).toEqual(sampleQuestions);
+  });
+
+  it('restartGame puede ser llamado consecutivamente sin fugas de estado', () => {
+    const currentState = {
+      score: 300,
+      currentQuestionIndex: 9,
+      questions: [{ id: 1, text: 'Old question' }],
+      answeredQuestions: [{ questionId: 'q1', answer: 'a', correct: true }],
+      screen: 'results',
+    };
+
+    const firstRestart = restartGame(currentState);
+    const secondRestart = restartGame(firstRestart);
+
+    expect(mockedSelectQuestions).toHaveBeenCalledTimes(2);
+    expect(secondRestart.score).toBe(0);
+    expect(secondRestart.currentQuestionIndex).toBe(0);
+    expect(secondRestart.answeredQuestions).toEqual([]);
+    expect(secondRestart.screen).toBe('playing');
+    expect(secondRestart.currentQuestion).toEqual(sampleQuestions[0]);
+  });
 });
