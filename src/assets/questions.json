@@ -1,0 +1,32 @@
+[
+  {
+    "question": "¿Qué dinosaurio es conocido como el 'rey de los dinosaurios'?",
+    "options": ["Triceratops", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Tyrannosaurus Rex",
+    "image_path": "assets/images/trex.png",
+    "fun_fact": {
+      "text": "El T-Rex tenía dientes del tamaño de plátanos.",
+      "image_path": "assets/images/trex_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio tenía tres cuernos en su cara?",
+    "options": ["Triceratops", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Triceratops",
+    "image_path": "assets/images/triceratops.png",
+    "fun_fact": {
+      "text": "El Triceratops usaba sus cuernos para defenderse de los depredadores.",
+      "image_path": "assets/images/triceratops_fun_fact.png"
+    }
+  },
+  {
+    "question": "¿Qué dinosaurio es conocido por sus placas óseas en la espalda?",
+    "options": ["Triceratops", "Velociraptor", "Tyrannosaurus Rex", "Stegosaurus"],
+    "correct_answer": "Stegosaurus",
+    "image_path": "assets/images/stegosaurus.png",
+    "fun_fact": {
+      "text": "Las placas del Stegosaurus podían ayudarle a regular su temperatura.",
+      "image_path": "assets/images/stegosaurus_fun_fact.png"
+    }
+  }
+]
