@@ -32,4 +32,30 @@ describe('TRIOFSND-36: ResultsScreen', () => {
 
     logSpy.mockRestore();
   });
+
+  it('renders the score, duration, and app version on screen', () => {
+    jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockResolvedValue(undefined);
+
+    const { getByText } = render(
+      <ResultsScreen score={500} durationMs={30000} appVersion="2.0.0" />
+    );
+
+    expect(getByText(/Score: 500/)).toBeInTheDocument();
+    expect(getByText(/Duration: 30000 ms/)).toBeInTheDocument();
+    expect(getByText(/App Version: 2.0.0/)).toBeInTheDocument();
+  });
+
+  it('does not block rendering if logging fails', () => {
+    jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockRejectedValue(new Error('fail'));
+
+    const { getByText } = render(
+      <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(getByText(/Score: 100/)).toBeInTheDocument();
+  });
 });
