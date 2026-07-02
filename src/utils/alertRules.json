@@ -4,13 +4,15 @@
       "name": "high_drop_off",
       "description": "Alert when any question has >5% drop-off rate",
       "condition": "drop_off_rate > 5",
-      "notification_channels": ["email", "slack"]
+      "notification_channels": ["email", "slack"],
+      "severity": "warning"
     },
     {
       "name": "low_hit_rate",
       "description": "Alert when any question has <40% hit rate",
       "condition": "hit_rate < 40",
-      "notification_channels": ["email", "slack"]
+      "notification_channels": ["email", "slack"],
+      "severity": "error"
     }
   ]
 }
