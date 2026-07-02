@@ -67,4 +67,38 @@ describe('TRIOFSND-39 - useGameState restart flow', () => {
     expect(result.current.answeredQuestions).toEqual([]);
     expect(result.current.score).toBe(0);
   });
+
+  it('startNewRound after resetGameState produces a clean state with first question visible', () => {
+    const { result } = renderHook(() => useGameState());
+
+    act(() => {
+      result.current.answerQuestion('q1', 'a', true);
+      result.current.answerQuestion('q2', 'b', true);
+    });
+
+    act(() => {
+      result.current.resetGameState();
+      result.current.startNewRound();
+    });
+
+    expect(result.current.score).toBe(0);
+    expect(result.current.currentQuestionIndex).toBe(0);
+    expect(result.current.answeredQuestions).toEqual([]);
+    expect(result.current.currentQuestion).toEqual(sampleQuestions[0]);
+    expect(result.current.questions).toEqual(sampleQuestions);
+  });
+
+  it('selectQuestions is called each time startNewRound is invoked', () => {
+    const { result } = renderHook(() => useGameState());
+
+    act(() => {
+      result.current.startNewRound();
+    });
+    expect(mockedSelectQuestions).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      result.current.startNewRound();
+    });
+    expect(mockedSelectQuestions).toHaveBeenCalledTimes(2);
+  });
 });
