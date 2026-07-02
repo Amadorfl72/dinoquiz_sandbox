@@ -1,32 +1,20 @@
-import logger from '../utils/logger';
-import config from '../config';
+import { getAppVersion } from '../config';
 
-class ScoreService {
-  constructor(storageService) {
-    this.storageService = storageService;
-    this.bestScore = null;
+/**
+ * Checks if the new score is a best score and logs a structured event if so.
+ * @param {number} newScore - The new score achieved.
+ * @param {number|null} previousBest - The previous best score, or null if none.
+ * @returns {boolean} True if the new score is a new best, false otherwise.
+ */
+export const updateBestScore = (newScore, previousBest) => {
+  if (previousBest === null || newScore > previousBest) {
+    console.log('best_score_updated', {
+      event: 'best_score_updated',
+      new_score: newScore,
+      previous_best: previousBest,
+      app_version: getAppVersion(),
+    });
+    return true;
   }
-
-  async initialize() {
-    this.bestScore = await this.storageService.loadBestScore();
-  }
-
-  async updateScore(newScore) {
-    if (this.bestScore === null || newScore > this.bestScore) {
-      const previousBest = this.bestScore;
-      this.bestScore = newScore;
-      await this.storageService.saveBestScore(newScore);
-      
-      logger.info('best_score_updated', {
-        previous_best: previousBest,
-        new_best: newScore,
-        app_version: config.appVersion
-      });
-      
-      return true;
-    }
-    return false;
-  }
-}
-
-export default ScoreService;
+  return false;
+};
