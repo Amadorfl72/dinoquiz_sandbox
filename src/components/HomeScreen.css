@@ -28,6 +28,11 @@
   cursor: pointer;
   min-height: 64px;
   min-width: 200px;
+  /* Ensure touch area meets requirements */
+  min-width: 48px;
+  min-height: 48px;
+  /* Padding ensures visual size meets requirements */
+  padding: 16px 32px;
 }
 
 .play-button:focus {
