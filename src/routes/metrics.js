@@ -10,6 +10,14 @@ router.post('/metrics', (req, res) => {
     return res.status(400).json({ error: 'eventType and eventData are required' });
   }
 
+  // Check for PII in eventData
+  const piiFields = ['userId', 'email', 'name', 'ip'];
+  const hasPII = piiFields.some(field => field in eventData);
+  
+  if (hasPII) {
+    return res.status(400).json({ error: 'Payload contains potentially identifiable information (PII)' });
+  }
+
   // Log the event for now (replace with actual metrics ingestion logic)
   console.log(`Received event: ${eventType}`, eventData);
 
