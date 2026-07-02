@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { QuestionScreen } from '../src/screens/QuestionScreen';
+import { QuestionScreen } from '../src/components/QuestionScreen';
 
 describe('QuestionScreen', () => {
   const mockProps = {
