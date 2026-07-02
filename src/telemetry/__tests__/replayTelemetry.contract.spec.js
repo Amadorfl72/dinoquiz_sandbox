@@ -10,6 +10,10 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
     emitMetricSpy = jest.spyOn(Telemetry, '_emitMetric').mockImplementation(() => {});
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('Contrato del evento replay_clicked', () => {
     it('debe contener exactamente los campos requeridos: name, previous_score, timestamp', () => {
       Telemetry.logReplayClicked.call(Telemetry, 1000);
@@ -34,6 +38,19 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
         expect(call[0].name).toBe('replay_clicked');
         expect(typeof call[0].name).toBe('string');
       });
+    });
+
+    it('previous_score debe preservar el valor numérico pasado', () => {
+      Telemetry.logReplayClicked.call(Telemetry, 42);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(event.previous_score).toBe(42);
+      expect(typeof event.previous_score).toBe('number');
+    });
+
+    it('timestamp debe ser un string ISO 8601 parseable', () => {
+      Telemetry.logReplayClicked.call(Telemetry, 100);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(new Date(event.timestamp).getTime()).not.toBeNaN();
     });
   });
 
@@ -62,6 +79,12 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
       Telemetry.logGameStarted.call(Telemetry, 'replay');
       const event = sendEventSpy.mock.calls[0][0];
       expect(event.trigger).toBe('replay');
+    });
+
+    it('timestamp debe ser un string ISO 8601 parseable', () => {
+      Telemetry.logGameStarted.call(Telemetry, 'replay');
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(new Date(event.timestamp).getTime()).not.toBeNaN();
     });
   });
 
@@ -95,6 +118,14 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
       Telemetry.calculateReplayRate.call(Telemetry);
       expect(emitMetricSpy.mock.calls[0][0]).toBe('replay_rate');
       expect(typeof emitMetricSpy.mock.calls[0][0]).toBe('string');
+    });
+
+    it('attributes debe contener únicamente window_minutes con valor 5', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.6);
+      Telemetry.calculateReplayRate.call(Telemetry);
+      const attributes = emitMetricSpy.mock.calls[0][2];
+      expect(Object.keys(attributes)).toEqual(['window_minutes']);
+      expect(attributes.window_minutes).toBe(5);
     });
   });
 });
