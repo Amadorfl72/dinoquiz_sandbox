@@ -8,6 +8,7 @@ jest.mock('../utils/api', () => ({
 describe('TRIOFSND-14: Observability and Metrics Integration', () => {
   let originalPerformanceObserver;
   let originalAddEventListener;
+  let originalOnerror;
 
   beforeEach(() => {
     // Mock PerformanceObserver
@@ -22,12 +23,15 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
     // Mock window
     global.window = global.window || {};
     originalAddEventListener = global.window.addEventListener;
+    originalOnerror = global.window.onerror;
     global.window.addEventListener = jest.fn();
+    global.window.onerror = undefined;
   });
 
   afterEach(() => {
     global.PerformanceObserver = originalPerformanceObserver;
     global.window.addEventListener = originalAddEventListener;
+    global.window.onerror = originalOnerror;
     jest.clearAllMocks();
   });
 
@@ -50,9 +54,36 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
 
       expect(sendMetric).toHaveBeenCalledWith('lcp_latency', 2500);
     });
+
+    it('should use the last entry when multiple LCP entries are recorded', () => {
+      trackLCP();
+      const entries = [
+        { startTime: 1200, size: 1000, entryType: 'largest-contentful-paint' },
+        { startTime: 3000, size: 5000, entryType: 'largest-contentful-paint' },
+        { startTime: 4500, size: 8000, entryType: 'largest-contentful-paint' }
+      ];
+
+      global.PerformanceObserver.mockCallback({
+        getEntries: () => entries
+      });
+
+      expect(sendMetric).toHaveBeenCalledWith('lcp_latency', 4500);
+    });
+
+    it('should create exactly one PerformanceObserver per trackLCP call', () => {
+      trackLCP();
+      trackLCP();
+      expect(global.PerformanceObserver).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('JS Error Rate Monitoring', () => {
+    it('should set window.onerror handler when trackJSErrors is called', () => {
+      expect(global.window.onerror).toBeUndefined();
+      trackJSErrors();
+      expect(typeof global.window.onerror).toBe('function');
+    });
+
     it('should track JS errors when an error event is fired', () => {
       trackJSErrors();
       const error = new Error('Test error');
@@ -66,6 +97,27 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
         error: error
       });
     });
+
+    it('should handle errors without an Error object', () => {
+      trackJSErrors();
+      window.onerror('Something went wrong', 'app.js', 42, 1, null);
+
+      expect(sendMetric).toHaveBeenCalledWith('js_error_rate', {
+        message: 'Something went wrong',
+        source: 'app.js',
+        lineno: 42,
+        colno: 1,
+        error: null
+      });
+    });
+
+    it('should send a metric each time an error is fired', () => {
+      trackJSErrors();
+      window.onerror('Error 1', 'a.js', 1, 1, null);
+      window.onerror('Error 2', 'b.js', 2, 2, null);
+
+      expect(sendMetric).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('Game Started Metrics', () => {
@@ -74,6 +126,21 @@ describe('TRIOFSND-14: Observability and Metrics Integration', () => {
       expect(sendMetric).toHaveBeenCalledWith('game_started', {
         timestamp: expect.any(String)
       });
+    });
+
+    it('should send a valid ISO timestamp string', () => {
+      trackGameStarted();
+      const callArgs = sendMetric.mock.calls[0];
+      const timestamp = callArgs[1].timestamp;
+      const parsed = new Date(timestamp);
+      expect(parsed.toString()).not.toBe('Invalid Date');
+      expect(parsed.toISOString()).toBe(timestamp);
+    });
+
+    it('should call sendMetric exactly once per trackGameStarted call', () => {
+      trackGameStarted();
+      trackGameStarted();
+      expect(sendMetric).toHaveBeenCalledTimes(2);
     });
   });
 });
