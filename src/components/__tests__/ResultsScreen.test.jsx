@@ -28,4 +28,42 @@ describe('ResultsScreen Component', () => {
       props.app_version
     );
   });
+
+  it('should not re-emit the event when re-rendered with the same props', () => {
+    const props = {
+      score: 2000,
+      duration_ms: 60000,
+      app_version: '1.2.0',
+    };
+
+    const { rerender } = render(
+      <ResultsScreen
+        score={props.score}
+        durationMs={props.duration_ms}
+        appVersion={props.app_version}
+      />
+    );
+
+    rerender(
+      <ResultsScreen
+        score={props.score}
+        durationMs={props.duration_ms}
+        appVersion={props.app_version}
+      />
+    );
+
+    expect(analytics.logGameCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('should re-emit the event when props change', () => {
+    const { rerender } = render(
+      <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    rerender(
+      <ResultsScreen score={200} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(analytics.logGameCompleted).toHaveBeenCalledTimes(2);
+  });
 });
