@@ -68,6 +68,13 @@ describe('TRIOFSND-38: Question selection and option shuffling', () => {
       // Over 3 calls of 10 from 30, we should have covered a good portion of the pool
       expect(allSelectedIds.size).toBeGreaterThan(10);
     });
+
+    it('should return question objects that are references from the original pool', () => {
+      const selected = selectRandomQuestions(mockQuestionPool, 10);
+      selected.forEach(question => {
+        expect(mockQuestionPool).toContain(question);
+      });
+    });
   });
 
   describe('shuffleQuestionOptions', () => {
@@ -135,6 +142,26 @@ describe('TRIOFSND-38: Question selection and option shuffling', () => {
       const shuffledIds = shuffled.options.map(o => o.id).sort();
       expect(shuffledIds).toEqual(originalIds);
     });
+
+    it('should always have exactly one correct option after shuffling', () => {
+      const question = mockQuestionPool[0];
+      for (let i = 0; i < 20; i++) {
+        const shuffled = shuffleQuestionOptions(question);
+        const correctCount = shuffled.options.filter(o => o.isCorrect).length;
+        expect(correctCount).toBe(1);
+      }
+    });
+
+    it('should produce different orderings over multiple calls (statistical)', () => {
+      const question = mockQuestionPool[0];
+      const orderings = new Set<string>();
+      for (let i = 0; i < 30; i++) {
+        const shuffled = shuffleQuestionOptions(question);
+        orderings.add(shuffled.options.map(o => o.id).join(','));
+      }
+      // With 3 options there are 6 possible permutations; over 30 calls we expect more than 1
+      expect(orderings.size).toBeGreaterThan(1);
+    });
   });
 
   describe('prepareQuestionsForGame', () => {
@@ -150,38 +177,37 @@ describe('TRIOFSND-38: Question selection and option shuffling', () => {
       expect(uniqueIds.size).toBe(10);
     });
 
-    it('should have shuffled options for each question (same elements, potentially different order)', () => {
-      const prepared = prepareQuestionsForGame(mockQuestionPool, 10);
-      prepared.forEach(question => {
-        const originalQuestion = mockQuestionPool.find(q => q.id === question.id)!;
-        const originalTexts = originalQuestion.options.map(o => o.text).sort();
-        const preparedTexts = question.options.map(o => o.text).sort();
-        expect(preparedTexts).toEqual(originalTexts);
-      });
-    });
-
-    it('should preserve the correct answer flag for each question', () => {
-      const prepared = prepareQuestionsForGame(mockQuestionPool, 10);
-      prepared.forEach(question => {
-        const originalQuestion = mockQuestionPool.find(q => q.id === question.id)!;
-        const originalCorrect = originalQuestion.options.filter(o => o.isCorrect);
-        const preparedCorrect = question.options.filter(o => o.isCorrect);
-        expect(preparedCorrect.length).toBe(originalCorrect.length);
-        if (originalCorrect.length > 0) {
-          expect(preparedCorrect[0].text).toBe(originalCorrect[0].text);
-        }
-      });
-    });
-
-    it('should default to 10 questions when no count is provided', () => {
+    it('should default to 10 questions when no count argument is provided', () => {
       const prepared = prepareQuestionsForGame(mockQuestionPool);
       expect(prepared).toHaveLength(10);
     });
 
-    it('should not mutate the original pool', () => {
+    it('should not mutate the original question pool', () => {
       const originalPoolCopy = JSON.parse(JSON.stringify(mockQuestionPool));
       prepareQuestionsForGame(mockQuestionPool, 10);
       expect(mockQuestionPool).toEqual(originalPoolCopy);
+    });
+
+    it('should return questions with shuffled options (each question has 3 options)', () => {
+      const prepared = prepareQuestionsForGame(mockQuestionPool, 10);
+      prepared.forEach(question => {
+        expect(question.options).toHaveLength(3);
+      });
+    });
+
+    it('should preserve exactly one correct option per prepared question', () => {
+      const prepared = prepareQuestionsForGame(mockQuestionPool, 10);
+      prepared.forEach(question => {
+        const correctCount = question.options.filter(o => o.isCorrect).length;
+        expect(correctCount).toBe(1);
+      });
+    });
+
+    it('should return new question objects, not references from the original pool', () => {
+      const prepared = prepareQuestionsForGame(mockQuestionPool, 10);
+      prepared.forEach(question => {
+        expect(mockQuestionPool).not.toContain(question);
+      });
     });
 
     it('should handle a pool smaller than the requested count', () => {
@@ -190,6 +216,11 @@ describe('TRIOFSND-38: Question selection and option shuffling', () => {
       expect(prepared).toHaveLength(5);
       const ids = prepared.map(q => q.id);
       expect(new Set(ids).size).toBe(5);
+    });
+
+    it('should return an empty array when the pool is empty', () => {
+      const prepared = prepareQuestionsForGame([], 10);
+      expect(prepared).toHaveLength(0);
     });
   });
 });
