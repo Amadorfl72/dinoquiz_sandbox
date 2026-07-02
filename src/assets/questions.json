@@ -222,5 +222,13 @@
     "dinoId": "camarasaurus",
     "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
     "image": "camarasaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "diplodocus",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "image": "diplodocus.png"
   }
 ]
