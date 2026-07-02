@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ResultsScreen } from '../ResultsScreen';
-import * as gameCompletedLogger from '../../logging/gameCompletedLogger';
+import * as gameCompletedLogger from '../../logging';
 
 describe('ResultsScreen', () => {
   const logGameCompletedSpy = vi.spyOn(gameCompletedLogger, 'logGameCompleted');
@@ -33,29 +33,7 @@ describe('ResultsScreen', () => {
     render(<ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />);
 
     await waitFor(() => {
-      expect(logGameCompletedSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ score: 320 })
-      );
-    });
-  });
-
-  it('passes the correct duration_ms to the logger', async () => {
-    render(<ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />);
-
-    await waitFor(() => {
-      expect(logGameCompletedSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ durationMs: 60000 })
-      );
-    });
-  });
-
-  it('passes the correct app_version to the logger', async () => {
-    render(<ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />);
-
-    await waitFor(() => {
-      expect(logGameCompletedSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ appVersion: '1.0.0' })
-      );
+      expect(logGameCompletedSpy).toHaveBeenCalledWith(320, 60000, '1.0.0');
     });
   });
 
