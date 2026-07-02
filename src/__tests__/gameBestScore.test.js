@@ -189,19 +189,20 @@ describe('Game - best score UI integration', () => {
       consoleSpy.mockRestore();
     });
 
-    test('should still show new best message even without localStorage', () => {
+    test('should still show new best message when localStorage is disabled but a new best is achieved', () => {
       mockScoreManager.getBestScore.mockReturnValue(0);
       mockScoreManager.submitScore.mockReturnValue({
         isNewBest: true,
-        score: 999,
+        score: 750,
         previousBest: 0,
       });
 
       game.init();
-      game.endRound(999);
+      game.endRound(750);
 
       const message = document.getElementById('new-best-message');
       expect(message.style.display).not.toBe('none');
+      expect(message.classList.contains('visible')).toBe(true);
     });
   });
 });
