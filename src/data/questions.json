@@ -1,23 +1,26 @@
 [
   {
     "id": 1,
-    "question": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
-    "answers": [
-      { "text": "Tiranosaurio Rex", "correct": true },
-      { "text": "Velociraptor", "correct": false },
-      { "text": "Triceratops", "correct": false }
-    ],
-    "funFact": "El Tiranosaurio Rex tenía una mordida tan fuerte que podía triturar huesos."
+    "text": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
+    "options": ["Triceratops", "Tyrannosaurus Rex", "Velociraptor", "Stegosaurus"],
+    "correctAnswer": 1,
+    "funFact": "El T-Rex podía medir hasta 12 metros de largo y pesar más de 8 toneladas.",
+    "dinosaurImage": "t-rex.png"
   },
   {
     "id": 2,
-    "question": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
-    "answers": [
-      { "text": "Estegosaurio", "correct": false },
-      { "text": "Triceratops", "correct": true },
-      { "text": "Brachiosaurus", "correct": false }
-    ],
-    "funFact": "El Triceratops usaba sus cuernos para defenderse de los depredadores."
+    "text": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
+    "options": ["Triceratops", "Brachiosaurus", "Ankylosaurus", "Pteranodon"],
+    "correctAnswer": 0,
+    "funFact": "El Triceratops usaba sus cuernos para defenderse de los depredadores como el T-Rex.",
+    "dinosaurImage": "triceratops.png"
+  },
+  {
+    "id": 3,
+    "text": "¿Qué dinosaurio es conocido por sus garras afiladas en forma de hoz?",
+    "options": ["Velociraptor", "Stegosaurus", "Brachiosaurus", "Pteranodon"],
+    "correctAnswer": 0,
+    "funFact": "Los Velociraptors eran muy inteligentes y cazaban en manadas.",
+    "dinosaurImage": "velociraptor.png"
   }
-  // Additional questions would follow the same format
 ]

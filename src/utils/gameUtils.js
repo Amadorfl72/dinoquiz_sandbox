@@ -1,16 +1,32 @@
-export const initializeGame = (questions) => {
-  // Select 10 unique random questions from the pool
-  const shuffledQuestions = [...questions].sort(() => 0.5 - Math.random());
-  const selectedQuestions = shuffledQuestions.slice(0, 10);
+// Utility functions for game logic
 
-  // Shuffle the answer options for each question
-  const questionsWithShuffledAnswers = selectedQuestions.map(question => {
-    const shuffledAnswers = [...question.answers].sort(() => 0.5 - Math.random());
-    return {
-      ...question,
-      answers: shuffledAnswers
-    };
-  });
+export function getRandomQuestions(allQuestions, count = 10) {
+  // Create a copy of the array to avoid mutating the original
+  const questionsCopy = [...allQuestions];
+  const selectedQuestions = [];
+  
+  // Select questions randomly without repetition
+  while (selectedQuestions.length < count && questionsCopy.length > 0) {
+    const randomIndex = Math.floor(Math.random() * questionsCopy.length);
+    selectedQuestions.push(questionsCopy.splice(randomIndex, 1)[0]);
+  }
+  
+  return selectedQuestions;
+}
 
-  return questionsWithShuffledAnswers;
-};
+export function resetGameState(setQuestions, setCurrentQuestionIndex, setScore, allQuestions) {
+  // Select new random questions
+  const newQuestions = getRandomQuestions(allQuestions);
+  setQuestions(newQuestions);
+  
+  // Reset game progress
+  setCurrentQuestionIndex(0);
+  setScore(0);
+}
+
+export function initializeGame(allQuestions, setQuestions, setCurrentQuestionIndex, setScore) {
+  const initialQuestions = getRandomQuestions(allQuestions);
+  setQuestions(initialQuestions);
+  setCurrentQuestionIndex(0);
+  setScore(0);
+}
