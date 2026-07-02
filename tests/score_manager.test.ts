@@ -48,4 +48,24 @@ describe('TRIOFSND-44: Best score comparison and update logic', () => {
     expect(setBestScore).toHaveBeenCalledWith(10);
     expect(triggerUIFeedback).toHaveBeenCalledWith('newBestScore', { score: 10 });
   });
+
+  it('should not call setBestScore or triggerUIFeedback when getBestScore throws', async () => {
+    (getBestScore as jest.Mock).mockRejectedValue(new Error('Storage error'));
+    
+    await handleScoreUpdate(150);
+    
+    expect(setBestScore).not.toHaveBeenCalled();
+    expect(triggerUIFeedback).not.toHaveBeenCalled();
+  });
+
+  it('should not trigger UI feedback if setBestScore throws after comparison passes', async () => {
+    (getBestScore as jest.Mock).mockResolvedValue(50);
+    (setBestScore as jest.Mock).mockRejectedValue(new Error('Write error'));
+    
+    await handleScoreUpdate(150);
+    
+    expect(setBestScore).toHaveBeenCalledTimes(1);
+    expect(setBestScore).toHaveBeenCalledWith(150);
+    expect(triggerUIFeedback).not.toHaveBeenCalled();
+  });
 });
