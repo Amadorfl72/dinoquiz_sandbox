@@ -1,4 +1,5 @@
-const GameSession = require('../src/game/GameSession');
+const GameSessionModule = require('../src/game/GameSession');
+const GameSession = GameSessionModule.default || GameSessionModule;
 
 describe('GameSession State Management', () => {
   let questions;
@@ -26,7 +27,7 @@ describe('GameSession State Management', () => {
   it('should not repeat previously shown questions', () => {
     const shown = new Set();
     shown.add(session.getCurrentQuestion().id);
-    
+
     for (let i = 0; i < 9; i++) {
       session.next();
       const current = session.getCurrentQuestion();
