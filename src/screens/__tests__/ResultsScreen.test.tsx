@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ResultsScreen } from '../ResultsScreen';
+import ResultsScreen from '../../components/ResultsScreen';
 import * as gameCompletedLogger from '../../logging';
 
 describe('ResultsScreen', () => {
@@ -29,7 +28,7 @@ describe('ResultsScreen', () => {
     });
   });
 
-  it('passes the correct score to the logger', async () => {
+  it('passes the correct score, duration, and app version to the logger', async () => {
     render(<ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />);
 
     await waitFor(() => {
@@ -37,7 +36,7 @@ describe('ResultsScreen', () => {
     });
   });
 
-  it('does not emit the event again on re-render', async () => {
+  it('does not emit the event again on re-render with the same props', async () => {
     const { rerender } = render(
       <ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />
     );
@@ -57,16 +56,15 @@ describe('ResultsScreen', () => {
     expect(screen.getByText(/320/)).toBeInTheDocument();
   });
 
-  it('emits the event when navigating to the results screen via the play again flow', async () => {
-    const { getByTestId } = render(
+  it('emits the event again when props change', async () => {
+    const { rerender } = render(
       <ResultsScreen score={320} durationMs={60000} appVersion="1.0.0" />
     );
 
-    await userEvent.click(getByTestId('play-again-button'));
+    rerender(<ResultsScreen score={400} durationMs={60000} appVersion="1.0.0" />);
 
-    // After replaying and returning to results, the event should fire again
     await waitFor(() => {
-      expect(logGameCompletedSpy).toHaveBeenCalled();
+      expect(logGameCompletedSpy).toHaveBeenCalledTimes(2);
     });
   });
 });
