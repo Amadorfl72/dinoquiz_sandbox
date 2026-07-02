@@ -18,7 +18,9 @@ const ResultsScreen = ({ score, onReplay }) => {
     <View style={styles.container}>
       <Text style={styles.scoreText}>Has acertado {score}/10</Text>
       <Text style={styles.messageText}>{getMotivationalMessage(score)}</Text>
-      <Button title="Volver a jugar" onPress={onReplay} style={styles.replayButton} />
+      <View style={styles.replayButton}>
+        <Button title="Volver a jugar" onPress={onReplay} />
+      </View>
     </View>
   );
 };
