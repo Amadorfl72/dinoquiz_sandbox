@@ -13,7 +13,7 @@ describe('AnalyticsDashboard', () => {
 
   it('initializes with metrics calculated from logs', () => {
     const logs = [
-      { event: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 }
+      { event_type: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 }
     ];
     const dashboard = new AnalyticsDashboard(logs);
     expect(dashboard.metrics).toBeDefined();
@@ -22,7 +22,7 @@ describe('AnalyticsDashboard', () => {
 
   it('displays metrics to console', () => {
     const logs = [
-      { event: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 }
+      { event_type: 'question_answered', question_id: 'q1', success: true, time_to_answer_ms: 100 }
     ];
     const dashboard = new AnalyticsDashboard(logs);
     dashboard.displayMetrics();
