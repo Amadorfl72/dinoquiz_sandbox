@@ -1,0 +1,14 @@
+.dino-image {
+  max-width: 100%;
+  height: auto;
+}
+
+.dino-image.placeholder {
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
