@@ -26,6 +26,11 @@ describe('TRIOFSND-41: ReplayButton telemetría', () => {
     expect(screen.getByLabelText('Volver a jugar')).toBeInTheDocument();
   });
 
+  it('debe tener la clase CSS replay-button', () => {
+    render(<ReplayButton score={0} onClick={() => {}} />);
+    expect(screen.getByText('Volver a jugar')).toHaveClass('replay-button');
+  });
+
   it('debe llamar a Telemetry.logReplayClicked con el score al hacer click', () => {
     const score = 1500;
     render(<ReplayButton score={score} onClick={() => {}} />);
@@ -62,5 +67,19 @@ describe('TRIOFSND-41: ReplayButton telemetría', () => {
     fireEvent.click(screen.getByText('Volver a jugar'));
 
     expect(logReplayClickedSpy).toHaveBeenCalledWith(0);
+  });
+
+  it('debe pasar el score correctamente con valores altos', () => {
+    const highScore = 999999;
+    render(<ReplayButton score={highScore} onClick={() => {}} />);
+    fireEvent.click(screen.getByText('Volver a jugar'));
+
+    expect(logReplayClickedSpy).toHaveBeenCalledWith(highScore);
+  });
+
+  it('no debe llamar a onClick si no se proporciona', () => {
+    render(<ReplayButton score={100} />);
+    // El botón debe renderizarse sin onClick sin lanzar error
+    expect(screen.getByText('Volver a jugar')).toBeInTheDocument();
   });
 });
