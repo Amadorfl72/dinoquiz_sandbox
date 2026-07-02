@@ -1,3 +1,6 @@
+// DEPRECATED - Use src/game/GameSession.ts instead
+// This file will be removed in a future update
+
 class GameSessionState {
   constructor() {
     this.selectedQuestions = [];
