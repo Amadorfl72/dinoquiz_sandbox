@@ -5,22 +5,52 @@
       {
         "title": "App Open",
         "type": "timeseries",
-        "query": "sum(rate(app_open_total[1m]))"
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(app_open_total[1m]))"
+          }
+        ]
       },
       {
         "title": "Pantalla Inicio",
         "type": "timeseries",
-        "query": "sum(rate(pantalla_inicio_total[1m]))"
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(pantalla_inicio_total[1m]))"
+          }
+        ]
       },
       {
         "title": "Tap Jugar",
         "type": "timeseries",
-        "query": "sum(rate(tap_jugar_total[1m]))"
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(tap_jugar_total[1m]))"
+          }
+        ]
       },
       {
         "title": "Partida Iniciada",
         "type": "timeseries",
-        "query": "sum(rate(partida_iniciada_total[1m]))"
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(partida_iniciada_total[1m]))"
+          }
+        ]
+      },
+      {
+        "title": "Time Between App Open and First Tap Jugar",
+        "type": "timeseries",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(time_between_app_open_and_tap_jugar_seconds_bucket[1m])) by (le))"
+          }
+        ]
       }
     ]
   }
