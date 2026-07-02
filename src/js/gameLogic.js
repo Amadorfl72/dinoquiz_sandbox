@@ -15,3 +15,5 @@ function showNewHighScoreMessage() {
     }, 3000);
   }
 }
+
+module.exports = { endGame, showNewHighScoreMessage };
