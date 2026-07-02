@@ -16,7 +16,7 @@ describe('TRIOFSND-36: ResultsScreen', () => {
     render(<ResultsScreen {...gameData} />);
 
     expect(logSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith(gameData);
+    expect(logSpy).toHaveBeenCalledWith(gameData.score, gameData.duration_ms, gameData.app_version);
     
     logSpy.mockRestore();
   });
