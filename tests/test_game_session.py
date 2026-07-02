@@ -1,3 +1,6 @@
+# DEPRECATED - Game session state management has been consolidated into the TypeScript implementation
+# This file will be removed in a future update
+
 import unittest
 from game_session import GameSession
 
