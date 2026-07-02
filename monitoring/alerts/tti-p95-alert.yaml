@@ -1,0 +1,8 @@
+alert: TTIP95High
+for: 1h
+expr: histogram_quantile(0.95, sum(rate(tti_seconds_bucket[1h])) by (le)) > 2
+labels:
+  severity: critical
+annotations:
+  summary: "TTI p95 is above 2 seconds for more than 1 hour"
+  description: "The 95th percentile of Time To Interactive (TTI) has been above 2 seconds for the last hour. This may impact user experience."
