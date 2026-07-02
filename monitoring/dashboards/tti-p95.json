@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "title": "TTI p95 Dashboard",
+    "panels": [
+      {
+        "title": "TTI p95",
+        "type": "timeseries",
+        "query": "histogram_quantile(0.95, sum(rate(tti_seconds_bucket[1m])) by (le))"
+      }
+    ]
+  }
+}
