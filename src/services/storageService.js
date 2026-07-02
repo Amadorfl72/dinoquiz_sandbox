@@ -1,61 +1,56 @@
-import logger from '../utils/logger';
-import config from '../config';
+import { getAppVersion } from '../config';
 
-class StorageService {
-  constructor() {
-    // Initialize storage adapter
-  }
+/**
+ * Logs a structured storage_failure event without leaking sensitive details.
+ * @param {string} operation - The operation that failed (save, load, clear).
+ * @param {Error} error - The error that was thrown.
+ */
+const logStorageFailure = (operation, error) => {
+  console.log('storage_failure', {
+    event: 'storage_failure',
+    operation,
+    error_type: error.name || 'Error',
+    app_version: getAppVersion(),
+  });
+};
 
+export const storageService = {
   async _persist(key, value) {
-    // Implementation for persisting data
-  }
+    throw new Error('Not implemented');
+  },
 
   async _load(key) {
-    // Implementation for loading data
-  }
+    throw new Error('Not implemented');
+  },
 
   async _clear(key) {
-    // Implementation for clearing data
-  }
+    throw new Error('Not implemented');
+  },
 
-  async saveBestScore(score) {
+  async save(key, value) {
     try {
-      await this._persist('bestScore', score);
+      return await this._persist(key, value);
     } catch (error) {
-      logger.error('storage_failure', {
-        operation: 'save',
-        error_type: error.name || 'Error',
-        app_version: config.appVersion
-      });
+      logStorageFailure('save', error);
       throw error;
     }
-  }
+  },
 
-  async loadBestScore() {
+  async load(key) {
     try {
-      return await this._load('bestScore');
+      return await this._load(key);
     } catch (error) {
-      logger.error('storage_failure', {
-        operation: 'load',
-        error_type: error.name || 'Error',
-        app_version: config.appVersion
-      });
+      logStorageFailure('load', error);
       throw error;
     }
-  }
+  },
 
-  async clearStorage() {
+  async clear(key) {
     try {
-      await this._clear('all');
+      return await this._clear(key);
     } catch (error) {
-      logger.error('storage_failure', {
-        operation: 'clear',
-        error_type: error.name || 'Error',
-        app_version: config.appVersion
-      });
+      logStorageFailure('clear', error);
       throw error;
     }
-  }
-}
-
-export default StorageService;
+  },
+};
