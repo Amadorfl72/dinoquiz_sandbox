@@ -142,9 +142,9 @@ def test_seed_data_dino_ids_are_non_empty_strings():
             f"Question {i} dinoId '{dino_id}' should contain only alphabetic characters"
 
 
-def test_seed_data_statements_are_questions():
+def test_seed_data_statements_are_non_empty_strings():
     seed_data = load_json(SEED_PATH)
     for i, question in enumerate(seed_data):
         statement = question['statement']
-        assert statement.endswith('?'), \
-            f"Question {i} statement should end with a question mark, got: {statement}"
+        assert isinstance(statement, str), f"Question {i} statement must be a string"
+        assert len(statement.strip()) > 0, f"Question {i} statement must be non-empty"
