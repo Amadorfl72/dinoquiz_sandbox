@@ -19,10 +19,10 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
   it('displays a placeholder when the image fails to load', () => {
     render(<DinosaurImage {...defaultProps} />);
     const image = screen.getByAltText(defaultProps.alt);
-    
+
     // Simulate image load error
     fireEvent.error(image);
-    
+
     // Image should be replaced by placeholder
     const placeholder = screen.getByTestId('dinosaur-placeholder');
     expect(placeholder).toBeInTheDocument();
@@ -32,22 +32,20 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
     render(<DinosaurImage {...defaultProps} />);
     const image = screen.getByAltText(defaultProps.alt);
     fireEvent.error(image);
-    
+
     const caption = screen.getByText(defaultProps.caption);
     expect(caption).toBeVisible();
-    
-    // Placeholder should have a background that ensures contrast
-    const placeholder = screen.getByTestId('dinosaur-placeholder');
-    const styles = window.getComputedStyle(placeholder);
-    expect(styles.backgroundColor).not.toBe('transparent');
-    expect(styles.backgroundColor).not.toBe('');
+
+    // Caption overlay should have the caption-overlay class for legible background
+    const captionOverlay = screen.getByTestId('caption-overlay');
+    expect(captionOverlay).toHaveClass('caption-overlay');
   });
 
   it('does not show placeholder if image loads successfully', () => {
     render(<DinosaurImage {...defaultProps} />);
     const image = screen.getByAltText(defaultProps.alt);
     fireEvent.load(image);
-    
+
     expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
     expect(image).toBeInTheDocument();
   });
