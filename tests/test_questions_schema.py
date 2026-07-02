@@ -10,8 +10,8 @@ def load_json(filepath):
         return json.load(f)
 
 def test_schema_exists_and_structure():
-    schema_path = os.path.join(BASE_DIR, 'schemas', 'question_schema.json')
-    assert os.path.exists(schema_path), "Schema file does not exist at schemas/question_schema.json"
+    schema_path = os.path.join(BASE_DIR, 'src', 'assets', 'schema', 'questions.schema.json')
+    assert os.path.exists(schema_path), "Schema file does not exist at src/assets/schema/questions.schema.json"
     schema = load_json(schema_path)
     assert schema.get('type') == 'object'
     required_props = ['statement', 'options', 'correctIndex', 'dinoId', 'funFact', 'image']
@@ -22,10 +22,10 @@ def test_schema_exists_and_structure():
     assert schema['properties']['options'].get('maxItems') == 3
 
 def test_seed_data_exists_and_validates():
-    schema_path = os.path.join(BASE_DIR, 'schemas', 'question_schema.json')
-    seed_path = os.path.join(BASE_DIR, 'data', 'questions.json')
+    schema_path = os.path.join(BASE_DIR, 'src', 'assets', 'schema', 'questions.schema.json')
+    seed_path = os.path.join(BASE_DIR, 'src', 'assets', 'questions.json')
     
-    assert os.path.exists(seed_path), "Seed data file does not exist at data/questions.json"
+    assert os.path.exists(seed_path), "Seed data file does not exist at src/assets/questions.json"
     
     schema = load_json(schema_path)
     seed_data = load_json(seed_path)
