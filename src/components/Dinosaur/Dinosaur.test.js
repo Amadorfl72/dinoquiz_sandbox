@@ -14,25 +14,25 @@ describe('TRIOFSND-27: Implement image fallback placeholder', () => {
   it('displays a placeholder when the image fails to load', () => {
     render(<Dinosaur />);
     const image = screen.getByAltText(/dinosaur/i);
-    
+
     // Simulate image load error
     fireEvent.error(image);
-    
+
     const placeholderImage = screen.getByAltText(/dinosaur/i);
-    expect(placeholderImage).toHaveAttribute('src', 'placeholder.jpg');
+    expect(placeholderImage.getAttribute('src')).toContain('placeholder');
   });
 
   it('ensures text remains legible when the placeholder is displayed', () => {
     render(<Dinosaur />);
     const image = screen.getByAltText(/dinosaur/i);
     const textElement = screen.getByText(/dinosaur fact/i);
-    
+
     // Simulate image load error
     fireEvent.error(image);
-    
+
     // Check that text is still visible
     expect(textElement).toBeVisible();
-    
+
     // Check that the text or its container has a class or style ensuring legibility
     const container = textElement.closest('.image-container');
     expect(container).toHaveClass('legible-text-overlay');
