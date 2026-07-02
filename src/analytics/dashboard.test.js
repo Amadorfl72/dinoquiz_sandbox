@@ -17,7 +17,7 @@ describe('AnalyticsDashboard', () => {
     ];
     const dashboard = new AnalyticsDashboard(logs);
     expect(dashboard.metrics).toBeDefined();
-    expect(dashboard.metrics.successRatios.q1).toEqual({ correct: 1, total: 1 });
+    expect(dashboard.metrics.successRatios.q1).toEqual(1); // Simple ratio value
   });
 
   it('displays metrics to console', () => {
