@@ -1,9 +1,25 @@
-import { selectRandomQuestions, shuffleAnswers, prepareQuestionsForGame } from '../questionUtils';
+import { selectRandomQuestions, shuffleQuestionOptions, prepareQuestionsForGame } from '../questionUtils';
 
 describe('questionUtils', () => {
   const mockQuestions = [
-    { id: 1, question: 'What is the T-Rex known for?', answers: ['Big arms', 'Sharp teeth', 'Long neck'], correctAnswer: 'Sharp teeth' },
-    { id: 2, question: 'Which dinosaur had three horns?', answers: ['Stegosaurus', 'Triceratops', 'Velociraptor'], correctAnswer: 'Triceratops' },
+    { 
+      id: 1, 
+      text: 'What is the T-Rex known for?', 
+      options: [
+        { id: 'q1_o1', text: 'Big arms', isCorrect: false },
+        { id: 'q1_o2', text: 'Sharp teeth', isCorrect: true },
+        { id: 'q1_o3', text: 'Long neck', isCorrect: false }
+      ] 
+    },
+    { 
+      id: 2, 
+      text: 'Which dinosaur had three horns?', 
+      options: [
+        { id: 'q2_o1', text: 'Stegosaurus', isCorrect: false },
+        { id: 'q2_o2', text: 'Triceratops', isCorrect: true },
+        { id: 'q2_o3', text: 'Velociraptor', isCorrect: false }
+      ] 
+    },
     // Add more mock questions as needed
   ];
 
@@ -20,25 +36,31 @@ describe('questionUtils', () => {
     });
   });
 
-  describe('shuffleAnswers', () => {
-    it('should return a question with shuffled answers', () => {
+  describe('shuffleQuestionOptions', () => {
+    it('should return a question with shuffled options', () => {
       const originalQuestion = mockQuestions[0];
-      const shuffledQuestion = shuffleAnswers(originalQuestion);
+      const shuffledQuestion = shuffleQuestionOptions(originalQuestion);
       
-      expect(shuffledQuestion.answers).not.toEqual(originalQuestion.answers);
-      expect(shuffledQuestion.answers.sort()).toEqual(originalQuestion.answers.sort());
+      expect(shuffledQuestion.options).not.toEqual(originalQuestion.options);
+      
+      const originalTexts = originalQuestion.options.map(o => o.text).sort();
+      const shuffledTexts = shuffledQuestion.options.map(o => o.text).sort();
+      expect(shuffledTexts).toEqual(originalTexts);
     });
 
-    it('should preserve the correct answer reference', () => {
+    it('should preserve the correct answer flag', () => {
       const originalQuestion = mockQuestions[0];
-      const shuffledQuestion = shuffleAnswers(originalQuestion);
+      const shuffledQuestion = shuffleQuestionOptions(originalQuestion);
       
-      expect(shuffledQuestion.answers[shuffledQuestion.correctAnswerIndex]).toBe(originalQuestion.correctAnswer);
+      const originalCorrect = originalQuestion.options.find(o => o.isCorrect);
+      const shuffledCorrect = shuffledQuestion.options.find(o => o.isCorrect);
+      
+      expect(shuffledCorrect.text).toBe(originalCorrect.text);
     });
   });
 
   describe('prepareQuestionsForGame', () => {
-    it('should return the specified number of questions with shuffled answers', () => {
+    it('should return the specified number of questions with shuffled options', () => {
       const preparedQuestions = prepareQuestionsForGame(mockQuestions, 2);
       expect(preparedQuestions.length).toBe(2);
       
@@ -47,7 +69,9 @@ describe('questionUtils', () => {
       
       preparedQuestions.forEach(question => {
         const originalQuestion = mockQuestions.find(q => q.id === question.id);
-        expect(question.answers.sort()).toEqual(originalQuestion.answers.sort());
+        const originalTexts = originalQuestion.options.map(o => o.text).sort();
+        const shuffledTexts = question.options.map(o => o.text).sort();
+        expect(shuffledTexts).toEqual(originalTexts);
       });
     });
   });
