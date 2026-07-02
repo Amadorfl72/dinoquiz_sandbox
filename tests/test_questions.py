@@ -55,3 +55,148 @@ def test_fun_fact_image_path_exists(questions_data):
         if image_path:  # Skip if empty (handled by other tests)
             full_path = os.path.join(os.path.dirname(__file__), '..', image_path)
             assert os.path.exists(full_path), f"Question {i+1} fun_fact image_path '{image_path}' does not exist."
+
+def test_fun_fact_text_is_unique(questions_data):
+    texts = [question.get("fun_fact", {}).get("text", "") for question in questions_data]
+    assert len(set(texts)) == len(texts), "All fun_fact texts should be unique."
+
+def test_fun_fact_image_path_is_unique(questions_data):
+    paths = [question.get("fun_fact", {}).get("image_path", "") for question in questions_data]
+    assert len(set(paths)) == len(paths), "All fun_fact image_paths should be unique."
+
+def test_fun_fact_text_ends_with_punctuation(questions_data):
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "").strip()
+        assert text[-1] in ".!?", f"Question {i+1} fun_fact text should end with proper punctuation."
+
+def test_fun_fact_has_no_extra_keys(questions_data):
+    allowed_keys = {"text", "image_path"}
+    for i, question in enumerate(questions_data):
+        fun_fact = question.get("fun_fact", {})
+        actual_keys = set(fun_fact.keys())
+        assert actual_keys.issubset(allowed_keys), f"Question {i+1} fun_fact has unexpected keys: {actual_keys - allowed_keys}"
+
+def test_fun_fact_text_no_urls_or_html(questions_data):
+    import re
+    url_pattern = re.compile(r'https?://.+')
+    html_tag_pattern = re.compile(r'<[^>]+>')
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "")
+        assert not url_pattern.search(text), f"Question {i+1} fun_fact text contains a URL."
+        assert not html_tag_pattern.search(text), f"Question {i+1} fun_fact text contains HTML tags."
+
+def test_fun_fact_text_max_sentences(questions_data):
+    import re
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "")
+        sentences = [s for s in re.split(r'[.!?]+', text) if s.strip()]
+        assert len(sentences) <= 3, f"Question {i+1} fun_fact text has more than 3 sentences."
+
+def test_image_path_has_valid_extension(questions_data):
+    valid_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp']
+    for i, question in enumerate(questions_data):
+        image_path = question.get("fun_fact", {}).get("image_path", "")
+        ext = os.path.splitext(image_path)[1].lower()
+        assert ext in valid_extensions, f"Question {i+1} fun_fact image_path has invalid extension '{ext}'."
+
+def test_image_path_has_valid_prefix(questions_data):
+    for i, question in enumerate(questions_data):
+        image_path = question.get("fun_fact", {}).get("image_path", "")
+        valid_start = (image_path.startswith('/') or
+                       image_path.startswith('./') or
+                       image_path.startswith('assets/') or
+                       image_path.startswith('images/'))
+        assert valid_start, f"Question {i+1} fun_fact image_path '{image_path}' has an invalid prefix."
+
+def test_fun_fact_text_min_length(questions_data):
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "").strip()
+        assert len(text) >= 10, f"Question {i+1} fun_fact text is too short (less than 10 characters)."
+
+def test_fun_fact_text_no_inappropriate_language(questions_data):
+    inappropriate_words = [
+        'violence', 'violent', 'kill', 'killed', 'killing', 'murder',
+        'blood', 'gore', 'weapon', 'gun', 'drugs', 'alcohol',
+        'drunk', 'sex', 'sexual', 'profanity', 'damn', 'hell',
+        'stupid', 'hate', 'death', 'dead', 'die', 'died', 'dying',
+        'war', 'fight', 'fighting', 'attack', 'attacked',
+        'terror', 'terrorist', 'bomb', 'shoot', 'shot',
+        'abuse', 'abused', 'crime', 'criminal', 'prison',
+        'drug', 'beer', 'wine', 'liquor', 'cigarette', 'smoke', 'smoking'
+    ]
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "").lower()
+        for word in inappropriate_words:
+            assert word not in text, f"Question {i+1} fun_fact text contains inappropriate word '{word}'."
+
+def test_fun_fact_text_no_complex_words(questions_data):
+    complex_words = [
+        'phenomenon', 'hypothesis', 'theoretical', 'quantum',
+        'metamorphosis', 'photosynthesis', 'biodiversity',
+        'archaeological', 'paleontological', 'anthropological',
+        'infrastructure', 'bureaucracy', 'institutionalized',
+        'constitutional', 'philosophical', 'psychological',
+        'sociological', 'geopolitical', 'macroeconomic',
+        'microeconomic', 'epidemiological', 'biotechnology',
+        'nanotechnology', 'cryptocurrency', 'blockchain',
+        'algorithmic', 'computational', 'statistical',
+        'methodological', 'conceptualization', 'operationalization',
+        'institutionalization', 'commercialization', 'privatization',
+        'nationalization', 'globalization', 'industrialization',
+        'urbanization', 'modernization', 'standardization',
+        'optimization', 'maximization', 'minimization',
+        'generalization', 'specialization', 'categorization',
+        'classification', 'identification', 'verification',
+        'authentication', 'authorization', 'encryption',
+        'decryption', 'compression', 'decompression'
+    ]
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "").lower()
+        for word in complex_words:
+            assert word not in text, f"Question {i+1} fun_fact text contains complex word '{word}'."
+
+def test_fun_fact_text_not_duplicate_of_question(questions_data):
+    question_texts = []
+    for question in questions_data:
+        qt = question.get('question') or question.get('prompt') or question.get('text') or ''
+        question_texts.append(qt.lower().strip())
+    for i, question in enumerate(questions_data):
+        fact_text = question.get("fun_fact", {}).get("text", "").lower().strip()
+        assert fact_text not in question_texts, f"Question {i+1} fun_fact text duplicates a question text."
+
+def test_fun_fact_text_avg_word_length(questions_data):
+    for i, question in enumerate(questions_data):
+        text = question.get("fun_fact", {}).get("text", "")
+        words = [w for w in text.split() if len(w) > 0]
+        total_chars = sum(len(w) for w in words)
+        avg_word_length = total_chars / len(words) if words else 0
+        assert avg_word_length <= 8, f"Question {i+1} fun_fact text average word length is too high ({avg_word_length})."
+
+def test_all_questions_have_fun_fact(questions_data):
+    with_fun_fact = [q for q in questions_data if q.get("fun_fact") and isinstance(q.get("fun_fact"), dict)]
+    assert len(with_fun_fact) == 30, "All 30 questions should have a fun_fact object."
+
+def test_questions_file_is_valid_json(questions_data):
+    # If the fixture loaded successfully, the JSON is valid
+    assert isinstance(questions_data, list), "questions.json should contain a JSON array."
+
+def test_each_question_has_question_property(questions_data):
+    for i, question in enumerate(questions_data):
+        has_question = 'question' in question or 'prompt' in question or 'text' in question
+        assert has_question, f"Question {i+1} is missing a question/prompt/text property."
+
+def test_each_question_has_options(questions_data):
+    for i, question in enumerate(questions_data):
+        assert 'options' in question, f"Question {i+1} is missing the 'options' property."
+        assert isinstance(question['options'], list), f"Question {i+1} 'options' should be a list."
+        assert len(question['options']) >= 2, f"Question {i+1} should have at least 2 options."
+
+def test_each_question_has_correct_answer(questions_data):
+    for i, question in enumerate(questions_data):
+        assert 'correct_answer' in question, f"Question {i+1} is missing the 'correct_answer' property."
+        assert question['correct_answer'] in question.get('options', []), f"Question {i+1} correct_answer is not among options."
+
+def test_each_question_has_image_path(questions_data):
+    for i, question in enumerate(questions_data):
+        assert 'image_path' in question, f"Question {i+1} is missing the 'image_path' property."
+        assert isinstance(question['image_path'], str) and len(question['image_path']) > 0, f"Question {i+1} image_path is invalid."
