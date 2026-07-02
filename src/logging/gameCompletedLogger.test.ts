@@ -56,4 +56,17 @@ describe('TRIOFSND-36: logGameCompleted', () => {
       logGameCompleted(payload.score, payload.duration_ms, payload.app_version)
     ).resolves.not.toThrow();
   });
+
+  it('does not throw if the backend responds with a non-OK status', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500 });
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      logGameCompleted(100, 5000, '1.0.0')
+    ).resolves.not.toThrow();
+
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 });
