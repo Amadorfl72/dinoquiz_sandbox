@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { DinosaurImage } from './DinosaurImage';
+import DinosaurImage from './DinosaurImage';
 
 // Helper function to calculate luminance for contrast ratio
 function luminance(r: number, g: number, b: number): number {
@@ -36,6 +36,7 @@ describe('DinosaurImage', () => {
     it('does not show the placeholder when the image loads successfully', () => {
       render(<DinosaurImage src={validSrc} alt="Dinosaur" />);
       expect(screen.queryByTestId('dinosaur-placeholder')).not.toBeInTheDocument();
+      expect(screen.getByTestId('dinosaur-image')).toBeInTheDocument();
     });
   });
 
@@ -98,7 +99,7 @@ describe('DinosaurImage', () => {
       const captionContainer = screen.getByTestId('caption-overlay');
       expect(captionContainer).toBeInTheDocument();
 
-      const styles = window.getComputedStyle(captionContainer!);
+      const styles = window.getComputedStyle(captionContainer);
       const bgColor = styles.backgroundColor;
       const color = styles.color;
 
