@@ -58,4 +58,62 @@ describe('TRIOFSND-47: logger.logStructured contract', () => {
       ['app_version', 'event', 'new_best', 'previous_best'].sort()
     );
   });
+
+  it('logBestScoreUpdated emits the correct structured payload', () => {
+    logger.logBestScoreUpdated(1500, 1200, '1.4.2');
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'best_score_updated',
+      new_best: 1500,
+      previous_best: 1200,
+      app_version: '1.4.2',
+    });
+  });
+
+  it('logStorageFailure emits the correct structured payload', () => {
+    logger.logStorageFailure('save', 'QuotaExceededError', '1.4.2');
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'storage_failure',
+      operation: 'save',
+      error_type: 'QuotaExceededError',
+      app_version: '1.4.2',
+    });
+  });
+
+  it('logBestScoreUpdated handles null previous_best', () => {
+    logger.logBestScoreUpdated(500, null, '1.4.2');
+
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'best_score_updated',
+      new_best: 500,
+      previous_best: null,
+      app_version: '1.4.2',
+    });
+  });
+
+  it('logStorageFailure handles undefined error_type gracefully', () => {
+    logger.logStorageFailure('save', undefined, '1.4.2');
+
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'storage_failure',
+      operation: 'save',
+      error_type: undefined,
+      app_version: '1.4.2',
+    });
+  });
 });
