@@ -1,22 +1,21 @@
-// Safe localStorage wrapper with graceful failure handling
-export const storage = {
-  get: (key, defaultValue) => {
+export const getBestScore = async () => {
+  return new Promise((resolve, reject) => {
     try {
-      const value = localStorage.getItem(key);
-      return value !== null ? JSON.parse(value) : defaultValue;
-    } catch (error) {
-      console.warn('Failed to read from localStorage:', error);
-      return defaultValue;
+      const bestScore = localStorage.getItem('bestScore');
+      resolve(bestScore ? parseInt(bestScore) : 0);
+    } catch (err) {
+      reject(new Error('Storage error'));
     }
-  },
+  });
+};
 
-  set: (key, value) => {
+export const saveBestScore = async (score) => {
+  return new Promise((resolve, reject) => {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (error) {
-      console.warn('Failed to write to localStorage:', error);
-      return false;
+      localStorage.setItem('bestScore', score.toString());
+      resolve();
+    } catch (err) {
+      reject(new Error('Storage error'));
     }
-  }
+  });
 };
