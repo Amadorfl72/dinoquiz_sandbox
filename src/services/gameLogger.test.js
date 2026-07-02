@@ -1,6 +1,6 @@
-import { logGameCompleted } from './gameLogger';
+import { logGameCompleted } from '../logging';
 
-global.fetch = jest.fn();
+global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
 
 describe('gameLogger', () => {
   beforeEach(() => {
@@ -11,10 +11,10 @@ describe('gameLogger', () => {
     const gameData = {
       score: 1500,
       duration_ms: 120000,
-      app_version: '1.2.3'
+      app_version: '1.2.3',
     };
 
-    await logGameCompleted(gameData);
+    await logGameCompleted(gameData.score, gameData.duration_ms, gameData.app_version);
 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(
@@ -22,14 +22,14 @@ describe('gameLogger', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         }),
         body: JSON.stringify({
           event: 'game_completed',
           score: 1500,
           duration_ms: 120000,
-          app_version: '1.2.3'
-        })
+          app_version: '1.2.3',
+        }),
       })
     );
   });
