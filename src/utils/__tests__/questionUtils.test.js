@@ -28,6 +28,13 @@ describe('questionUtils', () => {
       expect(shuffledQuestion.answers).not.toEqual(originalQuestion.answers);
       expect(shuffledQuestion.answers.sort()).toEqual(originalQuestion.answers.sort());
     });
+
+    it('should preserve the correct answer reference', () => {
+      const originalQuestion = mockQuestions[0];
+      const shuffledQuestion = shuffleAnswers(originalQuestion);
+      
+      expect(shuffledQuestion.answers[shuffledQuestion.correctAnswerIndex]).toBe(originalQuestion.correctAnswer);
+    });
   });
 
   describe('prepareQuestionsForGame', () => {
