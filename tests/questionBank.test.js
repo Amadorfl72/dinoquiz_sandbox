@@ -187,5 +187,11 @@ describe('TRIOFSND-57: Local JSON Question Bank', () => {
       const uniqueStatements = new Set(statements);
       expect(uniqueStatements.size).toBe(statements.length);
     });
+
+    test('all fun facts should be unique', () => {
+      const facts = questionBank.map((q) => q.funFact.trim().toLowerCase());
+      const uniqueFacts = new Set(facts);
+      expect(uniqueFacts.size).toBe(facts.length);
+    });
   });
 });
