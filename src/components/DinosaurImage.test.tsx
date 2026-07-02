@@ -1,18 +1,18 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { DinosaurImage } from './DinosaurImage';
+import DinoImage from './DinoImage/DinoImage';
 
 describe('TRIOFSND-21: Implement Image Fallback', () => {
   it('renders the dinosaur image under normal circumstances', () => {
-    render(<DinosaurImage src="/assets/dino.png" alt="Dinosaur" />);
+    render(<DinoImage src="/assets/dino.png" alt="Dinosaur" />);
     const image = screen.getByAltText('Dinosaur');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', '/assets/dino.png');
   });
 
   it('shows a placeholder if the dinosaur image fails to load', () => {
-    render(<DinosaurImage src="/assets/broken-dino.png" alt="Dinosaur" />);
+    render(<DinoImage src="/assets/broken-dino.png" alt="Dinosaur" />);
     const image = screen.getByAltText('Dinosaur');
     
     // Simulate image load failure
@@ -29,7 +29,7 @@ describe('TRIOFSND-21: Implement Image Fallback', () => {
 
   it('allows the game to continue without blocking when the image fails', () => {
     const mockOnErrorCallback = jest.fn();
-    render(<DinosaurImage src="/assets/broken-dino.png" alt="Dinosaur" onError={mockOnErrorCallback} />);
+    render(<DinoImage src="/assets/broken-dino.png" alt="Dinosaur" onError={mockOnErrorCallback} />);
     
     const image = screen.getByAltText('Dinosaur');
     fireEvent.error(image);
