@@ -45,6 +45,16 @@ describe('TRIOFSND-24: Local questions JSON with 30 fun facts', () => {
     });
   });
 
+  it('no image_path appears more than once across all 30 questions', () => {
+    const imagePaths = questions.map((q) => q.image_path);
+    const counts = {};
+    imagePaths.forEach((p) => {
+      counts[p] = (counts[p] || 0) + 1;
+    });
+    const duplicates = Object.entries(counts).filter(([, count]) => count > 1);
+    expect(duplicates).toEqual([]);
+  });
+
   it('every question has a fun_fact', () => {
     questions.forEach((q) => {
       expect(q).toHaveProperty('fun_fact');
