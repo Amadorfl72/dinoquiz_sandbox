@@ -1,15 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const dataDir = path.resolve(__dirname, '../data');
-const questionBankPath = path.join(dataDir, 'questionBank.json');
+const srcAssetsDir = path.resolve(__dirname, '../src/assets');
+const questionBankPath = path.join(srcAssetsDir, 'questions.json');
 
-// Ensure data directory exists for test environment
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Ensure src/assets directory exists for test environment
+if (!fs.existsSync(srcAssetsDir)) {
+  fs.mkdirSync(srcAssetsDir, { recursive: true });
 }
 
-// If questionBank.json does not exist, create a minimal placeholder
+// If questions.json does not exist, create a minimal placeholder
 // so that tests can detect the missing implementation
 if (!fs.existsSync(questionBankPath)) {
   fs.writeFileSync(questionBankPath, JSON.stringify([], null, 2));
