@@ -7,12 +7,16 @@ const ResultsScreen = ({ score, onRestart }) => {
 
   useEffect(() => {
     if (isNewBestScore(score)) {
-      setBestScore(score);
-      setShowNewBestFeedback(true);
-      
-      // Hide feedback after 3 seconds
-      const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
-      return () => clearTimeout(timer);
+      try {
+        setBestScore(score);
+        setShowNewBestFeedback(true);
+        
+        // Hide feedback after 3 seconds
+        const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.warn('Failed to persist best score:', error);
+      }
     }
   }, [score]);
 
