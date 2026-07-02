@@ -75,4 +75,74 @@ describe('TRIOFSND-17: Implement Option Shuffling', () => {
     renderQuestion({ question: 'Test Question?' });
     expect(screen.getByText('Test Question?')).toBeInTheDocument();
   });
+
+  it('should call onAnswer with true when the correct answer is clicked after shuffling', () => {
+    const onAnswer = jest.fn();
+    renderQuestion({
+      options: ['Paris', 'London', 'Berlin'],
+      correctAnswer: 'Paris',
+      onAnswer,
+    });
+    fireEvent.click(screen.getByText('Paris'));
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+    expect(onAnswer).toHaveBeenCalledWith(true);
+  });
+
+  it('should call onAnswer with false when a wrong answer is clicked after shuffling', () => {
+    const onAnswer = jest.fn();
+    renderQuestion({
+      options: ['Paris', 'London', 'Berlin'],
+      correctAnswer: 'Paris',
+      onAnswer,
+    });
+    fireEvent.click(screen.getByText('London'));
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+    expect(onAnswer).toHaveBeenCalledWith(false);
+  });
+
+  it('should reshuffle options when the options prop changes', () => {
+    const { rerender } = renderQuestion({
+      options: ['Paris', 'London', 'Berlin'],
+      correctAnswer: 'Paris',
+    });
+    expect(screen.getByText('Paris')).toBeInTheDocument();
+    expect(screen.getByText('London')).toBeInTheDocument();
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
+
+    rerender(
+      React.createElement(QuizQuestion, {
+        question: 'What is the capital of France?',
+        options: ['Madrid', 'Rome', 'Vienna'],
+        correctAnswer: 'Madrid',
+        onAnswer: jest.fn(),
+      })
+    );
+    expect(screen.getByText('Madrid')).toBeInTheDocument();
+    expect(screen.getByText('Rome')).toBeInTheDocument();
+    expect(screen.getByText('Vienna')).toBeInTheDocument();
+    expect(screen.queryByText('Paris')).not.toBeInTheDocument();
+  });
+
+  it('should maintain correct answer tracking across multiple reshuffles', () => {
+    const onAnswer = jest.fn();
+    const { rerender } = renderQuestion({
+      options: ['Paris', 'London', 'Berlin'],
+      correctAnswer: 'Paris',
+      onAnswer,
+    });
+    fireEvent.click(screen.getByText('Paris'));
+    expect(onAnswer).toHaveBeenLastCalledWith(true);
+
+    onAnswer.mockClear();
+    rerender(
+      React.createElement(QuizQuestion, {
+        question: 'What is the capital of France?',
+        options: ['Paris', 'London', 'Berlin'],
+        correctAnswer: 'London',
+        onAnswer,
+      })
+    );
+    fireEvent.click(screen.getByText('London'));
+    expect(onAnswer).toHaveBeenLastCalledWith(true);
+  });
 });
