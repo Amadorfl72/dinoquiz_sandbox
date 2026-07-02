@@ -1,6 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ResultsScreen from './ResultsScreen';
+import {
+  assertButtonMinHeight,
+  assertButtonMinWidth,
+} from './ResultsScreen/__mocks__/styleMock';
 
 describe('ResultsScreen', () => {
   const mockOnReplay = jest.fn();
@@ -52,6 +56,11 @@ describe('ResultsScreen', () => {
       expect(screen.getByText('¡Buen trabajo! ¡Puedes mejorar!')).toBeInTheDocument();
     });
 
+    it('renders the correct message for score 6 (boundary)', () => {
+      render(<ResultsScreen score={6} onReplay={mockOnReplay} />);
+      expect(screen.getByText('¡Buen trabajo! ¡Puedes mejorar!')).toBeInTheDocument();
+    });
+
     it('renders the correct message for score range 7-8', () => {
       render(<ResultsScreen score={8} onReplay={mockOnReplay} />);
       expect(screen.getByText(/¡Muy bien!/i)).toBeInTheDocument();
@@ -62,6 +71,11 @@ describe('ResultsScreen', () => {
       expect(screen.getByText('¡Muy bien! ¡Casi lo logras!')).toBeInTheDocument();
     });
 
+    it('renders the correct message for score 8 (boundary)', () => {
+      render(<ResultsScreen score={8} onReplay={mockOnReplay} />);
+      expect(screen.getByText('¡Muy bien! ¡Casi lo logras!')).toBeInTheDocument();
+    });
+
     it('renders the correct message for score range 9-10', () => {
       render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
       expect(screen.getByText(/¡Excelente!/i)).toBeInTheDocument();
@@ -69,6 +83,11 @@ describe('ResultsScreen', () => {
 
     it('renders the correct message for score 9 (boundary)', () => {
       render(<ResultsScreen score={9} onReplay={mockOnReplay} />);
+      expect(screen.getByText('¡Excelente! ¡Eres un genio!')).toBeInTheDocument();
+    });
+
+    it('renders the correct message for score 10 (boundary)', () => {
+      render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
       expect(screen.getByText('¡Excelente! ¡Eres un genio!')).toBeInTheDocument();
     });
   });
@@ -94,6 +113,42 @@ describe('ResultsScreen', () => {
         expect(button).toBeInTheDocument();
         unmount();
       });
+    });
+  });
+
+  describe('Button Sizing (TRIOFSND-32: >=48dp)', () => {
+    const getReplayButtonContainerStyle = () => {
+      const button = screen.getByRole('button', { name: /Volver a jugar/i });
+      const container = button.parentElement;
+      const computed = window.getComputedStyle(container);
+      return {
+        minHeight: parseInt(computed.minHeight || '0', 10) || 0,
+        minWidth: parseInt(computed.minWidth || '0', 10) || 0,
+      };
+    };
+
+    it('button container meets minimum height requirement of 48dp', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      const style = getReplayButtonContainerStyle();
+      expect(assertButtonMinHeight(style)).toBe(true);
+    });
+
+    it('button container meets minimum width requirement of 48dp', () => {
+      render(<ResultsScreen score={5} onReplay={mockOnReplay} />);
+      const style = getReplayButtonContainerStyle();
+      expect(assertButtonMinWidth(style)).toBe(true);
+    });
+
+    it('button container minHeight is at least 48', () => {
+      render(<ResultsScreen score={0} onReplay={mockOnReplay} />);
+      const style = getReplayButtonContainerStyle();
+      expect(style.minHeight).toBeGreaterThanOrEqual(48);
+    });
+
+    it('button container minWidth is at least 48', () => {
+      render(<ResultsScreen score={10} onReplay={mockOnReplay} />);
+      const style = getReplayButtonContainerStyle();
+      expect(style.minWidth).toBeGreaterThanOrEqual(48);
     });
   });
 });
