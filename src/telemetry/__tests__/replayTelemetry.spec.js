@@ -149,17 +149,22 @@ describe('TRIOFSND-41: Telemetría de re-jugada', () => {
     });
 
     it('debe emitir la métrica con el nombre "replay_rate"', () => {
-      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.2);
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.4);
       Telemetry.calculateReplayRate.call(Telemetry);
       expect(emitMetricSpy.mock.calls[0][0]).toBe('replay_rate');
     });
 
-    it('debe emitir la métrica con attributes conteniendo únicamente window_minutes', () => {
-      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.8);
+    it('debe emitir la métrica con attributes conteniendo window_minutes: 5', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.45);
       Telemetry.calculateReplayRate.call(Telemetry);
       const attributes = emitMetricSpy.mock.calls[0][2];
-      expect(Object.keys(attributes)).toEqual(['window_minutes']);
-      expect(attributes.window_minutes).toBe(5);
+      expect(attributes).toEqual({ window_minutes: 5 });
+    });
+
+    it('debe retornar un valor numérico', () => {
+      jest.spyOn(Telemetry, '_calculateRate').mockReturnValue(0.4);
+      const rate = Telemetry.calculateReplayRate.call(Telemetry);
+      expect(typeof rate).toBe('number');
     });
   });
 });
