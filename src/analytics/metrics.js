@@ -11,7 +11,7 @@ export const incrementMetric = (metricName) => {
   }
   metrics[metricName]++;
   
-  console.log(`[Metrics] ${metricName}: ${metrics[metricName]}`); // Replace with actual metrics service call
+  console.log(`[Metrics] ${metricName}: ${metrics[metricName]}`);
 };
 
 // --- Question analytics aggregation (TRIOFSND-22) ---
