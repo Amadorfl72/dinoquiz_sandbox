@@ -52,6 +52,12 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
       const event = sendEventSpy.mock.calls[0][0];
       expect(new Date(event.timestamp).getTime()).not.toBeNaN();
     });
+
+    it('el evento no debe incluir campos adicionales más allá de los requeridos', () => {
+      Telemetry.logReplayClicked.call(Telemetry, 100);
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(Object.keys(event).sort()).toEqual(['name', 'previous_score', 'timestamp']);
+    });
   });
 
   describe('Contrato del evento game_started con trigger replay', () => {
@@ -75,7 +81,7 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
       expect(event.name).toBe('game_started');
     });
 
-    it('trigger debe ser siempre el string "replay"', () => {
+    it('trigger debe ser siempre el string "replay" cuando se invoca con replay', () => {
       Telemetry.logGameStarted.call(Telemetry, 'replay');
       const event = sendEventSpy.mock.calls[0][0];
       expect(event.trigger).toBe('replay');
@@ -85,6 +91,12 @@ describe('TRIOFSND-41: Contrato de telemetría de re-jugada', () => {
       Telemetry.logGameStarted.call(Telemetry, 'replay');
       const event = sendEventSpy.mock.calls[0][0];
       expect(new Date(event.timestamp).getTime()).not.toBeNaN();
+    });
+
+    it('el evento no debe incluir campos adicionales más allá de los requeridos', () => {
+      Telemetry.logGameStarted.call(Telemetry, 'replay');
+      const event = sendEventSpy.mock.calls[0][0];
+      expect(Object.keys(event).sort()).toEqual(['name', 'timestamp', 'trigger']);
     });
   });
 
