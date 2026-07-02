@@ -1,3 +1,4 @@
+import Tooltip from './Tooltip';
 import React from 'react';
 import sessionService from '../services/sessionService';
 
@@ -10,7 +11,8 @@ const StartScreen = ({ onStartGame }) => {
   return (
     <div>
       <h1>DinoQuiz</h1>
-      <button onClick={handleStartGame}>¡Jugar!</button>
+      <button id="jugar-button" onClick={handleStartGame}>¡Jugar!</button>
+      <Tooltip targetId="jugar-button" />
     </div>
   );
 };
