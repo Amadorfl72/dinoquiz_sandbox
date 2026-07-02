@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
-import { logEvent } from '../services/analytics';
+import { analyticsLogger } from '../services/analyticsLogger';
 
 const FunFactScreen = ({ route }) => {
   const { funFact } = route.params;
 
   useEffect(() => {
-    logEvent('fun_fact_viewed', { fact_id: funFact.id });
+    analyticsLogger.emit({ 
+      event: 'fun_fact_viewed',
+      fact_id: funFact.id 
+    });
   }, [funFact.id]);
 
   return (
-    <View>
+    <View testID="fun-fact-screen">
       <Text>{funFact.text}</Text>
     </View>
   );
