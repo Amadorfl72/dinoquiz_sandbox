@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUESTIONS_JSON_PATH = path.resolve(__dirname, '../data/questions.json');
+const QUESTIONS_JSON_PATH = path.resolve(__dirname, '../src/assets/questions.json');
 
 function loadQuestions() {
   const raw = fs.readFileSync(QUESTIONS_JSON_PATH, 'utf-8');
