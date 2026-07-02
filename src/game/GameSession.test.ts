@@ -77,4 +77,42 @@ describe('GameSession', () => {
     expect(session.isFinished()).toBe(true);
     expect(session.getCurrentQuestion()).toBeUndefined();
   });
+
+  it('should select exactly 10 unique questions from the input pool', () => {
+    const session = new GameSession(mockQuestions);
+    const selected = session.getSelectedQuestions();
+    const ids = selected.map(q => q.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(10);
+  });
+
+  it('should keep the index unchanged when calling nextQuestion on a finished session', () => {
+    const session = new GameSession(mockQuestions);
+    
+    for (let i = 0; i < 10; i++) {
+      session.nextQuestion();
+    }
+    
+    expect(session.isFinished()).toBe(true);
+    const indexBefore = session.getCurrentIndex();
+    session.nextQuestion();
+    expect(session.getCurrentIndex()).toBe(indexBefore);
+    expect(session.isFinished()).toBe(true);
+  });
+
+  it('should traverse all 10 selected questions in order', () => {
+    const session = new GameSession(mockQuestions);
+    const selected = session.getSelectedQuestions();
+    
+    for (let i = 0; i < 10; i++) {
+      expect(session.getCurrentIndex()).toBe(i);
+      expect(session.getCurrentQuestion().id).toBe(selected[i].id);
+      if (i < 9) {
+        expect(session.isFinished()).toBe(false);
+      }
+      session.nextQuestion();
+    }
+    
+    expect(session.isFinished()).toBe(true);
+  });
 });
