@@ -25,7 +25,7 @@ export default async function handler(
     // Log the validated event
     await logEvent('game_completed', eventData);
     
-    return res.status(200).json({ message: 'Event received' });
+    return res.status(201).json({ message: 'Event received' });
   } catch (error) {
     console.error('Error processing game_completed event:', error);
     return res.status(500).json({ message: 'Internal server error' });
