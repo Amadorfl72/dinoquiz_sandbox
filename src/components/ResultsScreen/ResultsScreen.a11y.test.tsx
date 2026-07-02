@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ResultsScreen from '../ResultsScreen';
+import {
+  assertButtonMinHeight,
+  assertButtonMinWidth,
+} from './__mocks__/styleMock';
 
 describe('ResultsScreen Accessibility', () => {
   it('displays the score text which is readable by screen readers', () => {
@@ -20,6 +24,13 @@ describe('ResultsScreen Accessibility', () => {
     render(<ResultsScreen score={0} onReplay={jest.fn()} />);
     const button = screen.getByRole('button', { name: /Volver a jugar/i });
     expect(button).toBeInTheDocument();
+  });
+
+  it('button has accessibilityLabel set to "Volver a jugar"', () => {
+    render(<ResultsScreen score={3} onReplay={jest.fn()} />);
+    const button = screen.getByRole('button', { name: /Volver a jugar/i });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAccessibleName({ name: /Volver a jugar/i });
   });
 
   it('motivating message is present and readable by screen readers', () => {
@@ -57,5 +68,29 @@ describe('ResultsScreen Accessibility', () => {
       expect(msgElement.textContent).toBe(message);
       unmount();
     });
+  });
+
+  it('button is large enough for touch targets (>=48dp height)', () => {
+    render(<ResultsScreen score={5} onReplay={jest.fn()} />);
+    const button = screen.getByRole('button', { name: /Volver a jugar/i });
+    const container = button.parentElement;
+    const computed = window.getComputedStyle(container);
+    const style = {
+      minHeight: parseInt(computed.minHeight || '0', 10) || 0,
+      minWidth: parseInt(computed.minWidth || '0', 10) || 0,
+    };
+    expect(assertButtonMinHeight(style)).toBe(true);
+  });
+
+  it('button is large enough for touch targets (>=48dp width)', () => {
+    render(<ResultsScreen score={5} onReplay={jest.fn()} />);
+    const button = screen.getByRole('button', { name: /Volver a jugar/i });
+    const container = button.parentElement;
+    const computed = window.getComputedStyle(container);
+    const style = {
+      minHeight: parseInt(computed.minHeight || '0', 10) || 0,
+      minWidth: parseInt(computed.minWidth || '0', 10) || 0,
+    };
+    expect(assertButtonMinWidth(style)).toBe(true);
   });
 });
