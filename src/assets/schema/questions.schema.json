@@ -15,7 +15,7 @@
         "type": "string"
       },
       "minItems": 3,
-      "maxItems": 4
+      "maxItems": 3
     },
     "correctIndex": {
       "description": "The index of the correct answer in the options array",
