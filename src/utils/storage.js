@@ -1,11 +1,22 @@
-export const getBestScore = () => {
-  const storedScore = localStorage.getItem('bestScore');
-  return storedScore ? parseInt(storedScore, 10) : 0;
-};
+// Safe localStorage wrapper with graceful failure handling
+export const storage = {
+  get: (key, defaultValue) => {
+    try {
+      const value = localStorage.getItem(key);
+      return value !== null ? JSON.parse(value) : defaultValue;
+    } catch (error) {
+      console.warn('Failed to read from localStorage:', error);
+      return defaultValue;
+    }
+  },
 
-export const saveBestScore = (score) => {
-  const bestScore = getBestScore();
-  if (score > bestScore) {
-    localStorage.setItem('bestScore', score.toString());
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.warn('Failed to write to localStorage:', error);
+      return false;
+    }
   }
 };

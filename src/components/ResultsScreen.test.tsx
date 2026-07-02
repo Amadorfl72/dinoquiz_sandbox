@@ -1,53 +1,82 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render } from '@testing-library/react';
 import ResultsScreen from './ResultsScreen';
-import * as storage from '../utils/storage';
+import * as gameCompletedLogger from '../logging';
 
-jest.mock('../utils/storage');
+describe('TRIOFSND-36: ResultsScreen', () => {
+  it('logs game_completed event upon reaching the results screen', () => {
+    const logSpy = jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockResolvedValue(undefined);
 
-describe('TRIOFSND-46: Render current best score on results screen', () => {
-  const mockGetBestScore = storage.getBestScore as jest.Mock;
+    const gameData = {
+      score: 2000,
+      duration_ms: 180000,
+      app_version: '1.2.3',
+    };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+    render(
+      <ResultsScreen
+        score={gameData.score}
+        durationMs={gameData.duration_ms}
+        appVersion={gameData.app_version}
+      />
+    );
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    expect(logSpy).toHaveBeenCalledWith(
+      gameData.score,
+      gameData.duration_ms,
+      gameData.app_version
+    );
+
+    logSpy.mockRestore();
   });
 
-  it('renders the current score', () => {
-    mockGetBestScore.mockReturnValue(50);
-    render(<ResultsScreen currentScore={75} />);
-    
-    expect(screen.getByText('Tu puntuación actual: 75')).toBeInTheDocument();
+  it('renders the score, duration, and app version on screen', () => {
+    jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockResolvedValue(undefined);
+
+    const { getByText } = render(
+      <ResultsScreen score={500} durationMs={30000} appVersion="2.0.0" />
+    );
+
+    expect(getByText(/Score: 500/)).toBeInTheDocument();
+    expect(getByText(/Duration: 30000 ms/)).toBeInTheDocument();
+    expect(getByText(/App Version: 2.0.0/)).toBeInTheDocument();
   });
 
-  it('fetches and renders the persisted best score', () => {
-    mockGetBestScore.mockReturnValue(100);
-    render(<ResultsScreen currentScore={75} />);
-    
-    expect(screen.getByText('Tu mejor puntuación: 100')).toBeInTheDocument();
-    expect(mockGetBestScore).toHaveBeenCalledTimes(1);
+  it('does not block rendering if logging fails', () => {
+    jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockRejectedValue(new Error('fail'));
+
+    const { getByText } = render(
+      <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(getByText(/Score: 100/)).toBeInTheDocument();
   });
 
-  it('renders best score as 0 if no best score is persisted', () => {
-    mockGetBestScore.mockReturnValue(0);
-    render(<ResultsScreen currentScore={10} />);
-    
-    expect(screen.getByText('Tu mejor puntuación: 0')).toBeInTheDocument();
-  });
+  it('re-logs when props change', () => {
+    const logSpy = jest
+      .spyOn(gameCompletedLogger, 'logGameCompleted')
+      .mockResolvedValue(undefined);
 
-  it('renders both current score and best score simultaneously', () => {
-    mockGetBestScore.mockReturnValue(120);
-    render(<ResultsScreen currentScore={90} />);
-    
-    expect(screen.getByText('Tu puntuación actual: 90')).toBeInTheDocument();
-    expect(screen.getByText('Tu mejor puntuación: 120')).toBeInTheDocument();
-  });
-  
-  it('renders the game over title and replay button', () => {
-    mockGetBestScore.mockReturnValue(0);
-    render(<ResultsScreen currentScore={0} />);
-    
-    expect(screen.getByText('¡Partida Terminada!')).toBeInTheDocument();
-    expect(screen.getByText('Volver a jugar')).toBeInTheDocument();
+    const { rerender } = render(
+      <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ResultsScreen score={200} durationMs={5000} appVersion="1.0.0" />
+    );
+
+    expect(logSpy).toHaveBeenCalledTimes(2);
+    expect(logSpy).toHaveBeenLastCalledWith(200, 5000, '1.0.0');
+
+    logSpy.mockRestore();
   });
 });

@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
-import ResultsScreen from './components/ResultsScreen';
-import { saveBestScore } from './utils/storage';
+import React, { useEffect } from 'react';
+import StartScreen from './components/StartScreen';
+import QuizScreen from './components/QuizScreen';
+import sessionService from './services/sessionService';
 
 const App = () => {
-  const [currentScore, setCurrentScore] = useState(0);
+  const [gameState, setGameState] = React.useState('start');
 
-  const handleGameEnd = (score) => {
-    setCurrentScore(score);
-    saveBestScore(score);
+  useEffect(() => {
+    sessionService.resetGame();
+  }, []);
+
+  const handleStartGame = () => {
+    setGameState('quiz');
   };
 
   return (
-    <div className="App">
-      <ResultsScreen currentScore={currentScore} />
+    <div>
+      {gameState === 'start' && <StartScreen onStartGame={handleStartGame} />}
+      {gameState === 'quiz' && <QuizScreen />}
     </div>
   );
 };
