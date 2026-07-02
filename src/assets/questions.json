@@ -78,5 +78,149 @@
     "dinoId": "parasaurolophus",
     "funFact": "La cresta del Parasaurolophus podría haber sido usada para comunicarse con otros dinosaurios.",
     "image": "parasaurolophus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "diplodocus",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "image": "diplodocus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su cabeza gruesa y cuernos cortos?",
+    "options": ["Pachycephalosaurus", "Velociraptor", "Estegosaurio"],
+    "correctIndex": 0,
+    "dinoId": "pachycephalosaurus",
+    "funFact": "El Pachycephalosaurus usaba su cabeza gruesa para competir con otros dinosaurios.",
+    "image": "pachycephalosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por sus grandes garras en las patas delanteras?",
+    "options": ["Therizinosaurus", "T-Rex", "Ankylosaurus"],
+    "correctIndex": 0,
+    "dinoId": "therizinosaurus",
+    "funFact": "El Therizinosaurus tenía garras de hasta 1 metro de largo, las más largas de cualquier dinosaurio conocido.",
+    "image": "therizinosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
+    "image": "apatosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "camarasaurus",
+    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
+    "image": "camarasaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "diplodocus",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "image": "diplodocus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
+    "image": "apatosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "camarasaurus",
+    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
+    "image": "camarasaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "diplodocus",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "image": "diplodocus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
+    "image": "apatosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "camarasaurus",
+    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
+    "image": "camarasaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "diplodocus",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "image": "diplodocus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
+    "image": "apatosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "camarasaurus",
+    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
+    "image": "camarasaurus.png"
   }
 ]
