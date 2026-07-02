@@ -1,11 +1,13 @@
 import React from 'react';
 import { Button } from './Button';
-import { resetGameState, selectQuestions } from '../utils/gameLogic';
+import { useGame } from '../context/GameContext';
 
 const ResultsScreen = ({ score }) => {
+  const { resetGameState, startNewRound } = useGame();
+
   const handleRestart = () => {
     resetGameState();
-    selectQuestions();
+    startNewRound();
   };
 
   return (
