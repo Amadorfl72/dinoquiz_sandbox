@@ -1,4 +1,4 @@
-import { getBestScore, setBestScore } from '../utils/storage';
+import { getBestScore, setBestScore } from '../utils/safeWrapper';
 import { triggerUIFeedback } from '../utils/uiFeedback';
 
 export const handleScoreUpdate = async (newScore) => {
