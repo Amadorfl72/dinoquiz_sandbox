@@ -1,0 +1,27 @@
+{
+  "dashboard": {
+    "title": "DinoQuiz Funnel Dashboard",
+    "panels": [
+      {
+        "title": "App Open",
+        "type": "timeseries",
+        "query": "sum(rate(app_open_total[1m]))"
+      },
+      {
+        "title": "Pantalla Inicio",
+        "type": "timeseries",
+        "query": "sum(rate(pantalla_inicio_total[1m]))"
+      },
+      {
+        "title": "Tap Jugar",
+        "type": "timeseries",
+        "query": "sum(rate(tap_jugar_total[1m]))"
+      },
+      {
+        "title": "Partida Iniciada",
+        "type": "timeseries",
+        "query": "sum(rate(partida_iniciada_total[1m]))"
+      }
+    ]
+  }
+}
