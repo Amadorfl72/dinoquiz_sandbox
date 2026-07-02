@@ -18,6 +18,11 @@ const GameScreen = ({ onGameStart }) => {
     onGameStart();
   };
 
+  const handleAnswerSelect = (index) => {
+    // Handle answer selection logic here
+    console.log('Selected answer index:', index);
+  };
+
   return (
     <div>
       {gameQuestions.length > 0 && (
