@@ -1,10 +1,11 @@
 export const getBestScore = () => {
-  return localStorage.getItem('bestScore') || 0;
+  const storedScore = localStorage.getItem('bestScore');
+  return storedScore ? parseInt(storedScore, 10) : 0;
 };
 
 export const saveBestScore = (score) => {
   const bestScore = getBestScore();
   if (score > bestScore) {
-    localStorage.setItem('bestScore', score);
+    localStorage.setItem('bestScore', score.toString());
   }
 };
