@@ -23,8 +23,6 @@ export const Telemetry = {
 
   // Calculate and emit replay rate within 5 minutes
   calculateReplayRate: () => {
-    // Implementation depends on analytics backend
-    // This would typically query events and calculate the rate
     const replayRate = this._calculateRate('replay');
     this._emitMetric('replay_rate', replayRate, { window_minutes: 5 });
     return replayRate;
@@ -32,16 +30,14 @@ export const Telemetry = {
 
   // Private method to send events to analytics backend
   _sendEvent: (event) => {
-    // Implementation depends on analytics backend
-    // Example: Firebase Analytics or custom endpoint
-    console.log('Sending telemetry event:', event);
-    // analytics.track(event.name, event);
+    // Implementation for actual analytics backend would go here
+    // For now we'll just log to console for testing
+    console.log('Telemetry event:', event);
   },
 
   // Private method to emit metrics
   _emitMetric: (name, value, attributes) => {
-    console.log('Emitting metric:', name, value, attributes);
-    // analytics.emitMetric(name, value, attributes);
+    console.log('Telemetry metric:', name, value, attributes);
   },
 
   // Private method to calculate rate
