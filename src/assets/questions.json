@@ -230,5 +230,13 @@
     "dinoId": "diplodocus",
     "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
     "image": "diplodocus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "correctIndex": 0,
+    "dinoId": "apatosaurus",
+    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
+    "image": "apatosaurus.png"
   }
 ]
