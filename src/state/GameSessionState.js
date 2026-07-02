@@ -6,6 +6,9 @@ class GameSessionState {
   }
 
   initializeSession(questions) {
+    if (questions.length !== 10) {
+      throw new Error('Session must be initialized with exactly 10 questions');
+    }
     this.selectedQuestions = questions;
     this.currentQuestionIndex = 0;
     this.score = 0;
@@ -29,6 +32,10 @@ class GameSessionState {
 
   getScore() {
     return this.score;
+  }
+
+  isSessionComplete() {
+    return this.currentQuestionIndex >= this.selectedQuestions.length - 1;
   }
 }
 
