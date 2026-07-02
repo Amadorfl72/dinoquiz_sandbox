@@ -15,55 +15,58 @@ describe('Analytics Event Tracking Integration (TRIOFSND-54)', () => {
 
   it('should successfully store an app_open event with first_apertura flag', async () => {
     const payload = {
-      event_type: 'app_open',
-      payload: { first_apertura: true }
+      eventType: 'app_open',
+      timestamp: new Date().toISOString(),
+      first_apertura: true
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
 
-    expect(res.statusCode).toEqual(201);
+    expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('success', true);
     
-    const event = await db.AnalyticsEvent.findOne({ where: { event_type: 'app_open' } });
+    const event = await db.AnalyticsEvent.findOne({ where: { eventType: 'app_open' } });
     expect(event).not.toBeNull();
-    expect(event.payload.first_apertura).toBe(true);
+    expect(event.first_apertura).toBe(true);
   });
 
   it('should successfully store a tooltip_shown event', async () => {
     const payload = {
-      event_type: 'tooltip_shown',
-      payload: { tooltip_id: 'welcome_tooltip' }
+      eventType: 'tooltip_shown',
+      timestamp: new Date().toISOString(),
+      tooltipId: 'welcome_tooltip'
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
 
-    expect(res.statusCode).toEqual(201);
+    expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('success', true);
     
-    const event = await db.AnalyticsEvent.findOne({ where: { event_type: 'tooltip_shown' } });
+    const event = await db.AnalyticsEvent.findOne({ where: { eventType: 'tooltip_shown' } });
     expect(event).not.toBeNull();
-    expect(event.payload.tooltip_id).toBe('welcome_tooltip');
+    expect(event.tooltipId).toBe('welcome_tooltip');
   });
 
   it('should successfully store a tooltip_dismissed event', async () => {
     const payload = {
-      event_type: 'tooltip_dismissed',
-      payload: { tooltip_id: 'welcome_tooltip' }
+      eventType: 'tooltip_dismissed',
+      timestamp: new Date().toISOString(),
+      tooltipId: 'welcome_tooltip'
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
 
-    expect(res.statusCode).toEqual(201);
+    expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('success', true);
     
-    const event = await db.AnalyticsEvent.findOne({ where: { event_type: 'tooltip_dismissed' } });
+    const event = await db.AnalyticsEvent.findOne({ where: { eventType: 'tooltip_dismissed' } });
     expect(event).not.toBeNull();
   });
 
   it('should reject an invalid event type', async () => {
     const payload = {
-      event_type: 'invalid_event',
-      payload: {}
+      eventType: 'invalid_event',
+      timestamp: new Date().toISOString()
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
@@ -72,9 +75,9 @@ describe('Analytics Event Tracking Integration (TRIOFSND-54)', () => {
     expect(res.body).toHaveProperty('error');
   });
 
-  it('should reject missing event_type', async () => {
+  it('should reject missing eventType', async () => {
     const payload = {
-      payload: {}
+      timestamp: new Date().toISOString()
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
@@ -85,8 +88,9 @@ describe('Analytics Event Tracking Integration (TRIOFSND-54)', () => {
 
   it('should reject payloads containing PII (email)', async () => {
     const payload = {
-      event_type: 'app_open',
-      payload: { first_apertura: true, email: 'user@example.com' }
+      eventType: 'app_open',
+      timestamp: new Date().toISOString(),
+      email: 'user@example.com'
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
@@ -97,8 +101,9 @@ describe('Analytics Event Tracking Integration (TRIOFSND-54)', () => {
 
   it('should reject payloads containing PII (user_id)', async () => {
     const payload = {
-      event_type: 'tooltip_shown',
-      payload: { user_id: '12345' }
+      eventType: 'tooltip_shown',
+      timestamp: new Date().toISOString(),
+      user_id: '12345'
     };
 
     const res = await request(app).post(validEndpoint).send(payload);
