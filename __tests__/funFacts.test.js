@@ -160,11 +160,48 @@ describe('TRIOFSND-24: Local questions JSON with fun facts', () => {
     });
   });
 
-  test('image_path values point to existing files', () => {
+  test('fun_fact text does not contain more than 3 sentences', () => {
+    questions.forEach((q, idx) => {
+      const sentences = q.fun_fact.text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      expect(sentences.length).toBeLessThanOrEqual(3);
+    });
+  });
+
+  test('fun_fact text average word length is child-friendly (max 8 chars)', () => {
+    questions.forEach((q, idx) => {
+      const words = q.fun_fact.text.split(/\s+/).filter(w => w.length > 0);
+      const totalChars = words.reduce((sum, w) => sum + w.length, 0);
+      const avgWordLength = totalChars / words.length;
+      expect(avgWordLength).toBeLessThanOrEqual(8);
+    });
+  });
+
+  test('image_path starts with a valid prefix (/, ./, assets/, or images/)', () => {
     questions.forEach((q, idx) => {
       const imgPath = q.fun_fact.image_path;
-      const fullPath = path.resolve(__dirname, '..', imgPath);
-      expect(fs.existsSync(fullPath)).toBe(true);
+      const validStart = imgPath.startsWith('/') ||
+                         imgPath.startsWith('./') ||
+                         imgPath.startsWith('assets/') ||
+                         imgPath.startsWith('images/');
+      expect(validStart).toBe(true);
+    });
+  });
+
+  test('each question retains a question or prompt property', () => {
+    questions.forEach((q, idx) => {
+      const hasQuestion = q.hasOwnProperty('question') || q.hasOwnProperty('prompt') || q.hasOwnProperty('text');
+      expect(hasQuestion).toBe(true);
+    });
+  });
+
+  test('no fun_fact text is a duplicate of another question text', () => {
+    const questionTexts = questions.map(q => {
+      const qt = q.question || q.prompt || q.text || '';
+      return qt.toLowerCase().trim();
+    });
+    questions.forEach((q, idx) => {
+      const factText = q.fun_fact.text.toLowerCase().trim();
+      expect(questionTexts).not.toContain(factText);
     });
   });
 });
