@@ -18,16 +18,21 @@ export const selectRandomQuestions = (allQuestions, count = 10) => {
 export const shuffleAnswers = (question) => {
   // Create a copy of the answers array to avoid mutating the original
   const answersCopy = [...question.answers];
-  
+  const correctAnswer = question.correctAnswer;
+
   // Shuffle the answers array
   for (let i = answersCopy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [answersCopy[i], answersCopy[j]] = [answersCopy[j], answersCopy[i]];
   }
 
+  // Update the correctAnswer index
+  const newCorrectAnswerIndex = answersCopy.indexOf(correctAnswer);
+
   return {
     ...question,
-    answers: answersCopy
+    answers: answersCopy,
+    correctAnswerIndex: newCorrectAnswerIndex
   };
 };
 
