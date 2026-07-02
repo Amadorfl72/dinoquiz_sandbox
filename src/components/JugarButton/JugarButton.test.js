@@ -108,4 +108,15 @@ describe('TRIOFSND-52: JugarButton navigation and event logging', () => {
     });
     expect(navigationRef.navigate).toHaveBeenCalledWith('Game', undefined);
   });
+
+  it('validates event parameters before logging', () => {
+    const invalidParams = { malicious: { code: 'alert(1)' } };
+    analytics.logEvent.mockImplementation(() => {
+      throw new Error('Invalid parameters');
+    });
+    renderWithNavigation(<JugarButton />);
+    expect(() => {
+      fireEvent.press(screen.getByText('¡Jugar!'));
+    }).not.toThrow();
+  });
 });
