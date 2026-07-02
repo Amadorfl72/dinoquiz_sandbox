@@ -15,6 +15,7 @@ export class GameManager {
   }
 
   replayGame() {
+    Telemetry.logReplayClicked(this.currentScore);
     this.startGame('replay');
   }
 }
