@@ -1,7 +1,7 @@
 [
   {
     "statement": "¿Qué dinosaurio es conocido como el 'rey lagarto tirano'?",
-    "options": ["Triceratops", "T-Rex", "Velociraptor"],
+    "options": ["Triceratops", "Trex", "Velociraptor"],
     "correctIndex": 1,
     "dinoId": "trex",
     "funFact": "El T-Rex podía medir hasta 12 metros de largo y pesar más de 8 toneladas.",
@@ -9,7 +9,7 @@
   },
   {
     "statement": "¿Qué dinosaurio tenía tres cuernos en su cabeza?",
-    "options": ["Estegosaurio", "Triceratops", "Brachiosaurio"],
+    "options": ["Estegosaurio", "Triceratops", "Braquiosaurio"],
     "correctIndex": 1,
     "dinoId": "triceratops",
     "funFact": "El Triceratops usaba sus cuernos para defenderse de depredadores como el T-Rex.",
@@ -24,27 +24,27 @@
     "image": "stegosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio podía volar?",
+    "statement": "¿Qué reptil volador vivió en la época de los dinosaurios?",
     "options": ["Pteranodon", "T-Rex", "Triceratops"],
     "correctIndex": 0,
     "dinoId": "pteranodon",
-    "funFact": "El Pteranodon no era un dinosaurio, sino un reptil volador que vivió en la misma época.",
+    "funFact": "El Pteranodon podía extender sus alas hasta 7 metros para planear sobre el mar.",
     "image": "pteranodon.png"
   },
   {
     "statement": "¿Qué dinosaurio tenía una cola con un mazo óseo?",
-    "options": ["Ankylosaurus", "Velociraptor", "Brachiosaurio"],
+    "options": ["Ankylosaurus", "Velociraptor", "Braquiosaurio"],
     "correctIndex": 0,
     "dinoId": "ankylosaurus",
     "funFact": "El Ankylosaurus usaba su cola como un martillo para defenderse de los depredadores.",
     "image": "ankylosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su largo cuello?",
-    "options": ["Velociraptor", "Brachiosaurio", "T-Rex"],
+    "statement": "¿Qué dinosaurio es conocido por su largo cuello para comer hojas altas?",
+    "options": ["Velociraptor", "Braquiosaurio", "T-Rex"],
     "correctIndex": 1,
     "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
+    "funFact": "El Braquiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
     "image": "brachiosaurus.png"
   },
   {
@@ -52,7 +52,63 @@
     "options": ["Triceratops", "Velociraptor", "Estegosaurio"],
     "correctIndex": 1,
     "dinoId": "velociraptor",
-    "funFact": "El Velociraptor era mucho más pequeño de lo que se muestra en las películas, aproximadamente del tamaño de un pavo.",
+    "funFact": "El Velociraptor era mucho más pequeño de lo que se ve en las películas, del tamaño de un pavo.",
+    "image": "velociraptor.png"
+  },
+  {
+    "statement": "¿De qué se alimentaba principalmente el T-Rex?",
+    "options": ["Plantas", "Carne", "Insectos"],
+    "correctIndex": 1,
+    "dinoId": "trex",
+    "funFact": "El T-Rex era un gran carnívoro con dientes de hasta 20 centímetros de largo.",
+    "image": "trex.png"
+  },
+  {
+    "statement": "¿Cuántos cuernos tenía el Triceratops en la cara?",
+    "options": ["Uno", "Dos", "Tres"],
+    "correctIndex": 2,
+    "dinoId": "triceratops",
+    "funFact": "El nombre Triceratops significa 'cara con tres cuernos' en griego.",
+    "image": "triceratops.png"
+  },
+  {
+    "statement": "¿Qué tenía el Estegosaurio al final de su cola para defenderse?",
+    "options": ["Púas", "Un pico", "Aletas"],
+    "correctIndex": 0,
+    "dinoId": "stegosaurus",
+    "funFact": "El Estegosaurio tenía púas en la cola conocidas como 'thagomizer'.",
+    "image": "stegosaurus.png"
+  },
+  {
+    "statement": "¿Cómo se desplazaba principalmente el Pteranodon?",
+    "options": ["Volando", "Nadando", "Corriendo"],
+    "correctIndex": 0,
+    "dinoId": "pteranodon",
+    "funFact": "El Pteranodon no tenía dientes y usaba su pico para atrapar peces.",
+    "image": "pteranodon.png"
+  },
+  {
+    "statement": "¿Qué protegía el cuerpo del Ankylosaurus?",
+    "options": ["Una armadura ósea", "Plumas", "Escamas suaves"],
+    "correctIndex": 0,
+    "dinoId": "ankylosaurus",
+    "funFact": "El Ankylosaurus tenía una armadura ósea que lo protegía como un tanque.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "statement": "¿Qué comía el Braquiosaurio?",
+    "options": ["Carne", "Plantas", "Peces"],
+    "correctIndex": 1,
+    "dinoId": "brachiosaurus",
+    "funFact": "El Braquiosaurio era herbívoro y necesitaba comer cientos de kilos de plantas al día.",
+    "image": "brachiosaurus.png"
+  },
+  {
+    "statement": "¿En cuántas patas caminaba normalmente el Velociraptor?",
+    "options": ["Dos", "Cuatro", "Seis"],
+    "correctIndex": 0,
+    "dinoId": "velociraptor",
+    "funFact": "El Velociraptor caminaba sobre dos patas y era muy ágil al correr.",
     "image": "velociraptor.png"
   },
   {
@@ -60,51 +116,43 @@
     "options": ["Hadrosaurio", "T-Rex", "Ankylosaurus"],
     "correctIndex": 0,
     "dinoId": "hadrosaurus",
-    "funFact": "El Hadrosaurio usaba su pico para cortar plantas duras, que luego trituraba con cientos de dientes.",
+    "funFact": "El Hadrosaurio usaba su pico para cortar plantas duras que trituraba con cientos de dientes.",
     "image": "hadrosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido como el 'lagarto armado'?",
-    "options": ["Ankylosaurus", "Estegosaurio", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "ankylosaurus",
-    "funFact": "El Ankylosaurus tenía una armadura ósea que lo protegía de los depredadores.",
-    "image": "ankylosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su cresta en la cabeza?",
+    "statement": "¿Qué dinosaurio tenía una cresta hueca en la cabeza?",
     "options": ["Parasaurolophus", "Velociraptor", "T-Rex"],
     "correctIndex": 0,
     "dinoId": "parasaurolophus",
-    "funFact": "La cresta del Parasaurolophus podría haber sido usada para comunicarse con otros dinosaurios.",
+    "funFact": "La cresta del Parasaurolophus podría haber servido para emitir sonidos y comunicarse.",
     "image": "parasaurolophus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "statement": "¿Qué dinosaurio fue uno de los más largos que existieron?",
     "options": ["Diplodocus", "T-Rex", "Triceratops"],
     "correctIndex": 0,
     "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, ¡casi como una piscina olímpica!",
     "image": "diplodocus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su cabeza gruesa y cuernos cortos?",
+    "statement": "¿Qué dinosaurio tenía una cabeza muy gruesa como un casco?",
     "options": ["Pachycephalosaurus", "Velociraptor", "Estegosaurio"],
     "correctIndex": 0,
     "dinoId": "pachycephalosaurus",
-    "funFact": "El Pachycephalosaurus usaba su cabeza gruesa para competir con otros dinosaurios.",
+    "funFact": "El Pachycephalosaurus tenía un cráneo muy grueso que usaba para chocar cabezas.",
     "image": "pachycephalosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por sus grandes garras en las patas delanteras?",
+    "statement": "¿Qué dinosaurio tenía las garras más largas conocidas?",
     "options": ["Therizinosaurus", "T-Rex", "Ankylosaurus"],
     "correctIndex": 0,
     "dinoId": "therizinosaurus",
-    "funFact": "El Therizinosaurus tenía garras de hasta 1 metro de largo, las más largas de cualquier dinosaurio conocido.",
+    "funFact": "El Therizinosaurus tenía garras de hasta 1 metro de largo, las más largas de cualquier dinosaurio.",
     "image": "therizinosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "statement": "¿Qué dinosaurio gigante pesaba más de 20 toneladas?",
     "options": ["Apatosaurus", "T-Rex", "Triceratops"],
     "correctIndex": 0,
     "dinoId": "apatosaurus",
@@ -112,131 +160,83 @@
     "image": "apatosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
-    "image": "brachiosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
+    "statement": "¿Qué dinosaurio herbívoro tenía un cuello robusto y grueso?",
     "options": ["Camarasaurus", "T-Rex", "Triceratops"],
     "correctIndex": 0,
     "dinoId": "camarasaurus",
-    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
+    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y era muy común en su época.",
     "image": "camarasaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Diplodocus", "T-Rex", "Triceratops"],
+    "statement": "¿Qué comía el Estegosaurio?",
+    "options": ["Plantas", "Carne", "Peces"],
+    "correctIndex": 0,
+    "dinoId": "stegosaurus",
+    "funFact": "El Estegosaurio era herbívoro y tenía un cerebro del tamaño de una nuez.",
+    "image": "stegosaurus.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio tenía dos filas de placas a lo largo del lomo?",
+    "options": ["Estegosaurio", "Velociraptor", "Pteranodon"],
+    "correctIndex": 0,
+    "dinoId": "stegosaurus",
+    "funFact": "Las placas del Estegosaurio podían cambiar de color para asustar a los depredadores.",
+    "image": "stegosaurus.png"
+  },
+  {
+    "statement": "¿Qué famoso depredador tenía brazos muy pequeños?",
+    "options": ["Triceratops", "T-Rex", "Braquiosaurio"],
+    "correctIndex": 1,
+    "dinoId": "trex",
+    "funFact": "A pesar de su gran tamaño, el T-Rex tenía brazos muy cortos con solo dos dedos.",
+    "image": "trex.png"
+  },
+  {
+    "statement": "¿Qué usaba el Triceratops detrás de su cabeza como escudo?",
+    "options": ["Una gola ósea", "Alas", "Una cresta"],
+    "correctIndex": 0,
+    "dinoId": "triceratops",
+    "funFact": "La gran gola ósea del Triceratops protegía su cuello de los ataques.",
+    "image": "triceratops.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio cazador vivía a veces en grupo?",
+    "options": ["Velociraptor", "Braquiosaurio", "Estegosaurio"],
+    "correctIndex": 0,
+    "dinoId": "velociraptor",
+    "funFact": "Algunos científicos creen que el Velociraptor cazaba en grupos para atrapar presas grandes.",
+    "image": "velociraptor.png"
+  },
+  {
+    "statement": "¿Qué dinosaurio de cuello largo usaba su cola como látigo?",
+    "options": ["Diplodocus", "T-Rex", "Ankylosaurus"],
     "correctIndex": 0,
     "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
+    "funFact": "El Diplodocus podía mover su larga cola como un látigo para defenderse.",
     "image": "diplodocus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
+    "statement": "¿Qué dinosaurio con pico de pato podía correr sobre dos patas?",
+    "options": ["Hadrosaurio", "Ankylosaurus", "Camarasaurus"],
     "correctIndex": 0,
-    "dinoId": "apatosaurus",
-    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
-    "image": "apatosaurus.png"
+    "dinoId": "hadrosaurus",
+    "funFact": "El Hadrosaurio podía correr sobre dos patas para escapar de los depredadores.",
+    "image": "hadrosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
+    "statement": "¿Qué dinosaurio usaba su cabeza dura para pelear con otros?",
+    "options": ["Pachycephalosaurus", "Braquiosaurio", "Pteranodon"],
     "correctIndex": 0,
-    "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
-    "image": "brachiosaurus.png"
+    "dinoId": "pachycephalosaurus",
+    "funFact": "El Pachycephalosaurus podía chocar su cabeza gruesa contra rivales como los carneros.",
+    "image": "pachycephalosaurus.png"
   },
   {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
+    "statement": "¿Qué dinosaurio herbívoro tenía garras enormes pero comía plantas?",
+    "options": ["Therizinosaurus", "Velociraptor", "Triceratops"],
     "correctIndex": 0,
-    "dinoId": "camarasaurus",
-    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
-    "image": "camarasaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Diplodocus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
-    "image": "diplodocus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "apatosaurus",
-    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
-    "image": "apatosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
-    "image": "brachiosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "camarasaurus",
-    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
-    "image": "camarasaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Diplodocus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
-    "image": "diplodocus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "apatosaurus",
-    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
-    "image": "apatosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Brachiosaurio", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "brachiosaurus",
-    "funFact": "El Brachiosaurio podía alcanzar las hojas más altas de los árboles gracias a su largo cuello.",
-    "image": "brachiosaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Camarasaurus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "camarasaurus",
-    "funFact": "El Camarasaurus podía medir hasta 18 metros de largo y pesar más de 15 toneladas.",
-    "image": "camarasaurus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Diplodocus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "diplodocus",
-    "funFact": "El Diplodocus podía medir hasta 33 metros de largo, uno de los dinosaurios más largos que han existido.",
-    "image": "diplodocus.png"
-  },
-  {
-    "statement": "¿Qué dinosaurio es conocido por su gran tamaño y cuello largo?",
-    "options": ["Apatosaurus", "T-Rex", "Triceratops"],
-    "correctIndex": 0,
-    "dinoId": "apatosaurus",
-    "funFact": "El Apatosaurus podía medir hasta 21 metros de largo y pesar más de 20 toneladas.",
-    "image": "apatosaurus.png"
+    "dinoId": "therizinosaurus",
+    "funFact": "Aunque tenía garras gigantes, el Therizinosaurus las usaba para alcanzar plantas.",
+    "image": "therizinosaurus.png"
   }
 ]
