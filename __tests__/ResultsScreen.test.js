@@ -228,9 +228,14 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
       />
     );
 
+    // Wait for the score to render so the useEffect has run
     await findByText('Your Score: 8/10');
 
     expect(queryByText('New Best Score!')).toBeNull();
-    expect(rejectionErrors).toEqual([]);
+
+    // Allow any pending microtasks (including rejected promises) to settle
+    await waitFor(() => {
+      expect(rejectionErrors).toEqual([]);
+    });
   });
 });
