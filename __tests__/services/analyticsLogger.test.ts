@@ -29,4 +29,20 @@ describe('TRIOFSND-30: analyticsLogger structured log', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('does not include PII in the fun_fact_viewed payload', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    analyticsLogger.emit({ event: 'fun_fact_viewed' });
+
+    const logged = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(logged);
+
+    expect(parsed).toEqual({ event: 'fun_fact_viewed' });
+    expect(parsed).not.toHaveProperty('userId');
+    expect(parsed).not.toHaveProperty('email');
+    expect(parsed).not.toHaveProperty('name');
+
+    consoleSpy.mockRestore();
+  });
 });
