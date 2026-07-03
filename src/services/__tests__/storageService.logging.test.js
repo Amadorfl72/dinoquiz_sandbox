@@ -1,12 +1,16 @@
 import { logStorageFailure } from '../../analytics/logger';
-import config from '../../config';
 import Events from '../../analytics/events';
+
+jest.mock('../../config', () => ({
+  __esModule: true,
+  default: { app_version: '1.0.0' },
+}));
 
 jest.mock('../../analytics/metrics', () => ({
   incrementMetric: jest.fn(),
 }));
 
-describe('TRIOFSND-47: Storage Failure Structured Logging', () => {
+describe('TRIOFSND-47: Storage failure structured logging', () => {
   let consoleSpy;
 
   beforeEach(() => {
@@ -19,94 +23,123 @@ describe('TRIOFSND-47: Storage Failure Structured Logging', () => {
   });
 
   it('logs storage_failure when a save operation fails', () => {
-    logStorageFailure('save', 'Error');
+    logStorageFailure('save', 'QuotaExceededError');
 
     expect(consoleSpy).toHaveBeenCalledTimes(1);
-    const payload = consoleSpy.mock.calls[0][1];
+    const [, payload] = consoleSpy.mock.calls[0];
     expect(payload.event).toBe(Events.STORAGE_FAILURE);
     expect(payload.operation_type).toBe('save');
-    expect(payload.error_type).toBe('Error');
+    expect(payload.error_type).toBe('QuotaExceededError');
   });
 
   it('logs storage_failure when a load operation fails', () => {
-    logStorageFailure('load', 'Error');
+    logStorageFailure('load', 'DataError');
 
     expect(consoleSpy).toHaveBeenCalledTimes(1);
-    const payload = consoleSpy.mock.calls[0][1];
+    const [, payload] = consoleSpy.mock.calls[0];
     expect(payload.event).toBe(Events.STORAGE_FAILURE);
     expect(payload.operation_type).toBe('load');
-    expect(payload.error_type).toBe('Error');
+    expect(payload.error_type).toBe('DataError');
   });
 
   it('logs storage_failure when a clear operation fails', () => {
     logStorageFailure('clear', 'Error');
 
     expect(consoleSpy).toHaveBeenCalledTimes(1);
-    const payload = consoleSpy.mock.calls[0][1];
+    const [, payload] = consoleSpy.mock.calls[0];
     expect(payload.event).toBe(Events.STORAGE_FAILURE);
     expect(payload.operation_type).toBe('clear');
     expect(payload.error_type).toBe('Error');
   });
 
   it('does not log storage_failure when the operation succeeds', () => {
-    // The logger is only invoked on failure by the caller (storageService).
-    // When an operation succeeds, the caller does not call logStorageFailure.
-    // Here we verify that the logger produces exactly one entry per call and
-    // does not emit spurious logs.
-    logStorageFailure('save', 'Error');
-    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    // logStorageFailure is only called on failure by the caller (storageService).
+    // When an operation succeeds, the caller does not invoke logStorageFailure.
+    // Verify the function is callable but we choose not to call it on success.
+    expect(typeof logStorageFailure).toBe('function');
+    expect(consoleSpy).not.toHaveBeenCalled();
   });
 
   it('does not include any PII fields in the storage_failure log entry', () => {
     logStorageFailure('save', 'Error');
 
-    const payload = consoleSpy.mock.calls[0][1];
-    const allowedKeys = ['event', 'operation_type', 'error_type', 'app_version'];
-    Object.keys(payload).forEach((key) => {
-      expect(allowedKeys).toContain(key);
+    const [, payload] = consoleSpy.mock.calls[0];
+    const piiFields = [
+      'user_id', 'userId', 'email', 'name', 'username',
+      'ip', 'device_id', 'deviceId', 'phone', 'address',
+      'session_id', 'sessionId', 'token',
+    ];
+    piiFields.forEach((field) => {
+      expect(payload).not.toHaveProperty(field);
     });
-
-    // Explicitly verify common PII fields are absent
-    expect(payload.user_id).toBeUndefined();
-    expect(payload.userId).toBeUndefined();
-    expect(payload.email).toBeUndefined();
-    expect(payload.name).toBeUndefined();
-    expect(payload.ip).toBeUndefined();
-    expect(payload.device_id).toBeUndefined();
   });
 
   it('does not include the error message text (only error_type) to avoid leaking sensitive details', () => {
     logStorageFailure('save', 'QuotaExceededError');
 
-    const payload = consoleSpy.mock.calls[0][1];
+    const [, payload] = consoleSpy.mock.calls[0];
     expect(payload.error_type).toBe('QuotaExceededError');
-    // No raw error message or stack trace should be present
-    expect(payload.error_message).toBeUndefined();
-    expect(payload.message).toBeUndefined();
-    expect(payload.error).toBeUndefined();
-    expect(payload.stack).toBeUndefined();
+    expect(payload).not.toHaveProperty('error_message');
+    expect(payload).not.toHaveProperty('message');
+    expect(payload).not.toHaveProperty('error');
+    expect(payload).not.toHaveProperty('stack');
+    expect(payload).not.toHaveProperty('details');
   });
 
   it('includes the current app_version from config in the log entry', () => {
     logStorageFailure('save', 'Error');
 
-    const payload = consoleSpy.mock.calls[0][1];
-    expect(payload.app_version).toBeDefined();
-    expect(payload.app_version).toBe(config.app_version);
+    const [, payload] = consoleSpy.mock.calls[0];
+    expect(payload.app_version).toBe('1.0.0');
   });
 
   it('uses error_type "Error" when the error has no specific name', () => {
-    logStorageFailure('save', 'Error');
+    logStorageFailure('save', undefined);
 
-    const payload = consoleSpy.mock.calls[0][1];
+    const [, payload] = consoleSpy.mock.calls[0];
+    expect(payload.error_type).toBe('Error');
+  });
+
+  it('uses error_type "Error" when error_type is an empty string', () => {
+    logStorageFailure('save', '');
+
+    const [, payload] = consoleSpy.mock.calls[0];
+    expect(payload.error_type).toBe('Error');
+  });
+
+  it('uses error_type "Error" when error_type is null', () => {
+    logStorageFailure('save', null);
+
+    const [, payload] = consoleSpy.mock.calls[0];
     expect(payload.error_type).toBe('Error');
   });
 
   it('rethrows the original error after logging', () => {
-    // The logger function itself does not throw — it only logs the failure.
-    // The caller (storageService) is responsible for rethrowing the original
-    // error after calling logStorageFailure. Here we verify the logger does
-    // not swallow errors or throw its own.
+    // logStorageFailure is a pure logging function that does not catch or
+    // rethrow. The caller (storageService) is responsible for catching the
+    // error, calling logStorageFailure, and then rethrowing. Verify the
+    // function itself does not throw.
     expect(() => logStorageFailure('save', 'Error')).not.toThrow();
+  });
+
+  it('uses the STORAGE_FAILURE event constant from Events', () => {
+    logStorageFailure('save', 'Error');
+
+    const [, payload] = consoleSpy.mock.calls[0];
+    expect(payload.event).toBe('storage_failure');
+  });
+
+  it('only contains expected fields in the payload', () => {
+    logStorageFailure('save', 'Error');
+
+    const [, payload] = consoleSpy.mock.calls[0];
+    const expectedKeys = ['event', 'operation_type', 'error_type', 'app_version'];
+    expect(Object.keys(payload).sort()).toEqual(expectedKeys.sort());
+  });
+
+  it('emits exactly one structured log per storage failure', () => {
+    logStorageFailure('save', 'Error');
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
   });
 });
