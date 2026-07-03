@@ -91,271 +91,271 @@
   },
   {
     "id": 11,
-    "statement": "¿Qué dinosaurio tenía un cráneo grueso y redondeado?",
-    "options": ["Pachycephalosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Pachycephalosaurus",
-    "funFact": "El Pachycephalosaurus usaba su cráneo grueso para competir con otros de su especie.",
-    "imageRef": "pachycephalosaurus.jpg",
-    "species": "Pachycephalosaurus"
-  },
-  {
-    "id": 12,
-    "statement": "¿Qué dinosaurio tenía dientes en forma de lápiz?",
-    "options": ["T-Rex", "Brachiosaurus", "Iguanodon", "Stegosaurus"],
-    "correctAnswer": "Iguanodon",
-    "funFact": "El Iguanodon usaba sus dientes en forma de lápiz para masticar plantas duras.",
-    "imageRef": "iguanodon.jpg",
-    "species": "Iguanodon"
-  },
-  {
-    "id": 13,
-    "statement": "¿Qué dinosaurio tenía garras gigantes en sus patas delanteras?",
-    "options": ["Therizinosaurus", "Velociraptor", "T-Rex", "Triceratops"],
-    "correctAnswer": "Therizinosaurus",
-    "funFact": "Las garras del Therizinosaurus podían medir hasta 1 metro de largo.",
-    "imageRef": "therizinosaurus.jpg",
-    "species": "Therizinosaurus"
-  },
-  {
-    "id": 14,
-    "statement": "¿Qué dinosaurio tenía un pico similar al de un pato?",
-    "options": ["Hadrosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Hadrosaurus",
-    "funFact": "El Hadrosaurus usaba su pico para cortar plantas antes de masticarlas.",
-    "imageRef": "hadrosaurus.jpg",
-    "species": "Hadrosaurus"
-  },
-  {
-    "id": 15,
-    "statement": "¿Qué dinosaurio tenía una vela en su espalda?",
-    "options": ["Spinosaurus", "Stegosaurus", "Ankylosaurus", "Triceratops"],
-    "correctAnswer": "Spinosaurus",
-    "funFact": "La vela del Spinosaurus podía ayudar a regular su temperatura corporal.",
-    "imageRef": "spinosaurus.jpg",
-    "species": "Spinosaurus"
-  },
-  {
-    "id": 16,
-    "statement": "¿Qué dinosaurio tenía un cuello extremadamente largo en relación a su cuerpo?",
-    "options": ["Mamenchisaurus", "Brachiosaurus", "Triceratops", "Stegosaurus"],
-    "correctAnswer": "Mamenchisaurus",
-    "funFact": "El cuello del Mamenchisaurus podía medir hasta 14 metros de largo.",
-    "imageRef": "mamenchisaurus.jpg",
-    "species": "Mamenchisaurus"
-  },
-  {
-    "id": 17,
-    "statement": "¿Qué dinosaurio tenía una cabeza similar a la de un cocodrilo?",
-    "options": ["Baryonyx", "T-Rex", "Velociraptor", "Triceratops"],
-    "correctAnswer": "Baryonyx",
-    "funFact": "El Baryonyx probablemente usaba su cabeza alargada para pescar.",
-    "imageRef": "baryonyx.jpg",
-    "species": "Baryonyx"
-  },
-  {
-    "id": 18,
-    "statement": "¿Qué dinosaurio tenía un cuello corto y una cola larga?",
-    "options": ["T-Rex", "Brachiosaurus", "Stegosaurus", "Diplodocus"],
-    "correctAnswer": "Diplodocus",
-    "funFact": "El Diplodocus podía usar su cola como un látigo para defenderse.",
-    "imageRef": "diplodocus.jpg",
-    "species": "Diplodocus"
-  },
-  {
-    "id": 19,
-    "statement": "¿Qué dinosaurio tenía un pico similar al de un loro?",
-    "options": ["Oviraptor", "Triceratops", "Velociraptor", "Stegosaurus"],
-    "correctAnswer": "Oviraptor",
-    "funFact": "El Oviraptor probablemente usaba su pico para romper huevos y comer su contenido.",
-    "imageRef": "oviraptor.jpg",
-    "species": "Oviraptor"
-  },
-  {
-    "id": 20,
-    "statement": "¿Qué dinosaurio tenía una cresta en forma de casco?",
-    "options": ["Corythosaurus", "Triceratops", "Pteranodon", "Stegosaurus"],
-    "correctAnswer": "Corythosaurus",
-    "funFact": "La cresta del Corythosaurus podía ayudar a producir sonidos para comunicarse.",
-    "imageRef": "corythosaurus.jpg",
-    "species": "Corythosaurus"
-  },
-  {
-    "id": 21,
-    "statement": "¿Qué dinosaurio tenía una cola con púas?",
-    "options": ["Stegosaurus", "Ankylosaurus", "Triceratops", "Velociraptor"],
-    "correctAnswer": "Stegosaurus",
-    "funFact": "Las púas en la cola del Stegosaurus podían medir hasta 60 cm de largo.",
-    "imageRef": "stegosaurus.jpg",
-    "species": "Stegosaurus"
-  },
-  {
-    "id": 22,
-    "statement": "¿Qué dinosaurio tenía una cabeza grande con dientes afilados?",
-    "options": ["T-Rex", "Brachiosaurus", "Stegosaurus", "Triceratops"],
-    "correctAnswer": "T-Rex",
-    "funFact": "El T-Rex podía comer hasta 230 kg de carne en una sola mordida.",
+    "statement": "¿Qué comía principalmente el T-Rex?",
+    "options": ["Plantas", "Otros dinosaurios", "Insectos", "Peces"],
+    "correctAnswer": "Otros dinosaurios",
+    "funFact": "El T-Rex era un cazador y también carroñero muy poderoso.",
     "imageRef": "trex.jpg",
     "species": "T-Rex"
   },
   {
-    "id": 23,
-    "statement": "¿Qué dinosaurio tenía un cuello largo y flexible?",
-    "options": ["Brachiosaurus", "Triceratops", "Velociraptor", "Stegosaurus"],
-    "correctAnswer": "Brachiosaurus",
-    "funFact": "El Brachiosaurus podía alcanzar hojas en lo alto de los árboles que otros dinosaurios no podían.",
-    "imageRef": "brachiosaurus.jpg",
-    "species": "Brachiosaurus"
+    "id": 12,
+    "statement": "¿Cómo eran los brazos del T-Rex?",
+    "options": ["Muy largos", "Muy cortos", "Con alas", "Con garras enormes"],
+    "correctAnswer": "Muy cortos",
+    "funFact": "Aunque cortos, los brazos del T-Rex eran muy fuertes.",
+    "imageRef": "trex.jpg",
+    "species": "T-Rex"
   },
   {
-    "id": 24,
-    "statement": "¿Qué dinosaurio tenía una armadura que cubría todo su cuerpo?",
-    "options": ["Ankylosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Ankylosaurus",
-    "funFact": "La armadura del Ankylosaurus estaba formada por placas óseas llamadas osteodermos.",
-    "imageRef": "ankylosaurus.jpg",
-    "species": "Ankylosaurus"
+    "id": 13,
+    "statement": "¿Cuántos dientes grandes podía tener el T-Rex?",
+    "options": ["Alrededor de 60", "Solo 4", "Ninguno", "Más de 500"],
+    "correctAnswer": "Alrededor de 60",
+    "funFact": "Los dientes del T-Rex podían medir hasta 20 cm de largo.",
+    "imageRef": "trex.jpg",
+    "species": "T-Rex"
   },
   {
-    "id": 25,
-    "statement": "¿Qué dinosaurio tenía una cresta en forma de abanico?",
-    "options": ["Parasaurolophus", "Triceratops", "Pteranodon", "Stegosaurus"],
-    "correctAnswer": "Parasaurolophus",
-    "funFact": "La cresta del Parasaurolophus podía ayudar a producir sonidos para comunicarse.",
-    "imageRef": "parasaurolophus.jpg",
-    "species": "Parasaurolophus"
+    "id": 14,
+    "statement": "¿De qué se alimentaba el Triceratops?",
+    "options": ["Carne", "Plantas", "Peces", "Insectos"],
+    "correctAnswer": "Plantas",
+    "funFact": "El Triceratops era herbívoro y comía plantas bajas.",
+    "imageRef": "triceratops.jpg",
+    "species": "Triceratops"
   },
   {
-    "id": 26,
-    "statement": "¿Qué dinosaurio tenía un cuello largo y una cola corta?",
-    "options": ["Brachiosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Brachiosaurus",
-    "funFact": "El Brachiosaurus podía medir hasta 26 metros de largo.",
-    "imageRef": "brachiosaurus.jpg",
-    "species": "Brachiosaurus"
+    "id": 15,
+    "statement": "¿Qué tenía el Triceratops detrás de su cabeza?",
+    "options": ["Una gola grande", "Alas", "Una aleta", "Una trompa"],
+    "correctAnswer": "Una gola grande",
+    "funFact": "La gola del Triceratops podía protegerle el cuello.",
+    "imageRef": "triceratops.jpg",
+    "species": "Triceratops"
   },
   {
-    "id": 27,
-    "statement": "¿Qué dinosaurio tenía una cabeza pequeña en comparación con su cuerpo?",
-    "options": ["Stegosaurus", "Triceratops", "Velociraptor", "T-Rex"],
-    "correctAnswer": "Stegosaurus",
+    "id": 16,
+    "statement": "¿Cuántos cuernos tenía el Triceratops?",
+    "options": ["Uno", "Dos", "Tres", "Cuatro"],
+    "correctAnswer": "Tres",
+    "funFact": "Su nombre Triceratops significa 'cara con tres cuernos'.",
+    "imageRef": "triceratops.jpg",
+    "species": "Triceratops"
+  },
+  {
+    "id": 17,
+    "statement": "¿El Velociraptor era grande o pequeño?",
+    "options": ["Enorme como un edificio", "Pequeño como un pavo", "Del tamaño de una ballena", "Del tamaño de un elefante"],
+    "correctAnswer": "Pequeño como un pavo",
+    "funFact": "El Velociraptor real era mucho más pequeño de lo que muestran las películas.",
+    "imageRef": "velociraptor.jpg",
+    "species": "Velociraptor"
+  },
+  {
+    "id": 18,
+    "statement": "¿Qué tenía el Velociraptor en su cuerpo según los científicos?",
+    "options": ["Plumas", "Escamas de pez", "Pelo largo", "Caparazón"],
+    "correctAnswer": "Plumas",
+    "funFact": "El Velociraptor probablemente tenía plumas como las aves.",
+    "imageRef": "velociraptor.jpg",
+    "species": "Velociraptor"
+  },
+  {
+    "id": 19,
+    "statement": "¿Cómo cazaba el Velociraptor?",
+    "options": ["Con su garra en forma de hoz", "Con veneno", "Con fuego", "Con electricidad"],
+    "correctAnswer": "Con su garra en forma de hoz",
+    "funFact": "El Velociraptor usaba su gran garra curva para atrapar a sus presas.",
+    "imageRef": "velociraptor.jpg",
+    "species": "Velociraptor"
+  },
+  {
+    "id": 20,
+    "statement": "¿Para qué usaba el Stegosaurus las púas de su cola?",
+    "options": ["Para volar", "Para defenderse", "Para nadar", "Para comer"],
+    "correctAnswer": "Para defenderse",
+    "funFact": "Las púas de la cola del Stegosaurus se llaman 'thagomizer'.",
+    "imageRef": "stegosaurus.jpg",
+    "species": "Stegosaurus"
+  },
+  {
+    "id": 21,
+    "statement": "¿De qué tamaño era el cerebro del Stegosaurus?",
+    "options": ["Muy pequeño", "Enorme", "Como el de un humano", "No tenía cerebro"],
+    "correctAnswer": "Muy pequeño",
     "funFact": "El cerebro del Stegosaurus era del tamaño de una nuez.",
     "imageRef": "stegosaurus.jpg",
     "species": "Stegosaurus"
   },
   {
+    "id": 22,
+    "statement": "¿Qué comía el Stegosaurus?",
+    "options": ["Plantas", "Carne", "Peces", "Otros dinosaurios"],
+    "correctAnswer": "Plantas",
+    "funFact": "El Stegosaurus era herbívoro y comía plantas bajas y arbustos.",
+    "imageRef": "stegosaurus.jpg",
+    "species": "Stegosaurus"
+  },
+  {
+    "id": 23,
+    "statement": "¿Cómo alcanzaba el Brachiosaurus las hojas más altas?",
+    "options": ["Volando", "Con su largo cuello", "Saltando", "Trepando árboles"],
+    "correctAnswer": "Con su largo cuello",
+    "funFact": "El Brachiosaurus podía comer hojas de los árboles más altos.",
+    "imageRef": "brachiosaurus.jpg",
+    "species": "Brachiosaurus"
+  },
+  {
+    "id": 24,
+    "statement": "¿Qué patas del Brachiosaurus eran más largas?",
+    "options": ["Las delanteras", "Las traseras", "Todas iguales", "No tenía patas"],
+    "correctAnswer": "Las delanteras",
+    "funFact": "El Brachiosaurus tenía las patas delanteras más largas que las traseras.",
+    "imageRef": "brachiosaurus.jpg",
+    "species": "Brachiosaurus"
+  },
+  {
+    "id": 25,
+    "statement": "¿El Brachiosaurus era herbívoro o carnívoro?",
+    "options": ["Herbívoro", "Carnívoro", "Comía peces", "Comía insectos"],
+    "correctAnswer": "Herbívoro",
+    "funFact": "El Brachiosaurus solo comía plantas y necesitaba muchísima comida cada día.",
+    "imageRef": "brachiosaurus.jpg",
+    "species": "Brachiosaurus"
+  },
+  {
+    "id": 26,
+    "statement": "¿Qué parte del Ankylosaurus era como un escudo?",
+    "options": ["Su piel con placas", "Sus alas", "Su cuello", "Sus dientes"],
+    "correctAnswer": "Su piel con placas",
+    "funFact": "El Ankylosaurus estaba cubierto de placas óseas muy duras.",
+    "imageRef": "ankylosaurus.jpg",
+    "species": "Ankylosaurus"
+  },
+  {
+    "id": 27,
+    "statement": "¿Qué comía el Ankylosaurus?",
+    "options": ["Plantas", "Carne", "Peces", "Otros dinosaurios"],
+    "correctAnswer": "Plantas",
+    "funFact": "El Ankylosaurus era herbívoro y caminaba lento cerca del suelo.",
+    "imageRef": "ankylosaurus.jpg",
+    "species": "Ankylosaurus"
+  },
+  {
     "id": 28,
-    "statement": "¿Qué dinosaurio tenía una cola con una maza ósea al final?",
-    "options": ["Ankylosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Ankylosaurus",
-    "funFact": "La maza en la cola del Ankylosaurus podía pesar hasta 60 kg.",
+    "statement": "¿Cómo se defendía el Ankylosaurus de los depredadores?",
+    "options": ["Con la maza de su cola", "Volando", "Escondiéndose bajo el agua", "Corriendo muy rápido"],
+    "correctAnswer": "Con la maza de su cola",
+    "funFact": "Un golpe con la maza del Ankylosaurus podía romper huesos.",
     "imageRef": "ankylosaurus.jpg",
     "species": "Ankylosaurus"
   },
   {
     "id": 29,
-    "statement": "¿Qué dinosaurio tenía una cabeza con tres cuernos grandes?",
-    "options": ["Triceratops", "T-Rex", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Triceratops",
-    "funFact": "Los cuernos del Triceratops podían medir hasta 1 metro de largo.",
-    "imageRef": "triceratops.jpg",
-    "species": "Triceratops"
+    "statement": "¿El Pteranodon era un dinosaurio o un reptil volador?",
+    "options": ["Un reptil volador", "Un pez", "Un mamífero", "Una planta"],
+    "correctAnswer": "Un reptil volador",
+    "funFact": "El Pteranodon era un pterosaurio, un reptil volador, no un dinosaurio.",
+    "imageRef": "pteranodon.jpg",
+    "species": "Pteranodon"
   },
   {
     "id": 30,
-    "statement": "¿Qué dinosaurio tenía una cabeza grande con dientes afilados y brazos pequeños?",
-    "options": ["T-Rex", "Brachiosaurus", "Stegosaurus", "Triceratops"],
-    "correctAnswer": "T-Rex",
-    "funFact": "Los brazos del T-Rex eran tan cortos que no podían alcanzar su propia boca.",
-    "imageRef": "trex.jpg",
-    "species": "T-Rex"
+    "statement": "¿Qué comía el Pteranodon?",
+    "options": ["Peces", "Plantas", "Rocas", "Hojas"],
+    "correctAnswer": "Peces",
+    "funFact": "El Pteranodon volaba sobre el mar para pescar peces.",
+    "imageRef": "pteranodon.jpg",
+    "species": "Pteranodon"
   },
   {
     "id": 31,
-    "statement": "¿Qué dinosaurio tenía una cola con púas que usaba como arma?",
-    "options": ["Stegosaurus", "Ankylosaurus", "Triceratops", "Velociraptor"],
-    "correctAnswer": "Stegosaurus",
-    "funFact": "Las púas en la cola del Stegosaurus podían moverse con gran fuerza.",
-    "imageRef": "stegosaurus.jpg",
-    "species": "Stegosaurus"
+    "statement": "¿El Pteranodon tenía dientes?",
+    "options": ["No tenía dientes", "Tenía cientos de dientes", "Tenía colmillos", "Tenía dientes de metal"],
+    "correctAnswer": "No tenía dientes",
+    "funFact": "El Pteranodon tenía un pico sin dientes, parecido al de un pelícano.",
+    "imageRef": "pteranodon.jpg",
+    "species": "Pteranodon"
   },
   {
     "id": 32,
-    "statement": "¿Qué dinosaurio tenía una armadura que lo cubría como un tanque?",
-    "options": ["Ankylosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Ankylosaurus",
-    "funFact": "La armadura del Ankylosaurus era tan fuerte que podía resistir el ataque de un T-Rex.",
-    "imageRef": "ankylosaurus.jpg",
-    "species": "Ankylosaurus"
-  },
-  {
-    "id": 33,
-    "statement": "¿Qué dinosaurio tenía una cabeza con un cuerno grande sobre la nariz?",
-    "options": ["Triceratops", "T-Rex", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Triceratops",
-    "funFact": "El cuerno nasal del Triceratops podía usarse en combates con otros Triceratops.",
-    "imageRef": "triceratops.jpg",
-    "species": "Triceratops"
-  },
-  {
-    "id": 34,
-    "statement": "¿Qué dinosaurio tenía una cabeza pequeña y un cuerpo grande y pesado?",
-    "options": ["Stegosaurus", "Triceratops", "Velociraptor", "T-Rex"],
-    "correctAnswer": "Stegosaurus",
-    "funFact": "El Stegosaurus podía pesar hasta 5 toneladas a pesar de su pequeño cerebro.",
-    "imageRef": "stegosaurus.jpg",
-    "species": "Stegosaurus"
-  },
-  {
-    "id": 35,
-    "statement": "¿Qué dinosaurio tenía una cola con una maza que podía romper huesos?",
-    "options": ["Ankylosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Ankylosaurus",
-    "funFact": "La maza en la cola del Ankylosaurus podía golpear con la fuerza de un martillo.",
-    "imageRef": "ankylosaurus.jpg",
-    "species": "Ankylosaurus"
-  },
-  {
-    "id": 36,
-    "statement": "¿Qué dinosaurio tenía una cabeza con tres cuernos y un volante óseo?",
-    "options": ["Triceratops", "T-Rex", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Triceratops",
-    "funFact": "El volante óseo del Triceratops podía medir hasta 2 metros de ancho.",
-    "imageRef": "triceratops.jpg",
-    "species": "Triceratops"
-  },
-  {
-    "id": 37,
-    "statement": "¿Qué dinosaurio tenía una cabeza grande con dientes afilados y patas poderosas?",
-    "options": ["T-Rex", "Brachiosaurus", "Stegosaurus", "Triceratops"],
-    "correctAnswer": "T-Rex",
-    "funFact": "El T-Rex podía correr a velocidades de hasta 25 km/h.",
+    "statement": "¿En qué época vivió el T-Rex?",
+    "options": ["Cretácico", "Hoy en día", "Edad de Hielo", "Época de los mamuts"],
+    "correctAnswer": "Cretácico",
+    "funFact": "El T-Rex vivió al final del período Cretácico.",
     "imageRef": "trex.jpg",
     "species": "T-Rex"
   },
   {
-    "id": 38,
-    "statement": "¿Qué dinosaurio tenía una cola con púas que podía mover rápidamente?",
-    "options": ["Stegosaurus", "Ankylosaurus", "Triceratops", "Velociraptor"],
-    "correctAnswer": "Stegosaurus",
-    "funFact": "Las púas en la cola del Stegosaurus podían moverse a gran velocidad para defenderse.",
+    "id": 33,
+    "statement": "¿Qué sentido tenía muy desarrollado el T-Rex?",
+    "options": ["El olfato", "El oído bajo el agua", "La vista nocturna láser", "Ninguno"],
+    "correctAnswer": "El olfato",
+    "funFact": "El T-Rex tenía un olfato muy potente para encontrar comida.",
+    "imageRef": "trex.jpg",
+    "species": "T-Rex"
+  },
+  {
+    "id": 34,
+    "statement": "¿El Triceratops caminaba en dos o cuatro patas?",
+    "options": ["Cuatro patas", "Dos patas", "Volaba", "Nadaba"],
+    "correctAnswer": "Cuatro patas",
+    "funFact": "El Triceratops caminaba sobre sus cuatro fuertes patas.",
+    "imageRef": "triceratops.jpg",
+    "species": "Triceratops"
+  },
+  {
+    "id": 35,
+    "statement": "¿El Velociraptor era rápido o lento?",
+    "options": ["Muy rápido", "Muy lento", "No se movía", "Solo nadaba"],
+    "correctAnswer": "Muy rápido",
+    "funFact": "El Velociraptor era ágil y podía correr muy rápido para cazar.",
+    "imageRef": "velociraptor.jpg",
+    "species": "Velociraptor"
+  },
+  {
+    "id": 36,
+    "statement": "¿Cuántas filas de placas tenía el Stegosaurus en su espalda?",
+    "options": ["Dos filas", "Diez filas", "Ninguna", "Cien filas"],
+    "correctAnswer": "Dos filas",
+    "funFact": "El Stegosaurus tenía dos filas de placas a lo largo de su espalda.",
     "imageRef": "stegosaurus.jpg",
     "species": "Stegosaurus"
   },
   {
-    "id": 39,
-    "statement": "¿Qué dinosaurio tenía una armadura que lo hacía casi invulnerable?",
-    "options": ["Ankylosaurus", "Triceratops", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Ankylosaurus",
-    "funFact": "La armadura del Ankylosaurus era tan gruesa que incluso un T-Rex no podía morderla.",
+    "id": 37,
+    "statement": "¿Qué tan alto podía llegar el Brachiosaurus?",
+    "options": ["Como un edificio", "Como una hormiga", "Como un gato", "Como una pelota"],
+    "correctAnswer": "Como un edificio",
+    "funFact": "El Brachiosaurus podía ser tan alto como un edificio de cuatro pisos.",
+    "imageRef": "brachiosaurus.jpg",
+    "species": "Brachiosaurus"
+  },
+  {
+    "id": 38,
+    "statement": "¿El Ankylosaurus era rápido corriendo?",
+    "options": ["No, era lento", "Sí, muy rápido", "Volaba", "Corría más que un guepardo"],
+    "correctAnswer": "No, era lento",
+    "funFact": "El Ankylosaurus era pesado y caminaba despacio por su armadura.",
     "imageRef": "ankylosaurus.jpg",
     "species": "Ankylosaurus"
   },
   {
+    "id": 39,
+    "statement": "¿Qué usaba el Pteranodon para volar?",
+    "options": ["Sus grandes alas", "Un motor", "Sus patas", "Su cola"],
+    "correctAnswer": "Sus grandes alas",
+    "funFact": "Las alas del Pteranodon eran de piel estirada entre sus dedos.",
+    "imageRef": "pteranodon.jpg",
+    "species": "Pteranodon"
+  },
+  {
     "id": 40,
-    "statement": "¿Qué dinosaurio tenía una cabeza con tres cuernos y un cuerpo grande?",
-    "options": ["Triceratops", "T-Rex", "Stegosaurus", "Velociraptor"],
-    "correctAnswer": "Triceratops",
-    "funFact": "El Triceratops podía pesar hasta 12 toneladas, tanto como dos elefantes.",
+    "statement": "¿El Triceratops tenía un pico como el de un loro?",
+    "options": ["Sí, tenía un pico", "No, tenía trompa", "Tenía branquias", "Tenía un pico de metal"],
+    "correctAnswer": "Sí, tenía un pico",
+    "funFact": "El Triceratops tenía un pico curvo para cortar plantas.",
     "imageRef": "triceratops.jpg",
     "species": "Triceratops"
   }
