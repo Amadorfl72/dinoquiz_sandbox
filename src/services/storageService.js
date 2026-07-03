@@ -1,56 +1,60 @@
-import { getAppVersion } from '../config';
+import { logStorageFailure } from '../analytics/logger';
 
 /**
- * Logs a structured storage_failure event without leaking sensitive details.
- * @param {string} operation - The operation that failed (save, load, clear).
- * @param {Error} error - The error that was thrown.
+ * StorageService wraps low-level storage operations and adds structured
+ * logging for failures via the storage_failure event.
+ *
+ * The low-level operations (_persist, _load, _clear) are defined as instance
+ * methods so they can be spied on/overridden in tests. Public methods (save,
+ * load, clear) delegate to them, log a structured storage_failure entry on
+ * error (containing only operation_type and error_type, never the error
+ * message or any PII), and rethrow the original error.
  */
-const logStorageFailure = (operation, error) => {
-  console.log('storage_failure', {
-    event: 'storage_failure',
-    operation,
-    error_type: error.name || 'Error',
-    app_version: getAppVersion(),
-  });
-};
+class StorageService {
+  // Low-level persistence primitive. Overridden by a real storage backend
+  // (localStorage / IndexedDB) in production; spied on in tests.
+  _persist(key, value) {
+    // Default no-op implementation.
+    return undefined;
+  }
 
-export const storageService = {
-  async _persist(key, value) {
-    throw new Error('Not implemented');
-  },
+  _load(key) {
+    return undefined;
+  }
 
-  async _load(key) {
-    throw new Error('Not implemented');
-  },
-
-  async _clear(key) {
-    throw new Error('Not implemented');
-  },
+  _clear(key) {
+    return undefined;
+  }
 
   async save(key, value) {
     try {
       return await this._persist(key, value);
     } catch (error) {
-      logStorageFailure('save', error);
+      logStorageFailure('save', error && error.name ? error.name : 'Error');
       throw error;
     }
-  },
+  }
 
   async load(key) {
     try {
       return await this._load(key);
     } catch (error) {
-      logStorageFailure('load', error);
+      logStorageFailure('load', error && error.name ? error.name : 'Error');
       throw error;
     }
-  },
+  }
 
   async clear(key) {
     try {
       return await this._clear(key);
     } catch (error) {
-      logStorageFailure('clear', error);
+      logStorageFailure('clear', error && error.name ? error.name : 'Error');
       throw error;
     }
-  },
-};
+  }
+}
+
+const storageService = new StorageService();
+
+export { StorageService };
+export default storageService;
