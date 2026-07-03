@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import FunFactScreen from '../../src/screens/FunFactScreen';
-import { logFunFactViewed } from '../../src/analytics/logger';
+import { logFunFactViewed } from '../../src/services/analyticsLogger';
 
-jest.mock('../../src/analytics/logger');
+jest.mock('../../src/services/analyticsLogger');
 
 describe('TRIOFSND-30: FunFactScreen integration', () => {
   beforeEach(() => {
