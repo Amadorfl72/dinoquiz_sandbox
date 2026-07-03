@@ -1,6 +1,8 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ResultsScreen from './ResultsScreen';
+import * as gameCompletedLogger from '../logging';
 import {
   assertButtonMinHeight,
   assertButtonMinWidth,
@@ -212,6 +214,71 @@ describe('ResultsScreen', () => {
       expect(screen.getByText(/Has acertado 5\/10/i)).toBeInTheDocument();
       expect(screen.getByTestId('motivating-message')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Volver a jugar/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('TRIOFSND-36: ResultsScreen Logging', () => {
+    it('logs game_completed event upon reaching the results screen', () => {
+      const logSpy = jest
+        .spyOn(gameCompletedLogger, 'logGameCompleted')
+        .mockResolvedValue(undefined);
+
+      const gameData = {
+        score: 2000,
+        durationMs: 180000,
+        appVersion: '1.2.3',
+      };
+
+      render(
+        <ResultsScreen
+          score={gameData.score}
+          durationMs={gameData.durationMs}
+          appVersion={gameData.appVersion}
+          onReplay={mockOnReplay}
+        />
+      );
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      expect(logSpy).toHaveBeenCalledWith(
+        gameData.score,
+        gameData.durationMs,
+        gameData.appVersion
+      );
+
+      logSpy.mockRestore();
+    });
+
+    it('does not block rendering if logging fails', () => {
+      jest
+        .spyOn(gameCompletedLogger, 'logGameCompleted')
+        .mockRejectedValue(new Error('fail'));
+
+      const { getByText } = render(
+        <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" onReplay={mockOnReplay} />
+      );
+
+      expect(getByText(/Has acertado 100\/10/i)).toBeInTheDocument();
+    });
+
+    it('re-logs when props change', () => {
+      const logSpy = jest
+        .spyOn(gameCompletedLogger, 'logGameCompleted')
+        .mockResolvedValue(undefined);
+
+      const { rerender } = render(
+        <ResultsScreen score={100} durationMs={5000} appVersion="1.0.0" onReplay={mockOnReplay} />
+      );
+
+      expect(logSpy).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <ResultsScreen score={200} durationMs={5000} appVersion="1.0.0" onReplay={mockOnReplay} />
+      );
+
+      expect(logSpy).toHaveBeenCalledTimes(2);
+      expect(logSpy).toHaveBeenLastCalledWith(200, 5000, '1.0.0');
+
+      logSpy.mockRestore();
     });
   });
 });

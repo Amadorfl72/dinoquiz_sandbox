@@ -1,23 +1,43 @@
-import React, { useState } from 'react';
-import { View, Button, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { checkOfflineFirstLoad } from './utils/offlineFirstLoad';
+import OfflineFirstLoadMessage from './components/OfflineFirstLoadMessage';
+import StartScreen from './components/StartScreen';
+import QuizScreen from './components/QuizScreen';
 import ResultsScreen from './components/ResultsScreen';
+import sessionService from './services/sessionService';
+import { View, Button, StyleSheet } from 'react-native';
 
 const App = () => {
+  const [gameState, setGameState] = useState('start');
+  const [isOfflineFirstLoad, setIsOfflineFirstLoad] = useState(false);
   const [score, setScore] = useState(0);
-  const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    setIsOfflineFirstLoad(checkOfflineFirstLoad());
+    sessionService.resetGame();
+  }, []);
+
+  const handleStartGame = () => {
+    setGameState('quiz');
+  };
 
   const handleReplay = () => {
     setScore(0);
-    setShowResults(false);
+    setGameState('quiz');
   };
+
+  if (isOfflineFirstLoad) {
+    return <OfflineFirstLoadMessage />;
+  }
 
   return (
     <View style={styles.container}>
-      {showResults ? (
-        <ResultsScreen score={score} onReplay={handleReplay} />
-      ) : (
-        <Button title="Simular Partida" onPress={() => setShowResults(true)} />
-      )}
+      {gameState === 'start' && <StartScreen onStartGame={handleStartGame} />}
+      {gameState === 'quiz' && <QuizScreen onComplete={(finalScore) => {
+        setScore(finalScore);
+        setGameState('results');
+      }} />}
+      {gameState === 'results' && <ResultsScreen score={score} onReplay={handleReplay} />}
     </View>
   );
 };

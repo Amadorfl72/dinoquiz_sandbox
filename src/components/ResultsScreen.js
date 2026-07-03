@@ -1,7 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
+import { isNewBestScore, setBestScore, getBestScore } from '../utils/score';
+import { strings } from '../strings';
+import { logGameCompleted } from '../logging';
 
-const ResultsScreen = ({ score, onReplay }) => {
+const ResultsScreen = ({ score, durationMs, appVersion, onReplay }) => {
+  const [showNewBestFeedback, setShowNewBestFeedback] = useState(false);
+
+  useEffect(() => {
+    logGameCompleted(score, durationMs, appVersion);
+  }, [score, durationMs, appVersion]);
+
+  useEffect(() => {
+    if (isNewBestScore(score)) {
+      try {
+        setBestScore(score);
+        setShowNewBestFeedback(true);
+
+        // Hide feedback after 3 seconds
+        const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.warn('Failed to persist best score:', error);
+      }
+    }
+  }, [score]);
+
   const getMotivationalMessage = (score) => {
     if (score >= 0 && score <= 3) {
       return '¡No te rindas! ¡Sigue intentándolo!';
@@ -18,6 +42,12 @@ const ResultsScreen = ({ score, onReplay }) => {
     <View style={styles.container}>
       <Text style={styles.scoreText}>Has acertado {score}/10</Text>
       <Text style={styles.messageText} testID="motivating-message">{getMotivationalMessage(score)}</Text>
+      <Text style={styles.bestScoreText}>Tu mejor puntuación: {getBestScore()}</Text>
+
+      {showNewBestFeedback && (
+        <Text style={styles.newBestFeedbackText}>{strings.newBestScore}</Text>
+      )}
+
       <View style={styles.replayButtonContainer}>
         <Button 
           title="Volver a jugar" 
@@ -43,8 +73,18 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 18,
-    marginBottom: 40,
+    marginBottom: 20,
     textAlign: 'center',
+  },
+  bestScoreText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  newBestFeedbackText: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: 'green',
+    fontWeight: 'bold',
   },
   replayButtonContainer: {
     minWidth: 200,

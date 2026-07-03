@@ -1,0 +1,27 @@
+.results-screen {
+  text-align: center;
+  padding: 2rem;
+  
+  .new-best-feedback {
+    background-color: #ffeb3b;
+    color: #000;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    display: inline-block;
+    margin: 1rem 0;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .play-again-button {
+    margin-top: 2rem;
+    padding: 1rem 2rem;
+    font-size: 1.5rem;
+  }
+}
