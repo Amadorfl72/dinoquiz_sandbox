@@ -7,7 +7,9 @@ import App from './App';
 // "Cannot find module '../assets/dinosaur.png'."
 jest.mock('./assets/dinosaur.png', () => 'dinosaur.png');
 jest.mock('./components/assets/dinosaur.png', () => 'dinosaur.png');
+jest.mock('./components/dinosaur.png', () => 'dinosaur.png');
 jest.mock('../assets/dinosaur.png', () => 'dinosaur.png');
+jest.mock('../../assets/dinosaur.png', () => 'dinosaur.png');
 
 jest.mock('./utils/offlineFirstLoad', () => ({
   checkOfflineFirstLoad: jest.fn(() => false),
