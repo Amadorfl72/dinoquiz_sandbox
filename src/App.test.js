@@ -4,7 +4,7 @@ import App from './App';
 
 // Fix TRIOFSND-5: mock the dinosaur image asset imported transitively via
 // StartScreen so the App tests do not fail with
-// "Cannot find module '../assets/dinosaur.png'".
+// "Cannot find module '../assets/dinosaur.png'."
 jest.mock('./assets/dinosaur.png', () => 'dinosaur.png');
 jest.mock('./components/assets/dinosaur.png', () => 'dinosaur.png');
 jest.mock('../assets/dinosaur.png', () => 'dinosaur.png');
