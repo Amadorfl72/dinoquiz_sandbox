@@ -4,7 +4,7 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
 
   beforeEach(() => {
     store = {};
-    
+
     // Mock localStorage
     global.localStorage = {
       getItem: jest.fn((key) => store[key] || null),
@@ -29,18 +29,18 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
 
   test('1) Best score persists after close/reopen', () => {
     scoreManager.updateBestScore(150);
-    
+
     // Simulate close/reopen by re-instantiating or re-fetching
     jest.resetModules();
     const newScoreManagerInstance = require('./scoreManager');
-    
+
     expect(newScoreManagerInstance.getBestScore()).toBe(150);
   });
 
   test('2) New best updates localStorage and shows message', () => {
     scoreManager.updateBestScore(100);
     const isNewBest = scoreManager.updateBestScore(120);
-    
+
     expect(isNewBest).toBe(true);
     expect(localStorage.setItem).toHaveBeenCalledWith('bestScore', '120');
     expect(document.getElementById('message').textContent).toContain('New Best Score');
@@ -49,7 +49,7 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
   test('3) Tie does not update or show message', () => {
     scoreManager.updateBestScore(120);
     const isNewBest = scoreManager.updateBestScore(120);
-    
+
     expect(isNewBest).toBe(false);
     expect(localStorage.setItem).not.toHaveBeenCalledWith('bestScore', '120');
     expect(document.getElementById('message').textContent).toBe('');
@@ -72,7 +72,7 @@ describe('TRIOFSND-48: Best score persistence and error scenarios', () => {
     expect(() => {
       result = safeScoreManager.updateBestScore(200);
     }).not.toThrow();
-    
+
     expect(result).toBe(true); // Should still return true for new best in memory
     expect(document.getElementById('message').textContent).toBe(''); // No error message shown
   });
