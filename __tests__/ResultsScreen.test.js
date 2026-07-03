@@ -153,6 +153,7 @@ describe('TRIOFSND-33: Best Score Persistence and Feedback', () => {
 
 describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
   let rejectionHandler;
+  let rejectionErrors;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -161,8 +162,9 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
 
     // Capture any unhandled promise rejections so the test fails with a
     // clear message instead of a silent unhandledRejection crash.
+    rejectionErrors = [];
     rejectionHandler = (error) => {
-      throw error;
+      rejectionErrors.push(error);
     };
     process.on('unhandledRejection', rejectionHandler);
   });
@@ -221,13 +223,60 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
 
     const { queryByText, findByText } = render(
       <ResultsScreen
-        route={{ params: { score: 9 } }}
+        route={{ params: { score: 8 } }}
         navigation={mockNavigation}
       />
     );
 
-    await findByText('Your Score: 9/10');
+    // Wait for the score to render so useEffect has run
+    await findByText('Your Score: 8/10');
 
-    expect(queryByText('New Best Score!')).toBeNull();
+    // Allow any pending microtasks (including rejected promises) to settle
+    await waitFor(() => {
+      expect(queryByText('New Best Score!')).toBeNull();
+    });
+
+    // Flush the microtask queue to surface any unhandled rejections
+    await new Promise((resolve) => setImmediate(resolve));
+
+    // No unhandled promise rejection should have escaped checkBestScore
+    expect(rejectionErrors).toEqual([]);
+  });
+
+  it('handles getBestScore rejection gracefully without crashing the component', async () => {
+    getBestScore.mockRejectedValue(new Error('Storage error'));
+
+    const { findByText } = render(
+      <ResultsScreen
+        route={{ params: { score: 6 } }}
+        navigation={mockNavigation}
+      />
+    );
+
+    // Component should still render the score normally
+    expect(await findByText('Your Score: 6/10')).toBeTruthy();
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(rejectionErrors).toEqual([]);
+  });
+
+  it('does not call setBestScore again when getBestScore rejects during comparison', async () => {
+    getBestScore.mockRejectedValue(new Error('Storage error'));
+
+    render(
+      <ResultsScreen
+        route={{ params: { score: 8 } }}
+        navigation={mockNavigation}
+      />
+    );
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    // setBestScore should have been called once for persistence, but not
+    // a second time due to the comparison failure.
+    expect(setBestScore).toHaveBeenCalledTimes(1);
+
+    expect(rejectionErrors).toEqual([]);
   });
 });
