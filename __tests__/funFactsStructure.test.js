@@ -134,4 +134,42 @@ describe('TRIOFSND-24: Fun fact data integrity', () => {
       expect(q.fun_fact.text.length).toBeLessThanOrEqual(300);
     });
   });
+
+  test('fun_fact text does not contain inappropriate words', () => {
+    const inappropriateWords = [
+      'violence', 'violent', 'kill', 'killed', 'kills', 'killing',
+      'blood', 'bloody', 'death', 'dead', 'die', 'died', 'dies', 'dying',
+      'murder', 'murderer', 'murdered', 'weapon', 'weapons', 'gun', 'guns',
+      'knife', 'knives', 'bomb', 'bombs', 'war', 'wars', 'fight', 'fighting',
+      'fights', 'fought', 'hate', 'hated', 'hates', 'stupid', 'idiot',
+      'idiots', 'dumb', 'drugs', 'drug', 'alcohol', 'beer', 'wine',
+      'cigarette', 'cigarettes', 'smoke', 'smoking', 'hell', 'damn', 'crap',
+      'sexy', 'naked', 'nude', 'nudes', 'sex', 'sexual', 'terrorist',
+      'terrorism', 'shoot', 'shooting', 'shoots', 'shot', 'stab', 'stabbing',
+      'stabs', 'poison', 'poisoned', 'poisons', 'torture', 'tortured',
+      'tortures', 'cruel', 'cruelty', 'evil', 'demon', 'devil', 'satan',
+      'curse', 'cursed', 'curses', 'swear', 'swearing', 'swears',
+      'assault', 'attack', 'attacked', 'attacks', 'abuse', 'abused',
+      'abuses', 'abusive', 'racist', 'racism', 'sexist', 'sexism'
+    ];
+    questions.forEach((q, idx) => {
+      const lowerText = q.fun_fact.text.toLowerCase();
+      inappropriateWords.forEach(word => {
+        const regex = new RegExp(`\\b${word}\\b`, 'i');
+        expect(lowerText).not.toMatch(regex);
+      });
+    });
+  });
+
+  test('fun_fact text has no word longer than 12 characters', () => {
+    questions.forEach((q, idx) => {
+      const words = q.fun_fact.text.split(/\s+/).filter(w => w.length > 0);
+      words.forEach(word => {
+        const cleaned = word.replace(/[^a-zA-Z]/g, '');
+        if (cleaned.length > 0) {
+          expect(cleaned.length).toBeLessThanOrEqual(12);
+        }
+      });
+    });
+  });
 });
