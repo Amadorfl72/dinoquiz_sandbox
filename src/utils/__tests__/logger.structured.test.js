@@ -116,4 +116,32 @@ describe('TRIOFSND-47: logger.logStructured contract', () => {
       app_version: '1.4.2',
     });
   });
+
+  it('logBestScoreUpdated does not include any PII fields', () => {
+    logger.logBestScoreUpdated(1500, 1200, '1.4.2');
+
+    const parsed = JSON.parse(consoleSpy.mock.calls[0][0]);
+    const piiFields = ['userId', 'user_id', 'username', 'email', 'ip', 'device_id', 'name', 'phone'];
+
+    piiFields.forEach((field) => {
+      expect(parsed).not.toHaveProperty(field);
+    });
+    expect(Object.keys(parsed).sort()).toEqual(
+      ['app_version', 'event', 'new_best', 'previous_best'].sort()
+    );
+  });
+
+  it('logStorageFailure does not include any PII fields', () => {
+    logger.logStorageFailure('save', 'QuotaExceededError', '1.4.2');
+
+    const parsed = JSON.parse(consoleSpy.mock.calls[0][0]);
+    const piiFields = ['userId', 'user_id', 'username', 'email', 'ip', 'device_id', 'name', 'phone', 'payload', 'data', 'error_message', 'message', 'stack'];
+
+    piiFields.forEach((field) => {
+      expect(parsed).not.toHaveProperty(field);
+    });
+    expect(Object.keys(parsed).sort()).toEqual(
+      ['app_version', 'error_type', 'event', 'operation'].sort()
+    );
+  });
 });
