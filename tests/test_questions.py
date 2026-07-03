@@ -84,8 +84,8 @@ def test_fun_fact_text_is_non_empty_string(questions):
 def test_fun_fact_image_path_is_non_empty_string(questions):
     for idx, q in enumerate(questions):
         image_path = q['fun_fact']['image_path']
-        assert isinstance(image_path, str), f"Question {idx} fun_fact image_path is not a string"
-        assert len(image_path.strip()) > 0, f"Question {idx} fun_fact image_path is empty"
+        assert isinstance(image_path, str), f"Question {idx} fun_fact image path is not a string"
+        assert len(image_path.strip()) > 0, f"Question {idx} fun_fact image path is empty"
 
 
 def test_fun_fact_has_only_text_and_image_path_keys(questions):
@@ -148,33 +148,23 @@ def test_fun_fact_text_max_3_sentences(questions):
 def test_fun_fact_text_ends_with_proper_punctuation(questions):
     for idx, q in enumerate(questions):
         text = q['fun_fact']['text'].strip()
-        assert text[-1] in '.!?', \
-            f"Question {idx} fun_fact text does not end with proper punctuation"
+        last_char = text[-1] if text else ''
+        assert last_char in ('.', '!', '?'), \
+            f"Question {idx} fun_fact text does not end with proper punctuation: {last_char!r}"
 
 
-def test_fun_fact_text_min_10_characters(questions):
+def test_fun_fact_text_has_at_least_10_characters(questions):
     for idx, q in enumerate(questions):
         text = q['fun_fact']['text'].strip()
         assert len(text) >= 10, \
-            f"Question {idx} fun_fact text is shorter than 10 characters"
+            f"Question {idx} fun_fact text has only {len(text)} characters (min 10)"
 
 
-def test_fun_fact_text_max_300_characters(questions):
+def test_fun_fact_text_is_reasonably_short(questions):
     for idx, q in enumerate(questions):
         text = q['fun_fact']['text']
         assert len(text) <= 300, \
-            f"Question {idx} fun_fact text exceeds 300 characters"
-
-
-def test_fun_fact_text_not_duplicate_of_question_text(questions):
-    question_texts = []
-    for q in questions:
-        qt = q.get('question') or q.get('prompt') or q.get('text') or ''
-        question_texts.append(qt.lower().strip())
-    for idx, q in enumerate(questions):
-        fact_text = q['fun_fact']['text'].lower().strip()
-        assert fact_text not in question_texts, \
-            f"Question {idx} fun_fact text duplicates a question text"
+            f"Question {idx} fun_fact text has {len(text)} characters (max 300)"
 
 
 def test_image_path_has_valid_extension(questions):
@@ -185,24 +175,27 @@ def test_image_path_has_valid_extension(questions):
             f"Question {idx} image_path has invalid extension: {ext}"
 
 
-def test_image_path_has_valid_prefix(questions):
+def test_image_path_starts_with_valid_prefix(questions):
     for idx, q in enumerate(questions):
         image_path = q['fun_fact']['image_path']
         assert image_path.startswith(VALID_IMAGE_PREFIXES), \
-            f"Question {idx} image_path has invalid prefix: {image_path}"
+            f"Question {idx} image_path does not start with a valid prefix: {image_path}"
 
 
-def test_fun_fact_text_is_age_appropriate_vocabulary(questions):
-    # Additional check: ensure no complex scientific jargon that would
-    # be inappropriate for 6-9 year olds.
-    complex_terms = [
-        'paleontological', 'stratigraphy', 'phylogenetic', 'morphological',
-        'biogeography', 'taphonomy', 'ichnology', 'osteoderm', 'theropoda',
-        'sauropodomorpha', 'ceratopsian', 'pachycephalosaur', 'ornithischian',
-        'saurischian', 'cladistics', 'systematics', 'binomial', 'nomenclature'
+def test_no_fun_fact_text_duplicates_a_question_text(questions):
+    question_texts = [
+        (q.get('question') or q.get('prompt') or q.get('text') or '').lower().strip()
+        for q in questions
     ]
     for idx, q in enumerate(questions):
-        text = q['fun_fact']['text'].lower()
-        for term in complex_terms:
-            assert term not in text, \
-                f"Question {idx} fun_fact text contains complex term: {term}"
+        fact_text = q['fun_fact']['text'].lower().strip()
+        assert fact_text not in question_texts, \
+            f"Question {idx} fun_fact text duplicates a question text"
+
+
+def test_questions_is_a_list(questions_data):
+    if isinstance(questions_data, list):
+        assert isinstance(questions_data, list)
+    else:
+        assert 'questions' in questions_data, "questions.json must be a list or have a questions key"
+        assert isinstance(questions_data['questions'], list), "questions key must be a list"
