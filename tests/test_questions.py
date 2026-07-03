@@ -39,20 +39,10 @@ def test_fun_fact_image_path_unique_count_matches_total():
 
 def test_known_duplicate_image_paths_not_present():
     """Explicitly ensure the duplicate patterns reported in the bug are gone."""
-    known_duplicates = [
-        'assets/images/trex_fun_fact.png',
-        'assets/images/triceratops_fun_fact.png',
-        'assets/images/stegosaurus_fun_fact.png',
-        'assets/images/velociraptor_fun_fact.png',
-        'assets/images/brachiosaurus_fun_fact.png',
-        'assets/images/ankylosaurus_fun_fact.png',
-        'assets/images/pteranodon_fun_fact.png',
-    ]
     image_paths = [q['image_path'] for q in questions]
     counts = Counter(image_paths)
-    for path in known_duplicates:
-        assert counts.get(path, 0) <= 1, \
-            f"Known duplicate image_path '{path}' appears {counts.get(path, 0)} times"
+    duplicates = [p for p in counts if counts[p] > 1]
+    assert len(duplicates) == 0, f"Duplicate image_paths found: {duplicates}"
 
 
 def test_every_question_has_image_path():
