@@ -62,6 +62,20 @@ describe('POST /api/game_completed', () => {
     expect(res.body.error).toContain('app_version is required');
   });
 
+  it('should return 400 when app_version is not a string', async () => {
+    const payload = {
+      ...validPayload,
+      app_version: 123
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('app_version is required');
+  });
+
   it('should reject payload with negative duration_ms', async () => {
     const payload = {
       app_version: '1.0.0',
@@ -110,6 +124,20 @@ describe('POST /api/game_completed', () => {
     expect(res.body.error).toContain('duration_ms is required');
   });
 
+  it('should reject payload when duration_ms is not a number', async () => {
+    const payload = {
+      ...validPayload,
+      duration_ms: 'not-a-number'
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('duration_ms must be a number');
+  });
+
   it('should accept payload with duration_ms of 0', async () => {
     const payload = {
       ...validPayload,
@@ -135,6 +163,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('score is required');
   });
 
   it('should return 400 when score is out of range (above max)', async () => {
@@ -148,6 +177,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('score must be between 0 and 10');
   });
 
   it('should return 400 when score is out of range (below min)', async () => {
@@ -161,6 +191,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('score must be between 0 and 10');
   });
 
   it('should return 400 when questions_answered is missing', async () => {
@@ -175,6 +206,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('questions_answered is required');
   });
 
   it('should return 400 when questions_answered is out of range (above max)', async () => {
@@ -188,6 +220,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('questions_answered must be between 0 and 10');
   });
 
   it('should return 400 when questions_answered is out of range (below min)', async () => {
@@ -201,6 +234,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('questions_answered must be between 0 and 10');
   });
 
   it('should return 400 for an empty payload', async () => {
@@ -219,29 +253,20 @@ describe('POST /api/game_completed', () => {
     expect(res.statusCode).toEqual(400);
   });
 
-  it('should return 400 when duration_ms is not a number', async () => {
-    const payload = {
-      ...validPayload,
-      duration_ms: 'not-a-number'
-    };
-
+  it('should return 400 when no body is sent', async () => {
     const res = await request(app)
       .post('/api/game_completed')
-      .send(payload);
+      .send();
 
     expect(res.statusCode).toEqual(400);
   });
 
-  it('should return 400 when app_version is not a string', async () => {
-    const payload = {
-      ...validPayload,
-      app_version: 123
-    };
-
+  it('should return 201 and acknowledge the event for a valid full payload', async () => {
     const res = await request(app)
       .post('/api/game_completed')
-      .send(payload);
+      .send(validPayload);
 
-    expect(res.statusCode).toEqual(400);
+    expect(res.statusCode).toEqual(201);
+    expect(res.body.message).toEqual('Event received');
   });
 });
