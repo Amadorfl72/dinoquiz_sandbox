@@ -67,10 +67,26 @@ describe('TRIOFSND-47: storageService structured logging for storage failures', 
       });
     });
 
-    it('does not log storage_failure when the operation succeeds', async () => {
+    it('does not log storage_failure when the save operation succeeds', async () => {
       jest.spyOn(storageService, '_persist').mockResolvedValueOnce(undefined);
 
       await storageService.save({ score: 1500 });
+
+      expect(logger.logStructured).not.toHaveBeenCalled();
+    });
+
+    it('does not log storage_failure when the load operation succeeds', async () => {
+      jest.spyOn(storageService, '_load').mockResolvedValueOnce({ score: 1500 });
+
+      await storageService.load();
+
+      expect(logger.logStructured).not.toHaveBeenCalled();
+    });
+
+    it('does not log storage_failure when the clear operation succeeds', async () => {
+      jest.spyOn(storageService, '_clear').mockResolvedValueOnce(undefined);
+
+      await storageService.clear();
 
       expect(logger.logStructured).not.toHaveBeenCalled();
     });
@@ -134,6 +150,51 @@ describe('TRIOFSND-47: storageService structured logging for storage failures', 
       jest.spyOn(storageService, '_persist').mockRejectedValueOnce(error);
 
       await expect(storageService.save({ score: 1500 })).rejects.toThrow('fail');
+    });
+
+    it('logs exactly one storage_failure per failed operation', async () => {
+      const error = new Error('fail');
+      error.name = 'SomeError';
+      jest.spyOn(storageService, '_persist').mockRejectedValueOnce(error);
+
+      await expect(storageService.save({ score: 1500 })).rejects.toThrow();
+
+      expect(logger.logStructured).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes the correct event name in the log entry', async () => {
+      const error = new Error('fail');
+      error.name = 'SomeError';
+      jest.spyOn(storageService, '_persist').mockRejectedValueOnce(error);
+
+      await expect(storageService.save({ score: 1500 })).rejects.toThrow();
+
+      const logged = logger.logStructured.mock.calls[0][0];
+      expect(logged.event).toBe('storage_failure');
+    });
+
+    it('logs the correct operation name for each failing operation', async () => {
+      const saveError = new Error('save fail');
+      saveError.name = 'SaveError';
+      jest.spyOn(storageService, '_persist').mockRejectedValueOnce(saveError);
+      await expect(storageService.save({})).rejects.toThrow();
+      expect(logger.logStructured.mock.calls[0][0].operation).toBe('save');
+
+      jest.clearAllMocks();
+
+      const loadError = new Error('load fail');
+      loadError.name = 'LoadError';
+      jest.spyOn(storageService, '_load').mockRejectedValueOnce(loadError);
+      await expect(storageService.load()).rejects.toThrow();
+      expect(logger.logStructured.mock.calls[0][0].operation).toBe('load');
+
+      jest.clearAllMocks();
+
+      const clearError = new Error('clear fail');
+      clearError.name = 'ClearError';
+      jest.spyOn(storageService, '_clear').mockRejectedValueOnce(clearError);
+      await expect(storageService.clear()).rejects.toThrow();
+      expect(logger.logStructured.mock.calls[0][0].operation).toBe('clear');
     });
   });
 });
