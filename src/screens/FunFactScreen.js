@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
-import analyticsLogger from '../services/analyticsLogger';
+import { View, Text, Image } from 'react-native';
+import { logFunFactViewed } from '../services/analyticsLogger';
 
-const FunFactScreen = () => {
+export default function FunFactScreen({ fact, questionId, dinoId }) {
   useEffect(() => {
-    analyticsLogger.logEvent('fun_fact_viewed', {});
-  }, []);
+    logFunFactViewed(questionId, dinoId);
+  }, [questionId, dinoId]);
 
   return (
-    <div>
-      {/* Fun Fact Screen Content */}
-    </div>
+    <View testID="fun-fact-screen">
+      <Text>{fact}</Text>
+      <Image 
+        source={{ uri: `https://example.com/dinos/${dinoId}.png` }}
+        testID="fun-fact-image"
+      />
+    </View>
   );
-};
-
-export default FunFactScreen;
+}
