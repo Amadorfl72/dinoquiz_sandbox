@@ -1,52 +1,97 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import OptionButton from './OptionButton';
 
-describe('OptionButton', () => {
+describe('TRIOFSND-20: Double Tap Debounce', () => {
+  const DEBOUNCE_TIME = 300;
+  let onPressMock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    onPressMock = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const renderButton = (props = {}) => {
+    return render(
+      <OptionButton
+        label="Option A"
+        onPress={onPressMock}
+        debounceTime={DEBOUNCE_TIME}
+        {...props}
+      />
+    );
+  };
+
   it('should register the first response when tapped once', () => {
-    const onSelect = jest.fn();
-    const { getByText } = render(<OptionButton option="Option A" onSelect={onSelect} />);
-    fireEvent.click(getByText('Option A'));
-    expect(onSelect).toHaveBeenCalledWith('Option A');
+    const { getByText } = renderButton();
+
+    fireEvent.press(getByText('Option A'));
+
+    expect(onPressMock).toHaveBeenCalledTimes(1);
   });
 
   it('should not register multiple answers if tapped twice quickly', () => {
-    const onSelect = jest.fn();
-    const { getByText } = render(<OptionButton option="Option A" onSelect={onSelect} />);
-    fireEvent.click(getByText('Option A'));
-    fireEvent.click(getByText('Option A'));
-    expect(onSelect).toHaveBeenCalledTimes(1);
+    const { getByText } = renderButton();
+
+    fireEvent.press(getByText('Option A'));
+    fireEvent.press(getByText('Option A'));
+
+    expect(onPressMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should register a new answer if tapped after the debounce time', async () => {
-    const onSelect = jest.fn();
-    const { getByText } = render(<OptionButton option="Option A" onSelect={onSelect} />);
-    fireEvent.click(getByText('Option A'));
-    await new Promise((r) => setTimeout(r, 500)); // Wait for debounce time
-    fireEvent.click(getByText('Option A'));
-    expect(onSelect).toHaveBeenCalledTimes(2);
+  it('should register a new answer if tapped after the debounce time', () => {
+    const { getByText } = renderButton();
+
+    fireEvent.press(getByText('Option A'));
+    expect(onPressMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      jest.advanceTimersByTime(DEBOUNCE_TIME + 1);
+    });
+
+    fireEvent.press(getByText('Option A'));
+    expect(onPressMock).toHaveBeenCalledTimes(2);
   });
 
   it('should only register the first response if tapped multiple times quickly', () => {
-    const onSelect = jest.fn();
-    const { getByText } = render(<OptionButton option="Option A" onSelect={onSelect} />);
-    fireEvent.click(getByText('Option A'));
-    fireEvent.click(getByText('Option A'));
-    fireEvent.click(getByText('Option A'));
-    expect(onSelect).toHaveBeenCalledTimes(1);
+    const { getByText } = renderButton();
+
+    fireEvent.press(getByText('Option A'));
+    fireEvent.press(getByText('Option A'));
+    fireEvent.press(getByText('Option A'));
+    fireEvent.press(getByText('Option A'));
+
+    expect(onPressMock).toHaveBeenCalledTimes(1);
   });
 
   it('should register responses for different options independently', () => {
-    const onSelect = jest.fn();
+    const onPressA = jest.fn();
+    const onPressB = jest.fn();
+
     const { getByText } = render(
       <>
-        <OptionButton option="Option A" onSelect={onSelect} />
-        <OptionButton option="Option B" onSelect={onSelect} />
+        <OptionButton
+          label="Option A"
+          onPress={onPressA}
+          debounceTime={DEBOUNCE_TIME}
+        />
+        <OptionButton
+          label="Option B"
+          onPress={onPressB}
+          debounceTime={DEBOUNCE_TIME}
+        />
       </>
     );
-    fireEvent.click(getByText('Option A'));
-    fireEvent.click(getByText('Option B'));
-    expect(onSelect).toHaveBeenCalledWith('Option A');
-    expect(onSelect).toHaveBeenCalledWith('Option B');
+
+    fireEvent.press(getByText('Option A'));
+    fireEvent.press(getByText('Option B'));
+
+    expect(onPressA).toHaveBeenCalledTimes(1);
+    expect(onPressB).toHaveBeenCalledTimes(1);
   });
 });
