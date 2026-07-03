@@ -147,98 +147,98 @@
     {
       "id": 19,
       "question": "What dinosaur had the most teeth?",
-      "options": ["Nigersaurus", "Triceratops", "Hadrosaurus"],
+      "options": ["Nigersaurus", "T-Rex", "Spinosaurus"],
       "correct_answer": "Nigersaurus",
-      "fun_fact": "The Nigersaurus had over 1,000 teeth in its mouth at once.",
+      "fun_fact": "The Nigersaurus had over 500 teeth arranged in rows.",
       "image_path": "assets/images/nigersaurus_fun_fact_1.png"
     },
     {
       "id": 20,
       "question": "Which dinosaur had a sail on its back?",
-      "options": ["Spinosaurus", "Dilophosaurus", "Baryonyx"],
+      "options": ["Spinosaurus", "Stegosaurus", "Ankylosaurus"],
       "correct_answer": "Spinosaurus",
-      "fun_fact": "The Spinosaurus's sail may have helped regulate body temperature.",
+      "fun_fact": "The Spinosaurus had a large sail that may have helped regulate temperature.",
       "image_path": "assets/images/spinosaurus_fun_fact_1.png"
     },
     {
       "id": 21,
-      "question": "What dinosaur was named after a plate?",
-      "options": ["Stegosaurus", "Ankylosaurus", "Triceratops"],
-      "correct_answer": "Stegosaurus",
-      "fun_fact": "The name Stegosaurus means 'roofed lizard'.",
-      "image_path": "assets/images/stegosaurus_fun_fact_3.png"
-    },
-    {
-      "id": 22,
-      "question": "Which dinosaur had a frill and three horns?",
-      "options": ["Triceratops", "Styracosaurus", "Chasmosaurus"],
-      "correct_answer": "Triceratops",
-      "fun_fact": "The Triceratops could weigh up to 12 tons.",
-      "image_path": "assets/images/triceratops_fun_fact_3.png"
-    },
-    {
-      "id": 23,
-      "question": "What dinosaur was known as the 'thunder lizard'?",
-      "options": ["Brontosaurus", "Apatosaurus", "Diplodocus"],
-      "correct_answer": "Brontosaurus",
-      "fun_fact": "The Brontosaurus was once thought to be a Brachiosaurus.",
-      "image_path": "assets/images/brontosaurus_fun_fact_1.png"
-    },
-    {
-      "id": 24,
-      "question": "Which dinosaur had a dome-shaped head?",
-      "options": ["Pachycephalosaurus", "Stegosaurus", "Ankylosaurus"],
-      "correct_answer": "Pachycephalosaurus",
-      "fun_fact": "The Pachycephalosaurus may have headbutted rivals.",
-      "image_path": "assets/images/pachycephalosaurus_fun_fact_2.png"
-    },
-    {
-      "id": 25,
-      "question": "What dinosaur had a long, thin jaw full of sharp teeth?",
-      "options": ["Spinosaurus", "T-Rex", "Allosaurus"],
+      "question": "What dinosaur is thought to have been a good swimmer?",
+      "options": ["Spinosaurus", "T-Rex", "Triceratops"],
       "correct_answer": "Spinosaurus",
-      "fun_fact": "The Spinosaurus was likely the largest carnivorous dinosaur.",
+      "fun_fact": "The Spinosaurus likely spent much of its time hunting in water.",
       "image_path": "assets/images/spinosaurus_fun_fact_2.png"
     },
     {
-      "id": 26,
-      "question": "Which dinosaur had armor plates and spikes?",
-      "options": ["Ankylosaurus", "Stegosaurus", "Triceratops"],
-      "correct_answer": "Ankylosaurus",
-      "fun_fact": "The Ankylosaurus was so well-armored it was like a tank.",
-      "image_path": "assets/images/ankylosaurus_fun_fact_3.png"
+      "id": 22,
+      "question": "Which dinosaur had tiny arms?",
+      "options": ["T-Rex", "Brachiosaurus", "Velociraptor"],
+      "correct_answer": "T-Rex",
+      "fun_fact": "The T-Rex's arms were short but very strong.",
+      "image_path": "assets/images/trex_fun_fact_3.png"
     },
     {
-      "id": 27,
-      "question": "What dinosaur had a crest that could make sounds?",
-      "options": ["Parasaurolophus", "Corythosaurus", "Lambeosaurus"],
+      "id": 23,
+      "question": "What dinosaur had a duck-like bill?",
+      "options": ["Parasaurolophus", "Triceratops", "Stegosaurus"],
       "correct_answer": "Parasaurolophus",
-      "fun_fact": "The Parasaurolophus's crest was like a trombone.",
+      "fun_fact": "The Parasaurolophus may have used its crest to make trumpeting sounds.",
       "image_path": "assets/images/parasaurolophus_fun_fact_1.png"
     },
     {
-      "id": 28,
-      "question": "Which dinosaur was a good swimmer?",
-      "options": ["Spinosaurus", "T-Rex", "Velociraptor"],
-      "correct_answer": "Spinosaurus",
-      "fun_fact": "The Spinosaurus had webbed feet for swimming.",
-      "image_path": "assets/images/spinosaurus_fun_fact_3.png"
-    },
-    {
-      "id": 29,
-      "question": "What dinosaur had a tail club for defense?",
-      "options": ["Ankylosaurus", "Stegosaurus", "Diplodocus"],
-      "correct_answer": "Ankylosaurus",
-      "fun_fact": "The Ankylosaurus's tail club could break bones.",
-      "image_path": "assets/images/ankylosaurus_fun_fact_4.png"
-    },
-    {
-      "id": 30,
-      "question": "Which dinosaur was the fastest?",
-      "options": ["Compsognathus", "Velociraptor", "Ornithomimus"],
+      "id": 24,
+      "question": "Which dinosaur was one of the smallest?",
+      "options": ["Compsognathus", "Brachiosaurus", "Ankylosaurus"],
       "correct_answer": "Compsognathus",
       "fun_fact": "The Compsognathus was about the size of a chicken.",
       "image_path": "assets/images/compsognathus_fun_fact_1.png"
+    },
+    {
+      "id": 25,
+      "question": "What dinosaur had large eyes for hunting at night?",
+      "options": ["Troodon", "T-Rex", "Triceratops"],
+      "correct_answer": "Troodon",
+      "fun_fact": "The Troodon is considered one of the smartest dinosaurs.",
+      "image_path": "assets/images/troodon_fun_fact_1.png"
+    },
+    {
+      "id": 26,
+      "question": "Which dinosaur had a long whip-like tail?",
+      "options": ["Diplodocus", "Stegosaurus", "Ankylosaurus"],
+      "correct_answer": "Diplodocus",
+      "fun_fact": "The Diplodocus's tail could be over 40 feet long.",
+      "image_path": "assets/images/diplodocus_fun_fact_1.png"
+    },
+    {
+      "id": 27,
+      "question": "What dinosaur had a distinctive head crest for display?",
+      "options": ["Dilophosaurus", "Velociraptor", "Brachiosaurus"],
+      "correct_answer": "Dilophosaurus",
+      "fun_fact": "The Dilophosaurus had two thin crests on top of its head.",
+      "image_path": "assets/images/dilophosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 28,
+      "question": "Which dinosaur had a sharp claw on each foot?",
+      "options": ["Deinonychus", "Triceratops", "Stegosaurus"],
+      "correct_answer": "Deinonychus",
+      "fun_fact": "The Deinonychus used its large curved claw to hold prey.",
+      "image_path": "assets/images/deinonychus_fun_fact_1.png"
+    },
+    {
+      "id": 29,
+      "question": "What dinosaur had bony spikes around its neck frill?",
+      "options": ["Styracosaurus", "Ankylosaurus", "Velociraptor"],
+      "correct_answer": "Styracosaurus",
+      "fun_fact": "The Styracosaurus had long horns along the edge of its frill.",
+      "image_path": "assets/images/styracosaurus_fun_fact_1.png"
+    },
+    {
+      "id": 30,
+      "question": "Which dinosaur was a huge meat-eater from South America?",
+      "options": ["Giganotosaurus", "Brachiosaurus", "Triceratops"],
+      "correct_answer": "Giganotosaurus",
+      "fun_fact": "The Giganotosaurus was even longer than the T-Rex.",
+      "image_path": "assets/images/giganotosaurus_fun_fact_1.png"
     }
   ]
 }
