@@ -1,5 +1,3 @@
-import { incrementMetric } from './metrics';
-
 export const logFunFactViewed = (questionId, dinoId) => {
   console.log('[Analytics]', {
     event: 'fun_fact_viewed',
@@ -7,6 +5,4 @@ export const logFunFactViewed = (questionId, dinoId) => {
     dino_id: dinoId,
     timestamp: new Date().toISOString()
   });
-  
-  incrementMetric('fun_fact_viewed');
 };
