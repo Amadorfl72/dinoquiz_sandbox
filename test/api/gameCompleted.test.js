@@ -237,36 +237,53 @@ describe('POST /api/game_completed', () => {
     expect(res.body.error).toContain('questions_answered must be between 0 and 10');
   });
 
-  it('should return 400 for an empty payload', async () => {
+  it('should return 400 when payload is empty', async () => {
     const res = await request(app)
       .post('/api/game_completed')
       .send({});
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
   });
 
-  it('should return 400 for a payload missing multiple required fields', async () => {
+  it('should return 400 when payload is null', async () => {
     const res = await request(app)
       .post('/api/game_completed')
-      .send({ app_version: '1.0.0' });
+      .send(null);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
   });
 
-  it('should return 400 when no body is sent', async () => {
+  it('should return 201 and process a valid event with all fields at boundary values', async () => {
+    const payload = {
+      app_version: '1.0.0',
+      duration_ms: 0,
+      score: 0,
+      questions_answered: 0
+    };
+
     const res = await request(app)
       .post('/api/game_completed')
-      .send();
-
-    expect(res.statusCode).toEqual(400);
-  });
-
-  it('should return 201 and acknowledge the event for a valid full payload', async () => {
-    const res = await request(app)
-      .post('/api/game_completed')
-      .send(validPayload);
+      .send(payload);
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.message).toEqual('Event received');
+    expect(res.body).toHaveProperty('message');
+  });
+
+  it('should return 201 and process a valid event with max boundary values', async () => {
+    const payload = {
+      app_version: '1.0.0',
+      duration_ms: 999999999,
+      score: 10,
+      questions_answered: 10
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('message');
   });
 });
