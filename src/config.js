@@ -1,3 +1,6 @@
-export const APP_VERSION = '1.0.0';
+// Application configuration
+const config = {
+  app_version: '1.0.0'
+};
 
-export const getAppVersion = () => APP_VERSION;
+export default config;
