@@ -102,7 +102,7 @@ describe('AnswerOption', () => {
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalledTimes(1);
 
-    // Second click on the same option calls onSelect immediately and starts debounce
+    // Second click on the same option is debounced
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalledTimes(2);
 
@@ -190,5 +190,41 @@ describe('AnswerOption', () => {
     // Fourth click after debounce window expires
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalledTimes(3);
+  });
+
+  it('allows immediate selection of different options', () => {
+    const onSelect = jest.fn();
+    const option1 = { id: '1', text: 'Option 1', isCorrect: true };
+    const option2 = { id: '2', text: 'Option 2', isCorrect: false };
+
+    const { getByText } = render(
+      <>
+        <AnswerOption
+          option={option1}
+          onSelect={onSelect}
+          isSelected={false}
+          isCorrect={true}
+        />
+        <AnswerOption
+          option={option2}
+          onSelect={onSelect}
+          isSelected={false}
+          isCorrect={false}
+        />
+      </>
+    );
+
+    const button1 = getByText('Option 1');
+    const button2 = getByText('Option 2');
+
+    // Click first option
+    fireEvent.click(button1);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(option1);
+
+    // Click second option immediately
+    fireEvent.click(button2);
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenCalledWith(option2);
   });
 });
