@@ -9,7 +9,7 @@ jest.mock('../../services/analyticsLogger', () => ({
   },
 }));
 
-describe('FunFactScreen', () => {
+describe('TRIOFSND-30: FunFactScreen fun_fact_viewed event', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -41,5 +41,14 @@ describe('FunFactScreen', () => {
       <FunFactScreen route={{ params: { funFact: { text: 'Test fun fact' } } }} />
     );
     expect(analyticsLogger.emit).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits fun_fact_viewed with no PII fields', () => {
+    render(<FunFactScreen route={{ params: { funFact: { text: 'Test fun fact' } } }} />);
+    const call = (analyticsLogger.emit as jest.Mock).mock.calls[0][0];
+    expect(call).toEqual({ event: 'fun_fact_viewed' });
+    expect(call).not.toHaveProperty('userId');
+    expect(call).not.toHaveProperty('email');
+    expect(call).not.toHaveProperty('name');
   });
 });
