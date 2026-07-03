@@ -62,20 +62,12 @@ describe('TRIOFSND-24: Fun facts structure validation', () => {
   });
 
   it('known duplicate base image_paths from bug report are not reused', () => {
-    const knownDuplicateBases = [
-      'trex_fun_fact',
-      'triceratops_fun_fact',
-      'stegosaurus_fun_fact',
-      'velociraptor_fun_fact',
-      'brachiosaurus_fun_fact',
-      'ankylosaurus_fun_fact',
-      'pteranodon_fun_fact',
-    ];
     const imagePaths = questions.map((q) => q.image_path);
-    knownDuplicateBases.forEach((base) => {
-      const withoutSuffix = base.replace('_fun_fact', '');
-      const matching = imagePaths.filter((p) => p === `assets/images/${withoutSuffix}_fun_fact.png`);
-      expect(matching.length).toBe(0);
+    const counts = {};
+    imagePaths.forEach((p) => {
+      counts[p] = (counts[p] || 0) + 1;
     });
+    const duplicates = Object.entries(counts).filter(([, count]) => count > 1);
+    expect(duplicates).toEqual([]);
   });
 });
