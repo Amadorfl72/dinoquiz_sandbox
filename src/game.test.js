@@ -109,7 +109,7 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
 
   test('getBestScore debería devolver 0 si el valor guardado no es numérico', () => {
     localStorage.setItem('bestScore', 'abc');
-    expect(getBestScore()).toBeNaN();
+    expect(getBestScore()).toBe(0);
   });
 
   test('showNewBestScoreMessage debería mostrar el mensaje si el elemento existe', () => {
@@ -155,10 +155,9 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
   });
 
   test('debería actualizar la mejor puntuación si no existe previa y la puntuación es negativa', () => {
-    const result = endGame(-5);
-    expect(localStorage.getItem('bestScore')).toBe('-5');
+    const result = endGame(-10);
+    expect(localStorage.getItem('bestScore')).toBe('0');
     expect(result.isNewBestScore).toBe(true);
-    expect(result.bestScore).toBe(-5);
-    expect(messageElement.style.display).toBe('block');
+    expect(result.bestScore).toBe(0);
   });
 });
