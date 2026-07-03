@@ -96,4 +96,27 @@ describe('TRIOFSND-44: ResultsScreen best score comparison', () => {
     });
     expect(handleScoreUpdate).toHaveBeenCalledTimes(2);
   });
+
+  it('should call getBestScore exactly once per render cycle', async () => {
+    (getBestScore as jest.Mock).mockResolvedValue(5);
+    (handleScoreUpdate as jest.Mock).mockResolvedValue(undefined);
+
+    render(<ResultsScreen score={8} />);
+
+    await waitFor(() => {
+      expect(getBestScore).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should not call handleScoreUpdate when score is 0 and best is 0', async () => {
+    (getBestScore as jest.Mock).mockResolvedValue(0);
+    (handleScoreUpdate as jest.Mock).mockResolvedValue(undefined);
+
+    render(<ResultsScreen score={0} />);
+
+    await waitFor(() => {
+      expect(handleScoreUpdate).not.toHaveBeenCalled();
+    });
+    expect(screen.queryByText('New Best Score! 🎉')).not.toBeInTheDocument();
+  });
 });
