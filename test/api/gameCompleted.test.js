@@ -30,6 +30,7 @@ describe('POST /api/game_completed', () => {
       .send(payload);
 
     expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
     expect(res.body.error).toContain('app_version is required');
   });
 
@@ -47,10 +48,41 @@ describe('POST /api/game_completed', () => {
     expect(res.body.error).toContain('app_version is required');
   });
 
+  it('should return 400 when app_version is only whitespace', async () => {
+    const payload = {
+      ...validPayload,
+      app_version: '   '
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('app_version is required');
+  });
+
   it('should reject payload with negative duration_ms', async () => {
     const payload = {
       app_version: '1.0.0',
       duration_ms: -100,
+      score: 7,
+      questions_answered: 10
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toContain('duration_ms cannot be negative');
+  });
+
+  it('should reject payload with a large negative duration_ms', async () => {
+    const payload = {
+      app_version: '1.0.0',
+      duration_ms: -999999,
       score: 7,
       questions_answered: 10
     };
@@ -105,10 +137,23 @@ describe('POST /api/game_completed', () => {
     expect(res.statusCode).toEqual(400);
   });
 
-  it('should return 400 when score is out of range', async () => {
+  it('should return 400 when score is out of range (above max)', async () => {
     const payload = {
       ...validPayload,
       score: 11
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 when score is out of range (below min)', async () => {
+    const payload = {
+      ...validPayload,
+      score: -1
     };
 
     const res = await request(app)
@@ -132,10 +177,23 @@ describe('POST /api/game_completed', () => {
     expect(res.statusCode).toEqual(400);
   });
 
-  it('should return 400 when questions_answered is out of range', async () => {
+  it('should return 400 when questions_answered is out of range (above max)', async () => {
     const payload = {
       ...validPayload,
       questions_answered: 11
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 when questions_answered is out of range (below min)', async () => {
+    const payload = {
+      ...validPayload,
+      questions_answered: -1
     };
 
     const res = await request(app)
@@ -149,6 +207,40 @@ describe('POST /api/game_completed', () => {
     const res = await request(app)
       .post('/api/game_completed')
       .send({});
+
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 for a payload missing multiple required fields', async () => {
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send({ app_version: '1.0.0' });
+
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 when duration_ms is not a number', async () => {
+    const payload = {
+      ...validPayload,
+      duration_ms: 'not-a-number'
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
+
+    expect(res.statusCode).toEqual(400);
+  });
+
+  it('should return 400 when app_version is not a string', async () => {
+    const payload = {
+      ...validPayload,
+      app_version: 123
+    };
+
+    const res = await request(app)
+      .post('/api/game_completed')
+      .send(payload);
 
     expect(res.statusCode).toEqual(400);
   });
