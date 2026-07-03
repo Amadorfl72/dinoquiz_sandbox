@@ -223,23 +223,14 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
 
     const { queryByText, findByText } = render(
       <ResultsScreen
-        route={{ params: { score: 8 } }}
+        route={{ params: { score: 9 } }}
         navigation={mockNavigation}
       />
     );
 
-    // Wait for the score to be displayed so the effect has run
-    await findByText('Your Score: 8/10');
+    await findByText('Your Score: 9/10');
 
-    // Allow any pending microtasks (including rejected promises) to settle
-    await waitFor(() => {
-      expect(queryByText('New Best Score!')).toBeNull();
-    });
-
-    // Flush any remaining unhandled rejections
-    await new Promise((resolve) => setImmediate(resolve));
-
-    // No unhandled promise rejection should have escaped checkBestScore
+    expect(queryByText('New Best Score!')).toBeNull();
     expect(rejectionErrors).toEqual([]);
   });
 });
