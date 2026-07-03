@@ -142,9 +142,7 @@ def test_seed_data_dino_ids_are_non_empty_strings():
             f"Question {i} dinoId '{dino_id}' should contain only alphabetic characters"
 
 
-def test_seed_data_statements_are_non_empty_strings():
+def test_seed_data_statements_are_unique():
     seed_data = load_json(SEED_PATH)
-    for i, question in enumerate(seed_data):
-        statement = question['statement']
-        assert isinstance(statement, str), f"Question {i} statement must be a string"
-        assert len(statement.strip()) > 0, f"Question {i} statement must be non-empty"
+    statements = [q['statement'] for q in seed_data]
+    assert len(set(statements)) == len(statements), "Seed data statements must be unique"
