@@ -9,9 +9,15 @@ const BEST_SCORE_KEY = 'bestScore';
  * @returns {{ isNewBestScore: boolean, bestScore: number }}
  */
 function endGame(currentScore) {
+  // No actualizar con puntuaciones negativas
+  if (currentScore < 0) {
+    const bestScore = getBestScore();
+    return { isNewBestScore: false, bestScore };
+  }
+
   const stored = localStorage.getItem(BEST_SCORE_KEY);
   const hasPreviousScore = stored !== null;
-  const bestScore = parseInt(stored || '0', 10);
+  const bestScore = getBestScore();
 
   const isNewBestScore = !hasPreviousScore || currentScore > bestScore;
 
@@ -37,7 +43,14 @@ function handleGameEnd(currentScore) {
  * @returns {number}
  */
 function getBestScore() {
-  return parseInt(localStorage.getItem(BEST_SCORE_KEY) || '0', 10);
+  const stored = localStorage.getItem(BEST_SCORE_KEY);
+  if (stored === null) {
+    return 0;
+  }
+  
+  const parsed = parseInt(stored, 10);
+  // Devolver 0 si el valor no es numérico
+  return isNaN(parsed) ? 0 : parsed;
 }
 
 /**
