@@ -1,20 +1,29 @@
-import { getAppVersion } from '../config';
+import { logBestScoreUpdated } from '../analytics/logger';
 
 /**
- * Checks if the new score is a best score and logs a structured event if so.
- * @param {number} newScore - The new score achieved.
- * @param {number|null} previousBest - The previous best score, or null if none.
- * @returns {boolean} True if the new score is a new best, false otherwise.
+ * Determines the new best score and emits a structured best_score_updated
+ * log entry when a new best score is achieved.
+ *
+ * A new best is achieved when:
+ *  - there is no previous best (null/undefined), i.e. the first score, or
+ *  - the incoming score is strictly greater than the previous best.
+ *
+ * The structured log is intentionally PII-free: it only contains the event
+ * name, the numeric scores and the app_version (added by the logger).
+ *
+ * @param {number} newScore - The score just achieved.
+ * @param {number|null|undefined} previousBest - The previous best score.
+ * @returns {number} The resulting best score.
  */
 export const updateBestScore = (newScore, previousBest) => {
-  if (previousBest === null || newScore > previousBest) {
-    console.log('best_score_updated', {
-      event: 'best_score_updated',
-      new_score: newScore,
-      previous_best: previousBest,
-      app_version: getAppVersion(),
-    });
-    return true;
+  const hasPrevious = previousBest !== null && previousBest !== undefined;
+
+  if (!hasPrevious || newScore > previousBest) {
+    logBestScoreUpdated(newScore, hasPrevious ? previousBest : null);
+    return newScore;
   }
-  return false;
+
+  return previousBest;
 };
+
+export default { updateBestScore };
