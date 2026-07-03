@@ -112,7 +112,35 @@ describe('TRIOFSND-47: logger.logStructured contract', () => {
     expect(parsed).toEqual({
       event: 'storage_failure',
       operation: 'save',
-      error_type: undefined,
+      error_type: 'UnknownError',
+      app_version: '1.4.2',
+    });
+  });
+
+  it('logStorageFailure handles null error_type gracefully', () => {
+    logger.logStorageFailure('load', null, '1.4.2');
+
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'storage_failure',
+      operation: 'load',
+      error_type: 'UnknownError',
+      app_version: '1.4.2',
+    });
+  });
+
+  it('logStorageFailure handles empty string error_type gracefully', () => {
+    logger.logStorageFailure('clear', '', '1.4.2');
+
+    const output = consoleSpy.mock.calls[0][0];
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toEqual({
+      event: 'storage_failure',
+      operation: 'clear',
+      error_type: 'UnknownError',
       app_version: '1.4.2',
     });
   });
@@ -143,5 +171,33 @@ describe('TRIOFSND-47: logger.logStructured contract', () => {
     expect(Object.keys(parsed).sort()).toEqual(
       ['app_version', 'error_type', 'event', 'operation'].sort()
     );
+  });
+
+  it('logBestScoreUpdated calls logStructured internally', () => {
+    const spy = jest.spyOn(logger, 'logStructured');
+    logger.logBestScoreUpdated(1500, 1200, '1.4.2');
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith({
+      event: 'best_score_updated',
+      new_best: 1500,
+      previous_best: 1200,
+      app_version: '1.4.2',
+    });
+    spy.mockRestore();
+  });
+
+  it('logStorageFailure calls logStructured internally', () => {
+    const spy = jest.spyOn(logger, 'logStructured');
+    logger.logStorageFailure('save', 'QuotaExceededError', '1.4.2');
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith({
+      event: 'storage_failure',
+      operation: 'save',
+      error_type: 'QuotaExceededError',
+      app_version: '1.4.2',
+    });
+    spy.mockRestore();
   });
 });
