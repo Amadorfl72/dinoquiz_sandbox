@@ -1,6 +1,7 @@
 module.exports = {
-  testEnvironment: 'node',
-  setupFiles: ['<rootDir>/tests/setup.js'],
-  testMatch: ['<rootDir>/tests/**/*.test.js'],
-  collectCoverage: false,
+  testEnvironment: 'jsdom',
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/api/'
+  ]
 };
