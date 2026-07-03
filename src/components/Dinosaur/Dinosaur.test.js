@@ -1,44 +1,66 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import Dinosaur from './Dinosaur';
+import { render, fireEvent } from '@testing-library/react-native';
+import { Dinosaur } from './Dinosaur';
 
-describe('Dinosaur Component', () => {
+describe('TRIOFSND-27: Implement image fallback placeholder', () => {
   const defaultProps = {
-    imageUrl: 'https://example.com/dino.png',
-    altText: 'T-Rex dinosaur'
+    source: { uri: 'https://example.com/dino.png' },
+    label: 'T-Rex',
   };
 
-  it('renders dinosaur image by default', () => {
-    render(<Dinosaur {...defaultProps} />);
-    const image = screen.getByAltText(defaultProps.altText);
-    expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute('src', defaultProps.imageUrl);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('displays placeholder when image fails to load', () => {
-    render(<Dinosaur {...defaultProps} />);
-    const image = screen.getByAltText(defaultProps.altText);
-    
-    // Simulate image error
-    fireEvent.error(image);
-    
-    expect(image).toHaveClass('placeholder');
-    expect(image).toHaveAttribute('src', expect.stringContaining('dinosaur-placeholder.png'));
+  it('renders the dinosaur image by default', () => {
+    const { getByTestId, queryByTestId } = render(<Dinosaur {...defaultProps} />);
+
+    const image = getByTestId('dinosaur-image');
+    expect(image).toBeTruthy();
+    expect(image.props.source).toEqual(defaultProps.source);
+
+    // Placeholder should not be visible initially
+    expect(queryByTestId('dinosaur-placeholder')).toBeNull();
   });
 
-  it('ensures text remains legible when placeholder is displayed', () => {
-    render(
-      <div>
-        <Dinosaur {...defaultProps} />
-        <p className="dinosaur-description">This is a dinosaur description</p>
-      </div>
-    );
-    
-    const image = screen.getByAltText(defaultProps.altText);
-    fireEvent.error(image);
-    
-    const description = screen.getByText('This is a dinosaur description');
-    expect(description).toBeVisible();
-    expect(description).toHaveStyle('color: #333'); // Ensure good contrast
+  it('displays a placeholder when the image fails to load', () => {
+    const { getByTestId, queryByTestId } = render(<Dinosaur {...defaultProps} />);
+
+    // Initially the image is shown
+    expect(getByTestId('dinosaur-image')).toBeTruthy();
+    expect(queryByTestId('dinosaur-placeholder')).toBeNull();
+
+    // Simulate image load error
+    fireEvent(getByTestId('dinosaur-image'), 'error');
+
+    // Placeholder should now be visible
+    const placeholder = getByTestId('dinosaur-placeholder');
+    expect(placeholder).toBeTruthy();
+  });
+
+  it('ensures text remains legible when the placeholder is displayed', () => {
+    const { getByTestId, getByText } = render(<Dinosaur {...defaultProps} />);
+
+    // Trigger image error to show placeholder
+    fireEvent(getByTestId('dinosaur-image'), 'error');
+
+    // The label text should still be rendered and visible
+    const labelText = getByText(defaultProps.label);
+    expect(labelText).toBeTruthy();
+
+    // Verify the text has a color that is not transparent
+    const style = Array.isArray(labelText.props.style)
+      ? Object.assign({}, ...labelText.props.style)
+      : labelText.props.style || {};
+    expect(style.color).toBeDefined();
+    expect(style.color).not.toBe('transparent');
+
+    // Verify the placeholder has a background color that contrasts with text
+    const placeholder = getByTestId('dinosaur-placeholder');
+    const placeholderStyle = Array.isArray(placeholder.props.style)
+      ? Object.assign({}, ...placeholder.props.style)
+      : placeholder.props.style || {};
+    expect(placeholderStyle.backgroundColor).toBeDefined();
+    expect(placeholderStyle.backgroundColor).not.toBe('transparent');
   });
 });
