@@ -77,11 +77,18 @@ describe('TRIOFSND-24: Local questions JSON fun facts', () => {
     const inappropriateWords = [
       'violence', 'violent', 'kill', 'killed', 'kills', 'killing',
       'blood', 'bloody', 'death', 'dead', 'die', 'died', 'dies', 'dying',
-      'murder', 'weapon', 'weapons', 'gun', 'guns', 'knife', 'bomb',
-      'war', 'fight', 'fighting', 'hate', 'stupid', 'idiot', 'dumb',
-      'drugs', 'alcohol', 'beer', 'wine', 'cigarette', 'smoke', 'smoking',
-      'hell', 'damn', 'crap', 'sexy', 'naked', 'nude', 'sex',
-      'terrorist', 'terrorism', 'bomb', 'shoot', 'shooting', 'stab'
+      'murder', 'murderer', 'murdered', 'weapon', 'weapons', 'gun', 'guns',
+      'knife', 'knives', 'bomb', 'bombs', 'war', 'wars', 'fight', 'fighting',
+      'fights', 'fought', 'hate', 'hated', 'hates', 'stupid', 'idiot',
+      'idiots', 'dumb', 'drugs', 'drug', 'alcohol', 'beer', 'wine',
+      'cigarette', 'cigarettes', 'smoke', 'smoking', 'hell', 'damn', 'crap',
+      'sexy', 'naked', 'nude', 'nudes', 'sex', 'sexual', 'terrorist',
+      'terrorism', 'shoot', 'shooting', 'shoots', 'shot', 'stab', 'stabbing',
+      'stabs', 'poison', 'poisoned', 'poisons', 'torture', 'tortured',
+      'tortures', 'cruel', 'cruelty', 'evil', 'demon', 'devil', 'satan',
+      'curse', 'cursed', 'curses', 'swear', 'swearing', 'swears',
+      'assault', 'attack', 'attacked', 'attacks', 'abuse', 'abused',
+      'abuses', 'abusive', 'racist', 'racism', 'sexist', 'sexism'
     ];
     questions.forEach((q, idx) => {
       const lowerText = q.fun_fact.text.toLowerCase();
@@ -173,6 +180,19 @@ describe('TRIOFSND-24: Local questions JSON fun facts', () => {
     questions.forEach((q, idx) => {
       const sentences = q.fun_fact.text.split(/[.!?]+/).filter(s => s.trim().length > 0);
       expect(sentences.length).toBeLessThanOrEqual(3);
+    });
+  });
+
+  test('fun_fact text contains only age-appropriate vocabulary', () => {
+    questions.forEach((q, idx) => {
+      const words = q.fun_fact.text.split(/\s+/).filter(w => w.length > 0);
+      expect(words.length).toBeGreaterThan(0);
+      words.forEach(word => {
+        const cleaned = word.replace(/[^a-zA-Z]/g, '');
+        if (cleaned.length > 0) {
+          expect(cleaned.length).toBeLessThanOrEqual(12);
+        }
+      });
     });
   });
 });
