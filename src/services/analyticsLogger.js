@@ -1,9 +1,12 @@
-import { logEvent } from 'firebase/analytics';
+import { incrementMetric } from './metrics';
 
-const analyticsLogger = {
-  logEvent: (eventName, eventPayload) => {
-    logEvent(eventName, eventPayload);
-  }
+export const logFunFactViewed = (questionId, dinoId) => {
+  console.log('[Analytics]', {
+    event: 'fun_fact_viewed',
+    question_id: questionId,
+    dino_id: dinoId,
+    timestamp: new Date().toISOString()
+  });
+  
+  incrementMetric('fun_fact_viewed');
 };
-
-export default analyticsLogger;
