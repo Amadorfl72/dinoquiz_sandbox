@@ -5,7 +5,8 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = '<div id="new-best-score-message" style="display: none;"></div>';
+    document.body.innerHTML =
+      '<div id="new-best-score-message" style="display: none;"></div>';
     messageElement = document.getElementById('new-best-score-message');
   });
 
@@ -18,7 +19,14 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
   test('debería mostrar el mensaje de nueva mejor puntuación si la actual es mayor', () => {
     localStorage.setItem('bestScore', '100');
     endGame(150);
-    expect(messageElement.style.display).not.toBe('none');
+    expect(messageElement.style.display).toBe('block');
+  });
+
+  test('debería devolver isNewBestScore=true si la actual es mayor', () => {
+    localStorage.setItem('bestScore', '100');
+    const result = endGame(150);
+    expect(result.isNewBestScore).toBe(true);
+    expect(result.bestScore).toBe(150);
   });
 
   test('no debería actualizar la mejor puntuación en localStorage si la actual es menor', () => {
@@ -35,20 +43,22 @@ describe('TRIOFSND-40: Actualizar mejor puntuación en localStorage', () => {
 
   test('no debería actualizar ni mostrar el mensaje si la puntuación es igual a la mejor', () => {
     localStorage.setItem('bestScore', '100');
-    endGame(100);
+    const result = endGame(100);
     expect(localStorage.getItem('bestScore')).toBe('100');
     expect(messageElement.style.display).toBe('none');
+    expect(result.isNewBestScore).toBe(false);
   });
 
   test('debería actualizar la mejor puntuación si no existe una previa y la actual es mayor que 0', () => {
     endGame(50);
     expect(localStorage.getItem('bestScore')).toBe('50');
-    expect(messageElement.style.display).not.toBe('none');
+    expect(messageElement.style.display).toBe('block');
   });
 
   test('debería actualizar la mejor puntuación y mostrar el mensaje si no existe una previa y la puntuación es 0', () => {
-    endGame(0);
+    const result = endGame(0);
     expect(localStorage.getItem('bestScore')).toBe('0');
-    expect(messageElement.style.display).not.toBe('none');
+    expect(messageElement.style.display).toBe('block');
+    expect(result.isNewBestScore).toBe(true);
   });
 });
