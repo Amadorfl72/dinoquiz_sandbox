@@ -1,14 +1,16 @@
 import React from 'react';
-import { trackReplay } from '../analytics/telemetry';
+import { Telemetry, trackReplay } from '../analytics/telemetry';
 
-const ReplayButton = ({ onClick }) => {
+const ReplayButton = ({ score, onClick }) => {
   const handleClick = () => {
+    Telemetry.logReplayClicked(score);
     trackReplay();
     onClick();
   };
 
   return (
     <button 
+      className="replay-button" 
       onClick={handleClick}
       aria-label="Volver a jugar"
       style={{
