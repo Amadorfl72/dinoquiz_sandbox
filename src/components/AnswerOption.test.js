@@ -98,22 +98,23 @@ describe('AnswerOption', () => {
 
     const button = getByText('Test Option');
 
-    // First click triggers immediate onSelect via the else branch
+    // First click triggers immediate onSelect
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalledTimes(1);
 
-    // Subsequent rapid clicks on the same option go through debounced handleSelect
+    // Second click on the same option calls onSelect immediately and starts debounce
     fireEvent.click(button);
-    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(2);
 
-    // No additional calls before the debounce timer fires
-    expect(onSelect).toHaveBeenCalledTimes(1);
+    // Third rapid click is ignored due to debouncing
+    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(2);
 
     act(() => {
       jest.runAllTimers();
     });
 
-    // After debounce resolves, one additional call occurs (isSelected is still false in this static render)
+    // No additional calls after timer resolves
     expect(onSelect).toHaveBeenCalledTimes(2);
   });
 
@@ -144,8 +145,7 @@ describe('AnswerOption', () => {
     fireEvent.click(button);
     expect(onSelect).toHaveBeenCalledTimes(1);
 
-    // Second click: same option id, goes through debounced handleSelect
-    // but isSelected is now true, so the debounced call should be skipped
+    // Second click: isSelected is now true, so it returns early
     fireEvent.click(button);
 
     act(() => {
@@ -153,5 +153,42 @@ describe('AnswerOption', () => {
     });
 
     expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows another click after debounce window expires', () => {
+    const onSelect = jest.fn();
+    const option = { id: '1', text: 'Test Option', isCorrect: true };
+
+    const { getByText } = render(
+      <AnswerOption
+        option={option}
+        onSelect={onSelect}
+        isSelected={false}
+        isCorrect={true}
+      />
+    );
+
+    const button = getByText('Test Option');
+
+    // First click
+    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    // Second click (same option, triggers debounce)
+    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(2);
+
+    // Third click during debounce window is ignored
+    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(2);
+
+    // Advance timers past debounce window
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+
+    // Fourth click after debounce window expires
+    fireEvent.click(button);
+    expect(onSelect).toHaveBeenCalledTimes(3);
   });
 });
