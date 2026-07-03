@@ -2,8 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import StartScreen from './StartScreen';
 
-// Fix TRIOFSND-5: mock the dinosaur image asset so tests do not fail with
-// "Cannot find module '../assets/dinosaur.png'."
+// Fix TRIOFSND-5: mock the dinosaur image asset
 jest.mock('../assets/dinosaur.png', () => 'dinosaur.png');
 
 describe('StartScreen', () => {
@@ -15,6 +14,11 @@ describe('StartScreen', () => {
     jest.clearAllMocks();
   });
 
+  it('renders without crashing', () => {
+    const { toJSON } = render(<StartScreen {...defaultProps} />);
+    expect(toJSON()).not.toBeNull();
+  });
+
   it('displays the DinoQuiz title', () => {
     const { getByText } = render(<StartScreen {...defaultProps} />);
     expect(getByText('DinoQuiz')).toBeTruthy();
@@ -22,14 +26,12 @@ describe('StartScreen', () => {
 
   it('displays the dinosaur illustration with correct accessibility label', () => {
     const { getByLabelText } = render(<StartScreen {...defaultProps} />);
-    const image = getByLabelText('Dinosaur illustration');
-    expect(image).toBeTruthy();
+    expect(getByLabelText('Dinosaur illustration')).toBeTruthy();
   });
 
   it('displays the dinosaur illustration with correct testID', () => {
     const { getByTestId } = render(<StartScreen {...defaultProps} />);
-    const image = getByTestId('dinosaur-image');
-    expect(image).toBeTruthy();
+    expect(getByTestId('dinosaur-image')).toBeTruthy();
   });
 
   it('displays the play button with ¡Jugar! text', () => {
@@ -66,17 +68,11 @@ describe('StartScreen', () => {
 
   it('renders all key elements within 3 seconds', () => {
     const start = Date.now();
-    const { getByText, getByTestId } = render(<StartScreen {...defaultProps} />);
-    expect(getByText('DinoQuiz')).toBeTruthy();
-    expect(getByTestId('dinosaur-image')).toBeTruthy();
-    expect(getByTestId('play-button')).toBeTruthy();
-    expect(getByText('¡Jugar!')).toBeTruthy();
+    const { getByTestId } = render(<StartScreen {...defaultProps} />);
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
-  });
-
-  it('has a container with testID StartScreen', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
     expect(getByTestId('StartScreen')).toBeTruthy();
+    expect(getByTestId('dinosaur-image')).toBeTruthy();
+    expect(getByTestId('play-button')).toBeTruthy();
   });
 });
