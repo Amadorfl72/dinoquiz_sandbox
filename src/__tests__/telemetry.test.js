@@ -31,4 +31,28 @@ describe('Telemetry', () => {
     trackGameCompleted(score);
     expect(console.log).toHaveBeenCalledWith(`Telemetry: game completed with score ${score}`);
   });
+
+  describe('TRIOFSND-41: trackReplay', () => {
+    it('is a callable function', () => {
+      expect(typeof trackReplay).toBe('function');
+    });
+
+    it('logs exactly one replay event per call', () => {
+      trackReplay();
+      expect(console.log).toHaveBeenCalledTimes(1);
+      expect(console.log).toHaveBeenCalledWith('Telemetry: replay event tracked');
+    });
+
+    it('logs multiple replay events when called multiple times', () => {
+      trackReplay();
+      trackReplay();
+      trackReplay();
+      expect(console.log).toHaveBeenCalledTimes(3);
+      expect(console.log).toHaveBeenLastCalledWith('Telemetry: replay event tracked');
+    });
+
+    it('does not throw when called without arguments', () => {
+      expect(() => trackReplay()).not.toThrow();
+    });
+  });
 });
