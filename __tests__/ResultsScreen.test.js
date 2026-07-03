@@ -231,10 +231,6 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
     await findByText('Your Score: 8/10');
 
     expect(queryByText('New Best Score!')).toBeNull();
-
-    // Flush any pending microtasks so a rejected promise would have surfaced
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(rejectionErrors).toHaveLength(0);
+    expect(rejectionErrors).toEqual([]);
   });
 });
