@@ -36,6 +36,12 @@ describe('TRIOFSND-47: scoreService structured logging for best score', () => {
       expect(logger.logStructured).not.toHaveBeenCalled();
     });
 
+    it('does not log best_score_updated when the new score equals the previous best', () => {
+      scoreService.updateBestScore(1200, 1200);
+
+      expect(logger.logStructured).not.toHaveBeenCalled();
+    });
+
     it('logs best_score_updated when previous best is null (first score)', () => {
       scoreService.updateBestScore(500, null);
 
@@ -46,6 +52,20 @@ describe('TRIOFSND-47: scoreService structured logging for best score', () => {
         event: 'best_score_updated',
         new_best: 500,
         previous_best: null,
+        app_version: '1.4.2',
+      });
+    });
+
+    it('logs best_score_updated when previous best is undefined (first score)', () => {
+      scoreService.updateBestScore(500, undefined);
+
+      expect(logger.logStructured).toHaveBeenCalledTimes(1);
+      const logged = logger.logStructured.mock.calls[0][0];
+
+      expect(logged).toEqual({
+        event: 'best_score_updated',
+        new_best: 500,
+        previous_best: undefined,
         app_version: '1.4.2',
       });
     });
@@ -75,6 +95,21 @@ describe('TRIOFSND-47: scoreService structured logging for best score', () => {
       scoreService.updateBestScore(1500, 1200);
 
       expect(logger.logStructured).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes the correct event name in the log entry', () => {
+      scoreService.updateBestScore(1500, 1200);
+
+      const logged = logger.logStructured.mock.calls[0][0];
+      expect(logged.event).toBe('best_score_updated');
+    });
+
+    it('passes new_best and previous_best as numeric values', () => {
+      scoreService.updateBestScore(1500, 1200);
+
+      const logged = logger.logStructured.mock.calls[0][0];
+      expect(typeof logged.new_best).toBe('number');
+      expect(typeof logged.previous_best).toBe('number');
     });
   });
 });
