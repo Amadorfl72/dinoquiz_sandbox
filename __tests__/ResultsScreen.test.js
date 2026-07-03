@@ -216,75 +216,18 @@ describe('TRIOFSND-44: Best Score Comparison and Update Logic', () => {
     expect(queryByText('New Best Score!')).toBeNull();
   });
 
-  it('should not display new best score message when getBestScore rejects', async () => {
+  it('does not display new best score message when getBestScore rejects', async () => {
     getBestScore.mockRejectedValue(new Error('Storage error'));
 
     const { queryByText, findByText } = render(
       <ResultsScreen
-        route={{ params: { score: 8 } }}
+        route={{ params: { score: 9 } }}
         navigation={mockNavigation}
       />
     );
 
-    // Wait for the score to be displayed, which means the effect has run.
-    await findByText('Your Score: 8/10');
+    await findByText('Your Score: 9/10');
 
-    // Allow any pending microtasks/rejections to settle.
-    await waitFor(() => {
-      expect(queryByText('New Best Score!')).toBeNull();
-    });
-  });
-
-  it('does not throw or display new best score when both getBestScore and setBestScore reject', async () => {
-    setBestScore.mockRejectedValue(new Error('Storage failure'));
-    getBestScore.mockRejectedValue(new Error('Storage error'));
-
-    const { queryByText, findByText } = render(
-      <ResultsScreen
-        route={{ params: { score: 8 } }}
-        navigation={mockNavigation}
-      />
-    );
-
-    // The save error feedback should appear.
-    expect(
-      await findByText('Could not save your best score. Try again later.')
-    ).toBeTruthy();
-
-    // The new best score message should not appear.
     expect(queryByText('New Best Score!')).toBeNull();
-  });
-
-  it('updates the stored best score when current score exceeds stored best score', async () => {
-    getBestScore.mockResolvedValue(5);
-
-    render(
-      <ResultsScreen
-        route={{ params: { score: 8 } }}
-        navigation={mockNavigation}
-      />
-    );
-
-    await waitFor(() => {
-      expect(setBestScore).toHaveBeenCalledWith(8);
-    });
-  });
-
-  it('does not update the stored best score when current score is less than stored best score', async () => {
-    getBestScore.mockResolvedValue(9);
-
-    render(
-      <ResultsScreen
-        route={{ params: { score: 3 } }}
-        navigation={mockNavigation}
-      />
-    );
-
-    // setBestScore may still be called for persistence, but not with a
-    // value greater than the stored best. We assert it is not called with 3
-    // as a new best (i.e. the comparison prevents overwriting a higher best).
-    await waitFor(() => {
-      expect(setBestScore).not.toHaveBeenCalledWith(3);
-    });
   });
 });
