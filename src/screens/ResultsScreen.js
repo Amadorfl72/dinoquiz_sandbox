@@ -4,9 +4,9 @@ import { setBestScore, getBestScore } from '../storage/scoreStorage';
 
 const ResultsScreen = ({ route, navigation }) => {
   const { score } = route.params;
-  const [bestScore, setBestScoreState] = useState(null);
-  const [isNewBestScore, setIsNewBestScore] = useState(false);
-  const [storageError, setStorageError] = useState(null);
+  const [bestScore, setBestScoreState] = useState(0);
+  const [error, setError] = useState(null);
+  const [isNewBest, setIsNewBest] = useState(false);
 
   useEffect(() => {
     const checkBestScore = async () => {
@@ -14,25 +14,22 @@ const ResultsScreen = ({ route, navigation }) => {
         // First try to save the current score
         await setBestScore(score);
         
-        // Then get the stored best score to compare
+        // Then get the best score to compare
         const storedBestScore = await getBestScore();
         setBestScoreState(storedBestScore);
         
-        // Only show new best score message if we successfully got the stored score
-        if (score > storedBestScore) {
-          setIsNewBestScore(true);
-        }
-      } catch (error) {
-        console.error('Error handling best score:', error);
-        setStorageError('Could not save your best score. Try again later.');
+        // Check if this is a new best score
+        setIsNewBest(score > storedBestScore);
+      } catch (err) {
+        console.error('Error handling best score:', err);
+        setError('Could not save your best score. Try again later.');
         
-        // If getBestScore fails after setBestScore, try to get it again as fallback
+        // Even if saving failed, try to get the best score for display
         try {
-          const fallbackBestScore = await getBestScore();
-          setBestScoreState(fallbackBestScore);
-        } catch (fallbackError) {
-          console.error('Fallback best score load failed:', fallbackError);
-          // At this point we just won't show the best score
+          const storedBestScore = await getBestScore();
+          setBestScoreState(storedBestScore);
+        } catch (getErr) {
+          console.error('Error getting best score:', getErr);
         }
       }
     };
@@ -40,25 +37,35 @@ const ResultsScreen = ({ route, navigation }) => {
     checkBestScore();
   }, [score]);
 
+  const getStars = (score) => {
+    if (score >= 7) return '⭐⭐⭐';
+    if (score >= 4) return '⭐⭐';
+    return '⭐';
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.scoreText}>Your Score: {score}/10</Text>
+      <Text style={styles.title}>Your Score: {score}/10</Text>
+      <Text style={styles.stars}>{getStars(score)}</Text>
       
-      {bestScore !== null && (
-        <Text style={styles.bestScoreText}>Best Score: {bestScore}/10</Text>
+      {bestScore > 0 && (
+        <Text style={styles.bestScore}>Best Score: {bestScore}/10</Text>
       )}
       
-      {isNewBestScore && (
-        <Text style={styles.newBestText}>New Best Score!</Text>
+      {isNewBest && (
+        <Text style={styles.newBest}>New Best Score!</Text>
       )}
       
-      {storageError && (
-        <Text style={styles.errorText}>{storageError}</Text>
+      {error && (
+        <Text style={styles.error}>{error}</Text>
       )}
       
       <Button
         title="Play Again"
-        onPress={() => navigation.navigate('Home')}
+        onPress={() => navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        })}
       />
     </View>
   );
@@ -69,21 +76,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
-  scoreText: {
+  title: {
     fontSize: 24,
-    marginBottom: 20,
-  },
-  bestScoreText: {
-    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 10,
   },
-  newBestText: {
-    fontSize: 22,
-    color: 'green',
+  stars: {
+    fontSize: 36,
     marginBottom: 20,
   },
-  errorText: {
+  bestScore: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  newBest: {
+    fontSize: 20,
+    color: 'green',
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  error: {
     fontSize: 16,
     color: 'red',
     marginBottom: 20,
