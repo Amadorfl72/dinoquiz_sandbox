@@ -3,6 +3,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import { isNewBestScore, setBestScore, getBestScore } from '../utils/score';
 import { strings } from '../strings';
 import { logGameCompleted } from '../logging';
+import { handleScoreUpdate } from '../services/scoreService';
 
 const ResultsScreen = ({ score, durationMs, appVersion, onReplay }) => {
   const [showNewBestFeedback, setShowNewBestFeedback] = useState(false);
@@ -12,18 +13,23 @@ const ResultsScreen = ({ score, durationMs, appVersion, onReplay }) => {
   }, [score, durationMs, appVersion]);
 
   useEffect(() => {
-    if (isNewBestScore(score)) {
-      try {
-        setBestScore(score);
-        setShowNewBestFeedback(true);
+    const checkBestScore = async () => {
+      if (isNewBestScore(score)) {
+        try {
+          setBestScore(score);
+          setShowNewBestFeedback(true);
+          await handleScoreUpdate(score);
 
-        // Hide feedback after 3 seconds
-        const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
-        return () => clearTimeout(timer);
-      } catch (error) {
-        console.warn('Failed to persist best score:', error);
+          // Hide feedback after 3 seconds
+          const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
+          return () => clearTimeout(timer);
+        } catch (error) {
+          console.warn('Failed to persist best score:', error);
+        }
       }
-    }
+    };
+    
+    checkBestScore();
   }, [score]);
 
   const getMotivationalMessage = (score) => {
