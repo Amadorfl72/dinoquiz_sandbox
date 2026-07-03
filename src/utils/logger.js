@@ -15,7 +15,7 @@ const logStorageFailure = (operation, error_type, app_version) => {
   logStructured({
     event: 'storage_failure',
     operation,
-    error_type,
+    error_type: error_type || 'UnknownError',
     app_version
   });
 };
