@@ -2,49 +2,45 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import StartScreen from './StartScreen';
 
-// Fix TRIOFSND-5: mock the dinosaur image asset so tests do not fail with
-// "Cannot find module '../assets/dinosaur.png'."
-jest.mock('./assets/dinosaur.png', () => 'dinosaur.png');
+// Mock the dinosaur image asset
 jest.mock('../assets/dinosaur.png', () => 'dinosaur.png');
-jest.mock('../../assets/dinosaur.png', () => 'dinosaur.png');
 
 describe('StartScreen', () => {
-  const defaultProps = {
-    onStartGame: jest.fn(),
-  };
+  const mockOnStartGame = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('displays the DinoQuiz title', () => {
-    const { getByText } = render(<StartScreen {...defaultProps} />);
+    const { getByText } = render(<StartScreen onStartGame={mockOnStartGame} />);
     expect(getByText('DinoQuiz')).toBeTruthy();
   });
 
   it('displays the dinosaur illustration with correct accessibility label', () => {
-    const { getByLabelText } = render(<StartScreen {...defaultProps} />);
-    const image = getByLabelText('Dinosaur illustration');
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
+    const image = getByTestId('dinosaur-illustration');
     expect(image).toBeTruthy();
+    expect(image.props.accessibilityLabel).toBe('Dinosaurio mascota');
   });
 
   it('displays the dinosaur illustration with correct testID', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
-    expect(getByTestId('dinosaur-image')).toBeTruthy();
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
+    expect(getByTestId('dinosaur-illustration')).toBeTruthy();
   });
 
   it('displays the play button with ¡Jugar! text', () => {
-    const { getByText } = render(<StartScreen {...defaultProps} />);
+    const { getByText } = render(<StartScreen onStartGame={mockOnStartGame} />);
     expect(getByText('¡Jugar!')).toBeTruthy();
   });
 
   it('displays the play button with correct testID', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
     expect(getByTestId('play-button')).toBeTruthy();
   });
 
   it('play button has minHeight of at least 64', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
     const button = getByTestId('play-button');
     const style = Array.isArray(button.props.style)
       ? Object.assign({}, ...button.props.style)
@@ -53,32 +49,33 @@ describe('StartScreen', () => {
   });
 
   it('triggers onStartGame callback when play button is pressed', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
     fireEvent.press(getByTestId('play-button'));
-    expect(defaultProps.onStartGame).toHaveBeenCalledTimes(1);
+    expect(mockOnStartGame).toHaveBeenCalledTimes(1);
   });
 
   it('renders within 3 seconds', () => {
     const start = Date.now();
-    render(<StartScreen {...defaultProps} />);
+    render(<StartScreen onStartGame={mockOnStartGame} />);
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
   });
 
   it('renders all key elements within 3 seconds', () => {
     const start = Date.now();
-    const { getByText, getByTestId, getByLabelText } = render(<StartScreen {...defaultProps} />);
+    const { getByText, getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
+    
     expect(getByText('DinoQuiz')).toBeTruthy();
-    expect(getByTestId('dinosaur-image')).toBeTruthy();
-    expect(getByLabelText('Dinosaur illustration')).toBeTruthy();
-    expect(getByTestId('play-button')).toBeTruthy();
+    expect(getByTestId('dinosaur-illustration')).toBeTruthy();
     expect(getByText('¡Jugar!')).toBeTruthy();
+    expect(getByTestId('play-button')).toBeTruthy();
+    
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
   });
 
   it('has a container with testID StartScreen', () => {
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
+    const { getByTestId } = render(<StartScreen onStartGame={mockOnStartGame} />);
     expect(getByTestId('StartScreen')).toBeTruthy();
   });
 });
