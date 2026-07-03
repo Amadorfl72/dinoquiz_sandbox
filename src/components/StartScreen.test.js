@@ -2,8 +2,11 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import StartScreen from './StartScreen';
 
-// Fix TRIOFSND-5: mock the dinosaur image asset
+// Fix TRIOFSND-5: mock the dinosaur image asset so tests do not fail with
+// "Cannot find module '../assets/dinosaur.png'."
+jest.mock('./assets/dinosaur.png', () => 'dinosaur.png');
 jest.mock('../assets/dinosaur.png', () => 'dinosaur.png');
+jest.mock('../../assets/dinosaur.png', () => 'dinosaur.png');
 
 describe('StartScreen', () => {
   const defaultProps = {
@@ -14,11 +17,6 @@ describe('StartScreen', () => {
     jest.clearAllMocks();
   });
 
-  it('renders without crashing', () => {
-    const { toJSON } = render(<StartScreen {...defaultProps} />);
-    expect(toJSON()).not.toBeNull();
-  });
-
   it('displays the DinoQuiz title', () => {
     const { getByText } = render(<StartScreen {...defaultProps} />);
     expect(getByText('DinoQuiz')).toBeTruthy();
@@ -26,7 +24,8 @@ describe('StartScreen', () => {
 
   it('displays the dinosaur illustration with correct accessibility label', () => {
     const { getByLabelText } = render(<StartScreen {...defaultProps} />);
-    expect(getByLabelText('Dinosaur illustration')).toBeTruthy();
+    const image = getByLabelText('Dinosaur illustration');
+    expect(image).toBeTruthy();
   });
 
   it('displays the dinosaur illustration with correct testID', () => {
@@ -68,11 +67,18 @@ describe('StartScreen', () => {
 
   it('renders all key elements within 3 seconds', () => {
     const start = Date.now();
-    const { getByTestId } = render(<StartScreen {...defaultProps} />);
+    const { getByText, getByTestId, getByLabelText } = render(<StartScreen {...defaultProps} />);
+    expect(getByText('DinoQuiz')).toBeTruthy();
+    expect(getByTestId('dinosaur-image')).toBeTruthy();
+    expect(getByLabelText('Dinosaur illustration')).toBeTruthy();
+    expect(getByTestId('play-button')).toBeTruthy();
+    expect(getByText('¡Jugar!')).toBeTruthy();
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(3000);
+  });
+
+  it('has a container with testID StartScreen', () => {
+    const { getByTestId } = render(<StartScreen {...defaultProps} />);
     expect(getByTestId('StartScreen')).toBeTruthy();
-    expect(getByTestId('dinosaur-image')).toBeTruthy();
-    expect(getByTestId('play-button')).toBeTruthy();
   });
 });
