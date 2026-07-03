@@ -9,6 +9,12 @@ describe('Best Score Persistence', () => {
       removeItem: jest.fn(),
       clear: jest.fn(),
     };
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete global.localStorage;
   });
 
   it('should save and retrieve the best score when localStorage is available', () => {
@@ -29,6 +35,31 @@ describe('Best Score Persistence', () => {
     const score = 8;
     expect(() => saveBestScore(score)).not.toThrow();
     expect(() => getBestScore()).not.toThrow();
+  });
+
+  it('should handle null localStorage without throwing errors', () => {
+    global.localStorage = null;
+
+    const score = 8;
+    expect(() => saveBestScore(score)).not.toThrow();
+    expect(() => getBestScore()).not.toThrow();
+  });
+
+  it('should handle localStorage setItem throwing an error without crashing', () => {
+    localStorage.setItem.mockImplementation(() => {
+      throw new TypeError("Cannot read properties of undefined (reading 'setItem')");
+    });
+
+    expect(() => saveBestScore(10)).not.toThrow();
+  });
+
+  it('should handle localStorage getItem throwing an error and return 0', () => {
+    localStorage.getItem.mockImplementation(() => {
+      throw new Error('SecurityError');
+    });
+
+    expect(() => getBestScore()).not.toThrow();
+    expect(getBestScore()).toBe(0);
   });
 
   it('should return 0 when no best score is stored', () => {
