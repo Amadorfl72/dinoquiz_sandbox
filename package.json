@@ -1,0 +1,21 @@
+{
+  "name": "dinoquiz",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DinoQuiz web app",
+  "scripts": {
+    "test": "jest --ci"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^29.0.0",
+    "@testing-library/jest-dom": "^5.0.0",
+    "@testing-library/react": "^13.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
