@@ -178,18 +178,18 @@ describe('ScoreManager - best score persistence', () => {
       expect(result.score).toBe(500);
     });
 
-    test('should not throw when calling setBestScore without localStorage', () => {
+    test('should not throw when setting best score without localStorage', () => {
       const manager = new ScoreManager();
-
       expect(() => manager.setBestScore(777)).not.toThrow();
     });
 
     test('should not log errors to console when localStorage is disabled', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       const manager = new ScoreManager();
-      manager.submitScore(500);
+
       manager.getBestScore();
+      manager.submitScore(500);
+      manager.setBestScore(300);
 
       expect(consoleSpy).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
