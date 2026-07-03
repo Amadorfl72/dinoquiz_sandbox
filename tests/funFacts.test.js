@@ -29,23 +29,6 @@ describe('TRIOFSND-24: Local questions JSON with 30 fun facts', () => {
   });
 
   it('does not reuse the same dinosaur fun_fact image for different questions', () => {
-    const knownDuplicates = [
-      'assets/images/trex_fun_fact.png',
-      'assets/images/triceratops_fun_fact.png',
-      'assets/images/stegosaurus_fun_fact.png',
-      'assets/images/velociraptor_fun_fact.png',
-      'assets/images/brachiosaurus_fun_fact.png',
-      'assets/images/ankylosaurus_fun_fact.png',
-      'assets/images/pteranodon_fun_fact.png',
-    ];
-    const imagePaths = questions.map((q) => q.image_path);
-    knownDuplicates.forEach((path) => {
-      const occurrences = imagePaths.filter((p) => p === path).length;
-      expect(occurrences).toBeLessThanOrEqual(1);
-    });
-  });
-
-  it('no image_path appears more than once across all 30 questions', () => {
     const imagePaths = questions.map((q) => q.image_path);
     const counts = {};
     imagePaths.forEach((p) => {
@@ -53,6 +36,12 @@ describe('TRIOFSND-24: Local questions JSON with 30 fun facts', () => {
     });
     const duplicates = Object.entries(counts).filter(([, count]) => count > 1);
     expect(duplicates).toEqual([]);
+  });
+
+  it('no image_path appears more than once across all 30 questions', () => {
+    const imagePaths = questions.map((q) => q.image_path);
+    const uniqueImagePaths = new Set(imagePaths);
+    expect(uniqueImagePaths.size).toBe(30);
   });
 
   it('every question has a fun_fact', () => {
