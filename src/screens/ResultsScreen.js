@@ -2,69 +2,92 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { setBestScore, getBestScore } from '../storage/scoreStorage';
 
-export default function ResultsScreen({ route, navigation }) {
+const ResultsScreen = ({ route, navigation }) => {
   const { score } = route.params;
-  const [error, setError] = useState(null);
-  const [bestScore, setBestScoreState] = useState(0);
+  const [bestScore, setBestScoreState] = useState(null);
+  const [isNewBestScore, setIsNewBestScore] = useState(false);
+  const [storageError, setStorageError] = useState(null);
 
   useEffect(() => {
-    const persistAndLoadBestScore = async () => {
+    const checkBestScore = async () => {
       try {
-        // First try to persist the new score
+        // First try to save the current score
         await setBestScore(score);
         
-        // Then load the current best score to display
-        const currentBest = await getBestScore();
-        setBestScoreState(currentBest);
-      } catch (err) {
-        setError('Could not save your best score. Try again later.');
-        console.error('Failed to persist best score:', err);
+        // Then get the stored best score to compare
+        const storedBestScore = await getBestScore();
+        setBestScoreState(storedBestScore);
         
-        // Still try to load the best score even if saving failed
+        // Only show new best score message if we successfully got the stored score
+        if (score > storedBestScore) {
+          setIsNewBestScore(true);
+        }
+      } catch (error) {
+        console.error('Error handling best score:', error);
+        setStorageError('Could not save your best score. Try again later.');
+        
+        // If getBestScore fails after setBestScore, try to get it again as fallback
         try {
-          const currentBest = await getBestScore();
-          setBestScoreState(currentBest);
-        } catch (loadErr) {
-          console.error('Failed to load best score:', loadErr);
+          const fallbackBestScore = await getBestScore();
+          setBestScoreState(fallbackBestScore);
+        } catch (fallbackError) {
+          console.error('Fallback best score load failed:', fallbackError);
+          // At this point we just won't show the best score
         }
       }
     };
 
-    persistAndLoadBestScore();
+    checkBestScore();
   }, [score]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Score: {score}/10</Text>
-      <Text style={styles.bestScore}>Best Score: {bestScore}/10</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+      <Text style={styles.scoreText}>Your Score: {score}/10</Text>
+      
+      {bestScore !== null && (
+        <Text style={styles.bestScoreText}>Best Score: {bestScore}/10</Text>
+      )}
+      
+      {isNewBestScore && (
+        <Text style={styles.newBestText}>New Best Score!</Text>
+      )}
+      
+      {storageError && (
+        <Text style={styles.errorText}>{storageError}</Text>
+      )}
+      
       <Button
         title="Play Again"
         onPress={() => navigation.navigate('Home')}
-        accessibilityLabel="Play the game again"
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  title: {
+  scoreText: {
     fontSize: 24,
-    marginBottom: 10,
-  },
-  bestScore: {
-    fontSize: 20,
     marginBottom: 20,
   },
-  error: {
+  bestScoreText: {
+    fontSize: 20,
+    marginBottom: 10,
+  },
+  newBestText: {
+    fontSize: 22,
+    color: 'green',
+    marginBottom: 20,
+  },
+  errorText: {
+    fontSize: 16,
     color: 'red',
-    marginTop: 10,
     marginBottom: 20,
   },
 });
+
+export default ResultsScreen;
