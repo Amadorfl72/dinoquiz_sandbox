@@ -69,3 +69,6 @@ const calculateMetrics = (logs) => {
 };
 
 export { calculateMetrics };
+
+// Export metrics for testing
+export const getMetrics = () => metrics;
