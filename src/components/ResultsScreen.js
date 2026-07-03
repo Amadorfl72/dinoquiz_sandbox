@@ -1,51 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { resetGameState } from '../utils/gameUtils';
+import { isNewBestScore, setBestScore, getBestScore } from '../utils/score';
+import { strings } from '../strings';
+import { logGameCompleted } from '../logging';
+import { handleScoreUpdate } from '../services/scoreService';
 
-export default function ResultsScreen({ route }) {
-  const { score, questions } = route.params;
-  const navigation = useNavigation();
+const ResultsScreen = ({ score, durationMs, appVersion, onReplay }) => {
+  const [showNewBestFeedback, setShowNewBestFeedback] = useState(false);
 
-  const resetGame = () => {
-    // Reset game state and select new questions
-    resetGameState(
-      (newQuestions) => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Question', params: { questionIndex: 0 } }],
-        });
-      },
-      questions
-    );
+  useEffect(() => {
+    logGameCompleted(score, durationMs, appVersion);
+  }, [score, durationMs, appVersion]);
+
+  useEffect(() => {
+    const checkBestScore = async () => {
+      if (isNewBestScore(score)) {
+        try {
+          setBestScore(score);
+          setShowNewBestFeedback(true);
+          await handleScoreUpdate(score);
+
+          // Hide feedback after 3 seconds
+          const timer = setTimeout(() => setShowNewBestFeedback(false), 3000);
+          return () => clearTimeout(timer);
+        } catch (error) {
+          console.warn('Failed to persist best score:', error);
+        }
+      }
+    };
+    
+    checkBestScore();
+  }, [score]);
+
+  const getMotivationalMessage = (score) => {
+    if (score >= 0 && score <= 3) {
+      return '¡No te rindas! ¡Sigue intentándolo!';
+    } else if (score >= 4 && score <= 6) {
+      return '¡Buen trabajo! ¡Puedes mejorar!';
+    } else if (score >= 7 && score <= 8) {
+      return '¡Muy bien! ¡Casi lo logras!';
+    } else if (score >= 9 && score <= 10) {
+      return '¡Excelente! ¡Eres un genio!';
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>¡Resultados!</Text>
-      <Text style={styles.score}>Puntuación: {score}/10</Text>
-      
-      {/* Stars display based on score */}
-      <View style={styles.starsContainer}>
-        {[...Array(Math.min(Math.floor(score / 3.34) + 1, 3))].map((_, i) => (
-          <Text key={i} style={styles.star}>⭐</Text>
-        ))}
+      <Text style={styles.scoreText}>Has acertado {score}/10</Text>
+      <Text style={styles.messageText} testID="motivating-message">{getMotivationalMessage(score)}</Text>
+      <Text style={styles.bestScoreText}>Tu mejor puntuación: {getBestScore()}</Text>
+
+      {showNewBestFeedback && (
+        <Text style={styles.newBestFeedbackText}>{strings.newBestScore}</Text>
+      )}
+
+      <View style={styles.replayButtonContainer}>
+        <Button 
+          title="Volver a jugar" 
+          onPress={onReplay} 
+          style={styles.replayButton}
+          accessibilityLabel="Volver a jugar"
+        />
       </View>
-      
-      <Text style={styles.message}>
-        {score < 4 ? '¡Buen intento! Sigue aprendiendo.' : 
-         score < 7 ? '¡Bien hecho! Sabes mucho sobre dinosaurios.' : 
-         '¡Increíble! Eres un experto en dinosaurios.'}
-      </Text>
-      
-      <Button 
-        title="Volver a jugar" 
-        onPress={resetGame}
-        accessibilityLabel="Volver a jugar con nuevas preguntas"
-      />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -54,26 +73,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  title: {
+  scoreText: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
   },
-  score: {
-    fontSize: 20,
-    marginBottom: 20,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  star: {
-    fontSize: 30,
-    marginHorizontal: 5,
-  },
-  message: {
+  messageText: {
     fontSize: 18,
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 30,
+  },
+  bestScoreText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  newBestFeedbackText: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: 'green',
+    fontWeight: 'bold',
+  },
+  replayButtonContainer: {
+    minWidth: 200,
+    minHeight: 48,
+  },
+  replayButton: {
+    minHeight: 48,
   },
 });
+
+export default ResultsScreen;
