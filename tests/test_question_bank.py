@@ -4,7 +4,7 @@ from collections import Counter
 
 import pytest
 
-QUESTION_BANK_FILE = "question_bank.json"
+QUESTION_BANK_FILE = os.path.join("src", "assets", "questions.json")
 
 @pytest.fixture(scope="module")
 def question_bank():
@@ -33,29 +33,29 @@ def test_each_question_has_3_to_4_options(question_bank):
 
 def test_each_question_has_correct_answer(question_bank):
     for i, q in enumerate(question_bank):
-        assert "correct_answer" in q, f"Question {i} missing 'correct_answer'"
-        if isinstance(q["correct_answer"], int):
-            assert 0 <= q["correct_answer"] < len(q["options"]), f"Question {i} correct_answer index out of bounds"
-        elif isinstance(q["correct_answer"], str):
-            assert q["correct_answer"] in q["options"], f"Question {i} correct_answer not in options"
+        assert "correctAnswer" in q, f"Question {i} missing 'correctAnswer'"
+        if isinstance(q["correctAnswer"], int):
+            assert 0 <= q["correctAnswer"] < len(q["options"]), f"Question {i} correctAnswer index out of bounds"
+        elif isinstance(q["correctAnswer"], str):
+            assert q["correctAnswer"] in q["options"], f"Question {i} correctAnswer not in options"
         else:
-            pytest.fail(f"Question {i} correct_answer is of invalid type")
+            pytest.fail(f"Question {i} correctAnswer is of invalid type")
 
 def test_each_question_has_fun_fact(question_bank):
     for i, q in enumerate(question_bank):
-        assert "fun_fact" in q, f"Question {i} missing 'fun_fact'"
-        assert isinstance(q["fun_fact"], str) and len(q["fun_fact"]) > 0, f"Question {i} 'fun_fact' is empty"
+        assert "funFact" in q, f"Question {i} missing 'funFact'"
+        assert isinstance(q["funFact"], str) and len(q["funFact"]) > 0, f"Question {i} 'funFact' is empty"
 
 def test_each_question_has_image_reference(question_bank):
     for i, q in enumerate(question_bank):
-        assert "image" in q, f"Question {i} missing 'image' reference"
-        assert isinstance(q["image"], str) and len(q["image"]) > 0, f"Question {i} 'image' is empty"
+        assert "imageRef" in q, f"Question {i} missing 'imageRef' reference"
+        assert isinstance(q["imageRef"], str) and len(q["imageRef"]) > 0, f"Question {i} 'imageRef' is empty"
 
 def test_at_least_3_questions_per_dinosaur_species(question_bank):
     species_counter = Counter()
     for i, q in enumerate(question_bank):
-        species = q.get("species") or q.get("dinosaur")
-        assert species is not None, f"Question {i} missing 'species' or 'dinosaur' field"
+        species = q.get("species")
+        assert species is not None, f"Question {i} missing 'species' field"
         species_counter[species] += 1
     
     for species, count in species_counter.items():
