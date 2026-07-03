@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import ResultsScreen from './ResultsScreen';
 
 jest.mock('../NewBestScoreFeedback', () => ({
@@ -47,5 +47,21 @@ describe('ResultsScreen', () => {
     );
 
     expect(NewBestScoreFeedback).not.toHaveBeenCalled();
+  });
+
+  it('should display the score text', () => {
+    render(
+      <ResultsScreen route={{ params: { score: 7, previousBestScore: 5 } }} />
+    );
+
+    expect(screen.getByText('Tu puntuación: 7/10')).toBeTruthy();
+  });
+
+  it('should display the score text even when no new best score', () => {
+    render(
+      <ResultsScreen route={{ params: { score: 2, previousBestScore: 5 } }} />
+    );
+
+    expect(screen.getByText('Tu puntuación: 2/10')).toBeTruthy();
   });
 });
