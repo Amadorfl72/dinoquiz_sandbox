@@ -1,11 +1,11 @@
 import { getDatabase } from './database';
 
 export const initAnalyticsDB = async () => {
-  const db = await getDatabase();
-  
-  if (!db.objectStoreNames.contains('analyticsEvents')) {
-    db.createObjectStore('analyticsEvents', { autoIncrement: true });
-  }
+  // Opening the database triggers the `onupgradeneeded` handler in
+  // ./database.js, which creates the 'analyticsEvents' object store as part of
+  // the version-change transaction. Object stores can only be created there,
+  // so we simply ensure the database (and therefore its schema) is open.
+  await getDatabase();
 };
 
 export const storeAnalyticsEvent = async (eventData) => {
