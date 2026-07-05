@@ -11,13 +11,12 @@ export const handleAnalyticsEvent = async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    // Check for PII in event data
+    // Check for PII in event data (including one level of nesting, e.g. deviceInfo.name)
     const hasPII = PII_FIELDS.some(field => {
-      return field in eventData || 
-             (typeof eventData === 'object' && 
-              Object.values(eventData).some(
-                val => typeof val === 'object' && field in val
-              ));
+      return field in eventData ||
+             Object.values(eventData).some(
+               val => val !== null && typeof val === 'object' && field in val
+             );
     });
     
     if (hasPII) {
