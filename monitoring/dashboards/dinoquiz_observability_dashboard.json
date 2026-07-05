@@ -1,0 +1,88 @@
+{
+  "title": "DinoQuiz Observability Dashboard",
+  "uid": "dinoquiz-observability",
+  "description": "Tracks the DinoQuiz v1 success KPIs: completion rate, replay rate, D1/D7 retention, drop-off per question and frontend performance (TTI).",
+  "tags": ["dinoquiz", "observability", "kpi"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "TTI p95 (Time To Interactive)",
+      "type": "timeseries",
+      "description": "95th percentile Time To Interactive for the DinoQuiz start screen. Budget: <2s (AC-1).",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tti_seconds_bucket[5m])) by (le))",
+          "legendFormat": "tti_p95"
+        }
+      ],
+      "thresholds": [
+        { "value": 2, "op": "gt", "colorMode": "critical" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Time between app_open and first_tap_jugar",
+      "type": "timeseries",
+      "description": "p50 elapsed time between the app_open event and the first_tap_jugar event, measuring how quickly a child starts a game unassisted (AC-24).",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(time_between_app_open_and_first_tap_jugar_seconds_bucket[5m])) by (le))",
+          "legendFormat": "app_open_to_first_tap_jugar_p50"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Onboarding Funnel: Inicio -> Jugando -> Resultados -> Replay",
+      "type": "funnel",
+      "description": "Conversion funnel across the four core product steps, used to spot where players abandon the flow.",
+      "steps": ["app_open", "game_started", "game_completed", "replay_clicked"],
+      "targets": [
+        { "expr": "sum(increase(app_open_total[1d]))", "legendFormat": "app_open" },
+        { "expr": "sum(increase(game_started_total[1d]))", "legendFormat": "game_started" },
+        { "expr": "sum(increase(game_completed_total[1d]))", "legendFormat": "game_completed" },
+        { "expr": "sum(increase(replay_clicked_total[1d]))", "legendFormat": "replay_clicked" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Hit Rate per Question",
+      "type": "bargauge",
+      "description": "% de aciertos por pregunta, para detectar preguntas confusas o demasiado dificiles.",
+      "targets": [
+        { "expr": "avg(question_hit_rate) by (question_id)", "legendFormat": "hit_rate" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Average Game Duration",
+      "type": "stat",
+      "description": "Duracion media de una partida completa. Objetivo: entre 2 y 5 minutos (AC-25).",
+      "targets": [
+        { "expr": "avg(game_duration_seconds)", "legendFormat": "avg_duration_seconds" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "D1 / D7 Retention",
+      "type": "timeseries",
+      "description": "Retencion agregada por cohorte de fecha de instalacion. Objetivo: D1 >= 30%, D7 >= 15%.",
+      "targets": [
+        { "expr": "retention_rate{window=\"d1\"}", "legendFormat": "d1_retention" },
+        { "expr": "retention_rate{window=\"d7\"}", "legendFormat": "d7_retention" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Crash-Free Rate",
+      "type": "stat",
+      "description": "Porcentaje de sesiones sin crash en las ultimas 24h. Objetivo: >= 99%.",
+      "targets": [
+        {
+          "expr": "(1 - (sum(increase(app_crashes_total[24h])) / sum(increase(app_sessions_total[24h])))) * 100",
+          "legendFormat": "crash_free_rate"
+        }
+      ]
+    }
+  ]
+}

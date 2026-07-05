@@ -1,0 +1,69 @@
+{
+  "groups": [
+    {
+      "name": "dinoquiz_frontend_performance",
+      "rules": [
+        {
+          "alert": "TTIP95TooHigh",
+          "expr": "histogram_quantile(0.95, sum(rate(tti_seconds_bucket[1h])) by (le)) > 2",
+          "for": "1h",
+          "labels": {
+            "severity": "warning",
+            "team": "frontend",
+            "metric": "tti_p95"
+          },
+          "annotations": {
+            "summary": "TTI p95 above 2 seconds (2000ms) for over 1 hour",
+            "description": "The p95 Time To Interactive (TTI) has stayed above 2s for at least 1h, breaching the <2s startup budget from AC-1.",
+            "runbook_url": "https://github.com/dinoquiz/runbooks/blob/main/tti-p95-high.md"
+          }
+        },
+        {
+          "alert": "CrashFreeRateBelowTarget",
+          "expr": "(1 - (sum(increase(app_crashes_total[24h])) / sum(increase(app_sessions_total[24h])))) * 100 < 99",
+          "for": "15m",
+          "labels": {
+            "severity": "critical",
+            "team": "mobile",
+            "metric": "crash_free_rate"
+          },
+          "annotations": {
+            "summary": "Crash-free rate below 99% over the last 24h",
+            "description": "Crash-free sessions dropped below the 99% target from the observability requirements.",
+            "runbook_url": "https://github.com/dinoquiz/runbooks/blob/main/crash-free-rate.md"
+          }
+        },
+        {
+          "alert": "CompletionRateDrop",
+          "expr": "(completion_rate_baseline - completion_rate_current) > 10",
+          "for": "30m",
+          "labels": {
+            "severity": "warning",
+            "team": "product",
+            "metric": "completion_rate"
+          },
+          "annotations": {
+            "summary": "Completion rate dropped more than 10 points vs baseline",
+            "description": "Game completion rate fell more than 10 percentage points relative to its rolling baseline.",
+            "runbook_url": "https://github.com/dinoquiz/runbooks/blob/main/completion-rate-drop.md"
+          }
+        },
+        {
+          "alert": "QuestionDropOffSpike",
+          "expr": "question_drop_off_rate > 5",
+          "for": "10m",
+          "labels": {
+            "severity": "warning",
+            "team": "content",
+            "metric": "question_drop_off_rate"
+          },
+          "annotations": {
+            "summary": "Abandonment spike detected on a specific question",
+            "description": "A single question is showing a drop-off spike above the 5% threshold, indicating it may be too confusing or too hard.",
+            "runbook_url": "https://github.com/dinoquiz/runbooks/blob/main/question-drop-off.md"
+          }
+        }
+      ]
+    }
+  ]
+}
