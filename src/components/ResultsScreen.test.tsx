@@ -34,7 +34,7 @@ describe('ResultsScreen', () => {
     it('renders the score text for every valid score 0-10', () => {
       for (let s = 0; s <= 10; s++) {
         const { unmount } = render(<ResultsScreen score={s} onReplay={mockOnReplay} />);
-        expect(screen.getByText(new RegExp(`Has acertado ${s}/10`, 'i'))).toBeInTheDocument();
+        expect(screen.getByText(`Has acertado ${s}/10`)).toBeInTheDocument();
         unmount();
       }
     });

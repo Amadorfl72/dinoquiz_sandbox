@@ -97,7 +97,7 @@ describe('ResultsScreen Accessibility', () => {
   it('score text is visible and readable for all score ranges', () => {
     [0, 3, 4, 6, 7, 8, 9, 10].forEach((score) => {
       const { unmount } = render(<ResultsScreen score={score} onReplay={jest.fn()} />);
-      const scoreText = screen.getByText(new RegExp(`Has acertado ${score}/10`, 'i'));
+      const scoreText = screen.getByText(`Has acertado ${score}/10`);
       expect(scoreText).toBeInTheDocument();
       expect(scoreText).toBeVisible();
       unmount();
