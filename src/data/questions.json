@@ -1,0 +1,191 @@
+[
+  {
+    "id": "trex-1",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Qué comía el Tyrannosaurus Rex?",
+    "answers": ["Plantas", "Otros dinosaurios", "Solo insectos", "Peces"],
+    "correctAnswerIndex": 1,
+    "funFact": "El T-Rex tenía uno de los mordiscos más fuertes de todos los dinosaurios.",
+    "image": "trex.png"
+  },
+  {
+    "id": "trex-2",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Cuántos dientes tenía aproximadamente el Tyrannosaurus Rex?",
+    "answers": ["10", "60", "200", "500"],
+    "correctAnswerIndex": 1,
+    "funFact": "Sus dientes podían medir hasta 30 centímetros de largo.",
+    "image": "trex.png"
+  },
+  {
+    "id": "trex-3",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Cómo eran los brazos del Tyrannosaurus Rex?",
+    "answers": ["Muy largos", "Muy pequeños", "No tenía brazos", "Como alas"],
+    "correctAnswerIndex": 1,
+    "funFact": "Aunque sus brazos eran pequeños, eran muy fuertes.",
+    "image": "trex.png"
+  },
+  {
+    "id": "triceratops-1",
+    "dinosaur": "Triceratops",
+    "text": "¿Cuántos cuernos tenía el Triceratops?",
+    "answers": ["1", "2", "3", "4"],
+    "correctAnswerIndex": 2,
+    "funFact": "Sus cuernos y su escudo óseo lo protegían de los depredadores.",
+    "image": "triceratops.png"
+  },
+  {
+    "id": "triceratops-2",
+    "dinosaur": "Triceratops",
+    "text": "¿Qué comía el Triceratops?",
+    "answers": ["Plantas", "Carne", "Insectos", "Peces"],
+    "correctAnswerIndex": 0,
+    "funFact": "Usaba su pico afilado para cortar plantas duras.",
+    "image": "triceratops.png"
+  },
+  {
+    "id": "triceratops-3",
+    "dinosaur": "Triceratops",
+    "text": "¿Qué tenía el Triceratops alrededor del cuello?",
+    "answers": ["Plumas", "Un escudo óseo", "Escamas de colores", "Nada"],
+    "correctAnswerIndex": 1,
+    "funFact": "Ese escudo se llama gola y también lo ayudaba a protegerse.",
+    "image": "triceratops.png"
+  },
+  {
+    "id": "velociraptor-1",
+    "dinosaur": "Velociraptor",
+    "text": "¿Cómo era el tamaño del Velociraptor?",
+    "answers": ["Tan grande como un elefante", "Del tamaño de un pavo grande", "Tan pequeño como un ratón", "Tan grande como una casa"],
+    "correctAnswerIndex": 1,
+    "funFact": "A pesar de ser pequeño, era muy rápido y ágil.",
+    "image": "velociraptor.png"
+  },
+  {
+    "id": "velociraptor-2",
+    "dinosaur": "Velociraptor",
+    "text": "¿Qué tenía el Velociraptor en cada pie?",
+    "answers": ["Una garra curva especial", "Una pezuña", "Ventosas", "Nada especial"],
+    "correctAnswerIndex": 0,
+    "funFact": "Usaba esa garra curva para cazar a sus presas.",
+    "image": "velociraptor.png"
+  },
+  {
+    "id": "velociraptor-3",
+    "dinosaur": "Velociraptor",
+    "text": "¿De qué estaba cubierto probablemente el cuerpo del Velociraptor?",
+    "answers": ["Escamas de pez", "Plumas", "Pelo", "Caparazón"],
+    "correctAnswerIndex": 1,
+    "funFact": "Los científicos creen que el Velociraptor tenía plumas, como las aves.",
+    "image": "velociraptor.png"
+  },
+  {
+    "id": "estegosaurio-1",
+    "dinosaur": "Estegosaurio",
+    "text": "¿Qué tenía el Estegosaurio en la espalda?",
+    "answers": ["Placas óseas", "Alas", "Un caparazón", "Plumas"],
+    "correctAnswerIndex": 0,
+    "funFact": "Sus placas podían ayudarlo a regular su temperatura corporal.",
+    "image": "estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-2",
+    "dinosaur": "Estegosaurio",
+    "text": "¿Qué tenía el Estegosaurio al final de la cola?",
+    "answers": ["Un aguijón", "Púas afiladas", "Una maza de piedra", "Plumas de colores"],
+    "correctAnswerIndex": 1,
+    "funFact": "A esas púas de la cola se les llama 'thagomizer' y las usaba para defenderse.",
+    "image": "estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-3",
+    "dinosaur": "Estegosaurio",
+    "text": "¿Qué comía el Estegosaurio?",
+    "answers": ["Carne", "Plantas", "Peces", "Insectos"],
+    "correctAnswerIndex": 1,
+    "funFact": "Comía plantas bajas porque su cabeza estaba cerca del suelo.",
+    "image": "estegosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-1",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Qué tenía de especial el cuello del Braquiosaurio?",
+    "answers": ["Era muy corto", "Era muy largo", "No tenía cuello", "Tenía escamas de colores"],
+    "correctAnswerIndex": 1,
+    "funFact": "Su largo cuello le permitía comer hojas de los árboles más altos.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-2",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Cómo eran las patas delanteras del Braquiosaurio comparadas con las traseras?",
+    "answers": ["Más cortas", "Más largas", "Iguales", "No tenía patas delanteras"],
+    "correctAnswerIndex": 1,
+    "funFact": "Por eso su cuerpo se inclinaba hacia arriba, como una jirafa.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-3",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Qué comía el Braquiosaurio?",
+    "answers": ["Plantas", "Carne", "Otros dinosaurios", "Peces"],
+    "correctAnswerIndex": 0,
+    "funFact": "Era tan grande que necesitaba comer muchísimas plantas cada día.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "ankylosaurus-1",
+    "dinosaur": "Ankylosaurus",
+    "text": "¿Cómo estaba protegido el cuerpo del Ankylosaurus?",
+    "answers": ["Con plumas", "Con una armadura de placas óseas", "No tenía protección", "Con escamas de pez"],
+    "correctAnswerIndex": 1,
+    "funFact": "Su armadura lo hacía casi invulnerable frente a los depredadores.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-2",
+    "dinosaur": "Ankylosaurus",
+    "text": "¿Qué tenía el Ankylosaurus al final de la cola?",
+    "answers": ["Una maza ósea", "Un aguijón venenoso", "Plumas largas", "Nada"],
+    "correctAnswerIndex": 0,
+    "funFact": "Podía usar esa maza para golpear a quien lo atacara.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-3",
+    "dinosaur": "Ankylosaurus",
+    "text": "¿Qué comía el Ankylosaurus?",
+    "answers": ["Plantas", "Carne", "Insectos", "Huevos de otros dinosaurios"],
+    "correctAnswerIndex": 0,
+    "funFact": "A pesar de su aspecto fuerte, era un tranquilo comedor de plantas.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "id": "pteranodon-1",
+    "dinosaur": "Pteranodon",
+    "text": "¿Podía volar el Pteranodon?",
+    "answers": ["Sí", "No", "Solo nadaba", "Solo corría"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Pteranodon no era un dinosaurio, sino un reptil volador que vivió junto a ellos.",
+    "image": "pteranodon.png"
+  },
+  {
+    "id": "pteranodon-2",
+    "dinosaur": "Pteranodon",
+    "text": "¿Qué tenía el Pteranodon en la cabeza?",
+    "answers": ["Una cresta larga", "Cuernos", "Una melena", "Nada"],
+    "correctAnswerIndex": 0,
+    "funFact": "Los científicos creen que su cresta lo ayudaba a volar mejor.",
+    "image": "pteranodon.png"
+  },
+  {
+    "id": "pteranodon-3",
+    "dinosaur": "Pteranodon",
+    "text": "¿Qué comía el Pteranodon?",
+    "answers": ["Peces", "Plantas", "Otros reptiles voladores", "Rocas"],
+    "correctAnswerIndex": 0,
+    "funFact": "Volaba cerca del mar para atrapar peces con su largo pico.",
+    "image": "pteranodon.png"
+  }
+]

@@ -97,7 +97,8 @@ describe('TRIOFSND-39 - useGameState restart flow', () => {
       result.current.startNewRound();
     });
 
-    const firstQuestions = result.current.questions;\n
+    const firstQuestions = result.current.questions;
+
     act(() => {
       result.current.answerQuestion('q1', 'a', true);
       result.current.resetGameState();
