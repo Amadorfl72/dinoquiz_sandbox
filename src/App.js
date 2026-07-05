@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { checkOfflineFirstLoad } from './utils/offlineFirstLoad';
 import OfflineFirstLoadMessage from './components/OfflineFirstLoadMessage';
-import StartScreen from './components/StartScreen';
+import HomeScreen from './screens/HomeScreen';
 import QuizScreen from './components/QuizScreen';
 import ResultsScreen from './components/ResultsScreen';
 import sessionService from './services/sessionService';
@@ -32,7 +32,7 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      {gameState === 'start' && <StartScreen onStartGame={handleStartGame} />}
+      {gameState === 'start' && <HomeScreen onStartGame={handleStartGame} />}
       {gameState === 'quiz' && <QuizScreen onComplete={(finalScore) => {
         setScore(finalScore);
         setGameState('results');
