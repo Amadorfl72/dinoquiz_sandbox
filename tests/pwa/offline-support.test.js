@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-describe('TRIOFSND-53: Offline Support', () => {
+test.describe('TRIOFSND-53: Offline Support', () => {
   test('app loads from cache when offline', async ({ page, context, baseURL }) => {
     const url = baseURL || 'http://localhost:3000';
 

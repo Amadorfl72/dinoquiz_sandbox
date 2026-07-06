@@ -6,10 +6,47 @@
   <meta name="theme-color" content="#4CAF50">
   <link rel="manifest" href="/manifest.json">
   <title>DinoQuiz</title>
-  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #4CAF50;
+      font-display: swap;
+    }
+
+    #play-button {
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      min-height: 64px;
+      min-width: 120px;
+    }
+
+    #play-button:hover {
+      background-color: #45a049;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
   <link rel="preload" href="/images/dino-mascot.png" as="image">
-  <link rel="preload" href="/styles/main.css" as="style">
+  <link rel="preload" href="/styles/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" href="/scripts/main.js" as="script">
+  <noscript><link rel="stylesheet" href="/styles/main.css"></noscript>
 </head>
 <body>
   <div id="app">

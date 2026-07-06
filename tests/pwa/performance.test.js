@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-describe('TRIOFSND-53: Performance Optimization - TTI under 2 seconds', () => {
+test.describe('TRIOFSND-53: Performance Optimization - TTI under 2 seconds', () => {
   test('home screen TTI is under 2 seconds', async ({ page, baseURL }) => {
     const url = baseURL || 'http://localhost:3000';
 
@@ -86,7 +86,7 @@ describe('TRIOFSND-53: Performance Optimization - TTI under 2 seconds', () => {
     const indexPath = path.resolve(__dirname, '../../public/index.html');
     const html = fs.readFileSync(indexPath, 'utf-8');
 
-    expect(html).toMatch(/<script[^>]*src=["']\/scripts\/main\.js["'][^>]*defer["'][^>]*>/i);
+    expect(html).toMatch(/<script[^>]*src=["']\/scripts\/main\.js["'][^>]*\sdefer(\s|=|>)[^>]*>/i);
   });
 
   test('mascot image uses eager loading', async () => {

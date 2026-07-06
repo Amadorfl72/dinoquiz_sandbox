@@ -20,13 +20,15 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        );
+      })
+      .then(() => self.clients.claim())
   );
 });
 
@@ -43,8 +45,8 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request)
           .then((networkResponse) => {
             // Cache new responses for future offline use
-            if (event.request.method === 'GET' && 
-                networkResponse.status === 200 && 
+            if (event.request.method === 'GET' &&
+                networkResponse.status === 200 &&
                 networkResponse.type === 'basic') {
               const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME)
@@ -53,12 +55,24 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           })
           .catch(() => {
-            // Network failed - return offline page for HTML requests
-            if (event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('/offline.html');
+            // Network failed - fall back to the offline page for HTML/navigation requests
+            const acceptHeader = event.request.headers.get('accept') || '';
+            if (event.request.mode === 'navigate' || acceptHeader.includes('text/html')) {
+              return caches.match('/offline.html').then((offlinePage) => {
+                return offlinePage || new Response(
+                  '<!DOCTYPE html><html><body><h1>Offline</h1></body></html>',
+                  { status: 503, headers: { 'Content-Type': 'text/html' } }
+                );
+              });
             }
-            // Return cached assets for other requests
-            return caches.match(event.request);
+            // Fall back to any cached copy for non-HTML requests, or a
+            // synthetic response so callers never see an unhandled rejection.
+            return caches.match(event.request).then((cachedAsset) => {
+              return cachedAsset || new Response('', {
+                status: 503,
+                statusText: 'Offline and no cached copy available'
+              });
+            });
           });
       })
   );

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-describe('TRIOFSND-53: PWA Installability', () => {
+test.describe('TRIOFSND-53: PWA Installability', () => {
   test('app meets installability criteria', async ({ page, baseURL }) => {
     const errors = [];
     page.on('console', msg => {
