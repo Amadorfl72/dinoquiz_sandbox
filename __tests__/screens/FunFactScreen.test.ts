@@ -34,8 +34,6 @@ describe('TRIOFSND-30: FunFactScreen integration', () => {
     const { getByText } = render(
       <FunFactScreen fact="Fact text" questionId="q5" dinoId="velociraptor" />
     );
-    // The log should have been called synchronously during mount,
-    // before any user interaction is possible.
     expect(logFunFactViewed).toHaveBeenCalledTimes(1);
     expect(getByText('Fact text')).toBeTruthy();
   });
@@ -52,8 +50,6 @@ describe('TRIOFSND-30: FunFactScreen integration', () => {
   it('emits fun_fact_viewed with correct event name string', () => {
     render(<FunFactScreen fact="Fact" questionId="q6" dinoId="diplodocus" />);
     expect(logFunFactViewed).toHaveBeenCalledTimes(1);
-    // The function name itself implies the event; verify it was called
-    // with the expected arguments that map to the fun_fact_viewed event.
     expect(logFunFactViewed).toHaveBeenCalledWith('q6', 'diplodocus');
   });
 });
