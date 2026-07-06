@@ -1,0 +1,21 @@
+{
+  "name": "dinoquiz",
+  "version": "1.0.0",
+  "description": "DinoQuiz PWA",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.73.11"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.24.0",
+    "@testing-library/react-native": "^12.9.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "metro-react-native-babel-preset": "^0.77.0",
+    "react-test-renderer": "18.2.0"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import strings from '../strings.json';
 
@@ -7,17 +7,21 @@ interface NewBestScoreFeedbackProps {
 }
 
 const NewBestScoreFeedback: React.FC<NewBestScoreFeedbackProps> = ({ isNewBestScore }) => {
+  const [visible, setVisible] = useState(isNewBestScore);
+
   useEffect(() => {
+    setVisible(isNewBestScore);
+
     if (!isNewBestScore) return;
-    
+
     const timer = setTimeout(() => {
-      // Component will unmount after timeout
+      setVisible(false);
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, [isNewBestScore]);
 
-  if (!isNewBestScore) return null;
+  if (!visible) return null;
 
   return (
     <View style={styles.container} testID="new-best-score-feedback">

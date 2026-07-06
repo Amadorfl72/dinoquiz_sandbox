@@ -65,7 +65,7 @@ describe('NewBestScoreFeedback', () => {
   });
 
   it('clears the timeout on unmount', () => {
-    const { unmount } = render(<NewBestScoreFeedback isNewBestScore={true} />);
+    const { unmount, toJSON } = render(<NewBestScoreFeedback isNewBestScore={true} />);
     expect(screen.getByText('¡Nueva mejor puntuación!')).toBeTruthy();
 
     unmount();
@@ -75,6 +75,6 @@ describe('NewBestScoreFeedback', () => {
     });
 
     // No error thrown after advancing timers post-unmount
-    expect(screen.queryByText('¡Nueva mejor puntuación!')).toBeNull();
+    expect(toJSON()).toBeNull();
   });
 });
