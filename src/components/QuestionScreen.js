@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
-const QuestionScreen = ({ statement, options, imageUri, onSelectAnswer }) => {
+export const QuestionScreen = ({ statement, options, imageUri, onSelectAnswer }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.questionText}>{statement}</Text>
