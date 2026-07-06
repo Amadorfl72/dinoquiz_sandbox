@@ -1,17 +1,17 @@
 {
-  "dashboard": {
-    "title": "TTI p95 Dashboard",
-    "panels": [
-      {
-        "title": "TTI p95",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(tti_seconds_bucket[1m])) by (le))"
-          }
-        ]
-      }
-    ]
-  }
+  "title": "TTI p95 Dashboard",
+  "panels": [
+    {
+      "id": 1,
+      "title": "TTI p95",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "description": "95th percentile Time To Interactive (TTI), in seconds.",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tti_seconds_bucket[1m])) by (le))"
+        }
+      ]
+    }
+  ]
 }

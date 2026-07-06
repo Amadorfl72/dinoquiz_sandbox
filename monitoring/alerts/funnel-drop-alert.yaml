@@ -1,10 +1,10 @@
 alert: FunnelDropRateHigh
 for: 1h
-expr: (sum(rate(app_open_total[1h])) - sum(rate(partida_iniciada_total[1h]))) / sum(rate(app_open_total[1h])) > 0.5
-  OR (sum(rate(app_open_total[1h])) - sum(rate(tap_jugar_total[1h]))) / sum(rate(app_open_total[1h])) > 0.5
+expr: (sum(rate(app_open_total[1h])) - sum(rate(pantalla_inicio_total[1h]))) / sum(rate(app_open_total[1h])) > 0.5
+  OR (sum(rate(pantalla_inicio_total[1h])) - sum(rate(tap_jugar_total[1h]))) / sum(rate(pantalla_inicio_total[1h])) > 0.5
   OR (sum(rate(tap_jugar_total[1h])) - sum(rate(partida_iniciada_total[1h]))) / sum(rate(tap_jugar_total[1h])) > 0.5
 labels:
   severity: warning
 annotations:
-  summary: "High drop rate in DinoQuiz funnel"
-  description: "The drop rate in the DinoQuiz funnel (App Open -> Pantalla Inicio -> Tap Jugar -> Partida Iniciada) has exceeded 50% in the last hour."
+  summary: "High drop rate between consecutive steps of the DinoQuiz funnel"
+  description: "The drop rate between consecutive steps of the DinoQuiz funnel (app_open -> pantalla_inicio -> tap_jugar -> partida_iniciada) has exceeded 50% in the last hour for at least one intermediate step."

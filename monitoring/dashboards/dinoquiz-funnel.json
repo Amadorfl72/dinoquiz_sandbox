@@ -1,57 +1,86 @@
 {
-  "dashboard": {
-    "title": "DinoQuiz Funnel Dashboard",
-    "panels": [
-      {
-        "title": "App Open",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "sum(rate(app_open_total[1m]))"
-          }
-        ]
-      },
-      {
-        "title": "Pantalla Inicio",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "sum(rate(pantalla_inicio_total[1m]))"
-          }
-        ]
-      },
-      {
-        "title": "Tap Jugar",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "sum(rate(tap_jugar_total[1m]))"
-          }
-        ]
-      },
-      {
-        "title": "Partida Iniciada",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "sum(rate(partida_iniciada_total[1m]))"
-          }
-        ]
-      },
-      {
-        "title": "Time Between App Open and First Tap Jugar",
-        "type": "timeseries",
-        "datasource": "Prometheus",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(time_between_app_open_and_tap_jugar_seconds_bucket[1m])) by (le))"
-          }
-        ]
-      }
-    ]
-  }
+  "title": "DinoQuiz Funnel Dashboard",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Onboarding Funnel",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "description": "Conversion funnel tracking the onboarding sequence in order: app_open -> pantalla_inicio -> tap_jugar -> partida_iniciada.",
+      "targets": [
+        {
+          "expr": "sum(increase(app_open_total[1h]))",
+          "legendFormat": "1. app_open"
+        },
+        {
+          "expr": "sum(increase(pantalla_inicio_total[1h]))",
+          "legendFormat": "2. pantalla_inicio"
+        },
+        {
+          "expr": "sum(increase(tap_jugar_total[1h]))",
+          "legendFormat": "3. tap_jugar"
+        },
+        {
+          "expr": "sum(increase(partida_iniciada_total[1h]))",
+          "legendFormat": "4. partida_iniciada"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "App Open",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(app_open_total[1m]))"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Pantalla Inicio",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(pantalla_inicio_total[1m]))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Tap Jugar",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(tap_jugar_total[1m]))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Partida Iniciada",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(partida_iniciada_total[1m]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Time Between App Open and First Tap Jugar (p95)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "description": "95th percentile of the time elapsed between the app_open and tap_jugar events.",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(time_between_app_open_and_tap_jugar_seconds_bucket[1m])) by (le))"
+        }
+      ]
+    }
+  ]
 }
