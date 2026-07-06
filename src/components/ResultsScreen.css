@@ -1,0 +1,10 @@
+.results-screen-button {
+  min-height: 48px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 18px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}

@@ -187,5 +187,275 @@
     "correctAnswerIndex": 0,
     "funFact": "Volaba cerca del mar para atrapar peces con su largo pico.",
     "image": "pteranodon.png"
+  },
+  {
+    "id": "braquiosaurio-4",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Cuál es el dinosaurio más grande?",
+    "answers": ["Tyrannosaurus Rex", "Braquiosaurio", "Velociraptor"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Braquiosaurio podía medir hasta 26 metros de largo.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "triceratops-4",
+    "dinosaur": "Triceratops",
+    "text": "¿Qué dinosaurio tenía tres cuernos?",
+    "answers": ["Triceratops", "Estegosaurio", "Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Triceratops tenía una gran gola para proteger su cuello.",
+    "image": "triceratops.png"
+  },
+  {
+    "id": "estegosaurio-4",
+    "dinosaur": "Estegosaurio",
+    "text": "¿Qué dinosaurio es conocido por sus placas?",
+    "answers": ["Estegosaurio", "Velociraptor", "Pteranodon"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Estegosaurio tenía 17 placas a lo largo de su espalda.",
+    "image": "estegosaurio.png"
+  },
+  {
+    "id": "velociraptor-4",
+    "dinosaur": "Velociraptor",
+    "text": "¿Qué dinosaurio era un corredor veloz?",
+    "answers": ["Velociraptor", "Tyrannosaurus Rex", "Braquiosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Velociraptor podía correr hasta 64 km/h.",
+    "image": "velociraptor.png"
+  },
+  {
+    "id": "braquiosaurio-5",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Qué dinosaurio tenía un cuello largo?",
+    "answers": ["Braquiosaurio", "Triceratops", "Estegosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Braquiosaurio podía alcanzar las hojas más altas de los árboles.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "ankylosaurus-4",
+    "dinosaur": "Ankylosaurus",
+    "text": "¿Qué dinosaurio tenía una cola en forma de maza?",
+    "answers": ["Ankylosaurus", "Pteranodon", "Velociraptor"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Ankylosaurus usaba su cola como arma.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "id": "pteranodon-4",
+    "dinosaur": "Pteranodon",
+    "text": "¿Qué animal podía volar?",
+    "answers": ["Pteranodon", "Tyrannosaurus Rex", "Braquiosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Pteranodon tenía una envergadura de hasta 10 metros.",
+    "image": "pteranodon.png"
+  },
+  {
+    "id": "ankylosaurus-5",
+    "dinosaur": "Ankylosaurus",
+    "text": "¿Qué dinosaurio estaba fuertemente blindado?",
+    "answers": ["Ankylosaurus", "Estegosaurio", "Velociraptor"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Ankylosaurus tenía placas óseas cubriendo todo su cuerpo.",
+    "image": "ankylosaurus.png"
+  },
+  {
+    "id": "trex-4",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Qué dinosaurio es conocido por su tamaño?",
+    "answers": ["Tyrannosaurus Rex", "Braquiosaurio", "Velociraptor"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Tyrannosaurus Rex podía pesar hasta 9 toneladas.",
+    "image": "trex.png"
+  },
+  {
+    "id": "pteranodon-5",
+    "dinosaur": "Pteranodon",
+    "text": "¿Qué animal tenía una cresta en la cabeza?",
+    "answers": ["Pteranodon", "Triceratops", "Estegosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "La cresta del Pteranodon lo ayudaba a mantener el equilibrio.",
+    "image": "pteranodon.png"
+  },
+  {
+    "id": "trex-5",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Qué dinosaurio tenía la mordida más fuerte?",
+    "answers": ["Tyrannosaurus Rex", "Spinosaurus", "Allosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Tyrannosaurus Rex tenía una fuerza de mordida de unos 5800 kilos.",
+    "image": "trex.png"
+  },
+  {
+    "id": "triceratops-5",
+    "dinosaur": "Triceratops",
+    "text": "¿Qué dinosaurio tenía un pico parecido al de un loro?",
+    "answers": ["Triceratops", "Pachycephalosaurus", "Protoceratops"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Triceratops usaba su pico para cortar plantas.",
+    "image": "triceratops.png"
+  },
+  {
+    "id": "estegosaurio-5",
+    "dinosaur": "Estegosaurio",
+    "text": "¿Qué dinosaurio tenía púas en la cola?",
+    "answers": ["Estegosaurio", "Ankylosaurus", "Kentrosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Estegosaurio podía balancear su cola con púas para defenderse.",
+    "image": "estegosaurio.png"
+  },
+  {
+    "id": "velociraptor-5",
+    "dinosaur": "Velociraptor",
+    "text": "¿Qué dinosaurio probablemente estaba cubierto de plumas?",
+    "answers": ["Velociraptor", "Tyrannosaurus Rex", "Braquiosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Velociraptor pudo haber usado sus plumas para mantener el calor o para exhibirse.",
+    "image": "velociraptor.png"
+  },
+  {
+    "id": "braquiosaurio-6",
+    "dinosaur": "Braquiosaurio",
+    "text": "¿Qué dinosaurio tenía las fosas nasales en la parte superior de la cabeza?",
+    "answers": ["Braquiosaurio", "Diplodocus", "Apatosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "Las fosas nasales altas del Braquiosaurio pudieron ayudarlo a respirar mientras comía.",
+    "image": "braquiosaurio.png"
+  },
+  {
+    "id": "pachycephalosaurus-1",
+    "dinosaur": "Pachycephalosaurus",
+    "text": "¿Qué dinosaurio tenía el cráneo más grueso?",
+    "answers": ["Pachycephalosaurus", "Triceratops", "Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El cráneo del Pachycephalosaurus podía tener hasta 25 centímetros de grosor.",
+    "image": "pachycephalosaurus.png"
+  },
+  {
+    "id": "therizinosaurus-1",
+    "dinosaur": "Therizinosaurus",
+    "text": "¿Qué dinosaurio tenía las garras más largas?",
+    "answers": ["Therizinosaurus", "Velociraptor", "Deinonychus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Therizinosaurus tenía garras de casi un metro de largo.",
+    "image": "therizinosaurus.png"
+  },
+  {
+    "id": "megalosaurus-1",
+    "dinosaur": "Megalosaurus",
+    "text": "¿Qué dinosaurio fue el primero en ser descubierto?",
+    "answers": ["Iguanodon", "Megalosaurus", "Hylaeosaurus"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Megalosaurus fue el primer dinosaurio descrito científicamente, en 1824.",
+    "image": "megalosaurus.png"
+  },
+  {
+    "id": "nigersaurus-1",
+    "dinosaur": "Nigersaurus",
+    "text": "¿Qué dinosaurio tenía más dientes?",
+    "answers": ["Nigersaurus", "Tyrannosaurus Rex", "Spinosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Nigersaurus tenía más de 500 dientes dispuestos en filas.",
+    "image": "nigersaurus.png"
+  },
+  {
+    "id": "spinosaurus-1",
+    "dinosaur": "Spinosaurus",
+    "text": "¿Qué dinosaurio tenía una vela en la espalda?",
+    "answers": ["Spinosaurus", "Estegosaurio", "Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "La gran vela del Spinosaurus pudo ayudar a regular su temperatura.",
+    "image": "spinosaurus.png"
+  },
+  {
+    "id": "spinosaurus-2",
+    "dinosaur": "Spinosaurus",
+    "text": "¿Qué dinosaurio se cree que era un buen nadador?",
+    "answers": ["Spinosaurus", "Tyrannosaurus Rex", "Triceratops"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Spinosaurus probablemente pasaba mucho tiempo cazando en el agua.",
+    "image": "spinosaurus.png"
+  },
+  {
+    "id": "trex-6",
+    "dinosaur": "Tyrannosaurus Rex",
+    "text": "¿Qué dinosaurio tenía brazos diminutos?",
+    "answers": ["Tyrannosaurus Rex", "Braquiosaurio", "Velociraptor"],
+    "correctAnswerIndex": 0,
+    "funFact": "Los brazos del Tyrannosaurus Rex eran cortos pero muy fuertes.",
+    "image": "trex.png"
+  },
+  {
+    "id": "parasaurolophus-1",
+    "dinosaur": "Parasaurolophus",
+    "text": "¿Qué dinosaurio tenía un pico parecido al de un pato?",
+    "answers": ["Parasaurolophus", "Triceratops", "Estegosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Parasaurolophus pudo haber usado su cresta para producir sonidos como una trompeta.",
+    "image": "parasaurolophus.png"
+  },
+  {
+    "id": "compsognathus-1",
+    "dinosaur": "Compsognathus",
+    "text": "¿Qué dinosaurio fue uno de los más pequeños?",
+    "answers": ["Compsognathus", "Braquiosaurio", "Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Compsognathus tenía aproximadamente el tamaño de una gallina.",
+    "image": "compsognathus.png"
+  },
+  {
+    "id": "troodon-1",
+    "dinosaur": "Troodon",
+    "text": "¿Qué dinosaurio tenía ojos grandes para cazar de noche?",
+    "answers": ["Troodon", "Tyrannosaurus Rex", "Triceratops"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Troodon es considerado uno de los dinosaurios más inteligentes.",
+    "image": "troodon.png"
+  },
+  {
+    "id": "diplodocus-1",
+    "dinosaur": "Diplodocus",
+    "text": "¿Qué dinosaurio tenía una cola larga como un látigo?",
+    "answers": ["Diplodocus", "Estegosaurio", "Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "La cola del Diplodocus podía medir más de 12 metros.",
+    "image": "diplodocus.png"
+  },
+  {
+    "id": "dilophosaurus-1",
+    "dinosaur": "Dilophosaurus",
+    "text": "¿Qué dinosaurio tenía una cresta llamativa en la cabeza para exhibirse?",
+    "answers": ["Dilophosaurus", "Velociraptor", "Braquiosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Dilophosaurus tenía dos crestas delgadas en la parte superior de la cabeza.",
+    "image": "dilophosaurus.png"
+  },
+  {
+    "id": "deinonychus-1",
+    "dinosaur": "Deinonychus",
+    "text": "¿Qué dinosaurio tenía una garra afilada en cada pie?",
+    "answers": ["Deinonychus", "Triceratops", "Estegosaurio"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Deinonychus usaba su gran garra curva para sujetar a sus presas.",
+    "image": "deinonychus.png"
+  },
+  {
+    "id": "styracosaurus-1",
+    "dinosaur": "Styracosaurus",
+    "text": "¿Qué dinosaurio tenía púas óseas alrededor de su gola?",
+    "answers": ["Styracosaurus", "Ankylosaurus", "Velociraptor"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Styracosaurus tenía largos cuernos en el borde de su gola.",
+    "image": "styracosaurus.png"
+  },
+  {
+    "id": "giganotosaurus-1",
+    "dinosaur": "Giganotosaurus",
+    "text": "¿Qué dinosaurio era un enorme carnívoro de Sudamérica?",
+    "answers": ["Giganotosaurus", "Braquiosaurio", "Triceratops"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Giganotosaurus era incluso más largo que el Tyrannosaurus Rex.",
+    "image": "giganotosaurus.png"
   }
 ]
