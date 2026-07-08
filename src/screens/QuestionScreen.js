@@ -1,12 +1,19 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen (TRIOFSND-77): renders one question, and on tap
- * highlights the correct option in green with a thick border, plays a happy
- * animation on a hit, and — on a miss — only marks the picked option with a
- * neutral color (no red, no negative copy) while still revealing the
- * correct one. Score only ever goes up (see src/game/scoring.js): a miss
- * never subtracts (AC-7).
+ * Pregunta/Feedback screen: shows one question with its options and, once
+ * the child taps an answer, the feedback for that answer.
+ *
+ * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
+ * penalized — the score keeps whatever value it already had (+0), via
+ * `applyAnswerToScore` in src/game/scoring.js. The correct option is always
+ * highlighted with the same "acierto" style (`CORRECT_CLASS`, thick green
+ * border) whether the child got it right or not; the wrong pick itself only
+ * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
+ * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
+ * outcomes then reveal the same fun fact and "Siguiente" control, so the
+ * flow to the next question is identical whether the answer was right or
+ * wrong.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
@@ -57,6 +64,11 @@ function renderQuestionScreen(container, question, options = {}) {
   prompt.className = 'question-screen__prompt';
   prompt.textContent = question.question;
 
+  const scoreEl = document.createElement('p');
+  scoreEl.className = 'question-screen__score';
+  scoreEl.setAttribute('aria-live', 'polite');
+  scoreEl.textContent = `${strings.scoreLabel}: ${score}`;
+
   const optionsGroup = document.createElement('div');
   optionsGroup.className = 'question-screen__options';
   optionsGroup.setAttribute('role', 'group');
@@ -65,6 +77,22 @@ function renderQuestionScreen(container, question, options = {}) {
   const feedback = document.createElement('p');
   feedback.className = 'question-screen__feedback';
   feedback.setAttribute('aria-live', 'polite');
+
+  const funFactHeading = document.createElement('h3');
+  funFactHeading.className = 'question-screen__fun-fact-heading';
+  funFactHeading.textContent = strings.funFactHeading;
+  funFactHeading.hidden = true;
+
+  const funFact = document.createElement('p');
+  funFact.className = 'question-screen__fun-fact';
+  funFact.setAttribute('aria-live', 'polite');
+  funFact.hidden = true;
+
+  const nextButton = document.createElement('button');
+  nextButton.type = 'button';
+  nextButton.className = 'question-screen__next-button';
+  nextButton.textContent = strings.nextButton;
+  nextButton.hidden = true;
 
   const optionButtons = question.options.map((optionText, index) => {
     const button = document.createElement('button');
@@ -81,6 +109,7 @@ function renderQuestionScreen(container, question, options = {}) {
     answered = true;
 
     const correct = isAnswerCorrect(question, selectedIndex);
+    const previousScore = score;
     score = applyAnswerToScore(score, correct);
 
     optionButtons.forEach((button, index) => {
@@ -97,10 +126,18 @@ function renderQuestionScreen(container, question, options = {}) {
     });
 
     feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
+    scoreEl.textContent = `${strings.scoreLabel}: ${score}`;
+
+    funFactHeading.hidden = false;
+    funFact.textContent = question.funFact;
+    funFact.hidden = false;
+
+    nextButton.hidden = false;
 
     if (onAnswer) {
       onAnswer({
         isCorrect: correct,
+        scoreDelta: score - previousScore,
         score,
         selectedIndex,
         correctIndex: question.correctAnswerIndex,
@@ -108,17 +145,31 @@ function renderQuestionScreen(container, question, options = {}) {
     }
   }
 
+  nextButton.addEventListener('click', () => {
+    if (typeof options.onNext === 'function') {
+      options.onNext(score);
+    }
+  });
+
   root.appendChild(prompt);
+  root.appendChild(scoreEl);
   root.appendChild(optionsGroup);
   root.appendChild(feedback);
+  root.appendChild(funFactHeading);
+  root.appendChild(funFact);
+  root.appendChild(nextButton);
   container.appendChild(root);
 
   warmUpFeedbackAnimation();
 
   return {
     root,
+    prompt,
+    scoreEl,
     optionButtons,
     feedback,
+    funFact,
+    nextButton,
     getScore: () => score,
     isAnswered: () => answered,
   };

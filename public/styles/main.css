@@ -20,12 +20,15 @@ body {
 }
 
 /*
- * Question screen — answer feedback states (TRIOFSND-77).
+ * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
  * Colors mirror src/theme/questionScreenColors.js, which contrast.test.js
  * checks against WCAG AA (≥4.5:1, PRD AC-13) — keep both in sync.
  * The correct state is deliberately the only colored one: a miss is shown
- * with a neutral gray, never red, per AC-7 (no negative feedback).
+ * with a neutral gray, never red, per AC-7 (no negative feedback). The same
+ * correct-answer style is reused as-is on a miss (TRIOFSND-88): it always
+ * highlights the correct option, never marks the option the child picked
+ * as "wrong".
  */
 .question-screen__options {
   display: grid;

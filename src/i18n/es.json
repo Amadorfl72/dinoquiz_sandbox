@@ -13,6 +13,9 @@
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento! La respuesta correcta es esta:"
-    }
+    },
+    "funFactHeading": "Dato curioso",
+    "scoreLabel": "Puntos",
+    "nextButton": "Siguiente"
   }
 }
