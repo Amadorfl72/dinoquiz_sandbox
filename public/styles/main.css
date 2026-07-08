@@ -130,3 +130,149 @@ body {
     padding: 12px 24px;
   }
 }
+
+/*
+ * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
+ *
+ * Colors mirror src/theme/questionScreenColors.js, which contrast.test.js
+ * checks against WCAG AA (≥4.5:1, PRD AC-13) — keep both in sync.
+ * The correct state is deliberately the only colored one: a miss is shown
+ * with a neutral gray, never red, per AC-7 (no negative feedback). The same
+ * correct-answer style is reused as-is on a miss (TRIOFSND-88): it always
+ * highlights the correct option, never marks the option the child picked
+ * as "wrong".
+ */
+.question-screen__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.question-screen__option {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 16px 20px;
+  font-size: 20px;
+  font-family: inherit;
+  border-radius: 16px;
+  border: 3px solid #1b5e20;
+  background-color: #ffffff;
+  color: #1b5e20;
+  cursor: pointer;
+}
+
+.question-screen__option:disabled {
+  cursor: default;
+}
+
+.question-screen__option--correct {
+  border-width: 6px;
+  border-color: #1b5e20;
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.question-screen__option--neutral {
+  border-color: #607d8b;
+  background-color: #cfd8dc;
+  color: #263238;
+}
+
+.question-screen__option--celebrate {
+  animation: question-screen-celebrate 0.4s ease-in-out;
+}
+
+@keyframes question-screen-celebrate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question-screen__option--celebrate {
+    animation: none;
+  }
+}
+
+/* Visually hides content while keeping it available to screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.results-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 480px;
+}
+
+.results-screen__heading {
+  font-size: 32px;
+  margin: 0;
+}
+
+.results-screen__score {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.results-screen__stars {
+  font-size: 40px;
+  color: #f9a825;
+  letter-spacing: 4px;
+}
+
+.results-screen__message {
+  font-size: 20px;
+  margin: 0;
+}
+
+.results-screen__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.results-screen__play-again-button,
+.results-screen__exit-button {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 20px;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.results-screen__play-again-button {
+  background-color: #2e7d32;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 24px;
+  padding: 16px 40px;
+}
+
+.results-screen__exit-button {
+  background-color: transparent;
+  color: #1b5e20;
+  border: 2px solid #1b5e20;
+}

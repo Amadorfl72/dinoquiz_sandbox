@@ -28,14 +28,20 @@ Cada pregunta sigue este esquema:
   "question": "...",            // enunciado
   "options": ["...", "..."],    // 3-4 opciones de respuesta
   "correctAnswerIndex": 0,      // índice de la opción correcta
-  "funFact": "...",             // dato curioso mostrado tras responder
+  "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
+                                 // mostrado tras responder; el texto nunca va hardcodeado aquí
   "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
 }
 ```
 
 `loadQuestionBank()` lee el JSON y valida el esquema de cada pregunta (opciones, índice de
-respuesta correcta, ids únicos, etc.). El banco cubre los 7 dinosaurios con al menos 3-4
-preguntas cada uno.
+respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
+recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
+cada una de esas preguntas tiene su propio dato curioso.
+
+El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
+`funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
+resto de textos de la UI.
 
 ## Pantalla de Inicio
 
@@ -72,3 +78,50 @@ menos de 2 segundos.
 Todos los textos se gestionan desde el recurso i18n en [`public/i18n/es.json`](public/i18n/es.json)
 (cargado en Node a través de [`src/i18n/index.js`](src/i18n/index.js), y en el navegador con
 `fetch` desde `main.js`); v1 solo expone el locale `es`.
+
+## Pantalla de Pregunta/Feedback
+
+[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) renderiza una pregunta y,
+al pulsar una opción, aplica el feedback visual y el scoring (TRIOFSND-77):
+
+- La opción correcta siempre se resalta en verde con borde grueso
+  (`question-screen__option--correct`), acierte o falle el niño.
+- Si acierta, además reproduce una animación alegre (`question-screen__option--celebrate`,
+  ver `public/styles/main.css`) y suma +1 punto vía
+  [`src/game/scoring.js`](src/game/scoring.js).
+- Si falla, la opción elegida se marca en un color neutro
+  (`question-screen__option--neutral`, sin rojo ni lenguaje negativo) y no se descuenta ni
+  se suma ningún punto — `applyAnswerToScore` nunca resta.
+- Todas las opciones quedan deshabilitadas tras responder, evitando un segundo toque que
+  altere la puntuación.
+
+Rendimiento (AC-5, feedback en <300ms): las clases de feedback se aplican de forma síncrona
+dentro del propio manejador de clic (sin `setTimeout` ni trabajo asíncrono) y la única
+animación es un `@keyframes` CSS que solo anima `transform` (compositor, sin reflow).
+`warmUpFeedbackAnimation()` resuelve ese keyframe una vez, fuera de pantalla, justo al montar
+la pregunta, para que el primer toque real del niño no pague ese coste.
+
+Los tokens de color de cada estado (normal/correcto/neutro) viven en
+[`src/theme/questionScreenColors.js`](src/theme/questionScreenColors.js) y
+[`src/theme/contrast.js`](src/theme/contrast.js) los valida contra el umbral WCAG AA
+(≥4.5:1, AC-13) en `src/theme/contrast.test.js`, en sincronía con las reglas de
+`public/styles/main.css`.
+
+## Pantalla de Resultados
+
+[`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js) renderiza la pantalla de
+Resultados al terminar una partida: puntuación (`X/10`), estrellas por tramos
+(0-3 → 1 estrella, 4-6 → 2 estrellas, 7-10 → 3 estrellas, ver `calculateStars`), un mensaje
+motivador siempre positivo elegido al azar entre `results.messages` (`es.json`), un botón
+prominente "Volver a jugar" y un botón secundario opcional "Salir".
+
+`validateMotivationalMessages` actúa como guardarraíl de contenido: comprueba que ningún
+mensaje contenga lenguaje negativo (comparando palabras completas, sin acentos, contra una
+lista de términos prohibidos) para que la guía de contenido se cumpla también en tiempo de
+test, no solo por revisión manual.
+
+Accesibilidad: además de los elementos visibles (puntuación, estrellas con
+`role="img"`/`aria-label`, mensaje), la pantalla incluye una región `role="status"` con
+`aria-live="polite"` (oculta visualmente con `.sr-only`) que anuncia la puntuación, las
+estrellas y el mensaje como una sola frase a los lectores de pantalla. Los botones cumplen
+el área táctil mínima de 48x48dp y el contraste de texto respeta WCAG AA.
