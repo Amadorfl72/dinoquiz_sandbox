@@ -7,6 +7,14 @@
  * illustration and '¡Jugar!' button are actually visible on load (see
  * public/scripts/homeScreen.js, loaded before this file in index.html).
  *
+ * A minimal hash router (no bundler, no server-side rewrites needed — works
+ * offline behind the service worker) switches #app between Home and the
+ * Privacy policy screen (public/scripts/privacyPolicyScreen.js, TRIOFSND-116):
+ * the Home privacy icon sets `location.hash` to `PRIVACY_POLICY_HASH`, the
+ * policy screen's back button clears it, and a single `hashchange` listener
+ * re-renders the matching screen either way — so opening the policy from
+ * Home is exactly one tap, and coming back is exactly one tap.
+ *
  * Beyond Home, this file is also the app shell's navigator: it drives the
  * closed Inicio -> Quiz -> Resultados -> Volver a jugar/Salir loop described
  * by the PRD (main_workflow steps 6-7). `startNewGame` resets the game state
@@ -26,8 +34,14 @@
  * `resolveGameFlow` and `loadQuestions` therefore read from `window.DinoQuiz`
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
+ *
+ * `registerServiceWorker`/`loadHomeStrings`/`renderHome`/`renderRoute` accept
+ * explicit overrides so each is unit-testable under Node without touching the
+ * global `navigator`/`document`/`fetch`/`location`.
  */
 (function () {
+  var PRIVACY_POLICY_HASH = '#/privacidad';
+
   function resolveScreenRenderers(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
     var fromWindow = (win && win.DinoQuiz && win.DinoQuiz.screens) || {};
@@ -203,7 +217,7 @@
     });
   }
 
-  function loadHomeStrings(fetchFn, resourcePath) {
+  function fetchI18nResource(fetchFn, resourcePath) {
     fetchFn = fetchFn || (typeof fetch === 'function' ? fetch : undefined);
     resourcePath = resourcePath || '/i18n/es.json';
 
@@ -212,16 +226,44 @@
     }
 
     return fetchJson(fetchFn, resourcePath)
-      .then(function (data) {
-        return data.home;
-      })
       .catch(function (error) {
         console.error('DinoQuiz: failed to load the i18n resource', error);
         return null;
       });
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn) {
+  function loadHomeStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.home;
+    });
+  }
+
+  function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.privacyPolicy;
+    });
+  }
+
+  function navigateToPrivacyPolicy(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = PRIVACY_POLICY_HASH;
+    }
+  }
+
+  function navigateHome(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = '';
+    }
+  }
+
+  function isPrivacyPolicyRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === PRIVACY_POLICY_HASH;
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -240,7 +282,11 @@
     }
 
     return loadHomeStrings(fetchFn).then(function (strings) {
-      var homeApi = renderHomeScreen(container, strings ? { strings: strings } : {});
+      var options = strings ? { strings: strings } : {};
+      if (typeof onOpenPrivacyPolicy === 'function') {
+        options.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
+      }
+      var homeApi = renderHomeScreen(container, options);
 
       // Wire '¡Jugar!' to start a game without changing renderHomeScreen's
       // contract/props (it stays a plain, option-less strings renderer);
@@ -256,6 +302,45 @@
       }
 
       return homeApi;
+    });
+  }
+
+  function renderPrivacyPolicy(doc, renderPrivacyPolicyScreen, fetchFn, onBack) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderPrivacyPolicyScreen =
+      renderPrivacyPolicyScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderPrivacyPolicyScreen);
+
+    if (!doc || typeof renderPrivacyPolicyScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return loadPrivacyPolicyStrings(fetchFn).then(function (strings) {
+      var options = strings ? { strings: strings } : {};
+      if (typeof onBack === 'function') {
+        options.onBack = onBack;
+      }
+      return renderPrivacyPolicyScreen(container, options);
+    });
+  }
+
+  function renderRoute(doc, fetchFn, loc) {
+    if (isPrivacyPolicyRoute(loc)) {
+      return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
+        navigateHome(loc);
+      });
+    }
+
+    return renderHome(doc, undefined, fetchFn, function () {
+      navigateToPrivacyPolicy(loc);
     });
   }
 
@@ -296,15 +381,27 @@
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('load', function () {
       registerServiceWorker();
-      bootstrapBrowserApp();
+      bootstrapBrowserApp().then(function () {
+        renderRoute();
+      });
+    });
+    window.addEventListener('hashchange', function () {
+      renderRoute();
     });
   }
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+      PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
       loadHomeStrings: loadHomeStrings,
+      loadPrivacyPolicyStrings: loadPrivacyPolicyStrings,
+      navigateToPrivacyPolicy: navigateToPrivacyPolicy,
+      navigateHome: navigateHome,
+      isPrivacyPolicyRoute: isPrivacyPolicyRoute,
       renderHome: renderHome,
+      renderPrivacyPolicy: renderPrivacyPolicy,
+      renderRoute: renderRoute,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,

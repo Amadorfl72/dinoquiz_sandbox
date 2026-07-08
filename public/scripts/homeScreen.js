@@ -23,6 +23,11 @@
  * reading/interaction flow) so assistive tech can reach it without a child
  * needing to interact with it first — it is never focused programmatically
  * and never sits between the title and the play button in tab order.
+ *
+ * The privacy policy icon button (TRIOFSND-116) opens the privacy policy
+ * view (public/scripts/privacyPolicyScreen.js) in a single tap — it is a
+ * plain button with a descriptive `aria-label`/`title` from the i18n
+ * resource (no icon-only, unlabeled control), reachable from Home in <2 taps.
  */
 
 (function () {
@@ -64,6 +69,23 @@
     playButton.className = 'home-screen__play-button';
     playButton.textContent = strings.playButton;
 
+    var privacyPolicyButton = document.createElement('button');
+    privacyPolicyButton.type = 'button';
+    privacyPolicyButton.className = 'home-screen__privacy-button';
+    privacyPolicyButton.setAttribute('aria-label', strings.privacyPolicyIconLabel);
+    privacyPolicyButton.title = strings.privacyPolicyIconHint;
+    var privacyPolicyIcon = document.createElement('span');
+    privacyPolicyIcon.setAttribute('aria-hidden', 'true');
+    privacyPolicyIcon.textContent = '🔒';
+    var privacyPolicyLabel = document.createElement('span');
+    privacyPolicyLabel.className = 'home-screen__privacy-button-label';
+    privacyPolicyLabel.textContent = strings.privacyPolicyIconLabel;
+    privacyPolicyButton.appendChild(privacyPolicyIcon);
+    privacyPolicyButton.appendChild(privacyPolicyLabel);
+    if (typeof options.onOpenPrivacyPolicy === 'function') {
+      privacyPolicyButton.addEventListener('click', options.onOpenPrivacyPolicy);
+    }
+
     var parentalNotice = document.createElement('p');
     parentalNotice.className = 'home-screen__parental-notice';
     parentalNotice.setAttribute('role', 'note');
@@ -73,10 +95,18 @@
     root.appendChild(title);
     root.appendChild(mascot);
     root.appendChild(playButton);
+    root.appendChild(privacyPolicyButton);
     root.appendChild(parentalNotice);
     container.appendChild(root);
 
-    return { root: root, title: title, mascot: mascot, playButton: playButton, parentalNotice: parentalNotice };
+    return {
+      root: root,
+      title: title,
+      mascot: mascot,
+      playButton: playButton,
+      privacyPolicyButton: privacyPolicyButton,
+      parentalNotice: parentalNotice,
+    };
   }
 
   if (typeof module !== 'undefined' && module.exports) {

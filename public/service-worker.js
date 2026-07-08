@@ -26,6 +26,7 @@ const PRECACHE_URLS = [
   '/scripts/scoring.js',
   '/scripts/gameFlow.js',
   '/scripts/homeScreen.js',
+  '/scripts/privacyPolicyScreen.js',
   '/scripts/questionScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/main.js',

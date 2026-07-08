@@ -7,7 +7,70 @@
     "parentalNotice": {
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
-    }
+    },
+    "privacyPolicyIconLabel": "Política de privacidad",
+    "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
+  },
+  "privacyPolicy": {
+    "screenTitle": "Política de privacidad",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "updatedAt": "Última actualización: julio de 2026",
+    "kidsCallout": {
+      "heading": "Para ti, peque 🦖",
+      "body": "DinoQuiz no te pregunta tu nombre, ni tu foto, ni dónde vives. Solo guardamos en este aparato tu mejor puntuación y los datos curiosos que ya descubriste, para que los veas la próxima vez que juegues."
+    },
+    "sections": [
+      {
+        "id": "que-datos",
+        "heading": "¿Qué información usamos?",
+        "paragraphs": [
+          "DinoQuiz no pide ni guarda datos personales de niñas y niños: no hay registro, no hay nombre, no hay foto, no hay ubicación ni contactos.",
+          "Todo lo que necesita la app para jugar (preguntas, imágenes, sonidos) viene ya incluido y funciona sin conexión a internet.",
+          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos y si el sonido está silenciado. Esta información nunca sale del dispositivo.",
+          "De forma anónima y agregada podemos recibir información técnica como el modelo del dispositivo, la versión del sistema, el idioma o el tamaño de pantalla, y estadísticas de uso (por ejemplo, si una partida se completó). Estos datos no permiten identificar a ninguna persona."
+        ]
+      },
+      {
+        "id": "para-que",
+        "heading": "¿Para qué usamos esta información?",
+        "paragraphs": [
+          "Usamos las estadísticas anónimas y agregadas únicamente para mejorar la aplicación: saber si las partidas se completan, si alguna pregunta es demasiado difícil, o si hay algún fallo técnico (crash) que debamos corregir.",
+          "Nunca usamos esta información para mostrar publicidad personalizada ni para elaborar perfiles de niñas o niños."
+        ]
+      },
+      {
+        "id": "terceros",
+        "heading": "¿Compartimos información con terceros?",
+        "paragraphs": [
+          "No vendemos ni compartimos datos personales con terceros porque no los recopilamos.",
+          "Si en algún momento se muestran anuncios o se ofrece una compra dentro de la app, estos servicios no reciben datos personales de niñas o niños y no incluyen publicidad personalizada ni de seguimiento individual."
+        ]
+      },
+      {
+        "id": "derechos",
+        "heading": "Tus derechos (y los de tu hija o hijo)",
+        "paragraphs": [
+          "Como no recogemos datos personales, no existe un perfil que consultar, corregir o eliminar en nuestros sistemas.",
+          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador.",
+          "Si tienes cualquier duda sobre privacidad, o crees que en algún momento se ha recogido un dato que no debería, puedes ejercer tus derechos de acceso, rectificación, supresión, oposición y portabilidad escribiéndonos a la dirección de contacto indicada más abajo."
+        ]
+      },
+      {
+        "id": "responsable",
+        "heading": "¿Quién es el responsable?",
+        "paragraphs": [
+          "El responsable del tratamiento de la información descrita en esta política es el equipo de DinoQuiz.",
+          "Puedes contactarnos por correo electrónico en privacidad@dinoquiz-app.com para cualquier consulta relacionada con la privacidad de la aplicación."
+        ]
+      },
+      {
+        "id": "cambios",
+        "heading": "Cambios en esta política",
+        "paragraphs": [
+          "Si esta política cambia, lo indicaremos actualizando la fecha de esta página. Te recomendamos consultarla de vez en cuando junto a tu hija o hijo."
+        ]
+      }
+    ]
   },
   "results": {
     "heading": "¡Resultados!",

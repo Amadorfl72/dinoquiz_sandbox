@@ -45,3 +45,17 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe('privacy policy screen color tokens (PRD AC-13, TRIOFSND-116)', () => {
+  test('the home privacy icon (green text on white) meets AA', () => {
+    expect(contrastRatio('#1b5e20', '#ffffff')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the "Volver" back button (white text on green fill) meets AA', () => {
+    expect(contrastRatio('#ffffff', '#2e7d32')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the screen body text (green on the app cream background) meets AA', () => {
+    expect(contrastRatio('#1b5e20', '#fff8e1')).toBeGreaterThanOrEqual(4.5);
+  });
+});
