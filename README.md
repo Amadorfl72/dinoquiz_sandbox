@@ -57,11 +57,14 @@ AC-8) con un mensaje motivador siempre positivo, el botón principal "Volver a j
 (altura mínima 64dp, área táctil ≥48x48dp y texto ≥24sp, per AC-2/AC-23) y el botón
 secundario "Salir".
 
-El componente no posee el estado de partida ni la navegación: al pulsar cada botón invoca
-los callbacks `onPlayAgain`/`onExit` que le pasa quien lo integre (el motor de juego /
-router), que son responsables de reiniciar el estado de partida (puntuación, índice de
-pregunta, respuestas) y navegar a la primera pregunta o a Inicio respectivamente. Esto
-mantiene la pantalla testeable de forma aislada, con `role="img"` y `aria-label` en las
-estrellas para TalkBack/VoiceOver y contraste WCAG AA (`#ffffff` sobre `#2e7d32` ~5.1:1;
-`#1b5e20` sobre `#fff8e1` ~7.4:1). Los textos viven en `results` dentro de
-[`src/i18n/es.json`](src/i18n/es.json).
+Al pulsar "Volver a jugar" la pantalla llama a `resetGameState()`
+([`src/game/gameState.js`](src/game/gameState.js)), que reinicia puntuación, índice de
+pregunta y respuestas, y a `navigateTo(SCREENS.QUESTION)`
+([`src/navigation/navigator.js`](src/navigation/navigator.js)) para ir a la primera
+pregunta de la nueva partida; al pulsar "Salir" navega a `SCREENS.HOME`. En ambos casos,
+tras disparar ese reinicio/navegación real, se invoca el callback opcional
+`onPlayAgain`/`onExit` que le pase quien integre la pantalla (por ejemplo para además
+sustituir la pantalla renderizada en el DOM). Esto mantiene la pantalla testeable de forma
+aislada, con `role="img"` y `aria-label` en las estrellas para TalkBack/VoiceOver y
+contraste WCAG AA (`#ffffff` sobre `#2e7d32` ~5.1:1; `#1b5e20` sobre `#fff8e1` ~7.4:1). Los
+textos viven en `results` dentro de [`src/i18n/es.json`](src/i18n/es.json).

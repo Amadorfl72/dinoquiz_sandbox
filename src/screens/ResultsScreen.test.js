@@ -5,6 +5,8 @@ const { getByRole, getByText } = require('@testing-library/dom');
 
 const { renderResultsScreen, getStarCount, getMessageTier } = require('./ResultsScreen');
 const { results: strings } = require('../i18n/es.json');
+const { getGameState, resetGameState, recordAnswer } = require('../game/gameState');
+const { SCREENS, getCurrentScreen, navigateTo } = require('../navigation/navigator');
 
 describe('ResultsScreen', () => {
   let container;
@@ -38,7 +40,7 @@ describe('ResultsScreen', () => {
     expect(exitButton).toHaveClass('results-screen__exit-button');
   });
 
-  test('clicking "Volver a jugar" invokes onPlayAgain so the caller can reset game state and navigate to question 1', () => {
+  test('clicking "Volver a jugar" invokes onPlayAgain so the caller can further react to the reset', () => {
     const onPlayAgain = jest.fn();
     const { playAgainButton } = renderResultsScreen(container, { onPlayAgain });
 
@@ -47,13 +49,37 @@ describe('ResultsScreen', () => {
     expect(onPlayAgain).toHaveBeenCalledTimes(1);
   });
 
-  test('clicking "Salir" invokes onExit so the caller can navigate back to Home', () => {
+  test('clicking "Volver a jugar" resets the game state (score, question index, answers) and navigates to the first question', () => {
+    navigateTo(SCREENS.RESULTS);
+    resetGameState();
+    recordAnswer(true);
+    recordAnswer(false);
+    recordAnswer(true);
+    expect(getGameState()).toEqual({ score: 2, questionIndex: 3, answers: expect.any(Array) });
+
+    const { playAgainButton } = renderResultsScreen(container, { score: 2 });
+    playAgainButton.click();
+
+    expect(getGameState()).toEqual({ score: 0, questionIndex: 0, answers: [] });
+    expect(getCurrentScreen()).toBe(SCREENS.QUESTION);
+  });
+
+  test('clicking "Salir" invokes onExit so the caller can further react to the navigation', () => {
     const onExit = jest.fn();
     const { exitButton } = renderResultsScreen(container, { onExit });
 
     exitButton.click();
 
     expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  test('clicking "Salir" navigates to the Home screen', () => {
+    navigateTo(SCREENS.RESULTS);
+
+    const { exitButton } = renderResultsScreen(container);
+    exitButton.click();
+
+    expect(getCurrentScreen()).toBe(SCREENS.HOME);
   });
 
   test('does not throw when no callbacks are supplied', () => {

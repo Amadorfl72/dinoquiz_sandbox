@@ -6,11 +6,12 @@
  * secondary "Salir" action. All copy comes from the i18n resource (see
  * src/i18n) — no hardcoded strings here, per AC-15.
  *
- * This screen does not own game/navigation state: it only renders and, on
- * click, invokes the `onPlayAgain`/`onExit` callbacks supplied by the
- * caller, which is the one wiring in the actual game-reset and
- * screen-navigation logic. That keeps this component independently
- * testable and free of dependencies on a router or game engine.
+ * "Volver a jugar" resets the game state (score, question index, answers)
+ * via `resetGameState()` and navigates to the first question via
+ * `navigateTo(SCREENS.QUESTION)` before calling the optional `onPlayAgain`
+ * callback (used by the caller to actually swap the rendered screen).
+ * "Salir" navigates to the home screen before calling the optional
+ * `onExit` callback.
  *
  * Stars follow the AC-8 tramos: 0-3 -> 1 star, 4-6 -> 2 stars, 7-10 -> 3
  * stars. The star count and message tier are keyed off the raw score, not
@@ -18,6 +19,8 @@
  */
 
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
+const { resetGameState } = require('../game/gameState');
+const { SCREENS, navigateTo } = require('../navigation/navigator');
 
 const DEFAULT_TOTAL_QUESTIONS = 10;
 const LOW_SCORE_MAX = 3;
@@ -85,13 +88,20 @@ function renderResultsScreen(container, options = {}) {
   playAgainButton.type = 'button';
   playAgainButton.className = 'results-screen__play-again-button';
   playAgainButton.textContent = strings.playAgainButton;
-  playAgainButton.addEventListener('click', onPlayAgain);
+  playAgainButton.addEventListener('click', () => {
+    resetGameState();
+    navigateTo(SCREENS.QUESTION);
+    onPlayAgain();
+  });
 
   const exitButton = document.createElement('button');
   exitButton.type = 'button';
   exitButton.className = 'results-screen__exit-button';
   exitButton.textContent = strings.exitButton;
-  exitButton.addEventListener('click', onExit);
+  exitButton.addEventListener('click', () => {
+    navigateTo(SCREENS.HOME);
+    onExit();
+  });
 
   root.appendChild(title);
   root.appendChild(scoreText);
