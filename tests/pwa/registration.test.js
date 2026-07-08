@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+require('@testing-library/jest-dom');
+
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const INDEX_PATH = path.resolve(__dirname, '../../public/index.html');
 
@@ -62,38 +64,42 @@ describe('TRIOFSND-110: service worker registration', () => {
 });
 
 describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
-  test('loadHomeStrings fetches the i18n resource and returns the home strings', async () => {
-    const { loadHomeStrings } = require(MAIN_JS_PATH);
+  test('loadHomeResources fetches the i18n resource and returns the home, privacy and purchase sections', async () => {
+    const { loadHomeResources } = require(MAIN_JS_PATH);
     const homeStrings = { title: 'DinoQuiz' };
+    const privacyStrings = { heading: 'Política de privacidad' };
+    const purchaseStrings = { heading: 'Eliminar anuncios' };
     const fetchFn = jest.fn().mockResolvedValue({
-      json: () => Promise.resolve({ home: homeStrings }),
+      json: () => Promise.resolve({ home: homeStrings, privacy: privacyStrings, purchase: purchaseStrings }),
     });
 
-    const result = await loadHomeStrings(fetchFn, '/i18n/es.json');
+    const result = await loadHomeResources(fetchFn, '/i18n/es.json');
 
     expect(fetchFn).toHaveBeenCalledWith('/i18n/es.json');
-    expect(result).toBe(homeStrings);
+    expect(result).toEqual({ home: homeStrings, privacy: privacyStrings, purchase: purchaseStrings });
   });
 
-  test('loadHomeStrings resolves to null and logs when the fetch fails', async () => {
-    const { loadHomeStrings } = require(MAIN_JS_PATH);
+  test('loadHomeResources resolves to null and logs when the fetch fails', async () => {
+    const { loadHomeResources } = require(MAIN_JS_PATH);
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const fetchFn = jest.fn().mockRejectedValue(new Error('offline'));
 
-    const result = await loadHomeStrings(fetchFn);
+    const result = await loadHomeResources(fetchFn);
 
     expect(result).toBeNull();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  test('renderHome renders into #app using the fetched strings and the persisted mute state', async () => {
+  test('renderHome renders into #app using the fetched strings, privacy/purchase sections and the persisted mute state', async () => {
     const { renderHome, MUTE_STORAGE_KEY } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
     const renderHomeScreen = jest.fn();
     const homeStrings = { title: 'DinoQuiz' };
+    const privacyStrings = { heading: 'Política de privacidad' };
+    const purchaseStrings = { heading: 'Eliminar anuncios' };
     const fetchFn = jest.fn().mockResolvedValue({
-      json: () => Promise.resolve({ home: homeStrings }),
+      json: () => Promise.resolve({ home: homeStrings, privacy: privacyStrings, purchase: purchaseStrings }),
     });
     const storageObj = { getItem: jest.fn().mockReturnValue('true'), setItem: jest.fn() };
 
@@ -103,7 +109,13 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     expect(storageObj.getItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY);
     expect(renderHomeScreen).toHaveBeenCalledWith(
       { id: 'app' },
-      expect.objectContaining({ strings: homeStrings, muted: true, onToggleMute: expect.any(Function) })
+      expect.objectContaining({
+        strings: homeStrings,
+        privacyStrings: privacyStrings,
+        purchaseStrings: purchaseStrings,
+        muted: true,
+        onToggleMute: expect.any(Function),
+      })
     );
   });
 
@@ -131,6 +143,37 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
 
     expect(result).toBeNull();
     expect(renderHomeScreen).not.toHaveBeenCalled();
+  });
+});
+
+describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the browser has no require() for', () => {
+  test('the real homeScreen renderer builds the privacy and purchase panels from the sections renderHome fetched, without relying on require()', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
+
+    const { getByRole, fireEvent } = require('@testing-library/dom');
+    const privacyButton = getByRole(container, 'button', { name: home.globalControls.privacyButton });
+    fireEvent.click(privacyButton);
+    expect(container).toHaveTextContent(privacy.heading);
+    expect(container).toHaveTextContent(privacy.intro);
+
+    const purchaseButton = getByRole(container, 'button', { name: home.globalControls.purchaseButton });
+    fireEvent.click(purchaseButton);
+    expect(container).toHaveTextContent(purchase.heading);
+    expect(container).toHaveTextContent(purchase.priceLabel);
+
+    container.remove();
   });
 });
 

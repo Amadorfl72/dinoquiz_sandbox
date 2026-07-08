@@ -7,7 +7,7 @@
  * illustration and '¡Jugar!' button are actually visible on load (see
  * public/scripts/homeScreen.js, loaded before this file in index.html).
  *
- * `registerServiceWorker`/`loadHomeStrings`/`renderHome` accept explicit
+ * `registerServiceWorker`/`loadHomeResources`/`renderHome` accept explicit
  * overrides so each is unit-testable under Node without touching the
  * global `navigator`/`document`/`fetch`.
  *
@@ -21,6 +21,16 @@
  * `localStorage` directly -- sufficient for a single boolean preference --
  * degrading to an in-memory default (unmuted) if `localStorage` throws
  * (e.g. Safari private mode).
+ *
+ * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
+ * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
+ * `require('../../src/i18n')`, but that CommonJS path only exists under
+ * Jest -- browsers loading this as a plain `<script>` have no `require`.
+ * So `loadHomeResources` below fetches the whole `/i18n/es.json` document
+ * once and `renderHome` forwards its `home`, `privacy` and `purchase`
+ * sections as `options.strings`/`options.privacyStrings`/
+ * `options.purchaseStrings`, giving the browser path the same pre-resolved
+ * strings the Node/Jest path gets via `require`.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -71,7 +81,7 @@
       });
   }
 
-  function loadHomeStrings(fetchFn, resourcePath) {
+  function loadHomeResources(fetchFn, resourcePath) {
     fetchFn = fetchFn || (typeof fetch === 'function' ? fetch : undefined);
     resourcePath = resourcePath || '/i18n/es.json';
 
@@ -84,7 +94,7 @@
         return response.json();
       })
       .then(function (data) {
-        return data.home;
+        return { home: data.home, privacy: data.privacy, purchase: data.purchase };
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to load the i18n resource', error);
@@ -110,8 +120,10 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeStrings(fetchFn).then(function (strings) {
-      var options = strings ? { strings: strings } : {};
+    return loadHomeResources(fetchFn).then(function (resources) {
+      var options = resources
+        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        : {};
       options.muted = loadMutedState(storageObj);
       options.onToggleMute = function (muted) {
         persistMutedState(muted, storageObj);
@@ -130,7 +142,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       registerServiceWorker: registerServiceWorker,
-      loadHomeStrings: loadHomeStrings,
+      loadHomeResources: loadHomeResources,
       renderHome: renderHome,
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
