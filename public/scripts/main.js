@@ -10,19 +10,22 @@
  * Beyond Home, this file is also the app shell's navigator: it drives the
  * closed Inicio -> Quiz -> Resultados -> Volver a jugar/Salir loop described
  * by the PRD (main_workflow steps 6-7). `startNewGame` resets the game state
- * (score/questionIndex/answers, see src/game/gameFlow.js) and walks the
+ * (score/questionIndex/answers, see public/scripts/gameFlow.js) and walks the
  * player through the selected questions one at a time via
- * src/screens/QuestionScreen.js; once the last question is answered it shows
- * src/screens/ResultsScreen.js, whose 'Volver a jugar' calls back into
- * `startNewGame` (fresh state + a new random subset of questions, AC-9) and
- * whose 'Salir' calls `renderHome` again.
+ * public/scripts/questionScreen.js; once the last question is answered it
+ * shows public/scripts/resultsScreen.js, whose 'Volver a jugar' calls back
+ * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
+ * and whose 'Salir' calls `renderHome` again.
  *
- * `registerServiceWorker`/`loadHomeStrings`/`renderHome` accept explicit
- * overrides so each is unit-testable under Node without touching the
- * global `navigator`/`document`/`fetch`. The screen renderers and the
- * question bank are resolved the same way `homeScreen.js` resolves its
- * default strings: from `window.DinoQuiz` in the browser, or via `require`
- * under Node/Jest — see `resolveScreenRenderers`/`loadQuestions` below.
+ * No-bundler runtime: DinoQuiz ships without a build step, so `require` does
+ * not exist in the browser. Every screen and the game logic are loaded as
+ * plain `<script>`s (see public/index.html) that register themselves on
+ * `window.DinoQuiz` (screens, game, scoring); the question bank and i18n
+ * strings are fetched from /data/questions.json and /i18n/es.json at startup
+ * and stashed on `window.DinoQuiz` too. `resolveScreenRenderers`,
+ * `resolveGameFlow` and `loadQuestions` therefore read from `window.DinoQuiz`
+ * in the browser and fall back to `require` under Node/Jest, so the whole
+ * flow runs identically in the real PWA and in the unit tests.
  */
 (function () {
   function resolveScreenRenderers(win) {
@@ -46,32 +49,75 @@
     return null;
   }
 
-  function loadQuestions(loaderFn) {
-    loaderFn =
-      loaderFn ||
-      (typeof require === 'function'
-        ? function () {
-            return require('../../src/data/questionBank').loadQuestionBank();
-          }
-        : null);
+  function resolveGameFlow(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
 
-    if (typeof loaderFn !== 'function') {
-      return null;
+    if (typeof require === 'function') {
+      return require('../../src/game/gameFlow');
     }
 
-    try {
-      return loaderFn();
-    } catch (error) {
-      console.error('DinoQuiz: failed to load the question bank', error);
-      return null;
-    }
+    return (win && win.DinoQuiz && win.DinoQuiz.game) || null;
   }
 
-  function resolveGameFlow() {
-    if (typeof require !== 'function') {
-      return null;
+  /**
+   * Resolves the funny fact text for a question from the i18n strings. In the
+   * bank each question carries a `dato_curioso` i18n key (e.g.
+   * "funFacts.trex-01"); the question screen renders the resolved text as
+   * `question.funFact`.
+   */
+  function resolveFunFact(strings, key) {
+    if (!strings || typeof key !== 'string') {
+      return '';
     }
-    return require('../../src/game/gameFlow');
+    var text = key.split('.').reduce(function (value, segment) {
+      return value && typeof value === 'object' ? value[segment] : undefined;
+    }, strings);
+    return typeof text === 'string' ? text : '';
+  }
+
+  /**
+   * Turns the raw bank (as stored in /data/questions.json, with i18n keys) into
+   * the play-ready shape the question screen expects, resolving each question's
+   * `dato_curioso` key into a `funFact` string via the fetched i18n resource.
+   */
+  function prepareBrowserQuestions(rawQuestions, strings) {
+    if (!Array.isArray(rawQuestions)) {
+      return [];
+    }
+    var funFacts = strings ? strings.funFacts : null;
+    return rawQuestions.map(function (question) {
+      var prepared = {};
+      for (var key in question) {
+        if (Object.prototype.hasOwnProperty.call(question, key)) {
+          prepared[key] = question[key];
+        }
+      }
+      prepared.funFact = resolveFunFact(funFacts, question.dato_curioso);
+      return prepared;
+    });
+  }
+
+  function loadQuestions(loaderFn) {
+    if (typeof loaderFn === 'function') {
+      try {
+        return loaderFn();
+      } catch (error) {
+        console.error('DinoQuiz: failed to load the question bank', error);
+        return null;
+      }
+    }
+
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/data/questionBank').loadQuestionBank();
+      } catch (error) {
+        console.error('DinoQuiz: failed to load the question bank', error);
+        return null;
+      }
+    }
+
+    // Browser: the bank was fetched and prepared at startup (see bootstrap).
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
@@ -151,6 +197,12 @@
       });
   }
 
+  function fetchJson(fetchFn, resourcePath) {
+    return fetchFn(resourcePath).then(function (response) {
+      return response.json();
+    });
+  }
+
   function loadHomeStrings(fetchFn, resourcePath) {
     fetchFn = fetchFn || (typeof fetch === 'function' ? fetch : undefined);
     resourcePath = resourcePath || '/i18n/es.json';
@@ -159,10 +211,7 @@
       return Promise.resolve(null);
     }
 
-    return fetchFn(resourcePath)
-      .then(function (response) {
-        return response.json();
-      })
+    return fetchJson(fetchFn, resourcePath)
       .then(function (data) {
         return data.home;
       })
@@ -210,10 +259,44 @@
     });
   }
 
+  /**
+   * Browser-only startup: fetch the i18n strings and the question bank once,
+   * stash the play-ready data on `window.DinoQuiz` so `loadQuestions()` and
+   * the screens can read it synchronously, then render Home. Runs after the
+   * screen/game `<script>`s have registered themselves on `window.DinoQuiz`.
+   */
+  function bootstrapBrowserApp() {
+    if (typeof window === 'undefined') {
+      return Promise.resolve(null);
+    }
+
+    window.DinoQuiz = window.DinoQuiz || {};
+
+    var fetchFn = typeof fetch === 'function' ? fetch : undefined;
+    if (typeof fetchFn !== 'function') {
+      return renderHome();
+    }
+
+    return fetchJson(fetchFn, '/i18n/es.json')
+      .then(function (strings) {
+        window.DinoQuiz.strings = strings;
+        return fetchJson(fetchFn, '/data/questions.json');
+      })
+      .then(function (rawQuestions) {
+        window.DinoQuiz.questions = prepareBrowserQuestions(rawQuestions, window.DinoQuiz.strings);
+      })
+      .catch(function (error) {
+        console.error('DinoQuiz: failed to prepare the game data', error);
+      })
+      .then(function () {
+        return renderHome();
+      });
+  }
+
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('load', function () {
       registerServiceWorker();
-      renderHome();
+      bootstrapBrowserApp();
     });
   }
 
@@ -223,7 +306,9 @@
       loadHomeStrings: loadHomeStrings,
       renderHome: renderHome,
       resolveScreenRenderers: resolveScreenRenderers,
+      resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,
+      prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,

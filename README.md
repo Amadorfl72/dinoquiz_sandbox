@@ -15,8 +15,12 @@ npm test
 
 ## Banco de preguntas
 
-El banco de 40 preguntas vive en [`src/data/questions.json`](src/data/questions.json) y se
-carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js).
+El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
+y se carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js). El JSON
+vive bajo `public/` (igual que [`public/i18n/es.json`](public/i18n/es.json)) para que el
+navegador pueda hacerle `fetch('/data/questions.json')` en tiempo de ejecución sin duplicarlo
+entre `src/` y `public/`; el service worker lo cachea (ver
+[`public/service-worker.js`](public/service-worker.js)).
 
 Cada pregunta sigue este esquema:
 
@@ -81,8 +85,11 @@ Todos los textos se gestionan desde el recurso i18n en [`public/i18n/es.json`](p
 
 ## Pantalla de Pregunta/Feedback
 
-[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) renderiza una pregunta y,
-al pulsar una opción, aplica el feedback visual y el scoring (TRIOFSND-77):
+La pantalla de Pregunta la renderiza
+[`public/scripts/questionScreen.js`](public/scripts/questionScreen.js) (el navegador la
+carga como `<script>`, sin bundler; [`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js)
+la re-exporta para Node/Jest). Al pulsar una opción, aplica el feedback visual y el scoring
+(TRIOFSND-77):
 
 - La opción correcta siempre se resalta en verde con borde grueso
   (`question-screen__option--correct`), acierte o falle el niño.
@@ -109,8 +116,10 @@ Los tokens de color de cada estado (normal/correcto/neutro) viven en
 
 ## Pantalla de Resultados
 
-[`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js) renderiza la pantalla de
-Resultados al terminar una partida: puntuación (`X/10`), estrellas por tramos
+La pantalla de Resultados la renderiza
+[`public/scripts/resultsScreen.js`](public/scripts/resultsScreen.js) (cargada por el
+navegador como `<script>`, sin bundler; [`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js)
+la re-exporta para Node/Jest) al terminar una partida: puntuación (`X/10`), estrellas por tramos
 (0-3 → 1 estrella, 4-6 → 2 estrellas, 7-10 → 3 estrellas, ver `calculateStars`), un mensaje
 motivador siempre positivo elegido al azar entre `results.messages` (`es.json`), un botón
 prominente "Volver a jugar" y un botón secundario opcional "Salir".
@@ -137,7 +146,14 @@ partida (puntuación, índice de pregunta y respuestas, ver
 [`src/game/gameFlow.js`](src/game/gameFlow.js)) y selecciona un subconjunto aleatorio de
 10 preguntas distinto del anterior (AC-9) — y navega a la primera pregunta de esa partida.
 Al responder la última pregunta se muestra Resultados; su botón "Salir" vuelve a renderizar
-Inicio. Igual que `homeScreen.js`, las pantallas de Pregunta y Resultados se resuelven
-desde `window.DinoQuiz.screens` en el navegador o vía `require` bajo Node/Jest (ver
-`resolveScreenRenderers` en `main.js`), por lo que todo el recorrido se puede probar sin
+Inicio.
+
+Como no hay bundler, todo lo que el navegador ejecuta (scoring, gameFlow y las tres
+pantallas) se carga como `<script>` desde `public/scripts/` y se registra en
+`window.DinoQuiz` (ver el orden en [`public/index.html`](public/index.html)). Al arrancar,
+`main.js` hace `fetch` de `/i18n/es.json` y `/data/questions.json`, prepara el banco (resuelve
+cada `dato_curioso` a su texto de dato curioso) y lo deja en `window.DinoQuiz` para que
+`loadQuestions()` y las pantallas lo lean de forma síncrona. `resolveScreenRenderers`,
+`resolveGameFlow` y `loadQuestions` resuelven desde `window.DinoQuiz` en el navegador o vía
+`require` bajo Node/Jest, por lo que el flujo corre igual en la PWA real y en los tests sin
 bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
