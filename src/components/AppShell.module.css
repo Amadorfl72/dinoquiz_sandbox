@@ -1,0 +1,20 @@
+.appShell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.globalControls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.screenContent {
+  flex: 1;
+  width: 100%;
+}
