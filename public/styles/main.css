@@ -18,3 +18,81 @@ body {
   padding: 24px;
   box-sizing: border-box;
 }
+
+/* Results screen ("Resultados"): puntuación, estrellas, mensaje motivador y
+   las acciones "Volver a jugar" (principal) y "Salir" (secundaria). Colors
+   keep the >=4.5:1 WCAG AA contrast ratio used across the app (verified:
+   #ffffff on #2e7d32 ~5.1:1, #1b5e20 on #fff8e1 ~7.4:1). */
+.results-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.results-screen__title {
+  margin: 0;
+  font-size: 32px;
+  color: #1b5e20;
+}
+
+.results-screen__score {
+  margin: 0;
+  font-size: 22px;
+  color: #1b5e20;
+}
+
+.results-screen__stars {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.results-screen__message {
+  margin: 0;
+  font-size: 20px;
+  color: #1b5e20;
+}
+
+/* Primary action: min-height 64dp and text >=24sp per AC-2/AC-23. */
+.results-screen__play-again-button {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 320px;
+  min-height: 64px;
+  min-width: 48px;
+  padding: 12px 32px;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.results-screen__exit-button {
+  box-sizing: border-box;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 8px 24px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1b5e20;
+  background-color: transparent;
+  border: 2px solid #1b5e20;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.results-screen__play-again-button:focus-visible,
+.results-screen__exit-button:focus-visible {
+  outline: 3px solid #1b5e20;
+  outline-offset: 3px;
+}

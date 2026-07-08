@@ -48,3 +48,20 @@ puede alcanzarlo pero nunca interrumpe ni bloquea el flujo del niño hacia el bo
 
 Todos los textos se gestionan desde el recurso i18n en [`src/i18n/es.json`](src/i18n/es.json)
 (cargado a través de [`src/i18n/index.js`](src/i18n/index.js)); v1 solo expone el locale `es`.
+
+## Pantalla de Resultados
+
+[`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js) renderiza la pantalla de
+Resultados: puntuación (`X de 10`), estrellas (1-3, según los tramos 0-3 / 4-6 / 7-10 de
+AC-8) con un mensaje motivador siempre positivo, el botón principal "Volver a jugar"
+(altura mínima 64dp, área táctil ≥48x48dp y texto ≥24sp, per AC-2/AC-23) y el botón
+secundario "Salir".
+
+El componente no posee el estado de partida ni la navegación: al pulsar cada botón invoca
+los callbacks `onPlayAgain`/`onExit` que le pasa quien lo integre (el motor de juego /
+router), que son responsables de reiniciar el estado de partida (puntuación, índice de
+pregunta, respuestas) y navegar a la primera pregunta o a Inicio respectivamente. Esto
+mantiene la pantalla testeable de forma aislada, con `role="img"` y `aria-label` en las
+estrellas para TalkBack/VoiceOver y contraste WCAG AA (`#ffffff` sobre `#2e7d32` ~5.1:1;
+`#1b5e20` sobre `#fff8e1` ~7.4:1). Los textos viven en `results` dentro de
+[`src/i18n/es.json`](src/i18n/es.json).
