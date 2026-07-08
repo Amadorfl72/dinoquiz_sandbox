@@ -1,31 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="DinoQuiz">
   <title>DinoQuiz</title>
   <defs>
-    <clipPath id="rounded">
-      <rect x="0" y="0" width="512" height="512" rx="96" ry="96"/>
-    </clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#66BB6A"/>
+      <stop offset="1" stop-color="#2E7D32"/>
+    </linearGradient>
   </defs>
-  <g clip-path="url(#rounded)">
-    <rect x="0" y="0" width="512" height="512" fill="#FFF8E1"/>
-    <rect x="0" y="352" width="512" height="160" fill="#A5D6A7"/>
-    <!-- Cartoon dinosaur silhouette -->
-    <g fill="#2E7D32">
-      <path d="M120 372c-8-52 6-104 44-140 30-28 72-42 114-40-6-26 6-52 30-64-6 18 0 36 14 48 34 10 62 36 76 72 10 26 12 54 8 82l-40 0c2-22 0-44-10-64-14-28-42-48-74-52-40-6-82 8-108 40-24 30-34 70-28 108z"/>
-      <path d="M120 372l0 40c0 14 12 26 26 26s26-12 26-26l0-24z"/>
-      <path d="M356 372l0 40c0 14 12 26 26 26s26-12 26-26l0-32z"/>
-      <path d="M300 148c30-14 66-14 96 2-18-30-52-48-88-46z"/>
-    </g>
-    <!-- Belly -->
-    <path d="M180 300c30 34 78 46 120 34-4 24-24 44-50 48-40 6-78-24-84-64z" fill="#81C784"/>
-    <!-- Eye -->
-    <circle cx="330" cy="150" r="16" fill="#FFFFFF"/>
-    <circle cx="336" cy="152" r="8" fill="#1B5E20"/>
-    <!-- Spikes -->
-    <g fill="#F9A825">
-      <path d="M150 232l24-40 24 40z"/>
-      <path d="M204 210l24-40 24 40z"/>
-      <path d="M258 200l24-40 24 40z"/>
-    </g>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Cartoon dinosaur silhouette -->
+  <g fill="#FFF8E1" stroke="#1B5E20" stroke-width="10" stroke-linejoin="round">
+    <path d="M150 372
+             c-30 0 -54 -24 -54 -54
+             c0 -50 34 -92 82 -104
+             c-6 -18 -4 -40 10 -56
+             c18 -22 50 -28 76 -14
+             c8 -30 36 -52 68 -52
+             c6 0 12 1 18 3
+             c-14 8 -22 24 -20 40
+             c22 4 40 22 44 44
+             c26 8 44 32 44 60
+             c0 40 -30 74 -70 80
+             l0 32 -34 0 0 -30 -60 0 0 30 -34 0 0 -32 z"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="350" cy="196" r="12" fill="#1B5E20"/>
+  <!-- Back plates -->
+  <g fill="#FBC02D" stroke="#1B5E20" stroke-width="8" stroke-linejoin="round">
+    <path d="M196 178 l24 -34 24 34 z"/>
+    <path d="M248 172 l26 -36 26 36 z"/>
   </g>
 </svg>
