@@ -47,17 +47,33 @@ describe('HomeScreen', () => {
 
   test('the play button style meets the minimum 64dp height, 48dp width and 24sp label (AC-2)', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rule
+    // itself — resolve `var(--x)` against that :root map before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue;
+    };
+
     const ruleMatch = css.match(/\.home-screen__play-button\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
-
     const rule = ruleMatch[1];
-    const minHeight = parseFloat(rule.match(/min-height:\s*([\d.]+)px/)[1]);
-    const minWidth = parseFloat(rule.match(/min-width:\s*([\d.]+)px/)[1]);
-    const fontSizeRem = parseFloat(rule.match(/font-size:\s*([\d.]+)rem/)[1]);
+
+    const minHeight = parseFloat(resolve(rule.match(/min-height:\s*([^;]+);/)[1].trim()));
+    const minWidth = parseFloat(resolve(rule.match(/min-width:\s*([^;]+);/)[1].trim()));
+    const fontSizePx = parseFloat(resolve(rule.match(/font-size:\s*([^;]+);/)[1].trim()));
 
     expect(minHeight).toBeGreaterThanOrEqual(64);
     expect(minWidth).toBeGreaterThanOrEqual(48);
-    expect(fontSizeRem * 16).toBeGreaterThanOrEqual(24);
+    expect(fontSizePx).toBeGreaterThanOrEqual(24);
   });
 
   test('orders content title -> mascot -> play button for a predictable screen reader flow', () => {
