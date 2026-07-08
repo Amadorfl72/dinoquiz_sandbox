@@ -8,6 +8,15 @@
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
     },
+    "globalControls": {
+      "groupLabel": "Controles globales",
+      "muteButton": {
+        "muteLabel": "Silenciar sonido",
+        "unmuteLabel": "Activar sonido"
+      },
+      "privacyButton": "Política de privacidad",
+      "purchaseButton": "Eliminar anuncios"
+    },
     "tooltip": {
       "message": "¡Toca aquí para jugar!"
     },
@@ -74,6 +83,44 @@
         ]
       }
     ]
+  },
+  "privacy": {
+    "heading": "Política de privacidad",
+    "closeButton": "Cerrar",
+    "intro": "DinoQuiz está pensado para que jueguen niños y niñas, así que cuidamos mucho su privacidad. Aquí explicamos, en lenguaje sencillo, qué pasa con la información cuando usas la app.",
+    "sections": [
+      {
+        "heading": "¿Qué datos recogemos?",
+        "body": "Ninguno personal. DinoQuiz no pide nombre, edad, foto, email ni ningún otro dato que identifique a quien juega. No hay cuentas ni inicio de sesión."
+      },
+      {
+        "heading": "¿Dónde se guarda el progreso?",
+        "body": "La puntuación, la racha de aciertos y los datos curiosos descubiertos se guardan solo en este dispositivo (localStorage/IndexedDB). Nunca se envían a ningún servidor."
+      },
+      {
+        "heading": "¿Qué datos anónimos se usan?",
+        "body": "Se recogen estadísticas agregadas y anónimas (por ejemplo, partidas iniciadas o completadas) para mejorar la app. Estos datos no incluyen nombre, ubicación exacta ni ningún identificador publicitario, y nunca se usan con fines de publicidad personalizada."
+      },
+      {
+        "heading": "¿Se comparte con terceros?",
+        "body": "No se vende ni se comparte ningún dato personal con terceros. DinoQuiz no incluye SDKs de publicidad comportamental ni de seguimiento individual."
+      },
+      {
+        "heading": "¿Cuáles son tus derechos?",
+        "body": "Como no guardamos datos personales, no hay nada que borrar, corregir o exportar a nivel individual. Si tienes cualquier duda, puedes escribirnos."
+      },
+      {
+        "heading": "Contacto",
+        "body": "Para cualquier consulta sobre privacidad, escribe a privacidad@dinoquiz.app."
+      }
+    ]
+  },
+  "purchase": {
+    "heading": "Eliminar anuncios",
+    "closeButton": "Cerrar",
+    "description": "Con una única compra puedes eliminar los anuncios de DinoQuiz para siempre y desbloquear todos los packs de preguntas, ahora y en el futuro.",
+    "priceLabel": "Pago único de 3,99 €",
+    "purchaseButton": "Comprar ahora"
   },
   "results": {
     "heading": "¡Resultados!",

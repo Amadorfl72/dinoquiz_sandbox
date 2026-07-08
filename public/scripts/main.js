@@ -7,6 +7,10 @@
  * illustration and '¡Jugar!' button are actually visible on load (see
  * public/scripts/homeScreen.js, loaded before this file in index.html).
  *
+ * `registerServiceWorker`/`loadHomeStrings`/`loadHomeResources`/`renderHome`/
+ * `renderRoute` accept explicit overrides so each is unit-testable under Node
+ * without touching the global `navigator`/`document`/`fetch`/`location`.
+ *
  * A minimal hash router (no bundler, no server-side rewrites needed — works
  * offline behind the service worker) switches #app between Home and the
  * Privacy policy screen (public/scripts/privacyPolicyScreen.js, TRIOFSND-116):
@@ -35,9 +39,26 @@
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
  *
- * `registerServiceWorker`/`loadHomeStrings`/`renderHome`/`renderRoute` accept
- * explicit overrides so each is unit-testable under Node without touching the
- * global `navigator`/`document`/`fetch`/`location`.
+ * Mute persistence (TRIOFSND-66): `src/services/storage` already models a
+ * `muted` key with IndexedDB/localStorage/memory fallback, but it's a
+ * CommonJS module graph (`require`d internally) that this no-bundler app
+ * shell can't load as a plain `<script>`. `MUTE_STORAGE_KEY` below matches
+ * the exact namespaced key that service writes (`dinoquiz:muted`, JSON-
+ * encoded) so a future bundler-backed wiring of the real service reads back
+ * the same value with no migration. Until then, this reads/writes
+ * `localStorage` directly -- sufficient for a single boolean preference --
+ * degrading to an in-memory default (unmuted) if `localStorage` throws
+ * (e.g. Safari private mode).
+ *
+ * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
+ * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
+ * `require('../../src/i18n')`, but that CommonJS path only exists under
+ * Jest -- browsers loading this as a plain `<script>` have no `require`.
+ * So `loadHomeResources` below fetches the whole `/i18n/es.json` document
+ * once and `renderHome` forwards its `home`, `privacy` and `purchase`
+ * sections as `options.strings`/`options.privacyStrings`/
+ * `options.purchaseStrings`, giving the browser path the same pre-resolved
+ * strings the Node/Jest path gets via `require`.
  *
  * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
  * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
@@ -58,6 +79,35 @@
  * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  */
 (function () {
+  var MUTE_STORAGE_KEY = 'dinoquiz:muted';
+
+  function loadMutedState(storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return false;
+    }
+
+    try {
+      var raw = storageObj.getItem(MUTE_STORAGE_KEY);
+      return raw !== null ? JSON.parse(raw) === true : false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function persistMutedState(muted, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(MUTE_STORAGE_KEY, JSON.stringify(muted));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist the mute preference', error);
+    }
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   function resolveScreenRenderers(win) {
@@ -351,7 +401,7 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -369,13 +419,19 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeStrings(fetchFn).then(function (strings) {
+    return loadHomeResources(fetchFn).then(function (resources) {
       storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
 
-      var renderOptions = strings ? { strings: strings } : {};
+      var renderOptions = resources
+        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        : {};
       if (typeof onOpenPrivacyPolicy === 'function') {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
+      renderOptions.muted = loadMutedState(storageObj);
+      renderOptions.onToggleMute = function (muted) {
+        persistMutedState(muted, storageObj);
+      };
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -498,6 +554,7 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
@@ -515,6 +572,9 @@
       startNewGame: startNewGame,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
+      loadMutedState: loadMutedState,
+      persistMutedState: persistMutedState,
+      MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
     };
   }
 })();

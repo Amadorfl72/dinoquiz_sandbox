@@ -177,6 +177,119 @@ body {
   }
 }
 
+/*
+ * Global controls (TRIOFSND-66): mute toggle, privacy policy and remove-ads
+ * purchase entry points. Every icon button keeps a >=48x48dp tap target
+ * (AC-2/AC-13 sibling rule) regardless of viewport, and the disclosure
+ * panels reuse the same white-background/dark-green-text pair validated in
+ * src/theme/globalControlsColors.js against WCAG AA.
+ */
+.home-screen__global-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.home-screen__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px 14px;
+  gap: 8px;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-family: inherit;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__icon-button:hover {
+  background-color: #e8f5e9;
+}
+
+.home-screen__icon-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.home-screen__mute-button[aria-pressed='true'] {
+  background-color: #cfd8dc;
+  border-color: #607d8b;
+  color: #263238;
+}
+
+.home-screen__panel {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 8px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  text-align: left;
+  background-color: #ffffff;
+  color: #1b5e20;
+  border: 2px solid #1b5e20;
+  border-radius: 16px;
+}
+
+.home-screen__panel-heading {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.home-screen__panel-body h3 {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.home-screen__panel-body p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.home-screen__panel-price {
+  font-weight: 700;
+}
+
+.home-screen__panel-close-button,
+.home-screen__purchase-confirm-button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__purchase-confirm-button {
+  display: block;
+  margin: 12px 0;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+}
+
+.home-screen__panel-close-button {
+  color: #1b5e20;
+  background-color: transparent;
+  border: 2px solid #1b5e20;
+}
+
+.home-screen__panel-close-button:focus-visible,
+.home-screen__purchase-confirm-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
 /* Tablet landscape: the primary target — give the mascot and title more room. */
 @media (min-width: 900px) and (orientation: landscape) {
   .home-screen {
