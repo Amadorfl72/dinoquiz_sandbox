@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 
 require('@testing-library/jest-dom');
-const { getByRole, getByText } = require('@testing-library/dom');
+const { getByRole, getByText, fireEvent } = require('@testing-library/dom');
 
 const { renderHomeScreen, MASCOT_IMAGE_SRC } = require('../../public/scripts/homeScreen');
-const { home: strings } = require('../../public/i18n/es.json');
+const { home: strings, privacy: privacyStrings, purchase: purchaseStrings } = require('../../public/i18n/es.json');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
@@ -117,5 +117,156 @@ describe('HomeScreen', () => {
 
     expect(swContent).toContain("'/scripts/homeScreen.js'");
     expect(swContent).toContain("'/i18n/es.json'");
+  });
+});
+
+describe('HomeScreen global controls (TRIOFSND-66: mute, privacy policy, remove-ads purchase)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders a mute, a privacy and a purchase icon button, each an accessible, named button', () => {
+    const { muteButton, privacyButton, purchaseButton } = renderHomeScreen(container);
+
+    expect(muteButton.tagName).toBe('BUTTON');
+    expect(muteButton).toHaveAccessibleName(strings.globalControls.muteButton.muteLabel);
+
+    expect(privacyButton.tagName).toBe('BUTTON');
+    expect(privacyButton).toHaveAccessibleName(strings.globalControls.privacyButton);
+
+    expect(purchaseButton.tagName).toBe('BUTTON');
+    expect(purchaseButton).toHaveAccessibleName(strings.globalControls.purchaseButton);
+  });
+
+  test('every global control meets the >=48x48dp minimum touch target (AC-13 sibling rule)', () => {
+    const cssPath = path.resolve(__dirname, '../../public/styles/main.css');
+    const css = fs.readFileSync(cssPath, 'utf-8');
+    const ruleMatch = css.match(/\.home-screen__icon-button\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const rule = ruleMatch[1];
+    expect(parseFloat(rule.match(/min-width:\s*([\d.]+)px/)[1])).toBeGreaterThanOrEqual(48);
+    expect(parseFloat(rule.match(/min-height:\s*([\d.]+)px/)[1])).toBeGreaterThanOrEqual(48);
+  });
+
+  test('the mute button starts unmuted by default, with aria-pressed reflecting the state', () => {
+    const { muteButton } = renderHomeScreen(container);
+
+    expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('the mute button honors an initial muted state from options', () => {
+    const { muteButton } = renderHomeScreen(container, { muted: true });
+
+    expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+    expect(muteButton).toHaveAccessibleName(strings.globalControls.muteButton.unmuteLabel);
+  });
+
+  test('clicking the mute button toggles aria-pressed, the accessible name, and notifies onToggleMute', () => {
+    const onToggleMute = jest.fn();
+    const { muteButton, isMuted } = renderHomeScreen(container, { onToggleMute });
+
+    fireEvent.click(muteButton);
+
+    expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+    expect(muteButton).toHaveAccessibleName(strings.globalControls.muteButton.unmuteLabel);
+    expect(isMuted()).toBe(true);
+    expect(onToggleMute).toHaveBeenCalledWith(true);
+
+    fireEvent.click(muteButton);
+
+    expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+    expect(onToggleMute).toHaveBeenCalledWith(false);
+  });
+
+  test('the mute button is keyboard operable (a native <button>, reachable by Tab, activated by Enter/Space)', () => {
+    const { muteButton } = renderHomeScreen(container);
+
+    muteButton.focus();
+    expect(document.activeElement).toBe(muteButton);
+    expect(muteButton.disabled).toBe(false);
+  });
+
+  test('the privacy button is hidden from view initially and reachable in a single tap (AC-16: <=2 taps)', () => {
+    const { privacyButton, privacyPanel } = renderHomeScreen(container);
+
+    expect(privacyPanel.hidden).toBe(true);
+    expect(privacyButton).toHaveAttribute('aria-expanded', 'false');
+    expect(privacyButton).toHaveAttribute('aria-controls', privacyPanel.id);
+
+    fireEvent.click(privacyButton);
+
+    expect(privacyPanel.hidden).toBe(false);
+    expect(privacyButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('the privacy panel content comes from the i18n resource, not hardcoded copy (AC-15)', () => {
+    const { privacyButton, privacyPanel } = renderHomeScreen(container);
+
+    fireEvent.click(privacyButton);
+
+    expect(privacyPanel).toHaveTextContent(privacyStrings.heading);
+    expect(privacyPanel).toHaveTextContent(privacyStrings.intro);
+    privacyStrings.sections.forEach((section) => {
+      expect(privacyPanel).toHaveTextContent(section.heading);
+      expect(privacyPanel).toHaveTextContent(section.body);
+    });
+  });
+
+  test('closing the privacy panel collapses it and returns focus to the trigger button', () => {
+    const { privacyButton, privacyPanel } = renderHomeScreen(container);
+
+    fireEvent.click(privacyButton);
+    const closeButton = getByText(privacyPanel, privacyStrings.closeButton);
+    fireEvent.click(closeButton);
+
+    expect(privacyPanel.hidden).toBe(true);
+    expect(privacyButton).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(privacyButton);
+  });
+
+  test('the Escape key closes an open privacy panel', () => {
+    const { privacyButton, privacyPanel } = renderHomeScreen(container);
+
+    fireEvent.click(privacyButton);
+    fireEvent.keyDown(privacyPanel, { key: 'Escape' });
+
+    expect(privacyPanel.hidden).toBe(true);
+  });
+
+  test('the purchase button opens the remove-ads entry point with price and a "Comprar" call to action', () => {
+    const { purchaseButton, purchasePanel } = renderHomeScreen(container);
+
+    fireEvent.click(purchaseButton);
+
+    expect(purchasePanel.hidden).toBe(false);
+    expect(purchasePanel).toHaveTextContent(purchaseStrings.heading);
+    expect(purchasePanel).toHaveTextContent(purchaseStrings.description);
+    expect(purchasePanel).toHaveTextContent(purchaseStrings.priceLabel);
+    expect(getByText(purchasePanel, purchaseStrings.purchaseButton)).toBeInTheDocument();
+  });
+
+  test('confirming the purchase invokes options.onPurchase (entry point into the IAP flow)', () => {
+    const onPurchase = jest.fn();
+    const { purchaseButton, purchaseConfirmButton } = renderHomeScreen(container, { onPurchase });
+
+    fireEvent.click(purchaseButton);
+    fireEvent.click(purchaseConfirmButton);
+
+    expect(onPurchase).toHaveBeenCalledTimes(1);
+  });
+
+  test('global controls are grouped under an accessible, labeled group', () => {
+    const { globalControls } = renderHomeScreen(container);
+
+    expect(globalControls).toHaveAttribute('role', 'group');
+    expect(globalControls).toHaveAccessibleName(strings.globalControls.groupLabel);
   });
 });

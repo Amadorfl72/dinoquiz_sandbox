@@ -79,6 +79,34 @@ Todos los textos se gestionan desde el recurso i18n en [`public/i18n/es.json`](p
 (cargado en Node a través de [`src/i18n/index.js`](src/i18n/index.js), y en el navegador con
 `fetch` desde `main.js`); v1 solo expone el locale `es`.
 
+### Controles globales: mute, política de privacidad y compra in-app
+
+`renderHomeScreen` también monta, junto al botón "¡Jugar!", un grupo de tres botones-icono
+(`role="group"`, ver `.home-screen__global-controls` en `main.css`): silenciar sonido, política
+de privacidad y eliminar anuncios (compra in-app). Los tres son `<button>` nativos de al menos
+48x48dp (`.home-screen__icon-button`), navegables por teclado y con `aria-label` propio, por lo
+que cumplen el mismo criterio táctil/accesible que el resto de controles de la app.
+
+- **Mute**: alterna `aria-pressed` y su `aria-label` (silenciar/activar) al pulsarlo. La pantalla
+  en sí no persiste nada -- delega en `options.onToggleMute`, igual que `onPlayAgain`/`onExit` en
+  `ResultsScreen` -- para seguir siendo un componente DOM puro y testeable. Quien la monta en el
+  navegador ([`public/scripts/main.js`](public/scripts/main.js)) lee/escribe el estado inicial en
+  `localStorage` bajo la misma clave con namespace (`dinoquiz:muted`, JSON-serializada) que ya usa
+  [`src/services/storage`](src/services/storage), de forma que ambos caminos son compatibles.
+- **Política de privacidad** y **eliminar anuncios**: cada botón despliega un panel
+  (`.home-screen__panel`, patrón WAI-ARIA de disclosure con `aria-expanded`/`aria-controls`) con
+  el contenido correspondiente, tomado de las claves `privacy` y `purchase` de `es.json` -- nunca
+  hardcodeado (AC-15). Como abrir el panel es un único toque desde Inicio, la política de
+  privacidad queda alcanzable en ≤2 taps (AC-16). El panel de compra incluye el precio y un botón
+  "Comprar ahora" que invoca `options.onPurchase`: es el punto de entrada al flujo de compra
+  in-app, no la integración de cobro en sí (pendiente de la pasarela de pago real). Ambos paneles
+  se cierran con su botón "Cerrar", con la tecla Escape, o devolviendo el foco al botón que los
+  abrió.
+
+Estos tres controles viven en `homeScreen.js` (no como `src/screens/*Screen.js` independientes)
+porque no son una "pantalla" navegable dentro del flujo Inicio → Quiz → Resultados: son paneles
+de contenido que se abren y cierran sin salir de Inicio.
+
 ## Pantalla de Pregunta/Feedback
 
 [`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) renderiza una pregunta y,

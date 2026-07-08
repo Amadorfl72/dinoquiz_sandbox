@@ -87,19 +87,39 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test('renderHome renders into #app using the fetched strings', async () => {
-    const { renderHome } = require(MAIN_JS_PATH);
+  test('renderHome renders into #app using the fetched strings and the persisted mute state', async () => {
+    const { renderHome, MUTE_STORAGE_KEY } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
     const renderHomeScreen = jest.fn();
     const homeStrings = { title: 'DinoQuiz' };
     const fetchFn = jest.fn().mockResolvedValue({
       json: () => Promise.resolve({ home: homeStrings }),
     });
+    const storageObj = { getItem: jest.fn().mockReturnValue('true'), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn);
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
     expect(doc.getElementById).toHaveBeenCalledWith('app');
-    expect(renderHomeScreen).toHaveBeenCalledWith({ id: 'app' }, { strings: homeStrings });
+    expect(storageObj.getItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY);
+    expect(renderHomeScreen).toHaveBeenCalledWith(
+      { id: 'app' },
+      expect.objectContaining({ strings: homeStrings, muted: true, onToggleMute: expect.any(Function) })
+    );
+  });
+
+  test('renderHome wires onToggleMute so a toggle persists back to storage', async () => {
+    const { renderHome, MUTE_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
+
+    const { onToggleMute } = renderHomeScreen.mock.calls[0][1];
+    onToggleMute(true);
+
+    expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
   });
 
   test('renderHome resolves to null without a #app container', async () => {
@@ -111,5 +131,56 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
 
     expect(result).toBeNull();
     expect(renderHomeScreen).not.toHaveBeenCalled();
+  });
+});
+
+describe('TRIOFSND-66: mute preference persistence', () => {
+  test('loadMutedState returns false when nothing is stored yet', () => {
+    const { loadMutedState } = require(MAIN_JS_PATH);
+    const storageObj = { getItem: jest.fn().mockReturnValue(null) };
+
+    expect(loadMutedState(storageObj)).toBe(false);
+  });
+
+  test('loadMutedState returns the persisted value', () => {
+    const { loadMutedState, MUTE_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const storageObj = { getItem: jest.fn().mockReturnValue('true') };
+
+    expect(loadMutedState(storageObj)).toBe(true);
+    expect(storageObj.getItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY);
+  });
+
+  test('loadMutedState degrades to false when the storage backend throws', () => {
+    const { loadMutedState } = require(MAIN_JS_PATH);
+    const storageObj = {
+      getItem: jest.fn(() => {
+        throw new Error('private mode');
+      }),
+    };
+
+    expect(loadMutedState(storageObj)).toBe(false);
+  });
+
+  test('persistMutedState writes the namespaced key used by src/services/storage', () => {
+    const { persistMutedState, MUTE_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const storageObj = { setItem: jest.fn() };
+
+    persistMutedState(true, storageObj);
+
+    expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
+  });
+
+  test('persistMutedState logs instead of throwing when the storage backend fails', () => {
+    const { persistMutedState } = require(MAIN_JS_PATH);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const storageObj = {
+      setItem: jest.fn(() => {
+        throw new Error('quota exceeded');
+      }),
+    };
+
+    expect(() => persistMutedState(true, storageObj)).not.toThrow();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });
