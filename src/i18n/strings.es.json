@@ -1,0 +1,15 @@
+{
+  "results": {
+    "screenLabel": "Pantalla de resultados",
+    "title": "¡Partida terminada!",
+    "scoreLabel": "Puntuación: {score} de {total} aciertos",
+    "starsLabel": "{count} de 3 estrellas",
+    "messageOneStar": "¡Muy bien! Cada partida aprendes algo nuevo, ¡sigue así!",
+    "messageTwoStars": "¡Genial trabajo! Estás aprendiendo un montón de dinosaurios.",
+    "messageThreeStars": "¡Increíble! ¡Eres un auténtico experto en dinosaurios!",
+    "playAgainButton": "Volver a jugar",
+    "playAgainA11yLabel": "Volver a jugar, empezar una nueva partida",
+    "exitButton": "Salir",
+    "exitA11yLabel": "Salir, volver a la pantalla de inicio"
+  }
+}
