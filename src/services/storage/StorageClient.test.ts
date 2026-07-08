@@ -105,6 +105,31 @@ describe('DinoQuizStorage', () => {
     expect(storage.getDiagnostics().failureCount).toBeGreaterThan(0);
   });
 
+  it('falls back to the next adapter when the active one throws on write, and persists there', async () => {
+    const indexedDb = createFakeAdapter({
+      name: 'indexedDB',
+      async setItem() {
+        throw new Error('access denied');
+      },
+    });
+    const localStorage = createFakeAdapter({ name: 'localStorage' });
+    const storage = new DinoQuizStorage([indexedDb, localStorage]);
+
+    const persisted = await storage.set('bestScore', 9);
+
+    expect(persisted).toBe(true);
+    expect(storage.getDiagnostics()).toMatchObject({ backend: 'localStorage', isPersistent: true });
+
+    const unavailableIndexedDb = createFakeAdapter({
+      name: 'indexedDB',
+      async isAvailable() {
+        return false;
+      },
+    });
+    const fresh = new DinoQuizStorage([unavailableIndexedDb, localStorage]);
+    expect(await fresh.get('bestScore')).toBe(9);
+  });
+
   it('tracks discovered fun facts without duplicates', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 

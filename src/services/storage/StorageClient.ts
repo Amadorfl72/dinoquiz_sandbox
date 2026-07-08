@@ -95,6 +95,21 @@ export class DinoQuizStorage {
     }
   }
 
+  /** Swaps the active adapter, keeping the `storage` event listener in sync. */
+  private switchActiveAdapter(adapter: StorageAdapter): void {
+    if (this.activeAdapter === adapter) return;
+
+    if (typeof window !== 'undefined' && this.activeAdapter?.name === 'localStorage') {
+      window.removeEventListener('storage', this.handleStorageEvent);
+    }
+
+    this.activeAdapter = adapter;
+
+    if (typeof window !== 'undefined' && adapter.name === 'localStorage') {
+      window.addEventListener('storage', this.handleStorageEvent);
+    }
+  }
+
   private async loadAll(): Promise<void> {
     for (const key of PERSISTED_KEYS) {
       try {
@@ -133,19 +148,41 @@ export class DinoQuizStorage {
     return this.cache[key];
   }
 
-  /** Resolves to true if the value was durably persisted, false if it only lives in-memory this session. */
+  /**
+   * Resolves to true if the value was durably persisted, false if it only lives in-memory this session.
+   *
+   * If the active adapter throws (e.g. IndexedDB access denied, localStorage quota
+   * exceeded), this walks the remaining adapters in priority order -- localStorage,
+   * then memory -- and promotes the first one that accepts the write to be the new
+   * active adapter, so later reads/writes and diagnostics reflect reality instead of
+   * a backend that just proved it can't persist.
+   */
   async set<K extends StorageKey>(key: K, value: DinoQuizPersistedState[K]): Promise<boolean> {
     await this.init();
     this.cache = { ...this.cache, [key]: value };
     this.notify(key, value);
 
-    try {
-      await this.activeAdapter!.setItem(namespacedKey(key), JSON.stringify(value));
-      return true;
-    } catch {
-      this.recordFailure();
-      return false;
+    const activeIndex = this.activeAdapter ? this.adapters.indexOf(this.activeAdapter) : -1;
+    const candidates = this.adapters.slice(Math.max(activeIndex, 0));
+
+    for (const adapter of candidates) {
+      try {
+        if (adapter !== this.activeAdapter && !(await adapter.isAvailable())) {
+          continue;
+        }
+        await adapter.setItem(namespacedKey(key), JSON.stringify(value));
+        this.switchActiveAdapter(adapter);
+        return true;
+      } catch {
+        this.recordFailure();
+      }
     }
+
+    // Every remaining adapter is unavailable or threw: degrade to a fresh
+    // in-memory backend so the app stays playable and diagnostics stop
+    // reporting a backend that can no longer persist.
+    this.switchActiveAdapter(createMemoryAdapter());
+    return false;
   }
 
   subscribe<K extends StorageKey>(key: K, listener: Listener<K>): Unsubscribe {
