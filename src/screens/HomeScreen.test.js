@@ -53,4 +53,29 @@ describe('HomeScreen', () => {
 
     expect(container.textContent).toContain(strings.parentalNotice.message);
   });
+
+  describe('privacy policy access (TRIOFSND-116, AC-16: reachable in a single tap)', () => {
+    test('renders an accessible privacy button with a visible icon and a descriptive label', () => {
+      const { privacyButton } = renderHomeScreen(container);
+
+      expect(getByRole(container, 'button', { name: strings.privacyButton.ariaLabel })).toBe(privacyButton);
+      expect(privacyButton).toHaveTextContent(strings.privacyButton.label);
+      expect(privacyButton.querySelector('svg')).not.toBeNull();
+    });
+
+    test('calls onOpenPrivacy when tapped', () => {
+      const onOpenPrivacy = jest.fn();
+      const { privacyButton } = renderHomeScreen(container, { onOpenPrivacy });
+
+      privacyButton.click();
+
+      expect(onOpenPrivacy).toHaveBeenCalledTimes(1);
+    });
+
+    test('does nothing if no onOpenPrivacy handler is provided', () => {
+      const { privacyButton } = renderHomeScreen(container);
+
+      expect(() => privacyButton.click()).not.toThrow();
+    });
+  });
 });

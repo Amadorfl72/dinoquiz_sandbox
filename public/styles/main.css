@@ -87,3 +87,66 @@ body {
     animation: none;
   }
 }
+
+/*
+ * Home screen — privacy policy entry point (TRIOFSND-116).
+ *
+ * Reuses the same border/background/text combo already guarded at WCAG AA
+ * by contrast.test.js for the question screen's "normal" state
+ * (#FFFFFF background, #1B5E20 text/border — see
+ * src/theme/questionScreenColors.js), so no new color token is needed.
+ */
+.home-screen__privacy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 48px;
+  min-height: 48px;
+  margin-top: 16px;
+  padding: 10px 18px;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  border-radius: 16px;
+  border: 3px solid #1b5e20;
+  background-color: #ffffff;
+  color: #1b5e20;
+  cursor: pointer;
+}
+
+.home-screen__privacy-icon {
+  display: inline-flex;
+}
+
+/* Privacy policy screen (TRIOFSND-116). */
+.privacy-screen {
+  max-width: 640px;
+  text-align: left;
+}
+
+.privacy-screen__back-button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 10px 18px;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  border-radius: 16px;
+  border: 3px solid #1b5e20;
+  background-color: #ffffff;
+  color: #1b5e20;
+  cursor: pointer;
+}
+
+.privacy-screen__title {
+  color: #1b5e20;
+}
+
+.privacy-screen__section-heading {
+  color: #1b5e20;
+}
+
+.privacy-screen__section-body {
+  font-size: 18px;
+  line-height: 1.5;
+}

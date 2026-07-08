@@ -6,7 +6,35 @@
     "parentalNotice": {
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
+    },
+    "privacyButton": {
+      "label": "Privacidad",
+      "ariaLabel": "Abrir la política de privacidad"
     }
+  },
+  "privacy": {
+    "title": "Política de privacidad",
+    "backButton": "Volver al inicio",
+    "backButtonAriaLabel": "Volver a la pantalla de inicio",
+    "intro": "Aquí te contamos, con palabras sencillas, qué pasa con tus datos cuando juegas a DinoQuiz.",
+    "sections": [
+      {
+        "heading": "¿Qué datos usamos?",
+        "body": "DinoQuiz no te pide tu nombre, ni tu edad, ni tu foto, ni ningún otro dato personal tuyo o de tu familia. Solo guardamos, dentro de este mismo dispositivo, tu mejor puntuación, tu racha de aciertos, los datos curiosos que ya descubriste y si el sonido está silenciado."
+      },
+      {
+        "heading": "¿Para qué los usamos?",
+        "body": "Usamos esa información únicamente para que, la próxima vez que juegues, la app recuerde tu progreso y tus preferencias de sonido. Esos datos nunca salen de este dispositivo: no los enviamos a internet ni se los compartimos a nadie."
+      },
+      {
+        "heading": "Tus derechos",
+        "body": "Como no guardamos datos personales ni los enviamos a ningún servidor, no existe ninguna cuenta ni perfil que borrar: basta con borrar los datos de la app desde el dispositivo para eliminarlo todo. Si madres, padres o tutores tienen dudas o quieren más información, pueden escribirnos usando el contacto de abajo."
+      },
+      {
+        "heading": "¿Quién es el responsable y cómo contactar?",
+        "body": "El responsable de DinoQuiz es el equipo de DinoQuiz. Para cualquier pregunta sobre esta política de privacidad, puedes escribir a privacidad@dinoquiz.app."
+      }
+    ]
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
