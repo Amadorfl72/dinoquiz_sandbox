@@ -8,13 +8,16 @@
  *   question: string,           // enunciado shown to the player
  *   options: string[],          // 3-4 answer choices
  *   correctAnswerIndex: number, // index into "options" of the correct answer
- *   funFact: string,            // dato curioso shown after answering
+ *   dato_curioso: string,       // i18n key (in src/i18n/*.json under "funFacts")
+ *                                // resolving to the dato curioso shown after answering
  *   image: string,              // reference to the dinosaur's illustration
  * }
  */
 
 const fs = require('fs');
 const path = require('path');
+
+const { getStrings } = require('../i18n');
 
 const QUESTIONS_JSON_PATH = path.join(__dirname, 'questions.json');
 
@@ -89,8 +92,8 @@ function validateQuestion(question, index) {
     errors.push(`${where}: "correctAnswerIndex" must be a valid index into "options"`);
   }
 
-  if (typeof question.funFact !== 'string' || question.funFact.trim() === '') {
-    errors.push(`${where}: "funFact" must be a non-empty string`);
+  if (typeof question.dato_curioso !== 'string' || question.dato_curioso.trim() === '') {
+    errors.push(`${where}: "dato_curioso" must be a non-empty i18n key string`);
   }
 
   if (typeof question.image !== 'string' || question.image.trim() === '') {
@@ -138,10 +141,36 @@ function getDinosaurCoverageErrors(questions) {
   );
 }
 
+function resolveDatoCurioso(strings, key) {
+  if (typeof key !== 'string' || key.trim() === '') {
+    return undefined;
+  }
+  return key
+    .split('.')
+    .reduce((value, segment) => (value && typeof value === 'object' ? value[segment] : undefined), strings);
+}
+
+function getDatoCuriosoTranslationErrors(questions, strings) {
+  return questions.reduce((errors, question, index) => {
+    const where = describeQuestion(question, index);
+    if (!question || typeof question.dato_curioso !== 'string' || question.dato_curioso.trim() === '') {
+      return errors;
+    }
+
+    const text = resolveDatoCurioso(strings, question.dato_curioso);
+    if (typeof text !== 'string' || text.trim() === '') {
+      errors.push(`${where}: "dato_curioso" key "${question.dato_curioso}" has no i18n translation`);
+    }
+
+    return errors;
+  }, []);
+}
+
 function loadQuestionBank(options = {}) {
   const filePath = options.filePath || QUESTIONS_JSON_PATH;
   const checkCoverage = options.checkCoverage !== undefined ? options.checkCoverage : !options.filePath;
   const checkCount = options.checkCount !== undefined ? options.checkCount : !options.filePath;
+  const checkTranslations = options.checkTranslations !== undefined ? options.checkTranslations : !options.filePath;
   const raw = fs.readFileSync(filePath, 'utf-8');
 
   let questions;
@@ -154,6 +183,9 @@ function loadQuestionBank(options = {}) {
   const errors = validateQuestionBank(questions, { checkCount });
   if (checkCoverage) {
     errors.push(...getDinosaurCoverageErrors(questions));
+  }
+  if (checkTranslations) {
+    errors.push(...getDatoCuriosoTranslationErrors(questions, getStrings('es')));
   }
   if (errors.length > 0) {
     throw new Error(`Invalid question bank:\n- ${errors.join('\n- ')}`);
@@ -177,6 +209,8 @@ module.exports = {
   validateQuestion,
   validateQuestionBank,
   getDinosaurCoverageErrors,
+  resolveDatoCurioso,
+  getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
 };

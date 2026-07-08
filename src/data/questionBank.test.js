@@ -14,9 +14,12 @@ const {
   validateQuestion,
   validateQuestionBank,
   getDinosaurCoverageErrors,
+  resolveDatoCurioso,
+  getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
 } = require('./questionBank');
+const { getStrings } = require('../i18n');
 
 function buildValidQuestion(overrides = {}) {
   return {
@@ -25,7 +28,7 @@ function buildValidQuestion(overrides = {}) {
     question: '¿De qué se alimentaba el Tyrannosaurus Rex?',
     options: ['Solo de plantas', 'De carne', 'Solo de insectos', 'De algas del mar'],
     correctAnswerIndex: 1,
-    funFact: 'El T-Rex tenía una mordida muy potente.',
+    dato_curioso: 'funFacts.trex-01',
     image: 'dinosaurs/trex.png',
     ...overrides,
   };
@@ -69,10 +72,28 @@ describe('real question bank (src/data/questions.json)', () => {
     });
   });
 
-  test('every question has a non-empty funFact and image reference', () => {
+  test('every question has a non-empty dato_curioso key and image reference', () => {
     questions.forEach((question) => {
-      expect(question.funFact.trim().length).toBeGreaterThan(0);
+      expect(question.dato_curioso.trim().length).toBeGreaterThan(0);
       expect(question.image.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  test('every question dato_curioso key resolves to a non-empty i18n string', () => {
+    const strings = getStrings('es');
+    expect(getDatoCuriosoTranslationErrors(questions, strings)).toEqual([]);
+  });
+
+  test('every one of the 7 covered species has a dato curioso on each of its questions', () => {
+    const strings = getStrings('es');
+    VALID_DINOSAURS.forEach((dinosaur) => {
+      const dinosaurQuestions = getQuestionsByDinosaur(questions, dinosaur);
+      expect(dinosaurQuestions.length).toBeGreaterThan(0);
+      dinosaurQuestions.forEach((question) => {
+        const text = resolveDatoCurioso(strings, question.dato_curioso);
+        expect(typeof text).toBe('string');
+        expect(text.trim().length).toBeGreaterThan(0);
+      });
     });
   });
 });
@@ -126,9 +147,9 @@ describe('validateQuestion', () => {
     expect(errors.some((error) => error.includes('correctAnswerIndex'))).toBe(true);
   });
 
-  test('rejects a missing funFact', () => {
-    const errors = validateQuestion(buildValidQuestion({ funFact: '   ' }), 0);
-    expect(errors.some((error) => error.includes('funFact'))).toBe(true);
+  test('rejects a missing dato_curioso', () => {
+    const errors = validateQuestion(buildValidQuestion({ dato_curioso: '   ' }), 0);
+    expect(errors.some((error) => error.includes('dato_curioso'))).toBe(true);
   });
 
   test('rejects a missing image reference', () => {
@@ -204,6 +225,41 @@ describe('getDinosaurCoverageErrors', () => {
   });
 });
 
+describe('resolveDatoCurioso', () => {
+  const strings = { funFacts: { 'trex-01': 'El T-Rex tenía una mordida muy potente.' } };
+
+  test('resolves a dotted i18n key to its translated string', () => {
+    expect(resolveDatoCurioso(strings, 'funFacts.trex-01')).toBe('El T-Rex tenía una mordida muy potente.');
+  });
+
+  test('returns undefined for a key with no matching translation', () => {
+    expect(resolveDatoCurioso(strings, 'funFacts.unknown')).toBeUndefined();
+  });
+
+  test('returns undefined for an empty or non-string key', () => {
+    expect(resolveDatoCurioso(strings, '')).toBeUndefined();
+    expect(resolveDatoCurioso(strings, undefined)).toBeUndefined();
+  });
+});
+
+describe('getDatoCuriosoTranslationErrors', () => {
+  const strings = { funFacts: { 'trex-01': 'El T-Rex tenía una mordida muy potente.' } };
+
+  test('returns no errors when every dato_curioso key resolves', () => {
+    const questions = [buildValidQuestion({ dato_curioso: 'funFacts.trex-01' })];
+
+    expect(getDatoCuriosoTranslationErrors(questions, strings)).toEqual([]);
+  });
+
+  test('flags a dato_curioso key with no matching translation', () => {
+    const questions = [buildValidQuestion({ dato_curioso: 'funFacts.missing' })];
+
+    const errors = getDatoCuriosoTranslationErrors(questions, strings);
+
+    expect(errors.some((error) => error.includes('funFacts.missing'))).toBe(true);
+  });
+});
+
 describe('loadQuestionBank', () => {
   test('loads and validates a well-formed JSON file from disk', () => {
     const filePath = writeTempQuestionBank([buildValidQuestion()]);
@@ -256,6 +312,24 @@ describe('loadQuestionBank', () => {
     const filePath = writeTempQuestionBank([buildValidQuestion()]);
     try {
       expect(() => loadQuestionBank({ filePath, checkCount: true })).toThrow(/must contain exactly/);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('does not enforce dato_curioso translations for a custom filePath by default', () => {
+    const filePath = writeTempQuestionBank([buildValidQuestion({ dato_curioso: 'funFacts.does-not-exist' })]);
+    try {
+      expect(() => loadQuestionBank({ filePath })).not.toThrow();
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('enforces dato_curioso translations for a custom filePath when explicitly requested', () => {
+    const filePath = writeTempQuestionBank([buildValidQuestion({ dato_curioso: 'funFacts.does-not-exist' })]);
+    try {
+      expect(() => loadQuestionBank({ filePath, checkTranslations: true })).toThrow(/no i18n translation/);
     } finally {
       fs.unlinkSync(filePath);
     }
