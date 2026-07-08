@@ -88,10 +88,93 @@ body {
   box-shadow: 0 2px 0 #1b5e20;
 }
 
+.home-screen__privacy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__privacy-button:hover {
+  background-color: #f1f8e9;
+}
+
+.home-screen__privacy-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
 .home-screen__parental-notice {
   max-width: 60ch;
   font-size: 0.9rem;
   color: #1b5e20;
+}
+
+/*
+ * First-run tooltip (TRIOFSND-65): a small speech bubble with an upward
+ * arrow pointing at the play button above it. Shown only once, so the
+ * bounce animation is meant to catch a first-time player's eye — it is
+ * disabled under prefers-reduced-motion, same as the question feedback
+ * celebration animation.
+ */
+.home-screen__tooltip {
+  position: relative;
+  margin: 0;
+  max-width: 280px;
+  padding: 10px 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  /* #1b5e20 on #fbc02d is ~4.75:1, meeting WCAG AA (>=4.5:1, PRD AC-13) —
+     white text on this yellow only reaches ~1.66:1. */
+  color: #1b5e20;
+  background-color: #fbc02d;
+  border-radius: 16px;
+  box-shadow: 0 3px 0 #c79100;
+}
+
+.home-screen__tooltip::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #fbc02d;
+}
+
+.home-screen__tooltip--animated {
+  animation: home-screen-tooltip-bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes home-screen-tooltip-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-screen__tooltip--animated {
+    animation: none;
+  }
 }
 
 /*
@@ -207,7 +290,6 @@ body {
   outline: 4px solid #fbc02d;
   outline-offset: 3px;
 }
-
 /* Tablet landscape: the primary target — give the mascot and title more room. */
 @media (min-width: 900px) and (orientation: landscape) {
   .home-screen {
@@ -382,6 +464,7 @@ body {
   color: #ffffff;
   font-weight: bold;
   font-size: 24px;
+  min-height: 64px;
   padding: 16px 40px;
 }
 
@@ -389,4 +472,82 @@ body {
   background-color: transparent;
   color: #1b5e20;
   border: 2px solid #1b5e20;
+}
+
+/*
+ * Privacy policy screen (TRIOFSND-116) — reuses the home-screen palette
+ * (#1b5e20 text / #fff8e1 background, #2e7d32 accents), already checked
+ * against WCAG AA in src/theme/contrast.test.js, so the whole app stays on
+ * one verified color system instead of introducing a second one.
+ */
+.privacy-policy-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 4px 32px;
+  text-align: left;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__back-button {
+  align-self: flex-start;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.privacy-policy-screen__back-button:hover {
+  background-color: #388e3c;
+}
+
+.privacy-policy-screen__back-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.privacy-policy-screen__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__title:focus {
+  outline: none;
+}
+
+.privacy-policy-screen__updated-at {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__callout {
+  background-color: #f1f8e9;
+  border: 2px solid #2e7d32;
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.privacy-policy-screen__callout h2 {
+  margin-top: 0;
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__section h2 {
+  color: #1b5e20;
+  font-size: 1.25rem;
 }

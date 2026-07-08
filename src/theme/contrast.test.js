@@ -3,6 +3,7 @@
 const { contrastRatio, meetsWcagAA } = require('./contrast');
 const { QUESTION_SCREEN_COLORS } = require('./questionScreenColors');
 const { GLOBAL_CONTROLS_COLORS } = require('./globalControlsColors');
+const { HOME_SCREEN_COLORS } = require('./homeScreenColors');
 
 describe('contrastRatio', () => {
   test('is 21 for black on white (the maximum possible ratio)', () => {
@@ -56,5 +57,26 @@ describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purc
   test('the disclosure panel state meets AA', () => {
     const { background, text } = GLOBAL_CONTROLS_COLORS.panel;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('home screen color tokens (PRD AC-13: WCAG AA)', () => {
+  test('the first-run tooltip (TRIOFSND-65) meets AA', () => {
+    const { background, text } = HOME_SCREEN_COLORS.tooltip;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('privacy policy screen color tokens (PRD AC-13, TRIOFSND-116)', () => {
+  test('the home privacy icon (green text on white) meets AA', () => {
+    expect(contrastRatio('#1b5e20', '#ffffff')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the "Volver" back button (white text on green fill) meets AA', () => {
+    expect(contrastRatio('#ffffff', '#2e7d32')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the screen body text (green on the app cream background) meets AA', () => {
+    expect(contrastRatio('#1b5e20', '#fff8e1')).toBeGreaterThanOrEqual(4.5);
   });
 });

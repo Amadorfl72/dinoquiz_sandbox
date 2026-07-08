@@ -111,6 +111,34 @@ describe('HomeScreen', () => {
     expect(swContent).toContain(`'${MASCOT_IMAGE_SRC}'`);
   });
 
+  test('renders a privacy policy icon button with a descriptive accessible name (TRIOFSND-116)', () => {
+    const { privacyPolicyButton } = renderHomeScreen(container);
+
+    expect(privacyPolicyButton.tagName).toBe('BUTTON');
+    expect(privacyPolicyButton).toHaveAccessibleName(strings.privacyPolicyIconLabel);
+  });
+
+  test('the privacy policy icon opens the privacy view in a single tap', () => {
+    const onOpenPrivacyPolicy = jest.fn();
+    const { privacyPolicyButton } = renderHomeScreen(container, { onOpenPrivacyPolicy });
+
+    privacyPolicyButton.click();
+
+    expect(onOpenPrivacyPolicy).toHaveBeenCalledTimes(1);
+  });
+
+  test('the privacy policy icon meets the 48x48dp minimum touch target', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.home-screen__privacy-button\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const minHeight = parseFloat(ruleMatch[1].match(/min-height:\s*([\d.]+)px/)[1]);
+    const minWidth = parseFloat(ruleMatch[1].match(/min-width:\s*([\d.]+)px/)[1]);
+
+    expect(minHeight).toBeGreaterThanOrEqual(48);
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+  });
+
   test('the homeScreen script and the i18n resource are part of the service worker app-shell precache', () => {
     const publicDir = path.resolve(__dirname, '../../public');
     const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
@@ -268,5 +296,105 @@ describe('HomeScreen global controls (TRIOFSND-66: mute, privacy policy, remove-
 
     expect(globalControls).toHaveAttribute('role', 'group');
     expect(globalControls).toHaveAccessibleName(strings.globalControls.groupLabel);
+  });
+});
+
+describe('HomeScreen first-run tooltip (TRIOFSND-65)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('does not render a tooltip by default (already-seen / not first run)', () => {
+    renderHomeScreen(container);
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+  });
+
+  test('renders an animated tooltip pointing at the "¡Jugar!" button when showTooltip is true', () => {
+    const { tooltip, playButton } = renderHomeScreen(container, { showTooltip: true });
+
+    expect(tooltip).not.toBeNull();
+    expect(tooltip).toHaveClass('home-screen__tooltip--animated');
+    expect(tooltip).toHaveTextContent(strings.tooltip.message);
+    expect(playButton).toHaveAttribute('aria-describedby', tooltip.id);
+  });
+
+  test('hides the tooltip after the first tap anywhere on the screen', () => {
+    const onTooltipDismiss = jest.fn();
+    const { root, title } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    title.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('.home-screen__tooltip')).toBeNull();
+  });
+
+  test('hides the tooltip on a tap outside .home-screen (e.g. empty/padding area of #app)', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    // container (#app) is not part of `.home-screen` itself — it's the
+    // centered root's parent, standing in for the empty padding area
+    // around it that a real tap outside the card would land on.
+    container.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the tooltip on a tap anywhere in the document, even outside #app', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    document.body.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the tooltip when the "¡Jugar!" button is pressed', () => {
+    const onTooltipDismiss = jest.fn();
+    const { playButton } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    playButton.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('removes the aria-describedby link once the tooltip is dismissed', () => {
+    const { playButton } = renderHomeScreen(container, { showTooltip: true });
+
+    playButton.click();
+
+    expect(playButton).not.toHaveAttribute('aria-describedby');
+  });
+
+  test('does not call onTooltipDismiss more than once even if the screen is tapped repeatedly', () => {
+    const onTooltipDismiss = jest.fn();
+    const { root, playButton } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    playButton.click();
+    root.click();
+
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('invokes onPlayButtonClick on every tap of the "¡Jugar!" button', () => {
+    const onPlayButtonClick = jest.fn();
+    const { playButton } = renderHomeScreen(container, { onPlayButtonClick });
+
+    playButton.click();
+    playButton.click();
+
+    expect(onPlayButtonClick).toHaveBeenCalledTimes(2);
   });
 });
