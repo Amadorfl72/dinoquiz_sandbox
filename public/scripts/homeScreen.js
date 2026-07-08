@@ -34,6 +34,11 @@
  * which the caller uses to persist the "seen" flag so it never reappears.
  * `options.onPlayButtonClick` fires on every play button tap; the caller
  * uses it to record the aggregated, non-PII `first_tap_jugar` local counter.
+ *
+ * The privacy policy icon button (TRIOFSND-116) opens the privacy policy
+ * view (public/scripts/privacyPolicyScreen.js) in a single tap — it is a
+ * plain button with a descriptive `aria-label`/`title` from the i18n
+ * resource (no icon-only, unlabeled control), reachable from Home in <2 taps.
  */
 
 (function () {
@@ -74,6 +79,23 @@
     playButton.type = 'button';
     playButton.className = 'home-screen__play-button';
     playButton.textContent = strings.playButton;
+
+    var privacyPolicyButton = document.createElement('button');
+    privacyPolicyButton.type = 'button';
+    privacyPolicyButton.className = 'home-screen__privacy-button';
+    privacyPolicyButton.setAttribute('aria-label', strings.privacyPolicyIconLabel);
+    privacyPolicyButton.title = strings.privacyPolicyIconHint;
+    var privacyPolicyIcon = document.createElement('span');
+    privacyPolicyIcon.setAttribute('aria-hidden', 'true');
+    privacyPolicyIcon.textContent = '🔒';
+    var privacyPolicyLabel = document.createElement('span');
+    privacyPolicyLabel.className = 'home-screen__privacy-button-label';
+    privacyPolicyLabel.textContent = strings.privacyPolicyIconLabel;
+    privacyPolicyButton.appendChild(privacyPolicyIcon);
+    privacyPolicyButton.appendChild(privacyPolicyLabel);
+    if (typeof options.onOpenPrivacyPolicy === 'function') {
+      privacyPolicyButton.addEventListener('click', options.onOpenPrivacyPolicy);
+    }
 
     var parentalNotice = document.createElement('p');
     parentalNotice.className = 'home-screen__parental-notice';
@@ -128,6 +150,7 @@
     if (tooltip) {
       root.appendChild(tooltip);
     }
+    root.appendChild(privacyPolicyButton);
     root.appendChild(parentalNotice);
     container.appendChild(root);
 
@@ -136,6 +159,7 @@
       title: title,
       mascot: mascot,
       playButton: playButton,
+      privacyPolicyButton: privacyPolicyButton,
       parentalNotice: parentalNotice,
       tooltip: tooltip,
     };
