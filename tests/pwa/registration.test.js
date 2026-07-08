@@ -10,6 +10,15 @@ describe('TRIOFSND-110: service worker registration', () => {
     expect(indexHtml).toMatch(/<script[^>]+src=["']\/scripts\/main\.js["']/);
   });
 
+  test('index.html loads the Home screen script before the bootstrap script', () => {
+    const indexHtml = fs.readFileSync(INDEX_PATH, 'utf-8');
+    const homeScreenIndex = indexHtml.indexOf('/scripts/homeScreen.js');
+    const mainIndex = indexHtml.indexOf('/scripts/main.js');
+
+    expect(homeScreenIndex).toBeGreaterThan(-1);
+    expect(homeScreenIndex).toBeLessThan(mainIndex);
+  });
+
   test('registration is feature-detected and errors are handled', () => {
     const mainJs = fs.readFileSync(MAIN_JS_PATH, 'utf-8');
     expect(mainJs).toMatch(/['"]serviceWorker['"]\s+in\s+nav/);
@@ -49,5 +58,58 @@ describe('TRIOFSND-110: service worker registration', () => {
     expect(result).toBeNull();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
+  test('loadHomeStrings fetches the i18n resource and returns the home strings', async () => {
+    const { loadHomeStrings } = require(MAIN_JS_PATH);
+    const homeStrings = { title: 'DinoQuiz' };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings }),
+    });
+
+    const result = await loadHomeStrings(fetchFn, '/i18n/es.json');
+
+    expect(fetchFn).toHaveBeenCalledWith('/i18n/es.json');
+    expect(result).toBe(homeStrings);
+  });
+
+  test('loadHomeStrings resolves to null and logs when the fetch fails', async () => {
+    const { loadHomeStrings } = require(MAIN_JS_PATH);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchFn = jest.fn().mockRejectedValue(new Error('offline'));
+
+    const result = await loadHomeStrings(fetchFn);
+
+    expect(result).toBeNull();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('renderHome renders into #app using the fetched strings', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const homeStrings = { title: 'DinoQuiz' };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings }),
+    });
+
+    await renderHome(doc, renderHomeScreen, fetchFn);
+
+    expect(doc.getElementById).toHaveBeenCalledWith('app');
+    expect(renderHomeScreen).toHaveBeenCalledWith({ id: 'app' }, { strings: homeStrings });
+  });
+
+  test('renderHome resolves to null without a #app container', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue(null) };
+    const renderHomeScreen = jest.fn();
+
+    const result = await renderHome(doc, renderHomeScreen, jest.fn());
+
+    expect(result).toBeNull();
+    expect(renderHomeScreen).not.toHaveBeenCalled();
   });
 });

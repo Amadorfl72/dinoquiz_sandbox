@@ -1,7 +1,7 @@
 'use strict';
 
 const { DEFAULT_LOCALE, getStrings } = require('./index');
-const es = require('./es.json');
+const es = require('../../public/i18n/es.json');
 
 describe('i18n resource loader', () => {
   test('exposes "es" as the default locale (v1 ships only Spanish)', () => {

@@ -6,8 +6,8 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getByText } = require('@testing-library/dom');
 
-const { renderHomeScreen, MASCOT_IMAGE_SRC } = require('./HomeScreen');
-const { home: strings } = require('../i18n/es.json');
+const { renderHomeScreen, MASCOT_IMAGE_SRC } = require('../../public/scripts/homeScreen');
+const { home: strings } = require('../../public/i18n/es.json');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
@@ -97,11 +97,25 @@ describe('HomeScreen', () => {
     expect(container.textContent).toContain(strings.parentalNotice.message);
   });
 
+  test('accepts pre-resolved strings so the browser can render without a bundler', () => {
+    renderHomeScreen(container, { strings });
+
+    expect(getByText(container, strings.title)).toBeInTheDocument();
+  });
+
   test('the mascot asset file exists and is part of the service worker app-shell precache', () => {
     const publicDir = path.resolve(__dirname, '../../public');
     expect(fs.existsSync(path.join(publicDir, MASCOT_IMAGE_SRC.replace(/^\//, '')))).toBe(true);
 
     const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
     expect(swContent).toContain(`'${MASCOT_IMAGE_SRC}'`);
+  });
+
+  test('the homeScreen script and the i18n resource are part of the service worker app-shell precache', () => {
+    const publicDir = path.resolve(__dirname, '../../public');
+    const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
+
+    expect(swContent).toContain("'/scripts/homeScreen.js'");
+    expect(swContent).toContain("'/i18n/es.json'");
   });
 });
