@@ -20,6 +20,71 @@ body {
 }
 
 /*
+ * App shell (TRIOFSND-105) — the persistent header hosts the single global
+ * mute toggle; `content` is where each screen (Inicio, Quiz, Feedback,
+ * Resultados) mounts.
+ */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app-shell__header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.app-shell__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/*
+ * Global mute toggle (TRIOFSND-105, AC-2/AC-11/AC-13/AC-14).
+ *
+ * Colors mirror src/theme/muteToggleColors.js, which contrast.test.js checks
+ * against WCAG AA (≥4.5:1, AC-13). The two states are visually distinct: an
+ * outlined "sound on" button and a filled "sound off" one, so a child can
+ * tell the state apart without reading the label. Touch target is 48x48dp
+ * per AC-2.
+ */
+.mute-toggle {
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #1b5e20;
+  background-color: #ffffff;
+  color: #1b5e20;
+  cursor: pointer;
+}
+
+.mute-toggle--muted {
+  border-color: #1b5e20;
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.mute-toggle__icon {
+  pointer-events: none;
+}
+
+/*
  * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
  * Colors mirror src/theme/questionScreenColors.js, which contrast.test.js

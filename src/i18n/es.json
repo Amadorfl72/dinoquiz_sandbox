@@ -1,5 +1,11 @@
 {
   "locale": "es",
+  "appShell": {
+    "muteButton": {
+      "mute": "Silenciar sonido",
+      "unmute": "Activar sonido"
+    }
+  },
   "home": {
     "title": "DinoQuiz",
     "playButton": "¡Jugar!",
