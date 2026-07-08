@@ -8,6 +8,16 @@
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
     }
   },
+  "question": {
+    "optionsGroupLabel": "Opciones de respuesta",
+    "feedback": {
+      "correct": "¡Genial, acertaste!",
+      "incorrect": "¡Buen intento! La respuesta correcta es esta:"
+    },
+    "funFactHeading": "Dato curioso",
+    "scoreLabel": "Puntos",
+    "nextButton": "Siguiente"
+  },
   "funFacts": {
     "trex-01": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",
     "trex-02": "Aunque sus brazos eran diminutos, ¡eran sorprendentemente fuertes!",
@@ -49,5 +59,6 @@
     "pteranodon-03": "El Pteranodon volaba sobre el mar y atrapaba peces con su largo pico, como un pelícano gigante.",
     "pteranodon-04": "Esa cresta larga en la cabeza pudo ayudarle a volar mejor o a reconocer a otros Pteranodon.",
     "pteranodon-05": "A pesar de su gran pico, el Pteranodon no tenía dientes, ¡tragaba los peces enteros!"
+  }
   }
 }
