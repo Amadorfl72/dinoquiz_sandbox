@@ -28,14 +28,20 @@ Cada pregunta sigue este esquema:
   "question": "...",            // enunciado
   "options": ["...", "..."],    // 3-4 opciones de respuesta
   "correctAnswerIndex": 0,      // índice de la opción correcta
-  "funFact": "...",             // dato curioso mostrado tras responder
+  "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
+                                 // mostrado tras responder; el texto nunca va hardcodeado aquí
   "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
 }
 ```
 
 `loadQuestionBank()` lee el JSON y valida el esquema de cada pregunta (opciones, índice de
-respuesta correcta, ids únicos, etc.). El banco cubre los 7 dinosaurios con al menos 3-4
-preguntas cada uno.
+respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
+recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
+cada una de esas preguntas tiene su propio dato curioso.
+
+El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
+`funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
+resto de textos de la UI.
 
 ## Pantalla de Inicio
 
