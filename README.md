@@ -48,3 +48,22 @@ puede alcanzarlo pero nunca interrumpe ni bloquea el flujo del niño hacia el bo
 
 Todos los textos se gestionan desde el recurso i18n en [`src/i18n/es.json`](src/i18n/es.json)
 (cargado a través de [`src/i18n/index.js`](src/i18n/index.js)); v1 solo expone el locale `es`.
+
+## Pantalla de Resultados
+
+[`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js) renderiza la pantalla de
+Resultados al terminar una partida: puntuación (`X/10`), estrellas por tramos
+(0-3 → 1 estrella, 4-6 → 2 estrellas, 7-10 → 3 estrellas, ver `calculateStars`), un mensaje
+motivador siempre positivo elegido al azar entre `results.messages` (`es.json`), un botón
+prominente "Volver a jugar" y un botón secundario opcional "Salir".
+
+`validateMotivationalMessages` actúa como guardarraíl de contenido: comprueba que ningún
+mensaje contenga lenguaje negativo (comparando palabras completas, sin acentos, contra una
+lista de términos prohibidos) para que la guía de contenido se cumpla también en tiempo de
+test, no solo por revisión manual.
+
+Accesibilidad: además de los elementos visibles (puntuación, estrellas con
+`role="img"`/`aria-label`, mensaje), la pantalla incluye una región `role="status"` con
+`aria-live="polite"` (oculta visualmente con `.sr-only`) que anuncia la puntuación, las
+estrellas y el mensaje como una sola frase a los lectores de pantalla. Los botones cumplen
+el área táctil mínima de 48x48dp y el contraste de texto respeta WCAG AA.

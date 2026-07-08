@@ -7,5 +7,22 @@
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
     }
+  },
+  "results": {
+    "heading": "¡Resultados!",
+    "scoreLabel": "Puntuación",
+    "scoreFormat": "{score}/{total}",
+    "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
+    "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
+    "playAgainButton": "Volver a jugar",
+    "exitButton": "Salir",
+    "messages": [
+      "¡Lo has hecho genial! Sigue descubriendo datos curiosos de dinosaurios.",
+      "¡Qué partida tan divertida! Cada vez conoces mejor a los dinosaurios.",
+      "¡Sigue así, campeón! Aprender sobre dinosaurios mola muchísimo.",
+      "¡Bien jugado! Tu curiosidad por los dinosaurios es enorme.",
+      "¡Genial esfuerzo! Vuelve a jugar para descubrir más datos curiosos.",
+      "¡Eres un explorador estupendo! Los dinosaurios están orgullosos de ti."
+    ]
   }
 }
