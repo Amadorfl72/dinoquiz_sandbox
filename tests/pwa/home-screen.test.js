@@ -158,6 +158,29 @@ describe('HomeScreen first-run tooltip (TRIOFSND-65)', () => {
     expect(root.querySelector('.home-screen__tooltip')).toBeNull();
   });
 
+  test('hides the tooltip on a tap outside .home-screen (e.g. empty/padding area of #app)', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    // container (#app) is not part of `.home-screen` itself — it's the
+    // centered root's parent, standing in for the empty padding area
+    // around it that a real tap outside the card would land on.
+    container.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the tooltip on a tap anywhere in the document, even outside #app', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    document.body.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
   test('hides the tooltip when the "¡Jugar!" button is pressed', () => {
     const onTooltipDismiss = jest.fn();
     const { playButton } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });

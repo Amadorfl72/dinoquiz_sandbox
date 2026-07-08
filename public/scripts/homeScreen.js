@@ -83,6 +83,12 @@
 
     var tooltip = null;
     var tooltipDismissed = false;
+    // Dismissal listens on the document, not just `.home-screen`: the
+    // acceptance criterion is "hides after the first tap anywhere on the
+    // screen", and `.home-screen` is a centered, max-width root that leaves
+    // empty/padding area around it (inside #app and beyond) a tap there
+    // must still dismiss the tooltip.
+    var dismissScope = (container && container.ownerDocument) || document;
 
     function dismissTooltip() {
       if (tooltipDismissed) return;
@@ -92,6 +98,7 @@
         tooltip.parentNode.removeChild(tooltip);
       }
       playButton.removeAttribute('aria-describedby');
+      dismissScope.removeEventListener('click', dismissTooltip);
 
       if (typeof options.onTooltipDismiss === 'function') {
         options.onTooltipDismiss();
@@ -105,7 +112,7 @@
       tooltip.setAttribute('role', 'status');
       tooltip.textContent = strings.tooltip.message;
       playButton.setAttribute('aria-describedby', tooltip.id);
-      root.addEventListener('click', dismissTooltip);
+      dismissScope.addEventListener('click', dismissTooltip);
     }
 
     playButton.addEventListener('click', function () {

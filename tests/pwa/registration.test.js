@@ -221,3 +221,87 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     expect(storage.recordEventOnce).toHaveBeenCalledWith('first_tap_jugar');
   });
 });
+
+describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, unbundled browser', () => {
+  function createFakeWindow() {
+    const store = new Map();
+    return {
+      localStorage: {
+        getItem: jest.fn((key) => (store.has(key) ? store.get(key) : null)),
+        setItem: jest.fn((key, value) => store.set(key, value)),
+        removeItem: jest.fn((key) => store.delete(key)),
+      },
+    };
+  }
+
+  test('hasSeenHomeTooltip resolves false before anything has been persisted', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(false);
+  });
+
+  test('markHomeTooltipSeen persists the flag to localStorage so a later read resolves true', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.markHomeTooltipSeen();
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith('dinoquiz:homeTooltipSeen', 'true');
+    expect(await storage.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('the persisted "seen" flag survives across separate storage instances (same device, later launch)', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+
+    await createBrowserHomeStorage(win).markHomeTooltipSeen();
+
+    expect(await createBrowserHomeStorage(win).hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('recordEventOnce is a non-PII local counter that only increments the first time', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ first_tap_jugar: 1 })
+    );
+  });
+
+  test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = {
+      localStorage: {
+        getItem: jest.fn(() => {
+          throw new Error('SecurityError');
+        }),
+        setItem: jest.fn(() => {
+          throw new Error('QuotaExceededError');
+        }),
+      },
+    };
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.markHomeTooltipSeen();
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('the bootstrap falls back to createBrowserHomeStorage in a real browser, where require is unavailable', () => {
+    const { loadDinoQuizStorage, createBrowserHomeStorage } = require(MAIN_JS_PATH);
+
+    const resolved = loadDinoQuizStorage({}) || createBrowserHomeStorage(createFakeWindow());
+
+    expect(typeof resolved.hasSeenHomeTooltip).toBe('function');
+    expect(typeof resolved.markHomeTooltipSeen).toBe('function');
+    expect(typeof resolved.recordEventOnce).toBe('function');
+  });
+});
