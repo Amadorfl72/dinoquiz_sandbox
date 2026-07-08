@@ -241,4 +241,89 @@ describe('QuestionScreen', () => {
     expect(container.textContent).toContain(strings.feedback.incorrect);
     expect(nextButton).toHaveTextContent(strings.nextButton);
   });
+
+  describe('navigation safety (TRIOFSND-121: closed child flow, no external escapes)', () => {
+    let openSpy;
+    let startingHref;
+
+    beforeEach(() => {
+      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      startingHref = window.location.href;
+    });
+
+    afterEach(() => {
+      openSpy.mockRestore();
+    });
+
+    function assertNoExternalEscapeHatches() {
+      expect(container.querySelectorAll('a')).toHaveLength(0);
+      expect(container.querySelectorAll('[href]')).toHaveLength(0);
+      expect(container.querySelectorAll('[target="_blank"]')).toHaveLength(0);
+      expect(openSpy).not.toHaveBeenCalled();
+      expect(window.location.href).toBe(startingHref);
+    }
+
+    test('every option button and the "Siguiente" control are plain, non-navigating buttons', () => {
+      const question = buildQuestion();
+      const { optionButtons, nextButton } = renderQuestionScreen(container, question);
+
+      optionButtons.forEach((button) => {
+        expect(button.tagName).toBe('BUTTON');
+        expect(button.getAttribute('type')).toBe('button');
+        expect(button).not.toHaveAttribute('href');
+        expect(button).not.toHaveAttribute('target');
+      });
+      expect(nextButton.tagName).toBe('BUTTON');
+      expect(nextButton.getAttribute('type')).toBe('button');
+      expect(nextButton).not.toHaveAttribute('href');
+      expect(nextButton).not.toHaveAttribute('target');
+    });
+
+    test('clicking every answer option, one render per option, never opens an external window or navigates away', () => {
+      const question = buildQuestion();
+
+      question.options.forEach((_, index) => {
+        const { optionButtons } = renderQuestionScreen(container, question);
+
+        optionButtons[index].click();
+
+        assertNoExternalEscapeHatches();
+      });
+    });
+
+    test('clicking "Siguiente" after answering never opens an external window or navigates away', () => {
+      const question = buildQuestion();
+      const onNext = jest.fn();
+      const { optionButtons, nextButton } = renderQuestionScreen(container, question, { onNext });
+
+      optionButtons[question.correctAnswerIndex].click();
+      nextButton.click();
+
+      expect(onNext).toHaveBeenCalledTimes(1);
+      assertNoExternalEscapeHatches();
+    });
+
+    test('activating an option via keyboard (Enter) never opens an external window or navigates away', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      optionButtons[wrongIndex].focus();
+      optionButtons[wrongIndex].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      optionButtons[wrongIndex].click();
+
+      assertNoExternalEscapeHatches();
+    });
+
+    test('renders with no anchors, hrefs or blank-target elements before or after answering', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      assertNoExternalEscapeHatches();
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      assertNoExternalEscapeHatches();
+    });
+  });
 });
