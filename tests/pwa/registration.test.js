@@ -113,3 +113,195 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     expect(renderHomeScreen).not.toHaveBeenCalled();
   });
 });
+
+describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () => {
+  function createFakeStorage(overrides = {}) {
+    return {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(false),
+      markHomeTooltipSeen: jest.fn().mockResolvedValue(undefined),
+      recordEventOnce: jest.fn().mockResolvedValue(1),
+      ...overrides,
+    };
+  }
+
+  test('loadDinoQuizStorage returns null when require is unavailable (unbundled browser)', () => {
+    const { loadDinoQuizStorage } = require(MAIN_JS_PATH);
+
+    // Passing a truthy, non-function value stands in for the real browser
+    // case where the global `require` simply doesn't exist — `undefined`
+    // can't be used here because it would fall back to Jest's own `require`.
+    expect(loadDinoQuizStorage({})).toBeNull();
+  });
+
+  test('loadDinoQuizStorage returns null when the require call throws', () => {
+    const { loadDinoQuizStorage } = require(MAIN_JS_PATH);
+    const requireFn = jest.fn(() => {
+      throw new Error('module not found');
+    });
+
+    expect(loadDinoQuizStorage(requireFn)).toBeNull();
+  });
+
+  test('loadDinoQuizStorage resolves the shared dinoQuizStorage instance via the injected require', () => {
+    const { loadDinoQuizStorage } = require(MAIN_JS_PATH);
+    const fakeInstance = { hasSeenHomeTooltip: jest.fn() };
+    const requireFn = jest.fn().mockReturnValue({ dinoQuizStorage: fakeInstance });
+
+    expect(loadDinoQuizStorage(requireFn)).toBe(fakeInstance);
+  });
+
+  test('renderHome without a storage argument keeps its previous, tooltip-less behaviour', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const homeStrings = { title: 'DinoQuiz' };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings }),
+    });
+
+    await renderHome(doc, renderHomeScreen, fetchFn);
+
+    expect(renderHomeScreen).toHaveBeenCalledWith({ id: 'app' }, { strings: homeStrings });
+  });
+
+  test('renderHome shows the tooltip when the storage flag says it has not been seen yet', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storage = createFakeStorage({ hasSeenHomeTooltip: jest.fn().mockResolvedValue(false) });
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    expect(storage.hasSeenHomeTooltip).toHaveBeenCalled();
+    const options = renderHomeScreen.mock.calls[0][1];
+    expect(options.showTooltip).toBe(true);
+    expect(typeof options.onTooltipDismiss).toBe('function');
+    expect(typeof options.onPlayButtonClick).toBe('function');
+  });
+
+  test('renderHome hides the tooltip when the storage flag says it was already seen', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storage = createFakeStorage({ hasSeenHomeTooltip: jest.fn().mockResolvedValue(true) });
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    const options = renderHomeScreen.mock.calls[0][1];
+    expect(options.showTooltip).toBe(false);
+  });
+
+  test('the tooltip dismiss callback persists the "seen" flag through storage', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storage = createFakeStorage();
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+    const options = renderHomeScreen.mock.calls[0][1];
+    options.onTooltipDismiss();
+
+    expect(storage.markHomeTooltipSeen).toHaveBeenCalledTimes(1);
+  });
+
+  test('the play button click callback records the first_tap_jugar local counter', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storage = createFakeStorage();
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+    const options = renderHomeScreen.mock.calls[0][1];
+    options.onPlayButtonClick();
+
+    expect(storage.recordEventOnce).toHaveBeenCalledWith('first_tap_jugar');
+  });
+});
+
+describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, unbundled browser', () => {
+  function createFakeWindow() {
+    const store = new Map();
+    return {
+      localStorage: {
+        getItem: jest.fn((key) => (store.has(key) ? store.get(key) : null)),
+        setItem: jest.fn((key, value) => store.set(key, value)),
+        removeItem: jest.fn((key) => store.delete(key)),
+      },
+    };
+  }
+
+  test('hasSeenHomeTooltip resolves false before anything has been persisted', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(false);
+  });
+
+  test('markHomeTooltipSeen persists the flag to localStorage so a later read resolves true', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.markHomeTooltipSeen();
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith('dinoquiz:homeTooltipSeen', 'true');
+    expect(await storage.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('the persisted "seen" flag survives across separate storage instances (same device, later launch)', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+
+    await createBrowserHomeStorage(win).markHomeTooltipSeen();
+
+    expect(await createBrowserHomeStorage(win).hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('recordEventOnce is a non-PII local counter that only increments the first time', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ first_tap_jugar: 1 })
+    );
+  });
+
+  test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = {
+      localStorage: {
+        getItem: jest.fn(() => {
+          throw new Error('SecurityError');
+        }),
+        setItem: jest.fn(() => {
+          throw new Error('QuotaExceededError');
+        }),
+      },
+    };
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.markHomeTooltipSeen();
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  test('the bootstrap falls back to createBrowserHomeStorage in a real browser, where require is unavailable', () => {
+    const { loadDinoQuizStorage, createBrowserHomeStorage } = require(MAIN_JS_PATH);
+
+    const resolved = loadDinoQuizStorage({}) || createBrowserHomeStorage(createFakeWindow());
+
+    expect(typeof resolved.hasSeenHomeTooltip).toBe('function');
+    expect(typeof resolved.markHomeTooltipSeen).toBe('function');
+    expect(typeof resolved.recordEventOnce).toBe('function');
+  });
+});

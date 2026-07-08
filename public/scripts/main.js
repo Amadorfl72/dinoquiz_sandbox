@@ -38,6 +38,24 @@
  * `registerServiceWorker`/`loadHomeStrings`/`renderHome`/`renderRoute` accept
  * explicit overrides so each is unit-testable under Node without touching the
  * global `navigator`/`document`/`fetch`/`location`.
+ *
+ * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
+ * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
+ * whether the tooltip was already dismissed on this device and passes the
+ * persistence/analytics callbacks through to `renderHomeScreen`.
+ *
+ * Two backends can fill that argument. `loadDinoQuizStorage` requires the
+ * CommonJS `src/services/storage` module — this only resolves under
+ * Node/Jest (or a future bundler); a real unbundled browser has no
+ * `require`, so it always returns `null` there. For that case,
+ * `createBrowserHomeStorage` implements the same three-method interface
+ * directly against `window.localStorage` (namespaced the same way as
+ * `src/services/storage`, degrading to an in-memory object if localStorage
+ * throws/is unavailable), the same way `loadHomeStrings` above fetches the
+ * i18n resource natively instead of going through `src/i18n`'s loader. The
+ * bootstrap below tries the CommonJS path first and falls back to the
+ * native browser one, so the tooltip, its persisted "seen" flag and the
+ * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  */
 (function () {
   var PRIVACY_POLICY_HASH = '#/privacidad';
@@ -263,7 +281,77 @@
     return !!loc && loc.hash === PRIVACY_POLICY_HASH;
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy) {
+  function loadDinoQuizStorage(requireFn) {
+    requireFn = requireFn || (typeof require === 'function' ? require : undefined);
+
+    if (typeof requireFn !== 'function') {
+      return null;
+    }
+
+    try {
+      return requireFn('../../src/services/storage').dinoQuizStorage;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
+  var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+
+  function createBrowserHomeStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var backend = win && win.localStorage;
+    var memory = {};
+    memory[HOME_TOOLTIP_SEEN_KEY] = false;
+    memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+
+    function readJSON(key) {
+      if (backend) {
+        try {
+          var raw = backend.getItem(key);
+          if (raw !== null) {
+            return JSON.parse(raw);
+          }
+        } catch (error) {
+          // Fall through to the in-memory value below.
+        }
+      }
+      return memory[key];
+    }
+
+    function writeJSON(key, value) {
+      memory[key] = value;
+      if (backend) {
+        try {
+          backend.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          // Quota exceeded or unavailable (e.g. Safari private mode): the
+          // write still lands in `memory` above so the app stays correct
+          // for the rest of this session, it just won't persist past it.
+        }
+      }
+    }
+
+    return {
+      hasSeenHomeTooltip: function () {
+        return Promise.resolve(Boolean(readJSON(HOME_TOOLTIP_SEEN_KEY)));
+      },
+      markHomeTooltipSeen: function () {
+        writeJSON(HOME_TOOLTIP_SEEN_KEY, true);
+        return Promise.resolve();
+      },
+      recordEventOnce: function (eventName) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        if (!counts[eventName]) {
+          counts[eventName] = 1;
+          writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+        }
+        return Promise.resolve(counts[eventName]);
+      },
+    };
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -282,26 +370,42 @@
     }
 
     return loadHomeStrings(fetchFn).then(function (strings) {
-      var options = strings ? { strings: strings } : {};
+      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+
+      var renderOptions = strings ? { strings: strings } : {};
       if (typeof onOpenPrivacyPolicy === 'function') {
-        options.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
-      }
-      var homeApi = renderHomeScreen(container, options);
-
-      // Wire '¡Jugar!' to start a game without changing renderHomeScreen's
-      // contract/props (it stays a plain, option-less strings renderer);
-      // we attach to the button element it hands back instead.
-      if (homeApi && homeApi.playButton) {
-        homeApi.playButton.addEventListener('click', function () {
-          var renderers = resolveScreenRenderers();
-          var questions = loadQuestions();
-          if (renderers && questions && questions.length > 0) {
-            startNewGame(container, renderers, questions, doc, fetchFn);
-          }
-        });
+        renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
 
-      return homeApi;
+      function finishRender() {
+        var homeApi = renderHomeScreen(container, renderOptions);
+
+        // Wire '¡Jugar!' to start a game without changing renderHomeScreen's
+        // contract/props beyond the strings/tooltip/privacy-policy options
+        // above; we attach to the button element it hands back instead.
+        if (homeApi && homeApi.playButton) {
+          homeApi.playButton.addEventListener('click', function () {
+            var renderers = resolveScreenRenderers();
+            var questions = loadQuestions();
+            if (renderers && questions && questions.length > 0) {
+              startNewGame(container, renderers, questions, doc, fetchFn);
+            }
+          });
+        }
+
+        return homeApi;
+      }
+
+      return storage.hasSeenHomeTooltip().then(function (seen) {
+        renderOptions.showTooltip = !seen;
+        renderOptions.onTooltipDismiss = function () {
+          storage.markHomeTooltipSeen();
+        };
+        renderOptions.onPlayButtonClick = function () {
+          storage.recordEventOnce('first_tap_jugar');
+        };
+        return finishRender();
+      });
     });
   }
 
@@ -395,6 +499,8 @@
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
       loadHomeStrings: loadHomeStrings,
+      loadDinoQuizStorage: loadDinoQuizStorage,
+      createBrowserHomeStorage: createBrowserHomeStorage,
       loadPrivacyPolicyStrings: loadPrivacyPolicyStrings,
       navigateToPrivacyPolicy: navigateToPrivacyPolicy,
       navigateHome: navigateHome,

@@ -24,6 +24,17 @@
  * needing to interact with it first — it is never focused programmatically
  * and never sits between the title and the play button in tab order.
  *
+ * `options.showTooltip` optionally renders a first-run animated tooltip
+ * pointing at the '¡Jugar!' button (TRIOFSND-65). This screen has no
+ * knowledge of *why* it should or shouldn't show it — the caller (the
+ * bootstrap in public/scripts/main.js) resolves the persisted "already
+ * seen" flag and passes the boolean in, the same way it resolves the i18n
+ * strings before calling here. The tooltip disappears on the first tap
+ * anywhere on screen or on the play button itself via `options.onTooltipDismiss`,
+ * which the caller uses to persist the "seen" flag so it never reappears.
+ * `options.onPlayButtonClick` fires on every play button tap; the caller
+ * uses it to record the aggregated, non-PII `first_tap_jugar` local counter.
+ *
  * The privacy policy icon button (TRIOFSND-116) opens the privacy policy
  * view (public/scripts/privacyPolicyScreen.js) in a single tap — it is a
  * plain button with a descriptive `aria-label`/`title` from the i18n
@@ -92,9 +103,53 @@
     parentalNotice.setAttribute('aria-label', strings.parentalNotice.label);
     parentalNotice.textContent = strings.parentalNotice.message;
 
+    var tooltip = null;
+    var tooltipDismissed = false;
+    // Dismissal listens on the document, not just `.home-screen`: the
+    // acceptance criterion is "hides after the first tap anywhere on the
+    // screen", and `.home-screen` is a centered, max-width root that leaves
+    // empty/padding area around it (inside #app and beyond) a tap there
+    // must still dismiss the tooltip.
+    var dismissScope = (container && container.ownerDocument) || document;
+
+    function dismissTooltip() {
+      if (tooltipDismissed) return;
+      tooltipDismissed = true;
+
+      if (tooltip && tooltip.parentNode) {
+        tooltip.parentNode.removeChild(tooltip);
+      }
+      playButton.removeAttribute('aria-describedby');
+      dismissScope.removeEventListener('click', dismissTooltip);
+
+      if (typeof options.onTooltipDismiss === 'function') {
+        options.onTooltipDismiss();
+      }
+    }
+
+    if (options.showTooltip) {
+      tooltip = document.createElement('p');
+      tooltip.id = 'home-screen-tooltip';
+      tooltip.className = 'home-screen__tooltip home-screen__tooltip--animated';
+      tooltip.setAttribute('role', 'status');
+      tooltip.textContent = strings.tooltip.message;
+      playButton.setAttribute('aria-describedby', tooltip.id);
+      dismissScope.addEventListener('click', dismissTooltip);
+    }
+
+    playButton.addEventListener('click', function () {
+      dismissTooltip();
+      if (typeof options.onPlayButtonClick === 'function') {
+        options.onPlayButtonClick();
+      }
+    });
+
     root.appendChild(title);
     root.appendChild(mascot);
     root.appendChild(playButton);
+    if (tooltip) {
+      root.appendChild(tooltip);
+    }
     root.appendChild(privacyPolicyButton);
     root.appendChild(parentalNotice);
     container.appendChild(root);
@@ -106,6 +161,7 @@
       playButton: playButton,
       privacyPolicyButton: privacyPolicyButton,
       parentalNotice: parentalNotice,
+      tooltip: tooltip,
     };
   }
 

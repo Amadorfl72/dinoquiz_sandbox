@@ -147,3 +147,103 @@ describe('HomeScreen', () => {
     expect(swContent).toContain("'/i18n/es.json'");
   });
 });
+
+describe('HomeScreen first-run tooltip (TRIOFSND-65)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('does not render a tooltip by default (already-seen / not first run)', () => {
+    renderHomeScreen(container);
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+  });
+
+  test('renders an animated tooltip pointing at the "¡Jugar!" button when showTooltip is true', () => {
+    const { tooltip, playButton } = renderHomeScreen(container, { showTooltip: true });
+
+    expect(tooltip).not.toBeNull();
+    expect(tooltip).toHaveClass('home-screen__tooltip--animated');
+    expect(tooltip).toHaveTextContent(strings.tooltip.message);
+    expect(playButton).toHaveAttribute('aria-describedby', tooltip.id);
+  });
+
+  test('hides the tooltip after the first tap anywhere on the screen', () => {
+    const onTooltipDismiss = jest.fn();
+    const { root, title } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    title.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('.home-screen__tooltip')).toBeNull();
+  });
+
+  test('hides the tooltip on a tap outside .home-screen (e.g. empty/padding area of #app)', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    // container (#app) is not part of `.home-screen` itself — it's the
+    // centered root's parent, standing in for the empty padding area
+    // around it that a real tap outside the card would land on.
+    container.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the tooltip on a tap anywhere in the document, even outside #app', () => {
+    const onTooltipDismiss = jest.fn();
+    renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    document.body.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the tooltip when the "¡Jugar!" button is pressed', () => {
+    const onTooltipDismiss = jest.fn();
+    const { playButton } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    playButton.click();
+
+    expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('removes the aria-describedby link once the tooltip is dismissed', () => {
+    const { playButton } = renderHomeScreen(container, { showTooltip: true });
+
+    playButton.click();
+
+    expect(playButton).not.toHaveAttribute('aria-describedby');
+  });
+
+  test('does not call onTooltipDismiss more than once even if the screen is tapped repeatedly', () => {
+    const onTooltipDismiss = jest.fn();
+    const { root, playButton } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+    playButton.click();
+    root.click();
+
+    expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  test('invokes onPlayButtonClick on every tap of the "¡Jugar!" button', () => {
+    const onPlayButtonClick = jest.fn();
+    const { playButton } = renderHomeScreen(container, { onPlayButtonClick });
+
+    playButton.click();
+    playButton.click();
+
+    expect(onPlayButtonClick).toHaveBeenCalledTimes(2);
+  });
+});
