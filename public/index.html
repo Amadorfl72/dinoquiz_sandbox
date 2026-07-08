@@ -17,8 +17,18 @@
     <!-- App shell: las pantallas (Inicio, Quiz, Resultados) se montan aquí. -->
   </div>
 
+  <!--
+    No bundler: every module the browser runs is a plain <script>. `defer`
+    keeps them in order and runs them after the document parses. The game
+    logic and screens register themselves on window.DinoQuiz; main.js (last)
+    fetches the data and drives the Inicio -> Quiz -> Resultados loop.
+  -->
+  <script src="/scripts/scoring.js" defer></script>
+  <script src="/scripts/gameFlow.js" defer></script>
   <script src="/scripts/homeScreen.js" defer></script>
   <script src="/scripts/privacyPolicyScreen.js" defer></script>
+  <script src="/scripts/questionScreen.js" defer></script>
+  <script src="/scripts/resultsScreen.js" defer></script>
   <script src="/scripts/main.js" defer></script>
 </body>
 </html>

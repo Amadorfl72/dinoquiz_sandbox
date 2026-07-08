@@ -19,7 +19,12 @@ const path = require('path');
 
 const { getStrings } = require('../i18n');
 
-const QUESTIONS_JSON_PATH = path.join(__dirname, 'questions.json');
+// The question bank JSON lives under public/data so the browser can fetch it
+// at runtime (/data/questions.json, precached/runtime-cached by the service
+// worker) without duplicating it between src/ and public/ — the same rationale
+// as public/i18n/es.json (loaded here via this Node-side loader, and via
+// fetch() from public/scripts/main.js in the browser).
+const QUESTIONS_JSON_PATH = path.join(__dirname, '..', '..', 'public', 'data', 'questions.json');
 
 const DINOSAURS = Object.freeze({
   TREX: 'trex',

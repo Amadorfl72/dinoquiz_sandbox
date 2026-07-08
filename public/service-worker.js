@@ -23,12 +23,17 @@ const PRECACHE_URLS = [
   '/index.html',
   '/manifest.json',
   '/styles/main.css',
+  '/scripts/scoring.js',
+  '/scripts/gameFlow.js',
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
+  '/scripts/questionScreen.js',
+  '/scripts/resultsScreen.js',
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',
   '/i18n/es.json',
+  '/data/questions.json',
   '/offline.html',
 ];
 
