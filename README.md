@@ -123,5 +123,21 @@ test, no solo por revisión manual.
 Accesibilidad: además de los elementos visibles (puntuación, estrellas con
 `role="img"`/`aria-label`, mensaje), la pantalla incluye una región `role="status"` con
 `aria-live="polite"` (oculta visualmente con `.sr-only`) que anuncia la puntuación, las
-estrellas y el mensaje como una sola frase a los lectores de pantalla. Los botones cumplen
-el área táctil mínima de 48x48dp y el contraste de texto respeta WCAG AA.
+estrellas y el mensaje como una sola frase a los lectores de pantalla. El botón "Volver a
+jugar" cumple la altura visual mínima de 64dp (AC-2/AC-23, ver
+`.results-screen__play-again-button` en `public/styles/main.css`) y ambos botones cumplen
+el área táctil mínima de 48x48dp; el contraste de texto respeta WCAG AA.
+
+### Navegación Inicio → Quiz → Resultados
+
+[`public/scripts/main.js`](public/scripts/main.js) es quien conecta las tres pantallas en
+el flujo lineal cerrado del PRD: al pulsar "¡Jugar!" en Inicio (o "Volver a jugar" en
+Resultados) arranca una partida nueva con `startNewGame` — que resetea el estado de
+partida (puntuación, índice de pregunta y respuestas, ver
+[`src/game/gameFlow.js`](src/game/gameFlow.js)) y selecciona un subconjunto aleatorio de
+10 preguntas distinto del anterior (AC-9) — y navega a la primera pregunta de esa partida.
+Al responder la última pregunta se muestra Resultados; su botón "Salir" vuelve a renderizar
+Inicio. Igual que `homeScreen.js`, las pantallas de Pregunta y Resultados se resuelven
+desde `window.DinoQuiz.screens` en el navegador o vía `require` bajo Node/Jest (ver
+`resolveScreenRenderers` en `main.js`), por lo que todo el recorrido se puede probar sin
+bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
