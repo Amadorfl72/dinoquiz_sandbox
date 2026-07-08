@@ -1,5 +1,3 @@
-import type { StorageAdapter } from '../types';
-
 const DB_NAME = 'dinoquiz-storage';
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
@@ -7,15 +5,16 @@ const STORE_NAME = 'kv';
 // bound the wait and treat a timeout as "unavailable" to keep the fallback chain moving.
 const OPEN_TIMEOUT_MS = 2000;
 
-export function createIndexedDbAdapter(): StorageAdapter {
-  let dbPromise: Promise<IDBDatabase> | null = null;
+/** @returns {import('../types').StorageAdapter} */
+function createIndexedDbAdapter() {
+  let dbPromise = null;
 
-  function openDb(): Promise<IDBDatabase> {
+  function openDb() {
     if (dbPromise) {
       return dbPromise;
     }
 
-    dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+    dbPromise = new Promise((resolve, reject) => {
       if (typeof indexedDB === 'undefined') {
         reject(new Error('indexedDB is not available in this environment'));
         return;
@@ -28,7 +27,7 @@ export function createIndexedDbAdapter(): StorageAdapter {
         reject(new Error('indexedDB open timed out'));
       }, OPEN_TIMEOUT_MS);
 
-      let request: IDBOpenDBRequest;
+      let request;
       try {
         request = indexedDB.open(DB_NAME, DB_VERSION);
       } catch (error) {
@@ -75,17 +74,14 @@ export function createIndexedDbAdapter(): StorageAdapter {
     return dbPromise;
   }
 
-  function withStore<T>(
-    mode: IDBTransactionMode,
-    run: (store: IDBObjectStore) => IDBRequest<unknown>,
-  ): Promise<T> {
+  function withStore(mode, run) {
     return openDb().then(
       (db) =>
-        new Promise<T>((resolve, reject) => {
+        new Promise((resolve, reject) => {
           const tx = db.transaction(STORE_NAME, mode);
           const store = tx.objectStore(STORE_NAME);
 
-          let request: IDBRequest<unknown>;
+          let request;
           try {
             request = run(store);
           } catch (error) {
@@ -93,7 +89,7 @@ export function createIndexedDbAdapter(): StorageAdapter {
             return;
           }
 
-          request.onsuccess = () => resolve(request.result as T);
+          request.onsuccess = () => resolve(request.result);
           request.onerror = () => reject(request.error ?? new Error('indexedDB request failed'));
         }),
     );
@@ -109,15 +105,17 @@ export function createIndexedDbAdapter(): StorageAdapter {
         return false;
       }
     },
-    async getItem(key: string) {
-      const result = await withStore<string | undefined>('readonly', (store) => store.get(key));
+    async getItem(key) {
+      const result = await withStore('readonly', (store) => store.get(key));
       return result ?? null;
     },
-    async setItem(key: string, value: string) {
-      await withStore<IDBValidKey>('readwrite', (store) => store.put(value, key));
+    async setItem(key, value) {
+      await withStore('readwrite', (store) => store.put(value, key));
     },
-    async removeItem(key: string) {
-      await withStore<undefined>('readwrite', (store) => store.delete(key));
+    async removeItem(key) {
+      await withStore('readwrite', (store) => store.delete(key));
     },
   };
 }
+
+module.exports = { createIndexedDbAdapter };

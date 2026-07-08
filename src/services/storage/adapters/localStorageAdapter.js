@@ -1,15 +1,15 @@
-import type { StorageAdapter } from '../types';
-
 const PROBE_KEY = '__dinoquiz_storage_probe__';
 
-function getLocalStorage(): Storage {
+/** @returns {Storage} */
+function getLocalStorage() {
   if (typeof window === 'undefined' || !window.localStorage) {
     throw new Error('localStorage is not available in this environment');
   }
   return window.localStorage;
 }
 
-export function createLocalStorageAdapter(): StorageAdapter {
+/** @returns {import('../types').StorageAdapter} */
+function createLocalStorageAdapter() {
   return {
     name: 'localStorage',
     async isAvailable() {
@@ -24,14 +24,16 @@ export function createLocalStorageAdapter(): StorageAdapter {
         return false;
       }
     },
-    async getItem(key: string) {
+    async getItem(key) {
       return getLocalStorage().getItem(key);
     },
-    async setItem(key: string, value: string) {
+    async setItem(key, value) {
       getLocalStorage().setItem(key, value);
     },
-    async removeItem(key: string) {
+    async removeItem(key) {
       getLocalStorage().removeItem(key);
     },
   };
 }
+
+module.exports = { createLocalStorageAdapter };

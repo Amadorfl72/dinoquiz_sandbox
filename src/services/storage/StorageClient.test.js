@@ -1,21 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DinoQuizStorage } from './StorageClient';
-import type { StorageAdapter } from './types';
+const { DinoQuizStorage } = require('./StorageClient');
 
-function createFakeAdapter(overrides: Partial<StorageAdapter> = {}): StorageAdapter {
-  const store = new Map<string, string>();
+function createFakeAdapter(overrides = {}) {
+  const store = new Map();
   return {
     name: 'memory',
     async isAvailable() {
       return true;
     },
-    async getItem(key: string) {
-      return store.has(key) ? (store.get(key) as string) : null;
+    async getItem(key) {
+      return store.has(key) ? store.get(key) : null;
     },
-    async setItem(key: string, value: string) {
+    async setItem(key, value) {
       store.set(key, value);
     },
-    async removeItem(key: string) {
+    async removeItem(key) {
       store.delete(key);
     },
     ...overrides,
@@ -40,7 +38,7 @@ describe('DinoQuizStorage', () => {
 
   it('notifies subscribers when a value changes', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
-    const listener = vi.fn();
+    const listener = jest.fn();
     storage.subscribe('muted', listener);
 
     await storage.set('muted', true);
@@ -50,7 +48,7 @@ describe('DinoQuizStorage', () => {
 
   it('stops notifying after unsubscribe', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
-    const listener = vi.fn();
+    const listener = jest.fn();
     const unsubscribe = storage.subscribe('muted', listener);
     unsubscribe();
 
