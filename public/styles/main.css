@@ -18,3 +18,115 @@ body {
   padding: 24px;
   box-sizing: border-box;
 }
+
+/*
+ * Home screen — tablet-first (the PRD's primary target is a horizontal
+ * tablet), with graceful degradation down to small phones and up to
+ * non-tablet desktop. `clamp()` keeps the title/mascot scaling smoothly
+ * between those breakpoints instead of jumping at fixed widths, and every
+ * size below still respects the minimum legibility/touch-target rules:
+ * title/body text stays >=20px, the play button never drops under a 64px
+ * visual height or a 48x48dp tap area, and its label stays >=24px (AC-2, AC-4).
+ */
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 3vh, 40px);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.home-screen__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1.1;
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.home-screen__mascot {
+  display: block;
+  width: clamp(140px, 34vw, 320px);
+  height: auto;
+  max-width: 100%;
+}
+
+.home-screen__play-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  min-width: 48px;
+  padding: 12px 48px;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 32px;
+  box-shadow: 0 4px 0 #1b5e20;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__play-button:hover {
+  background-color: #388e3c;
+}
+
+.home-screen__play-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.home-screen__play-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #1b5e20;
+}
+
+.home-screen__parental-notice {
+  max-width: 60ch;
+  font-size: 0.9rem;
+  color: #1b5e20;
+}
+
+/* Tablet landscape: the primary target — give the mascot and title more room. */
+@media (min-width: 900px) and (orientation: landscape) {
+  .home-screen {
+    max-width: 900px;
+    gap: 48px;
+  }
+
+  .home-screen__title {
+    font-size: 4rem;
+  }
+
+  .home-screen__mascot {
+    width: 360px;
+  }
+}
+
+/* Small phones: degrade gracefully without shrinking below tap/legibility minimums. */
+@media (max-width: 420px) {
+  .home-screen {
+    gap: 20px;
+  }
+
+  .home-screen__title {
+    font-size: 2rem;
+  }
+
+  .home-screen__mascot {
+    width: 140px;
+  }
+
+  .home-screen__play-button {
+    width: 100%;
+    max-width: 320px;
+    padding: 12px 24px;
+  }
+}

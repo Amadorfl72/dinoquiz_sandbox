@@ -2,6 +2,7 @@
   "locale": "es",
   "home": {
     "title": "DinoQuiz",
+    "mascotAlt": "Dino, la mascota de DinoQuiz: un simpático dinosaurio verde saludando con la pata",
     "playButton": "¡Jugar!",
     "parentalNotice": {
       "label": "Nota para madres y padres",

@@ -1,10 +1,15 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 require('@testing-library/jest-dom');
 const { getByRole, getByText } = require('@testing-library/dom');
 
-const { renderHomeScreen } = require('./HomeScreen');
+const { renderHomeScreen, MASCOT_IMAGE_SRC } = require('./HomeScreen');
 const { home: strings } = require('../i18n/es.json');
+
+const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
 describe('HomeScreen', () => {
   let container;
@@ -23,6 +28,44 @@ describe('HomeScreen', () => {
 
     expect(getByText(container, strings.title)).toBeInTheDocument();
     expect(getByRole(container, 'button', { name: strings.playButton })).toBeInTheDocument();
+  });
+
+  test('renders the mascot illustration with a descriptive alt text for screen readers', () => {
+    const { mascot } = renderHomeScreen(container);
+
+    expect(mascot.tagName).toBe('IMG');
+    expect(mascot).toHaveAttribute('src', MASCOT_IMAGE_SRC);
+    expect(mascot).toHaveAttribute('alt', strings.mascotAlt);
+    expect(mascot.alt).not.toBe('');
+  });
+
+  test('the play button carries the styling hook for its touch target and label size', () => {
+    const { playButton } = renderHomeScreen(container);
+
+    expect(playButton).toHaveClass('home-screen__play-button');
+  });
+
+  test('the play button style meets the minimum 64dp height, 48dp width and 24sp label (AC-2)', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.home-screen__play-button\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const rule = ruleMatch[1];
+    const minHeight = parseFloat(rule.match(/min-height:\s*([\d.]+)px/)[1]);
+    const minWidth = parseFloat(rule.match(/min-width:\s*([\d.]+)px/)[1]);
+    const fontSizeRem = parseFloat(rule.match(/font-size:\s*([\d.]+)rem/)[1]);
+
+    expect(minHeight).toBeGreaterThanOrEqual(64);
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+    expect(fontSizeRem * 16).toBeGreaterThanOrEqual(24);
+  });
+
+  test('orders content title -> mascot -> play button for a predictable screen reader flow', () => {
+    const { root, title, mascot, playButton } = renderHomeScreen(container);
+
+    const children = Array.from(root.children);
+    expect(children.indexOf(title)).toBeLessThan(children.indexOf(mascot));
+    expect(children.indexOf(mascot)).toBeLessThan(children.indexOf(playButton));
   });
 
   test('renders an optional parental notice explaining local-only progress loss', () => {
@@ -52,5 +95,13 @@ describe('HomeScreen', () => {
     renderHomeScreen(container, { locale: 'es' });
 
     expect(container.textContent).toContain(strings.parentalNotice.message);
+  });
+
+  test('the mascot asset file exists and is part of the service worker app-shell precache', () => {
+    const publicDir = path.resolve(__dirname, '../../public');
+    expect(fs.existsSync(path.join(publicDir, MASCOT_IMAGE_SRC.replace(/^\//, '')))).toBe(true);
+
+    const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
+    expect(swContent).toContain(`'${MASCOT_IMAGE_SRC}'`);
   });
 });
