@@ -4,7 +4,7 @@ require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
 const { renderQuestionScreen } = require('./QuestionScreen');
-const { question: strings } = require('../i18n/es.json');
+const { question: strings } = require('../../public/i18n/es.json');
 
 function buildQuestion(overrides = {}) {
   return {

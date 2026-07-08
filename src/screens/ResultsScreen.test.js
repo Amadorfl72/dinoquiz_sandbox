@@ -12,7 +12,7 @@ const {
   selectMotivationalMessage,
   renderResultsScreen,
 } = require('./ResultsScreen');
-const { results: strings } = require('../i18n/es.json');
+const { results: strings } = require('../../public/i18n/es.json');
 
 describe('calculateStars (tier logic)', () => {
   test.each([
