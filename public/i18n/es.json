@@ -7,6 +7,9 @@
     "parentalNotice": {
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
+    },
+    "tooltip": {
+      "message": "¡Toca aquí para jugar!"
     }
   },
   "results": {

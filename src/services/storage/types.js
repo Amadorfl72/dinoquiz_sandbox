@@ -4,6 +4,8 @@
  * @property {number} maxStreak
  * @property {string[]} discoveredFunFacts
  * @property {boolean} muted
+ * @property {boolean} homeTooltipSeen
+ * @property {Object.<string, number>} analyticsEventCounts
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -12,6 +14,8 @@ const DEFAULT_STATE = {
   maxStreak: 0,
   discoveredFunFacts: [],
   muted: false,
+  homeTooltipSeen: false,
+  analyticsEventCounts: {},
 };
 
 /**

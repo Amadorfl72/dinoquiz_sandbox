@@ -94,6 +94,61 @@ body {
   color: #1b5e20;
 }
 
+/*
+ * First-run tooltip (TRIOFSND-65): a small speech bubble with an upward
+ * arrow pointing at the play button above it. Shown only once, so the
+ * bounce animation is meant to catch a first-time player's eye — it is
+ * disabled under prefers-reduced-motion, same as the question feedback
+ * celebration animation.
+ */
+.home-screen__tooltip {
+  position: relative;
+  margin: 0;
+  max-width: 280px;
+  padding: 10px 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  /* #1b5e20 on #fbc02d is ~4.75:1, meeting WCAG AA (>=4.5:1, PRD AC-13) —
+     white text on this yellow only reaches ~1.66:1. */
+  color: #1b5e20;
+  background-color: #fbc02d;
+  border-radius: 16px;
+  box-shadow: 0 3px 0 #c79100;
+}
+
+.home-screen__tooltip::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #fbc02d;
+}
+
+.home-screen__tooltip--animated {
+  animation: home-screen-tooltip-bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes home-screen-tooltip-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-screen__tooltip--animated {
+    animation: none;
+  }
+}
+
 /* Tablet landscape: the primary target — give the mascot and title more room. */
 @media (min-width: 900px) and (orientation: landscape) {
   .home-screen {

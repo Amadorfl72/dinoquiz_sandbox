@@ -2,6 +2,7 @@
 
 const { contrastRatio, meetsWcagAA } = require('./contrast');
 const { QUESTION_SCREEN_COLORS } = require('./questionScreenColors');
+const { HOME_SCREEN_COLORS } = require('./homeScreenColors');
 
 describe('contrastRatio', () => {
   test('is 21 for black on white (the maximum possible ratio)', () => {
@@ -42,6 +43,13 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
 
   test('the neutral incorrect-pick state meets AA', () => {
     const { background, text } = QUESTION_SCREEN_COLORS.neutral;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('home screen color tokens (PRD AC-13: WCAG AA)', () => {
+  test('the first-run tooltip (TRIOFSND-65) meets AA', () => {
+    const { background, text } = HOME_SCREEN_COLORS.tooltip;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
 });

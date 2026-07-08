@@ -10,6 +10,15 @@
  * `registerServiceWorker`/`loadHomeStrings`/`renderHome` accept explicit
  * overrides so each is unit-testable under Node without touching the
  * global `navigator`/`document`/`fetch`.
+ *
+ * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
+ * tooltip (TRIOFSND-65) to `src/services/storage`: when given, it resolves
+ * whether the tooltip was already dismissed on this device and passes the
+ * persistence/analytics callbacks through to `renderHomeScreen`. It is only
+ * ever resolved via `loadDinoQuizStorage`, which requires the CommonJS
+ * service module — available under Node/Jest, a no-op in a real unbundled
+ * browser — so `renderHome` degrades to its previous, tooltip-less
+ * behaviour when no `storage` is supplied.
  */
 (function () {
   function registerServiceWorker(nav, swPath) {
@@ -52,7 +61,21 @@
       });
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn) {
+  function loadDinoQuizStorage(requireFn) {
+    requireFn = requireFn || (typeof require === 'function' ? require : undefined);
+
+    if (typeof requireFn !== 'function') {
+      return null;
+    }
+
+    try {
+      return requireFn('../../src/services/storage').dinoQuizStorage;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn, storage) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -71,14 +94,29 @@
     }
 
     return loadHomeStrings(fetchFn).then(function (strings) {
-      return renderHomeScreen(container, strings ? { strings: strings } : {});
+      var renderOptions = strings ? { strings: strings } : {};
+
+      if (!storage) {
+        return renderHomeScreen(container, renderOptions);
+      }
+
+      return storage.hasSeenHomeTooltip().then(function (seen) {
+        renderOptions.showTooltip = !seen;
+        renderOptions.onTooltipDismiss = function () {
+          storage.markHomeTooltipSeen();
+        };
+        renderOptions.onPlayButtonClick = function () {
+          storage.recordEventOnce('first_tap_jugar');
+        };
+        return renderHomeScreen(container, renderOptions);
+      });
     });
   }
 
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('load', function () {
       registerServiceWorker();
-      renderHome();
+      renderHome(undefined, undefined, undefined, loadDinoQuizStorage());
     });
   }
 
@@ -86,6 +124,7 @@
     module.exports = {
       registerServiceWorker: registerServiceWorker,
       loadHomeStrings: loadHomeStrings,
+      loadDinoQuizStorage: loadDinoQuizStorage,
       renderHome: renderHome,
     };
   }

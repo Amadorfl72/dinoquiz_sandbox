@@ -23,6 +23,17 @@
  * reading/interaction flow) so assistive tech can reach it without a child
  * needing to interact with it first — it is never focused programmatically
  * and never sits between the title and the play button in tab order.
+ *
+ * `options.showTooltip` optionally renders a first-run animated tooltip
+ * pointing at the '¡Jugar!' button (TRIOFSND-65). This screen has no
+ * knowledge of *why* it should or shouldn't show it — the caller (the
+ * bootstrap in public/scripts/main.js) resolves the persisted "already
+ * seen" flag and passes the boolean in, the same way it resolves the i18n
+ * strings before calling here. The tooltip disappears on the first tap
+ * anywhere on screen or on the play button itself via `options.onTooltipDismiss`,
+ * which the caller uses to persist the "seen" flag so it never reappears.
+ * `options.onPlayButtonClick` fires on every play button tap; the caller
+ * uses it to record the aggregated, non-PII `first_tap_jugar` local counter.
  */
 
 (function () {
@@ -70,13 +81,57 @@
     parentalNotice.setAttribute('aria-label', strings.parentalNotice.label);
     parentalNotice.textContent = strings.parentalNotice.message;
 
+    var tooltip = null;
+    var tooltipDismissed = false;
+
+    function dismissTooltip() {
+      if (tooltipDismissed) return;
+      tooltipDismissed = true;
+
+      if (tooltip && tooltip.parentNode) {
+        tooltip.parentNode.removeChild(tooltip);
+      }
+      playButton.removeAttribute('aria-describedby');
+
+      if (typeof options.onTooltipDismiss === 'function') {
+        options.onTooltipDismiss();
+      }
+    }
+
+    if (options.showTooltip) {
+      tooltip = document.createElement('p');
+      tooltip.id = 'home-screen-tooltip';
+      tooltip.className = 'home-screen__tooltip home-screen__tooltip--animated';
+      tooltip.setAttribute('role', 'status');
+      tooltip.textContent = strings.tooltip.message;
+      playButton.setAttribute('aria-describedby', tooltip.id);
+      root.addEventListener('click', dismissTooltip);
+    }
+
+    playButton.addEventListener('click', function () {
+      dismissTooltip();
+      if (typeof options.onPlayButtonClick === 'function') {
+        options.onPlayButtonClick();
+      }
+    });
+
     root.appendChild(title);
     root.appendChild(mascot);
     root.appendChild(playButton);
+    if (tooltip) {
+      root.appendChild(tooltip);
+    }
     root.appendChild(parentalNotice);
     container.appendChild(root);
 
-    return { root: root, title: title, mascot: mascot, playButton: playButton, parentalNotice: parentalNotice };
+    return {
+      root: root,
+      title: title,
+      mascot: mascot,
+      playButton: playButton,
+      parentalNotice: parentalNotice,
+      tooltip: tooltip,
+    };
   }
 
   if (typeof module !== 'undefined' && module.exports) {
