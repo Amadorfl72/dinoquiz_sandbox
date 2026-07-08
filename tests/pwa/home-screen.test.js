@@ -111,6 +111,34 @@ describe('HomeScreen', () => {
     expect(swContent).toContain(`'${MASCOT_IMAGE_SRC}'`);
   });
 
+  test('renders a privacy policy icon button with a descriptive accessible name (TRIOFSND-116)', () => {
+    const { privacyPolicyButton } = renderHomeScreen(container);
+
+    expect(privacyPolicyButton.tagName).toBe('BUTTON');
+    expect(privacyPolicyButton).toHaveAccessibleName(strings.privacyPolicyIconLabel);
+  });
+
+  test('the privacy policy icon opens the privacy view in a single tap', () => {
+    const onOpenPrivacyPolicy = jest.fn();
+    const { privacyPolicyButton } = renderHomeScreen(container, { onOpenPrivacyPolicy });
+
+    privacyPolicyButton.click();
+
+    expect(onOpenPrivacyPolicy).toHaveBeenCalledTimes(1);
+  });
+
+  test('the privacy policy icon meets the 48x48dp minimum touch target', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.home-screen__privacy-button\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const minHeight = parseFloat(ruleMatch[1].match(/min-height:\s*([\d.]+)px/)[1]);
+    const minWidth = parseFloat(ruleMatch[1].match(/min-width:\s*([\d.]+)px/)[1]);
+
+    expect(minHeight).toBeGreaterThanOrEqual(48);
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+  });
+
   test('the homeScreen script and the i18n resource are part of the service worker app-shell precache', () => {
     const publicDir = path.resolve(__dirname, '../../public');
     const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
