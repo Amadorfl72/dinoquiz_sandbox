@@ -47,6 +47,28 @@ El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) baj
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
 resto de textos de la UI.
 
+## Motor de selección aleatoria de preguntas
+
+[`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
+iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
+aleatoria:
+
+- `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el
+  array de entrada), dando a cada pregunta la misma probabilidad de salir en cualquier
+  posición.
+- `selectGameQuestions(questions, options)` devuelve los primeros `count` elementos (10 por
+  defecto) de ese barajado. Al salir de un `shuffle`, nunca hay dos posiciones con la misma
+  pregunta, así que la selección resultante nunca repite ninguna dentro de la misma partida
+  (AC-3). Lanza un error si el banco tiene menos preguntas que las solicitadas.
+- `randomFn` (por defecto `Math.random`) es inyectable, igual que en
+  `selectMotivationalMessage` de la pantalla de Resultados, para que los tests sean
+  deterministas.
+
+`src/game/questionSelector.test.js` cubre la ausencia de duplicados dentro de una partida,
+que toda pregunta seleccionada pertenezca al banco original, y la distribución: en un número
+alto de partidas simuladas, cada pregunta del banco sale seleccionada y a un ritmo similar
+al resto (sin preguntas "muertas" que nunca salgan).
+
 ## Pantalla de Inicio
 
 [`public/scripts/homeScreen.js`](public/scripts/homeScreen.js) renderiza la pantalla de
