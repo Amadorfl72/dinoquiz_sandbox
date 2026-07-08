@@ -101,11 +101,30 @@ animación es un `@keyframes` CSS que solo anima `transform` (compositor, sin re
 `warmUpFeedbackAnimation()` resuelve ese keyframe una vez, fuera de pantalla, justo al montar
 la pregunta, para que el primer toque real del niño no pague ese coste.
 
-Los tokens de color de cada estado (normal/correcto/neutro) viven en
+Los tokens de color de cada estado (normal/correcto/neutro/dato curioso) viven en
 [`src/theme/questionScreenColors.js`](src/theme/questionScreenColors.js) y
 [`src/theme/contrast.js`](src/theme/contrast.js) los valida contra el umbral WCAG AA
 (≥4.5:1, AC-13) en `src/theme/contrast.test.js`, en sincronía con las reglas de
 `public/styles/main.css`.
+
+### Feedback y dato curioso (TRIOFSND-83)
+
+Tras responder, además del resaltado de la opción correcta, la pantalla muestra:
+
+- La ilustración del dinosaurio de la pregunta (`question-screen__image`), con un `alt`
+  descriptivo generado a partir de `question.dinosaur` y el mapa `dinosaurNames` del
+  recurso i18n (`question.dinosaurNames` en `es.json`), nunca un texto genérico como
+  "imagen".
+- El dato curioso en un recuadro amarillo (`question-screen__fun-fact-box`), con
+  tipografía ≥20sp y `aria-live="polite"` para que TalkBack/VoiceOver lo lean en cuanto
+  aparece.
+- El botón "Siguiente" (`question-screen__next-button`, área táctil ≥48x48dp), que se
+  muestra deshabilitado y solo se habilita tras `MIN_ADVANCE_DELAY_MS` (4s, ver
+  `src/screens/QuestionScreen.js`) para garantizar que el dato curioso esté visible al
+  menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
+  ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
+
+
 
 ## Pantalla de Resultados
 
