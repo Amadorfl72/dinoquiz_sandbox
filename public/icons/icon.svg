@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="DinoQuiz">
+  <title>DinoQuiz</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#66BB6A"/>
+      <stop offset="1" stop-color="#2E7D32"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Cartoon dinosaur silhouette -->
+  <g fill="#FFF8E1" stroke="#1B5E20" stroke-width="10" stroke-linejoin="round">
+    <path d="M150 372
+             c-30 0 -54 -24 -54 -54
+             c0 -50 34 -92 82 -104
+             c-6 -18 -4 -40 10 -56
+             c18 -22 50 -28 76 -14
+             c8 -30 36 -52 68 -52
+             c6 0 12 1 18 3
+             c-14 8 -22 24 -20 40
+             c22 4 40 22 44 44
+             c26 8 44 32 44 60
+             c0 40 -30 74 -70 80
+             l0 32 -34 0 0 -30 -60 0 0 30 -34 0 0 -32 z"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="350" cy="196" r="12" fill="#1B5E20"/>
+  <!-- Back plates -->
+  <g fill="#FBC02D" stroke="#1B5E20" stroke-width="8" stroke-linejoin="round">
+    <path d="M196 178 l24 -34 24 34 z"/>
+    <path d="M248 172 l26 -36 26 36 z"/>
+  </g>
+</svg>
