@@ -150,6 +150,32 @@ describe('validateQuestionBank', () => {
   test('rejects a non-array payload', () => {
     expect(validateQuestionBank({ not: 'an array' })).toEqual(['The question bank must be an array of questions']);
   });
+
+  test('rejects a bank with fewer than the expected number of questions by default', () => {
+    const questions = Array.from({ length: EXPECTED_QUESTION_COUNT - 1 }, (_, index) =>
+      buildValidQuestion({ id: `trex-${index}` })
+    );
+
+    const errors = validateQuestionBank(questions);
+
+    expect(errors.some((error) => error.includes(`exactly ${EXPECTED_QUESTION_COUNT}`))).toBe(true);
+  });
+
+  test('rejects a bank with more than the expected number of questions by default', () => {
+    const questions = Array.from({ length: EXPECTED_QUESTION_COUNT + 1 }, (_, index) =>
+      buildValidQuestion({ id: `trex-${index}` })
+    );
+
+    const errors = validateQuestionBank(questions);
+
+    expect(errors.some((error) => error.includes(`exactly ${EXPECTED_QUESTION_COUNT}`))).toBe(true);
+  });
+
+  test('allows opting out of the total count check', () => {
+    const questions = [buildValidQuestion()];
+
+    expect(validateQuestionBank(questions, { checkCount: false })).toEqual([]);
+  });
 });
 
 describe('getDinosaurCoverageErrors', () => {
@@ -212,6 +238,24 @@ describe('loadQuestionBank', () => {
     const filePath = writeTempQuestionBank([buildValidQuestion()]);
     try {
       expect(() => loadQuestionBank({ filePath, checkCoverage: true })).toThrow(/must have at least/);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('does not enforce the total question count for a custom filePath by default', () => {
+    const filePath = writeTempQuestionBank([buildValidQuestion()]);
+    try {
+      expect(() => loadQuestionBank({ filePath })).not.toThrow();
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('enforces the total question count for a custom filePath when explicitly requested', () => {
+    const filePath = writeTempQuestionBank([buildValidQuestion()]);
+    try {
+      expect(() => loadQuestionBank({ filePath, checkCount: true })).toThrow(/must contain exactly/);
     } finally {
       fs.unlinkSync(filePath);
     }

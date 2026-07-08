@@ -100,16 +100,22 @@ function validateQuestion(question, index) {
   return errors;
 }
 
-function validateQuestionBank(questions) {
+function validateQuestionBank(questions, options = {}) {
   if (!Array.isArray(questions)) {
     return ['The question bank must be an array of questions'];
   }
+
+  const checkCount = options.checkCount !== undefined ? options.checkCount : true;
 
   const errors = questions.flatMap((question, index) => validateQuestion(question, index));
 
   const ids = questions.map((question) => question && question.id).filter(Boolean);
   if (new Set(ids).size !== ids.length) {
     errors.push('All questions must have a unique "id"');
+  }
+
+  if (checkCount && questions.length !== EXPECTED_QUESTION_COUNT) {
+    errors.push(`The question bank must contain exactly ${EXPECTED_QUESTION_COUNT} questions, found ${questions.length}`);
   }
 
   return errors;
@@ -135,6 +141,7 @@ function getDinosaurCoverageErrors(questions) {
 function loadQuestionBank(options = {}) {
   const filePath = options.filePath || QUESTIONS_JSON_PATH;
   const checkCoverage = options.checkCoverage !== undefined ? options.checkCoverage : !options.filePath;
+  const checkCount = options.checkCount !== undefined ? options.checkCount : !options.filePath;
   const raw = fs.readFileSync(filePath, 'utf-8');
 
   let questions;
@@ -144,7 +151,7 @@ function loadQuestionBank(options = {}) {
     throw new Error(`Failed to parse question bank JSON at ${filePath}: ${error.message}`);
   }
 
-  const errors = validateQuestionBank(questions);
+  const errors = validateQuestionBank(questions, { checkCount });
   if (checkCoverage) {
     errors.push(...getDinosaurCoverageErrors(questions));
   }
