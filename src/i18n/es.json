@@ -9,9 +9,11 @@
     }
   },
   "question": {
-    "optionsGroupLabel": "Elige una respuesta",
-    "correctFeedback": "¡Correcto!",
-    "incorrectFeedback": "¡Casi! Esta es la respuesta correcta:",
+    "optionsGroupLabel": "Opciones de respuesta",
+    "feedback": {
+      "correct": "¡Genial, acertaste!",
+      "incorrect": "¡Buen intento! La respuesta correcta es esta:"
+    },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente"

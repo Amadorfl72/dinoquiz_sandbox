@@ -1,20 +1,23 @@
 'use strict';
 
 require('@testing-library/jest-dom');
-const { getByRole, getByText } = require('@testing-library/dom');
+const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
 const { renderQuestionScreen } = require('./QuestionScreen');
 const { question: strings } = require('../i18n/es.json');
 
-const sampleQuestion = {
-  id: 'trex-01',
-  dinosaur: 'trex',
-  question: '¿De qué se alimentaba el Tyrannosaurus Rex?',
-  options: ['Solo de plantas', 'De carne, ¡era un gran cazador!', 'Solo de insectos', 'De algas del mar'],
-  correctAnswerIndex: 1,
-  funFact: 'El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.',
-  image: 'dinosaurs/trex.png',
-};
+function buildQuestion(overrides = {}) {
+  return {
+    id: 'trex-01',
+    dinosaur: 'trex',
+    question: '¿De qué se alimentaba el Tyrannosaurus Rex?',
+    options: ['Solo de plantas', 'De carne, ¡era un gran cazador!', 'Solo de insectos', 'De algas del mar'],
+    correctAnswerIndex: 1,
+    funFact: 'El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.',
+    image: 'dinosaurs/trex.png',
+    ...overrides,
+  };
+}
 
 describe('QuestionScreen', () => {
   let container;
@@ -28,46 +31,64 @@ describe('QuestionScreen', () => {
     container.remove();
   });
 
-  test('renders the question and one button per option', () => {
-    const { optionButtons } = renderQuestionScreen(container, sampleQuestion);
+  test('renders the question prompt and one accessible button per option', () => {
+    const question = buildQuestion();
+    renderQuestionScreen(container, question);
 
-    expect(getByText(container, sampleQuestion.question)).toBeInTheDocument();
-    expect(optionButtons).toHaveLength(sampleQuestion.options.length);
-    sampleQuestion.options.forEach((label) => {
-      expect(getByRole(container, 'button', { name: label })).toBeInTheDocument();
+    expect(getByText(container, question.question)).toBeInTheDocument();
+    const buttons = getAllByRole(container, 'button');
+    expect(buttons).toHaveLength(question.options.length);
+    question.options.forEach((optionText) => {
+      expect(getByRole(container, 'button', { name: optionText })).toBeInTheDocument();
     });
   });
 
   test('starts the score at 0 by default', () => {
-    renderQuestionScreen(container, sampleQuestion);
+    renderQuestionScreen(container, buildQuestion());
 
     expect(getByText(container, `${strings.scoreLabel}: 0`)).toBeInTheDocument();
   });
 
   describe('on a correct answer', () => {
-    test('adds +1 to the score', () => {
-      const { optionButtons, getScore } = renderQuestionScreen(container, sampleQuestion, { score: 3 });
+    test('adds +1 to the score, highlights the option green, and plays the celebration animation', () => {
+      const question = buildQuestion();
+      const onAnswer = jest.fn();
+      const { optionButtons, getScore } = renderQuestionScreen(container, question, { score: 3, onAnswer });
 
-      optionButtons[sampleQuestion.correctAnswerIndex].click();
+      const correctButton = optionButtons[question.correctAnswerIndex];
+      correctButton.click();
 
+      expect(correctButton).toHaveClass('question-screen__option--correct');
+      expect(correctButton).toHaveClass('question-screen__option--celebrate');
       expect(getScore()).toBe(4);
       expect(getByText(container, `${strings.scoreLabel}: 4`)).toBeInTheDocument();
+      expect(onAnswer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isCorrect: true,
+          score: 4,
+          scoreDelta: 1,
+          correctIndex: question.correctAnswerIndex,
+          selectedIndex: question.correctAnswerIndex,
+        })
+      );
     });
 
-    test('highlights the chosen option with the "acierto" style', () => {
-      const { optionButtons } = renderQuestionScreen(container, sampleQuestion);
+    test('shows the celebratory feedback copy', () => {
+      const question = buildQuestion();
+      const { optionButtons, feedback } = renderQuestionScreen(container, question);
 
-      optionButtons[sampleQuestion.correctAnswerIndex].click();
+      optionButtons[question.correctAnswerIndex].click();
 
-      expect(optionButtons[sampleQuestion.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
+      expect(feedback).toHaveTextContent(strings.feedback.correct);
     });
 
     test('reveals the fun fact and the "Siguiente" control', () => {
-      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, sampleQuestion);
+      const question = buildQuestion();
+      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question);
 
-      optionButtons[sampleQuestion.correctAnswerIndex].click();
+      optionButtons[question.correctAnswerIndex].click();
 
-      expect(funFact).toHaveTextContent(sampleQuestion.funFact);
+      expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
     });
@@ -75,8 +96,9 @@ describe('QuestionScreen', () => {
 
   describe('on an incorrect answer (TRIOFSND-88: no penalty)', () => {
     test('leaves the score exactly as it was (+0)', () => {
-      const { optionButtons, getScore } = renderQuestionScreen(container, sampleQuestion, { score: 5 });
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, getScore } = renderQuestionScreen(container, question, { score: 5 });
 
       optionButtons[wrongIndex].click();
 
@@ -85,71 +107,77 @@ describe('QuestionScreen', () => {
     });
 
     test('does not let the score go below its pre-answer value across several misses', () => {
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
 
       [0, 1, 2].forEach(() => {
-        const view = renderQuestionScreen(container, sampleQuestion, { score: 2 });
+        const view = renderQuestionScreen(container, question, { score: 2 });
         view.optionButtons[wrongIndex].click();
         expect(view.getScore()).toBe(2);
       });
     });
 
-    test('highlights the correct option with the same "acierto" style used on a hit', () => {
-      const { optionButtons } = renderQuestionScreen(container, sampleQuestion);
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+    test('marks only the chosen option as neutral (no red styling) and highlights the correct option, without the celebration animation', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
-      expect(optionButtons[sampleQuestion.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
-    });
-
-    test('does not mark the chosen wrong option as bad', () => {
-      const { optionButtons } = renderQuestionScreen(container, sampleQuestion);
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
-
-      optionButtons[wrongIndex].click();
-
+      expect(optionButtons[wrongIndex]).toHaveClass('question-screen__option--neutral');
       expect(optionButtons[wrongIndex]).not.toHaveClass('question-screen__option--correct');
       expect(optionButtons[wrongIndex].className).not.toMatch(/wrong|incorrect|error|bad/i);
+      expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
+      expect(optionButtons[question.correctAnswerIndex]).not.toHaveClass('question-screen__option--celebrate');
     });
 
     test('still reveals the fun fact and the "Siguiente" control, same as a hit', () => {
-      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, sampleQuestion);
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
-      expect(funFact).toHaveTextContent(sampleQuestion.funFact);
+      expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
     });
 
-    test('shows a positive-toned message, never a negative one', () => {
-      const { optionButtons, feedbackMessage } = renderQuestionScreen(container, sampleQuestion);
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+    test('shows a neutral/positive-toned message, never a negative one', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, feedback } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
-      expect(feedbackMessage).toHaveTextContent(strings.incorrectFeedback);
-      expect(feedbackMessage.textContent).not.toMatch(/mal|error|incorrecto|fallaste/i);
+      expect(feedback).toHaveTextContent(strings.feedback.incorrect);
+      expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
     });
 
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
       const onAnswer = jest.fn();
-      const { optionButtons } = renderQuestionScreen(container, sampleQuestion, { score: 6, onAnswer });
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question, { score: 6, onAnswer });
 
       optionButtons[wrongIndex].click();
 
       expect(onAnswer).toHaveBeenCalledWith(
-        expect.objectContaining({ isCorrect: false, scoreDelta: 0, score: 6, selectedIndex: wrongIndex })
+        expect.objectContaining({
+          isCorrect: false,
+          score: 6,
+          scoreDelta: 0,
+          correctIndex: question.correctAnswerIndex,
+          selectedIndex: wrongIndex,
+        })
       );
     });
 
     test('advancing via "Siguiente" carries forward the unchanged score', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
       const onNext = jest.fn();
-      const { optionButtons, nextButton } = renderQuestionScreen(container, sampleQuestion, { score: 6, onNext });
-      const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+      const { optionButtons, nextButton } = renderQuestionScreen(container, question, { score: 6, onNext });
 
       optionButtons[wrongIndex].click();
       nextButton.click();
@@ -158,26 +186,59 @@ describe('QuestionScreen', () => {
     });
   });
 
-  test('locks selection after answering — a second tap on another option is ignored', () => {
+  test('starts from a given running score and only adds on a hit', () => {
+    const question = buildQuestion();
+    const { optionButtons, getScore } = renderQuestionScreen(container, question, { score: 4 });
+
+    optionButtons[question.correctAnswerIndex].click();
+
+    expect(getScore()).toBe(5);
+  });
+
+  test('once answered, all options are disabled so a second tap cannot change the score or re-trigger onAnswer', () => {
+    const question = buildQuestion();
+    const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
     const onAnswer = jest.fn();
-    const { optionButtons, getScore } = renderQuestionScreen(container, sampleQuestion, { onAnswer });
-    const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+    const { optionButtons, getScore } = renderQuestionScreen(container, question, { onAnswer });
 
     optionButtons[wrongIndex].click();
-    optionButtons[sampleQuestion.correctAnswerIndex].click();
+    optionButtons[question.correctAnswerIndex].click();
 
     expect(onAnswer).toHaveBeenCalledTimes(1);
     expect(getScore()).toBe(0);
-    optionButtons.forEach((optionButton) => expect(optionButton.disabled).toBe(true));
+    optionButtons.forEach((optionButton) => expect(optionButton).toBeDisabled());
+  });
+
+  test('feedback classes are applied synchronously in the click handler, well within the 300ms budget (AC-5)', () => {
+    jest.useFakeTimers();
+    try {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      const start = performance.now();
+      optionButtons[question.correctAnswerIndex].click();
+      const elapsed = performance.now() - start;
+
+      // No timer needed to advance for the feedback to already be present —
+      // it isn't scheduled on a timer at all.
+      expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
+      expect(elapsed).toBeLessThan(300);
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test('does not hardcode copy — text is sourced from the es locale resource file', () => {
-    const { optionButtons, nextButton } = renderQuestionScreen(container, sampleQuestion, { locale: 'es' });
-    const wrongIndex = sampleQuestion.options.findIndex((_, i) => i !== sampleQuestion.correctAnswerIndex);
+    const question = buildQuestion();
+    const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+    const { optionButtons, nextButton } = renderQuestionScreen(container, question, { locale: 'es' });
+
+    expect(getByRole(container, 'group', { name: strings.optionsGroupLabel })).toBeInTheDocument();
 
     optionButtons[wrongIndex].click();
 
-    expect(container.textContent).toContain(strings.incorrectFeedback);
+    expect(container.textContent).toContain(strings.feedback.incorrect);
     expect(nextButton).toHaveTextContent(strings.nextButton);
   });
 });

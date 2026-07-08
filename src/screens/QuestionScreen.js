@@ -1,37 +1,68 @@
 'use strict';
 
 /**
- * Question/Feedback screen: shows one question with its options and, once
+ * Pregunta/Feedback screen: shows one question with its options and, once
  * the child taps an answer, the feedback for that answer.
  *
- * Per TRIOFSND-88 / AC-7, a wrong pick is never penalized: the score keeps
- * whatever value it already had (+0), the correct option is highlighted
- * with the very same "acierto" style used when the child *does* get it
- * right (`question-screen__option--correct`), and the wrong pick itself is
- * never tagged as bad — it just stops being selectable. Both outcomes then
- * reveal the same fun fact and "Siguiente" control, so the flow to the next
- * question is identical whether the answer was right or wrong.
+ * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
+ * penalized — the score keeps whatever value it already had (+0), via
+ * `applyAnswerToScore` in src/game/scoring.js. The correct option is always
+ * highlighted with the same "acierto" style (`CORRECT_CLASS`, thick green
+ * border) whether the child got it right or not; the wrong pick itself only
+ * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
+ * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
+ * outcomes then reveal the same fun fact and "Siguiente" control, so the
+ * flow to the next question is identical whether the answer was right or
+ * wrong.
+ *
+ * Performance (AC-5, "<300ms"): all feedback classes are toggled
+ * synchronously inside the click handler — no timers, no awaited work — so
+ * the browser paints the new state on the very next frame. The only
+ * animation used is the CSS keyframe in main.css (transform/opacity only,
+ * compositor-driven, no layout thrashing). `warmUpFeedbackAnimation` forces
+ * the browser to resolve that keyframe's styles once, off-screen, right
+ * after the question mounts, so the child's first tap doesn't pay a
+ * first-run style-recalculation cost.
  */
 
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
-const { applyAnswer } = require('../game/scoring');
+const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
+
+const OPTION_CLASS = 'question-screen__option';
+const CORRECT_CLASS = 'question-screen__option--correct';
+const NEUTRAL_CLASS = 'question-screen__option--neutral';
+const CELEBRATE_CLASS = 'question-screen__option--celebrate';
+
+function warmUpFeedbackAnimation() {
+  if (typeof document === 'undefined') return;
+
+  const probe = document.createElement('div');
+  probe.className = `${OPTION_CLASS} ${CORRECT_CLASS} ${CELEBRATE_CLASS}`;
+  probe.style.position = 'absolute';
+  probe.style.visibility = 'hidden';
+  probe.style.pointerEvents = 'none';
+  document.body.appendChild(probe);
+  // Reading layout forces style resolution now instead of on the child's tap.
+  void probe.getBoundingClientRect();
+  probe.remove();
+}
 
 function renderQuestionScreen(container, question, options = {}) {
   const locale = options.locale || DEFAULT_LOCALE;
   const { question: strings } = getStrings(locale);
-  const initialScore = options.score || 0;
+  const onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
+
+  let score = options.score || 0;
+  let answered = false;
 
   container.innerHTML = '';
-
-  let answered = false;
-  let score = initialScore;
 
   const root = document.createElement('div');
   root.className = 'question-screen';
 
-  const questionText = document.createElement('h2');
-  questionText.className = 'question-screen__question';
-  questionText.textContent = question.question;
+  const prompt = document.createElement('h2');
+  prompt.className = 'question-screen__prompt';
+  prompt.textContent = question.question;
 
   const scoreEl = document.createElement('p');
   scoreEl.className = 'question-screen__score';
@@ -43,9 +74,9 @@ function renderQuestionScreen(container, question, options = {}) {
   optionsGroup.setAttribute('role', 'group');
   optionsGroup.setAttribute('aria-label', strings.optionsGroupLabel);
 
-  const feedbackMessage = document.createElement('p');
-  feedbackMessage.className = 'question-screen__feedback-message';
-  feedbackMessage.hidden = true;
+  const feedback = document.createElement('p');
+  feedback.className = 'question-screen__feedback';
+  feedback.setAttribute('aria-live', 'polite');
 
   const funFactHeading = document.createElement('h3');
   funFactHeading.className = 'question-screen__fun-fact-heading';
@@ -63,41 +94,38 @@ function renderQuestionScreen(container, question, options = {}) {
   nextButton.textContent = strings.nextButton;
   nextButton.hidden = true;
 
-  const optionButtons = question.options.map((optionLabel, index) => {
-    const optionButton = document.createElement('button');
-    optionButton.type = 'button';
-    optionButton.className = 'question-screen__option';
-    optionButton.textContent = optionLabel;
-    optionButton.addEventListener('click', () => handleOptionClick(index));
-    optionsGroup.appendChild(optionButton);
-    return optionButton;
+  const optionButtons = question.options.map((optionText, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = OPTION_CLASS;
+    button.textContent = optionText;
+    button.addEventListener('click', () => handleSelect(index));
+    optionsGroup.appendChild(button);
+    return button;
   });
 
-  function handleOptionClick(selectedIndex) {
-    if (answered) {
-      return;
-    }
+  function handleSelect(selectedIndex) {
+    if (answered) return;
     answered = true;
 
-    const correctIndex = question.correctAnswerIndex;
-    const isCorrect = selectedIndex === correctIndex;
-    const result = applyAnswer(score, isCorrect);
-    score = result.score;
+    const correct = isAnswerCorrect(question, selectedIndex);
+    const previousScore = score;
+    score = applyAnswerToScore(score, correct);
 
-    optionButtons.forEach((optionButton) => {
-      optionButton.disabled = true;
+    optionButtons.forEach((button, index) => {
+      button.disabled = true;
+
+      if (index === question.correctAnswerIndex) {
+        button.classList.add(CORRECT_CLASS);
+        if (correct) {
+          button.classList.add(CELEBRATE_CLASS);
+        }
+      } else if (index === selectedIndex) {
+        button.classList.add(NEUTRAL_CLASS);
+      }
     });
 
-    // Same class in both branches: correctness is always shown on the
-    // correct option, never as a "wrong" mark on the one that was picked.
-    optionButtons[correctIndex].classList.add('question-screen__option--correct');
-    if (!isCorrect) {
-      optionButtons[selectedIndex].setAttribute('data-selected', 'true');
-    }
-
-    feedbackMessage.textContent = isCorrect ? strings.correctFeedback : strings.incorrectFeedback;
-    feedbackMessage.hidden = false;
-
+    feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
     scoreEl.textContent = `${strings.scoreLabel}: ${score}`;
 
     funFactHeading.hidden = false;
@@ -106,13 +134,13 @@ function renderQuestionScreen(container, question, options = {}) {
 
     nextButton.hidden = false;
 
-    if (typeof options.onAnswer === 'function') {
-      options.onAnswer({
-        isCorrect,
-        scoreDelta: result.delta,
+    if (onAnswer) {
+      onAnswer({
+        isCorrect: correct,
+        scoreDelta: score - previousScore,
         score,
         selectedIndex,
-        correctIndex,
+        correctIndex: question.correctAnswerIndex,
       });
     }
   }
@@ -123,25 +151,28 @@ function renderQuestionScreen(container, question, options = {}) {
     }
   });
 
-  root.appendChild(questionText);
+  root.appendChild(prompt);
   root.appendChild(scoreEl);
   root.appendChild(optionsGroup);
-  root.appendChild(feedbackMessage);
+  root.appendChild(feedback);
   root.appendChild(funFactHeading);
   root.appendChild(funFact);
   root.appendChild(nextButton);
   container.appendChild(root);
 
+  warmUpFeedbackAnimation();
+
   return {
     root,
-    questionText,
+    prompt,
     scoreEl,
     optionButtons,
-    feedbackMessage,
+    feedback,
     funFact,
     nextButton,
     getScore: () => score,
+    isAnswered: () => answered,
   };
 }
 
-module.exports = { renderQuestionScreen };
+module.exports = { renderQuestionScreen, warmUpFeedbackAnimation };
