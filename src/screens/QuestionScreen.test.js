@@ -1,10 +1,15 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
 const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
+
+const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
 function buildQuestion(overrides = {}) {
   return {
@@ -47,6 +52,21 @@ describe('QuestionScreen', () => {
     renderQuestionScreen(container, buildQuestion());
 
     expect(getByText(container, `${strings.scoreLabel}: 0`)).toBeInTheDocument();
+  });
+
+  test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const rule = ruleMatch[1];
+    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
+    expect(fontSizeMatch).not.toBeNull();
+
+    const fontSizePx = fontSizeMatch[2] === 'rem'
+      ? parseFloat(fontSizeMatch[1]) * 16
+      : parseFloat(fontSizeMatch[1]);
+    expect(fontSizePx).toBeGreaterThanOrEqual(20);
   });
 
   describe('on a correct answer', () => {

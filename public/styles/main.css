@@ -157,6 +157,11 @@ body {
   border-radius: 16px;
 }
 
+.question-screen__score {
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+
 .question-screen__feedback {
   font-size: 20px;
   margin: 8px 0;
