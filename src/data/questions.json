@@ -1,0 +1,362 @@
+[
+  {
+    "id": "trex-01",
+    "dinosaur": "trex",
+    "question": "¿De qué se alimentaba el Tyrannosaurus Rex?",
+    "options": ["Solo de plantas", "De carne, ¡era un gran cazador!", "Solo de insectos", "De algas del mar"],
+    "correctAnswerIndex": 1,
+    "funFact": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "trex-02",
+    "dinosaur": "trex",
+    "question": "¿Cómo eran los brazos del Tyrannosaurus Rex?",
+    "options": ["Muy largos", "Muy cortos y pequeños", "No tenía brazos", "Como alas"],
+    "correctAnswerIndex": 1,
+    "funFact": "Aunque sus brazos eran diminutos, ¡eran sorprendentemente fuertes!",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "trex-03",
+    "dinosaur": "trex",
+    "question": "¿En qué periodo vivió el Tyrannosaurus Rex?",
+    "options": ["Jurásico", "Cretácico", "Triásico", "Época de hielo"],
+    "correctAnswerIndex": 1,
+    "funFact": "El T-Rex vivió hace unos 68 millones de años, ¡casi al final de la era de los dinosaurios!",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "trex-04",
+    "dinosaur": "trex",
+    "question": "¿Cómo se movía el Tyrannosaurus Rex?",
+    "options": ["Sobre dos patas", "Sobre cuatro patas", "Nadando", "Volando"],
+    "correctAnswerIndex": 0,
+    "funFact": "El T-Rex usaba su enorme cola para mantener el equilibrio al caminar y correr.",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "trex-05",
+    "dinosaur": "trex",
+    "question": "¿Aproximadamente cuántos dientes afilados tenía el T-Rex?",
+    "options": ["10 dientes", "Unos 60 dientes", "500 dientes", "No tenía dientes"],
+    "correctAnswerIndex": 1,
+    "funFact": "Sus dientes eran tan gruesos como un plátano y servían para triturar huesos.",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "trex-06",
+    "dinosaur": "trex",
+    "question": "¿Qué significa el nombre \"Tyrannosaurus Rex\"?",
+    "options": ["Lagarto veloz", "Rey lagarto tirano", "Dinosaurio volador", "Lagarto con cuernos"],
+    "correctAnswerIndex": 1,
+    "funFact": "Su nombre viene del griego y del latín y significa algo así como \"el rey de los lagartos tiranos\".",
+    "image": "dinosaurs/trex.png"
+  },
+  {
+    "id": "triceratops-01",
+    "dinosaur": "triceratops",
+    "question": "¿Cuántos cuernos tenía el Triceratops en la cara?",
+    "options": ["Uno", "Dos", "Tres", "Cuatro"],
+    "correctAnswerIndex": 2,
+    "funFact": "Sus tres cuernos podían medir casi un metro de largo, ¡más que un brazo adulto!",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "triceratops-02",
+    "dinosaur": "triceratops",
+    "question": "¿De qué se alimentaba el Triceratops?",
+    "options": ["De carne", "De plantas", "De peces", "De insectos"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Triceratops usaba su pico afilado para cortar plantas duras, como pequeños arbustos.",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "triceratops-03",
+    "dinosaur": "triceratops",
+    "question": "¿Para qué le servía al Triceratops el gran escudo óseo detrás de su cabeza?",
+    "options": ["Para volar", "Para proteger su cuello", "Para nadar", "Para hacer ruido"],
+    "correctAnswerIndex": 1,
+    "funFact": "Ese escudo óseo se llama \"gola\" y también ayudaba a impresionar a otros Triceratops.",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "triceratops-04",
+    "dinosaur": "triceratops",
+    "question": "¿Cuántas patas tenía el Triceratops?",
+    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Triceratops caminaba sobre cuatro robustas patas, como un rinoceronte gigante.",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "triceratops-05",
+    "dinosaur": "triceratops",
+    "question": "¿Qué significa el nombre \"Triceratops\"?",
+    "options": ["Cara con tres cuernos", "Lagarto veloz", "Rey de los mares", "Cola con púas"],
+    "correctAnswerIndex": 0,
+    "funFact": "\"Triceratops\" viene del griego y significa literalmente \"cara con tres cuernos\".",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "triceratops-06",
+    "dinosaur": "triceratops",
+    "question": "¿Con qué otro dinosaurio se cree que el Triceratops tenía enfrentamientos?",
+    "options": ["Con el Tyrannosaurus Rex", "Con el Pteranodon", "Con el Velociraptor", "Con el Ankylosaurus"],
+    "correctAnswerIndex": 0,
+    "funFact": "Se han encontrado fósiles de Triceratops con marcas de dientes de T-Rex, ¡pruebas de sus batallas!",
+    "image": "dinosaurs/triceratops.png"
+  },
+  {
+    "id": "velociraptor-01",
+    "dinosaur": "velociraptor",
+    "question": "¿De qué tamaño era aproximadamente un Velociraptor?",
+    "options": ["Como un pavo grande", "Como un elefante", "Como un ratón", "Como una ballena"],
+    "correctAnswerIndex": 0,
+    "funFact": "A pesar de lo que muestran algunas películas, el Velociraptor era del tamaño de un pavo grande.",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "velociraptor-02",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tenía el Velociraptor en cada pie que usaba para cazar?",
+    "options": ["Una garra curva y grande", "Una ventosa", "Una aleta", "Un casco óseo"],
+    "correctAnswerIndex": 0,
+    "funFact": "Esa garra curva en forma de hoz podía medir varios centímetros y era mortal para cazar.",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "velociraptor-03",
+    "dinosaur": "velociraptor",
+    "question": "¿De qué se alimentaba el Velociraptor?",
+    "options": ["De plantas", "De carne", "De rocas", "De algas"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Velociraptor era un cazador muy rápido e inteligente que perseguía a otros animales pequeños.",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "velociraptor-04",
+    "dinosaur": "velociraptor",
+    "question": "¿Cómo se cree que cazaba el Velociraptor?",
+    "options": ["Completamente solo", "En grupo, como una manada", "Bajo el agua", "Volando"],
+    "correctAnswerIndex": 1,
+    "funFact": "Muchos científicos piensan que los Velociraptors cazaban en grupo para atrapar presas más grandes.",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "velociraptor-05",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué cubría el cuerpo del Velociraptor, según los descubrimientos más recientes?",
+    "options": ["Escamas duras", "Plumas", "Una concha", "Piel de rana"],
+    "correctAnswerIndex": 1,
+    "funFact": "Los científicos han encontrado marcas en sus huesos que muestran que tenía plumas, ¡como un ave!",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "velociraptor-06",
+    "dinosaur": "velociraptor",
+    "question": "¿Cuántas patas usaba el Velociraptor para correr?",
+    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Velociraptor corría sobre sus dos patas traseras y era muy veloz y ágil.",
+    "image": "dinosaurs/velociraptor.png"
+  },
+  {
+    "id": "estegosaurio-01",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué tenía el Estegosaurio a lo largo del lomo?",
+    "options": ["Placas óseas", "Plumas de colores", "Escamas de pez", "Alas pequeñas"],
+    "correctAnswerIndex": 0,
+    "funFact": "Las placas del Estegosaurio formaban dos hileras a lo largo de toda su espalda.",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-02",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué tenía el Estegosaurio en la punta de la cola para defenderse?",
+    "options": ["Púas afiladas", "Ventosas", "Un aguijón venenoso", "Fuego"],
+    "correctAnswerIndex": 0,
+    "funFact": "Esas púas en la cola podían usarse como un arma para espantar a depredadores.",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-03",
+    "dinosaur": "estegosaurio",
+    "question": "¿De qué se alimentaba el Estegosaurio?",
+    "options": ["De carne", "De plantas", "De peces", "De otros dinosaurios"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Estegosaurio comía plantas bajas porque no podía levantar mucho la cabeza.",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-04",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cómo era el cerebro del Estegosaurio comparado con su tamaño?",
+    "options": ["Muy grande", "Muy pequeño", "No tenía cerebro", "Gigante"],
+    "correctAnswerIndex": 1,
+    "funFact": "El cerebro del Estegosaurio era del tamaño de una nuez, ¡muy pequeño para un animal tan grande!",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-05",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cuántas patas tenía el Estegosaurio?",
+    "options": ["Dos", "Cuatro", "Seis", "Ocho"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Estegosaurio caminaba a cuatro patas, con las traseras más largas que las delanteras.",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "estegosaurio-06",
+    "dinosaur": "estegosaurio",
+    "question": "Además de protegerlo, ¿para qué más podían servir las placas del Estegosaurio?",
+    "options": ["Para regular su temperatura", "Para volar", "Para nadar rápido", "Para masticar mejor"],
+    "correctAnswerIndex": 0,
+    "funFact": "Los científicos creen que las placas ayudaban a liberar calor y a regular su temperatura corporal.",
+    "image": "dinosaurs/estegosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-01",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué destaca del cuello del Braquiosaurio?",
+    "options": ["Que era muy largo", "Que era muy corto", "Que no tenía cuello", "Que tenía púas"],
+    "correctAnswerIndex": 0,
+    "funFact": "El larguísimo cuello del Braquiosaurio le permitía comer hojas de los árboles más altos.",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-02",
+    "dinosaur": "braquiosaurio",
+    "question": "¿De qué se alimentaba el Braquiosaurio?",
+    "options": ["De carne", "De hojas de árboles altos", "De peces", "De insectos"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Braquiosaurio pasaba gran parte del día comiendo hojas para alimentar su enorme cuerpo.",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-03",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo era el tamaño del Braquiosaurio comparado con otros dinosaurios?",
+    "options": ["Uno de los más grandes", "Uno de los más pequeños", "Del tamaño de un perro", "Del tamaño de un gato"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Braquiosaurio podía llegar a medir más de 12 metros de altura, ¡como un edificio de cuatro pisos!",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-04",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo eran las patas delanteras del Braquiosaurio comparadas con las traseras?",
+    "options": ["Más largas", "Más cortas", "Iguales", "No tenía patas delanteras"],
+    "correctAnswerIndex": 0,
+    "funFact": "A diferencia de muchos dinosaurios, el Braquiosaurio tenía las patas delanteras más largas que las traseras.",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-05",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cuántas patas usaba el Braquiosaurio para caminar?",
+    "options": ["Dos", "Cuatro", "Seis", "Ocho"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Braquiosaurio necesitaba sus cuatro robustas patas para sostener su enorme peso.",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "braquiosaurio-06",
+    "dinosaur": "braquiosaurio",
+    "question": "¿En qué periodo vivió el Braquiosaurio?",
+    "options": ["Jurásico", "Época de hielo", "Triásico tardío", "Cretácico final"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Braquiosaurio vivió hace unos 150 millones de años, durante el periodo Jurásico.",
+    "image": "dinosaurs/braquiosaurio.png"
+  },
+  {
+    "id": "ankylosaurus-01",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué tenía el Ankylosaurus en la punta de la cola?",
+    "options": ["Una maza ósea", "Un aguijón", "Una aleta", "Plumas"],
+    "correctAnswerIndex": 0,
+    "funFact": "La maza de su cola era tan dura y pesada que podía romper los huesos de un atacante.",
+    "image": "dinosaurs/ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-02",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Cómo estaba protegido el cuerpo del Ankylosaurus?",
+    "options": ["Con una armadura de placas óseas", "Con escamas de pez", "Con plumas suaves", "Sin ninguna protección"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Ankylosaurus estaba cubierto de placas óseas como una auténtica armadura, ¡incluso en los párpados!",
+    "image": "dinosaurs/ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-03",
+    "dinosaur": "ankylosaurus",
+    "question": "¿De qué se alimentaba el Ankylosaurus?",
+    "options": ["De carne", "De plantas bajas", "De peces", "De insectos voladores"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Ankylosaurus comía plantas cercanas al suelo, ya que no podía levantar mucho la cabeza.",
+    "image": "dinosaurs/ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-04",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Para qué usaba el Ankylosaurus la maza de su cola?",
+    "options": ["Para defenderse de depredadores", "Para volar", "Para nadar", "Para cavar túneles"],
+    "correctAnswerIndex": 0,
+    "funFact": "Cuando un depredador se acercaba, el Ankylosaurus golpeaba con fuerza usando la maza de su cola.",
+    "image": "dinosaurs/ankylosaurus.png"
+  },
+  {
+    "id": "ankylosaurus-05",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Cuántas patas tenía el Ankylosaurus?",
+    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "correctAnswerIndex": 1,
+    "funFact": "El Ankylosaurus caminaba a cuatro patas cortas y fuertes, cerca del suelo.",
+    "image": "dinosaurs/ankylosaurus.png"
+  },
+  {
+    "id": "pteranodon-01",
+    "dinosaur": "pteranodon",
+    "question": "¿El Pteranodon era realmente un dinosaurio?",
+    "options": ["No, era un reptil volador llamado pterosaurio", "Sí, era un dinosaurio terrestre", "Era un pez gigante", "Era un mamífero"],
+    "correctAnswerIndex": 0,
+    "funFact": "Aunque vivió junto a los dinosaurios, el Pteranodon era un pterosaurio, ¡un reptil volador diferente!",
+    "image": "dinosaurs/pteranodon.png"
+  },
+  {
+    "id": "pteranodon-02",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué tenía el Pteranodon que le permitía volar?",
+    "options": ["Alas de piel entre los dedos", "Alas de plumas como un ave", "Aletas", "Globos de aire"],
+    "correctAnswerIndex": 0,
+    "funFact": "Sus alas eran de piel estirada, parecidas a las de un murciélago pero mucho más grandes.",
+    "image": "dinosaurs/pteranodon.png"
+  },
+  {
+    "id": "pteranodon-03",
+    "dinosaur": "pteranodon",
+    "question": "¿De qué se alimentaba principalmente el Pteranodon?",
+    "options": ["De peces", "De plantas", "De otros dinosaurios grandes", "De rocas"],
+    "correctAnswerIndex": 0,
+    "funFact": "El Pteranodon volaba sobre el mar y atrapaba peces con su largo pico, como un pelícano gigante.",
+    "image": "dinosaurs/pteranodon.png"
+  },
+  {
+    "id": "pteranodon-04",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué tenía el Pteranodon en la cabeza?",
+    "options": ["Una cresta larga", "Cuernos", "Placas óseas", "Una maza"],
+    "correctAnswerIndex": 0,
+    "funFact": "Esa cresta larga en la cabeza pudo ayudarle a volar mejor o a reconocer a otros Pteranodon.",
+    "image": "dinosaurs/pteranodon.png"
+  },
+  {
+    "id": "pteranodon-05",
+    "dinosaur": "pteranodon",
+    "question": "¿Tenía dientes el Pteranodon?",
+    "options": ["No, no tenía ni un solo diente", "Sí, tenía cientos de dientes", "Solo dos dientes gigantes", "Tenía dientes venenosos"],
+    "correctAnswerIndex": 0,
+    "funFact": "A pesar de su gran pico, el Pteranodon no tenía dientes, ¡tragaba los peces enteros!",
+    "image": "dinosaurs/pteranodon.png"
+  }
+]
