@@ -141,6 +141,7 @@
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
+    "imageAltFormat": "Ilustración de un {dinosaur}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento! La respuesta correcta es esta:"
@@ -148,6 +149,15 @@
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente"
+  },
+  "dinosaurNames": {
+    "trex": "Tyrannosaurus Rex",
+    "triceratops": "Triceratops",
+    "velociraptor": "Velociraptor",
+    "estegosaurio": "Estegosaurio",
+    "braquiosaurio": "Braquiosaurio",
+    "ankylosaurus": "Ankylosaurus",
+    "pteranodon": "Pteranodon"
   },
   "funFacts": {
     "trex-01": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",

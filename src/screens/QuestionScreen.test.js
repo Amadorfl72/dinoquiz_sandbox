@@ -43,6 +43,18 @@ describe('QuestionScreen', () => {
     });
   });
 
+  test('renders the dinosaur illustration above the prompt with a descriptive alt-text (TRIOFSND-72, AC-4/AC-14)', () => {
+    const question = buildQuestion();
+    const { image, prompt } = renderQuestionScreen(container, question);
+
+    expect(image.tagName).toBe('IMG');
+    expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+    expect(image.alt).toContain('Tyrannosaurus Rex');
+    expect(
+      image.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   test('starts the score at 0 by default', () => {
     renderQuestionScreen(container, buildQuestion());
 

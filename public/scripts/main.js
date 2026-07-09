@@ -300,6 +300,12 @@
       });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function loadHomeStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.home;

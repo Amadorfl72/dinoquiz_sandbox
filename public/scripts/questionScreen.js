@@ -1,8 +1,13 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen: shows one question with its options and, once
- * the child taps an answer, the feedback for that answer.
+ * Pregunta/Feedback screen: shows the dinosaur illustration, a large
+ * centered enunciado (TRIOFSND-72, AC-4: >=20sp) and its options, and, once
+ * the child taps an answer, the feedback for that answer. The 3-4 options
+ * get distinct colors (public/styles/main.css `:nth-child` rules on
+ * `.question-screen__option`, tokens in src/theme/questionScreenColors.js)
+ * before answering; there is no timer and no auto-advance, only the
+ * "Siguiente" control revealed after an answer.
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -34,6 +39,7 @@
   var CORRECT_CLASS = 'question-screen__option--correct';
   var NEUTRAL_CLASS = 'question-screen__option--neutral';
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
+  var IMAGE_SRC_BASE = '/assets/images/';
 
   function resolveStrings(options) {
     options = options || {};
@@ -46,6 +52,29 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.question : null;
+  }
+
+  function resolveDinosaurNames(options) {
+    options = options || {};
+    if (options.dinosaurNames) {
+      return options.dinosaurNames;
+    }
+    if (typeof require === 'function') {
+      var i18n = require('../../src/i18n');
+      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).dinosaurNames;
+    }
+    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
+    return bundle ? bundle.dinosaurNames : null;
+  }
+
+  /** "Ilustración de un {dinosaur}" -> "Ilustración de un Tyrannosaurus Rex" (AC-14: descriptive alt-text). */
+  function buildImageAlt(strings, dinosaurNames, dinosaur) {
+    var format = strings && strings.imageAltFormat;
+    if (typeof format !== 'string') {
+      return '';
+    }
+    var name = (dinosaurNames && dinosaurNames[dinosaur]) || dinosaur || '';
+    return format.replace('{dinosaur}', name);
   }
 
   function resolveScoring() {
@@ -72,6 +101,7 @@
   function renderQuestionScreen(container, question, options) {
     options = options || {};
     var strings = resolveStrings(options);
+    var dinosaurNames = resolveDinosaurNames(options);
     var scoring = resolveScoring();
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
 
@@ -82,6 +112,12 @@
 
     var root = document.createElement('div');
     root.className = 'question-screen';
+
+    var image = document.createElement('img');
+    image.className = 'question-screen__image';
+    image.src = IMAGE_SRC_BASE + question.image;
+    image.alt = buildImageAlt(strings, dinosaurNames, question.dinosaur);
+    image.decoding = 'async';
 
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
@@ -176,6 +212,7 @@
       }
     });
 
+    root.appendChild(image);
     root.appendChild(prompt);
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
@@ -189,6 +226,7 @@
 
     return {
       root: root,
+      image: image,
       prompt: prompt,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
