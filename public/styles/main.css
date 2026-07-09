@@ -447,6 +447,52 @@ body {
 }
 
 /*
+ * Rewarded-ad CTA (TRIOFSND-86): purple fill, distinct from the green
+ * "Siguiente" button, so its optional/ad nature reads at a glance. Colors
+ * mirror src/theme/questionScreenColors.js (QUESTION_SCREEN_COLORS.rewardedAdCta),
+ * checked against WCAG AA (AC-13) in contrast.test.js — keep both in sync.
+ * It never gates "Siguiente" (see QuestionScreen.js): the two controls are
+ * fully independent.
+ */
+.question-screen__rewarded-ad-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  margin-top: 12px;
+  padding: 12px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #6a1b9a;
+  border: none;
+  border-radius: 32px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__rewarded-ad-cta:disabled {
+  background-color: #ce93d8;
+  cursor: default;
+}
+
+.question-screen__rewarded-ad-status {
+  margin: 8px 0 0;
+  font-size: 18px;
+  color: #5d4037;
+}
+
+/* Extra dato curioso unlocked by the rewarded ad: blue highlight, distinct
+ * from the free dato curioso's yellow box above. */
+.question-screen__extra-fun-fact-box {
+  border-color: #0d47a1;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+/*
  * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
  * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
  * QuestionScreen.js) so the dato curioso stays readable before advancing.

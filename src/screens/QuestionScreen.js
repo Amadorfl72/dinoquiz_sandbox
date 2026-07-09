@@ -37,6 +37,18 @@
  * dinosaur illustration carries a descriptive `alt` built from the i18n
  * `dinosaurNames` map instead of a generic label.
  *
+ * Rewarded-ad CTA (TRIOFSND-86): once the feedback is revealed, an optional,
+ * clearly-labeled "watch an ad for an extra dato curioso" button appears
+ * through `src/services/ads/rewardedAdService` (the app's one seam for every
+ * rewarded-ad CTA) — but only when that service reports an ad is actually
+ * available, since v1 ships without a real ad network wired in and a CTA
+ * that always fails would be worse than no CTA. Clicking it never touches
+ * `nextButton`/its advance timer: whatever the ad service resolves with —
+ * granted or not, available or not, completed or abandoned — the CTA only
+ * ever shows or hides the extra fact box and never blocks or delays the
+ * child from pressing "Siguiente" (PRD: "si no se ve el rewarded, la
+ * partida funciona igual").
+ *
  * The implementation lives in public/scripts/questionScreen.js because the
  * browser renders this screen directly, and without a bundler it must be
  * loaded there as a `<script>` (see public/index.html) — the same rationale
@@ -44,10 +56,9 @@
  * module re-exports it so Node/Jest keep a single source of truth (mirrors
  * how src/i18n/index.js loads public/i18n/es.json).
  */
-
- */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
+const { rewardedAdService: defaultRewardedAdService } = require('../services/ads/rewardedAdService');
 
 const OPTION_CLASS = 'question-screen__option';
 const CORRECT_CLASS = 'question-screen__option--correct';
@@ -79,6 +90,7 @@ function renderQuestionScreen(container, question, options = {}) {
   const locale = options.locale || DEFAULT_LOCALE;
   const { question: strings } = getStrings(locale);
   const onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
+  const rewardedAdService = options.rewardedAdService || defaultRewardedAdService;
 
   let score = options.score || 0;
   let answered = false;
@@ -127,6 +139,52 @@ function renderQuestionScreen(container, question, options = {}) {
   funFactBox.appendChild(funFactHeading);
   funFactBox.appendChild(funFact);
 
+  const rewardedAdStrings = strings.rewardedAd || {};
+
+  const rewardedAdCta = document.createElement('button');
+  rewardedAdCta.type = 'button';
+  rewardedAdCta.className = 'question-screen__rewarded-ad-cta';
+  rewardedAdCta.textContent = rewardedAdStrings.ctaLabel;
+  rewardedAdCta.setAttribute('aria-label', rewardedAdStrings.ctaAriaLabel);
+  rewardedAdCta.hidden = true;
+
+  const rewardedAdStatus = document.createElement('p');
+  rewardedAdStatus.className = 'question-screen__rewarded-ad-status';
+  rewardedAdStatus.setAttribute('aria-live', 'polite');
+
+  const extraFunFactBox = document.createElement('div');
+  extraFunFactBox.className = 'question-screen__fun-fact-box question-screen__extra-fun-fact-box';
+  extraFunFactBox.hidden = true;
+
+  const extraFunFactHeading = document.createElement('h3');
+  extraFunFactHeading.className = 'question-screen__fun-fact-heading';
+  extraFunFactHeading.textContent = rewardedAdStrings.extraFactHeading;
+
+  const extraFunFact = document.createElement('p');
+  extraFunFact.className = 'question-screen__fun-fact';
+  extraFunFact.setAttribute('aria-live', 'polite');
+
+  extraFunFactBox.appendChild(extraFunFactHeading);
+  extraFunFactBox.appendChild(extraFunFact);
+
+  rewardedAdCta.addEventListener('click', () => {
+    if (rewardedAdCta.disabled) return;
+    rewardedAdCta.disabled = true;
+    rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
+
+    rewardedAdService.request().then((result) => {
+      if (result && result.granted) {
+        const extraFact = (rewardedAdStrings.extraFacts && rewardedAdStrings.extraFacts[question.dinosaur]) || '';
+        extraFunFact.textContent = extraFact;
+        extraFunFactBox.hidden = false;
+        rewardedAdStatus.textContent = '';
+        rewardedAdCta.hidden = true;
+      } else {
+        rewardedAdStatus.textContent = rewardedAdStrings.notCompletedMessage;
+      }
+    });
+  });
+
   const nextButton = document.createElement('button');
   nextButton.type = 'button';
   nextButton.className = 'question-screen__next-button';
@@ -170,6 +228,10 @@ function renderQuestionScreen(container, question, options = {}) {
     funFact.textContent = question.funFact;
     funFactBox.hidden = false;
 
+    if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
+      rewardedAdCta.hidden = false;
+    }
+
     nextButton.hidden = false;
     nextButton.disabled = true;
     setTimeout(() => {
@@ -199,6 +261,9 @@ function renderQuestionScreen(container, question, options = {}) {
   root.appendChild(optionsGroup);
   root.appendChild(feedback);
   root.appendChild(funFactBox);
+  root.appendChild(rewardedAdCta);
+  root.appendChild(rewardedAdStatus);
+  root.appendChild(extraFunFactBox);
   root.appendChild(nextButton);
   container.appendChild(root);
 
@@ -213,6 +278,10 @@ function renderQuestionScreen(container, question, options = {}) {
     feedback,
     funFactBox,
     funFact,
+    rewardedAdCta,
+    rewardedAdStatus,
+    extraFunFactBox,
+    extraFunFact,
     nextButton,
     getScore: () => score,
     isAnswered: () => answered,

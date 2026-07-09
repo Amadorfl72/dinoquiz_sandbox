@@ -181,7 +181,36 @@ Tras responder, además del resaltado de la opción correcta, la pantalla muestr
   menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
   ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
 
+### CTA opcional de anuncio con recompensa (TRIOFSND-86)
 
+Junto al dato curioso gratuito, la pantalla de feedback ofrece un CTA opcional y
+claramente etiquetado ("🎬 Ver anuncio: ¡dato extra!", `question-screen__rewarded-ad-cta`)
+para desbloquear un segundo dato curioso viendo un anuncio con recompensa. El CTA llama al
+único punto de entrada de anuncios de la app,
+[`src/services/ads/rewardedAdService.js`](src/services/ads/rewardedAdService.js), en vez de
+hablar con un SDK de anuncios directamente — así, cuando en el futuro se integre una red de
+anuncios real, solo hay que sustituir el `provider` de ese servicio, sin tocar la pantalla.
+
+- El CTA solo se muestra si `rewardedAdService.isAvailable()` responde `true`. La v1 no
+  integra ningún SDK de anuncios (ver `open_risks` del PRD: "sin SDK publicitario
+  comportamental"), así que el proveedor por defecto siempre informa que no hay anuncio
+  disponible y el CTA permanece oculto — el mecanismo completo queda implementado y
+  probado (con un proveedor simulado inyectable) listo para activarse.
+- `rewardedAdService.request()` nunca rechaza la promesa: si el anuncio no está disponible,
+  no se completa o el proveedor lanza un error, siempre resuelve
+  `{ granted: false, reason: ... }`. La pantalla nunca necesita `try/catch` ni bloquea el
+  flujo — "Siguiente" y su temporizador son completamente independientes del CTA.
+- Si el niño ve el anuncio hasta el final (`granted: true`), se revela un segundo recuadro
+  de dato curioso (`question-screen__extra-fun-fact-box`, azul para diferenciarlo del
+  amarillo del dato curioso gratuito) con un dato adicional del mismo dinosaurio
+  (`question.rewardedAd.extraFacts` en `es.json`).
+- Si no se completa, se muestra un mensaje neutro y no bloqueante
+  (`question-screen__rewarded-ad-status`, `aria-live="polite"`) y la partida continúa igual.
+
+Como el resto de pantallas, la implementación real vive en
+[`public/scripts/questionScreen.js`](public/scripts/questionScreen.js) (con la misma
+resolución `require`-o-`window.DinoQuiz` que usa para scoring/i18n) y
+[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) la re-exporta para Node/Jest.
 
 ## Pantalla de Resultados
 

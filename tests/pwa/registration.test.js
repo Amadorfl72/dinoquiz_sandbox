@@ -352,16 +352,19 @@ describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the br
     });
     const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
+    const homeApi = await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
-    const { getByRole, fireEvent } = require('@testing-library/dom');
-    const privacyButton = getByRole(container, 'button', { name: home.globalControls.privacyButton });
-    fireEvent.click(privacyButton);
+    const { fireEvent } = require('@testing-library/dom');
+    // Home renders both the inline collapsible privacy/purchase panels
+    // (TRIOFSND-66, exercised here) and a separate icon button that
+    // navigates to the full Privacy policy screen (TRIOFSND-116) sharing the
+    // same accessible name, so the inline-panel buttons are taken from the
+    // renderHomeScreen API directly rather than an ambiguous name lookup.
+    fireEvent.click(homeApi.privacyButton);
     expect(container).toHaveTextContent(privacy.heading);
     expect(container).toHaveTextContent(privacy.intro);
 
-    const purchaseButton = getByRole(container, 'button', { name: home.globalControls.purchaseButton });
-    fireEvent.click(purchaseButton);
+    fireEvent.click(homeApi.purchaseButton);
     expect(container).toHaveTextContent(purchase.heading);
     expect(container).toHaveTextContent(purchase.priceLabel);
 

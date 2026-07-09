@@ -51,6 +51,16 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
     const { background, text } = QUESTION_SCREEN_COLORS.funFact;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
+
+  test('the rewarded-ad CTA button meets AA (TRIOFSND-86)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.rewardedAdCta;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the extra dato curioso blue box unlocked by the rewarded ad meets AA (TRIOFSND-86)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.extraFunFact;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purchase controls)', () => {

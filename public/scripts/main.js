@@ -312,6 +312,12 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function navigateToPrivacyPolicy(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
@@ -401,7 +407,28 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  // The historic 4th argument slot has carried three unrelated overrides
+  // across three separate features (TRIOFSND-65's tooltip storage,
+  // TRIOFSND-66's mute storageObj, TRIOFSND-116's onOpenPrivacyPolicy
+  // callback). Rather than pick one fixed position and break the other two
+  // call shapes, every extra argument is duck-typed by shape so all three
+  // callers (and every existing test) can keep passing their override in
+  // any position.
+  function resolveHomeExtras(extraArgs) {
+    var extras = {};
+    extraArgs.forEach(function (arg) {
+      if (typeof arg === 'function') {
+        extras.onOpenPrivacyPolicy = arg;
+      } else if (arg && typeof arg.hasSeenHomeTooltip === 'function') {
+        extras.storage = arg;
+      } else if (arg && typeof arg.getItem === 'function') {
+        extras.storageObj = arg;
+      }
+    });
+    return extras;
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -419,19 +446,21 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    var extras = resolveHomeExtras(Array.prototype.slice.call(arguments, 3));
 
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
-        renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
+      if (typeof extras.onOpenPrivacyPolicy === 'function') {
+        renderOptions.onOpenPrivacyPolicy = extras.onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+      if (extras.storageObj) {
+        renderOptions.muted = loadMutedState(extras.storageObj);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, extras.storageObj);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -452,13 +481,17 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
+      if (!extras.storage) {
+        return finishRender();
+      }
+
+      return extras.storage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
+          extras.storage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
+          extras.storage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -499,9 +532,19 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    var storage = loadDinoQuizStorage() || createBrowserHomeStorage();
+    var storageObj = typeof localStorage !== 'undefined' ? localStorage : undefined;
+
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      storage,
+      storageObj
+    );
   }
 
   /**
