@@ -1,4 +1,10 @@
 /**
+ * @typedef {Object} QuestionAnswerStats
+ * @property {number} attempts
+ * @property {number} failures
+ */
+
+/**
  * @typedef {Object} DinoQuizPersistedState
  * @property {number} bestScore
  * @property {number} maxStreak
@@ -6,6 +12,10 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
+ * @property {Object.<string, QuestionAnswerStats>} questionStats Aggregated,
+ *   non-PII attempt/failure counts per question id (from the
+ *   `pregunta_respondida` event) -- no per-child answer log, so the % de
+ *   fallo por pregunta can only ever be computed in aggregate.
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -16,6 +26,7 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
+  questionStats: {},
 };
 
 /**

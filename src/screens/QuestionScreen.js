@@ -45,7 +45,6 @@
  * how src/i18n/index.js loads public/i18n/es.json).
  */
 
- */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
 

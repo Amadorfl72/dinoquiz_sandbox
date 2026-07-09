@@ -29,6 +29,7 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('muted')).toBe(false);
     expect(await storage.get('homeTooltipSeen')).toBe(false);
     expect(await storage.get('analyticsEventCounts')).toEqual({});
+    expect(await storage.get('questionStats')).toEqual({});
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -212,5 +213,45 @@ describe('DinoQuizStorage', () => {
       first_tap_jugar: 1,
       mute_toggled: 1,
     });
+  });
+
+  it('recordQuestionAnswered aggregates attempts and failures per question id, without a per-answer log', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 3, failures: 2 });
+    expect(await storage.get('questionStats')).toEqual({ 'trex-01': { attempts: 3, failures: 2 } });
+  });
+
+  it('recordQuestionAnswered tracks distinct question ids independently', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('triceratops-02', false);
+
+    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 1, failures: 0 });
+    expect(await storage.getQuestionStats('triceratops-02')).toEqual({ attempts: 1, failures: 1 });
+  });
+
+  it('getQuestionStats defaults to zero attempts/failures for an unanswered question', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getQuestionStats('never-answered')).toEqual({ attempts: 0, failures: 0 });
+  });
+
+  it('getQuestionFailureRate computes the aggregated % de fallo por pregunta', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getQuestionFailureRate('trex-01')).toBe(0);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(await storage.getQuestionFailureRate('trex-01')).toBe(0.75);
   });
 });

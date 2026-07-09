@@ -202,8 +202,17 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
+  /**
+   * Resolves the analytics storage backend, preferring an explicit override
+   * (tests) and otherwise following the same CommonJS-first, browser-native
+   * fallback chain as `renderHome`'s tooltip/`first_tap_jugar` wiring.
+   */
+  function resolveAnalyticsStorage(storage) {
+    return storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+  }
+
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
-  function renderQuestionAt(container, renderers, session, onGameComplete) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storage) {
     var question = session.questions[session.state.questionIndex];
 
     return renderers.renderQuestionScreen(container, question, {
@@ -218,6 +227,13 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        // 'pregunta_respondida' (TRIOFSND-92): an aggregated, non-PII
+        // attempts/failures counter per question id, so the % de fallo por
+        // pregunta can be computed later -- never a per-child answer log.
+        if (storage && typeof storage.recordQuestionAnswered === 'function') {
+          storage.recordQuestionAnswered(question.id, result.isCorrect);
+        }
       },
       onNext: function () {
         session.state.questionIndex += 1;
@@ -225,18 +241,18 @@
         if (session.state.questionIndex >= session.questions.length) {
           onGameComplete(session.state);
         } else {
-          renderQuestionAt(container, renderers, session, onGameComplete);
+          renderQuestionAt(container, renderers, session, onGameComplete, storage);
         }
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn);
@@ -245,17 +261,24 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storage) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
     var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var analyticsStorage = resolveAnalyticsStorage(storage);
 
-    renderQuestionAt(container, renderers, session, function (finalState) {
-      renderResultsFor(container, renderers, questions, finalState, doc, fetchFn);
-    });
+    renderQuestionAt(
+      container,
+      renderers,
+      session,
+      function (finalState) {
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, analyticsStorage);
+      },
+      analyticsStorage
+    );
 
     return session;
   }
@@ -306,6 +329,13 @@
     });
   }
 
+  /** Fetches the i18n resource once and returns Home's `home`, `privacy` and `purchase` sections together. */
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && { home: data.home, privacy: data.privacy, purchase: data.purchase };
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -347,6 +377,7 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -354,6 +385,7 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[QUESTION_STATS_KEY] = {};
 
     function readJSON(key) {
       if (backend) {
@@ -397,6 +429,21 @@
           writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         }
         return Promise.resolve(counts[eventName]);
+      },
+      // Aggregated, non-PII 'pregunta_respondida' counter: attempts/failures
+      // per question id only, never a per-answer log (see StorageClient's
+      // recordQuestionAnswered, which this mirrors for the no-require browser
+      // path).
+      recordQuestionAnswered: function (questionId, isCorrect) {
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { attempts: 0, failures: 0 };
+        var next = {
+          attempts: current.attempts + 1,
+          failures: isCorrect ? current.failures : current.failures + 1,
+        };
+        stats[questionId] = next;
+        writeJSON(QUESTION_STATS_KEY, stats);
+        return Promise.resolve(next);
       },
     };
   }
@@ -444,7 +491,7 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              startNewGame(container, renderers, questions, doc, fetchFn);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage);
             }
           });
         }
@@ -572,6 +619,7 @@
       startNewGame: startNewGame,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
+      resolveAnalyticsStorage: resolveAnalyticsStorage,
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
