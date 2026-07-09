@@ -6,7 +6,7 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, validateFeedbackCopy } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
@@ -23,6 +23,38 @@ function buildQuestion(overrides = {}) {
     ...overrides,
   };
 }
+
+describe('content-guide validation of failure feedback copy (TRIOFSND-91)', () => {
+  test('the real es.json question strings contain no negative language', () => {
+    expect(validateFeedbackCopy(strings)).toEqual([]);
+  });
+
+  test('flags a feedback.incorrect string containing banned negative language', () => {
+    const errors = validateFeedbackCopy({
+      ...strings,
+      feedback: { ...strings.feedback, incorrect: '¡Vaya, fallaste! Inténtalo mejor la próxima vez.' },
+    });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/feedback\.incorrect/);
+    expect(errors[0]).toMatch(/negative language/);
+  });
+
+  test('flags an empty or missing field', () => {
+    const errors = validateFeedbackCopy({ ...strings, funFactHeading: '' });
+
+    expect(errors).toContainEqual(expect.stringContaining('funFactHeading'));
+  });
+
+  test('does not flag words that merely contain a banned word as a substring', () => {
+    expect(
+      validateFeedbackCopy({
+        ...strings,
+        feedback: { ...strings.feedback, incorrect: '¡Aprender sobre dinosaurios mola muchísimo!' },
+      })
+    ).toEqual([]);
+  });
+});
 
 describe('QuestionScreen', () => {
   let container;

@@ -45,9 +45,9 @@
  * how src/i18n/index.js loads public/i18n/es.json).
  */
 
- */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
+const { BANNED_WORDS, normalizeToWords } = require('../../public/scripts/resultsScreen');
 
 const OPTION_CLASS = 'question-screen__option';
 const CORRECT_CLASS = 'question-screen__option--correct';
@@ -55,6 +55,34 @@ const NEUTRAL_CLASS = 'question-screen__option--neutral';
 const CELEBRATE_CLASS = 'question-screen__option--celebrate';
 const IMAGE_BASE_PATH = '/assets/images/';
 const MIN_ADVANCE_DELAY_MS = 4000;
+
+// TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
+// curioso heading are the copy a child sees right after a miss, so they are
+// held to the same no-reproach standard as ResultsScreen's motivational
+// messages — reusing that same banned-word list rather than a second one.
+function validateFeedbackCopy(strings) {
+  const errors = [];
+  const fieldsToCheck = [
+    ['feedback.correct', strings && strings.feedback && strings.feedback.correct],
+    ['feedback.incorrect', strings && strings.feedback && strings.feedback.incorrect],
+    ['funFactHeading', strings && strings.funFactHeading],
+    ['nextButton', strings && strings.nextButton],
+  ];
+
+  fieldsToCheck.forEach(([field, value]) => {
+    if (typeof value !== 'string' || value.trim() === '') {
+      errors.push(`${field} must be a non-empty string`);
+      return;
+    }
+
+    const bannedWordsFound = normalizeToWords(value).filter((word) => BANNED_WORDS.has(word));
+    if (bannedWordsFound.length > 0) {
+      errors.push(`${field} ("${value}") contains negative language: ${bannedWordsFound.join(', ')}`);
+    }
+  });
+
+  return errors;
+}
 
 function resolveImageAlt(strings, dinosaur) {
   const dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
@@ -219,4 +247,4 @@ function renderQuestionScreen(container, question, options = {}) {
   };
 }
 
-module.exports = { renderQuestionScreen, warmUpFeedbackAnimation, MIN_ADVANCE_DELAY_MS };
+module.exports = { renderQuestionScreen, warmUpFeedbackAnimation, MIN_ADVANCE_DELAY_MS, validateFeedbackCopy };
