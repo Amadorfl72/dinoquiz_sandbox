@@ -7,6 +7,7 @@ const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
+const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 
 function buildQuestion(id) {
   return {
@@ -24,14 +25,29 @@ function buildQuestionBank(count) {
   return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
 }
 
+// Answers the currently visible question and advances manually via
+// "Siguiente" (TRIOFSND-84): the button only becomes clickable once the
+// question screen's own MIN_ADVANCE_DELAY_MS gate (AC-6) has elapsed, so
+// fake timers must be advanced past it first.
 function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+  jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
-describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a jugar / Salir', () => {
+// Lets any promise chains already queued (e.g. renderHome's several
+// `.then()` hops across fetch/storage) settle. renderHome does not depend on
+// any timer firing, so this drops back to real timers for one tick rather
+// than guessing how many fake-timer advances would cover every `.then()` hop.
+async function flushPromises() {
+  jest.useRealTimers();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  jest.useFakeTimers();
+}
+
+describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> Volver a jugar / Salir', () => {
   let container;
 
   beforeEach(() => {
@@ -39,9 +55,11 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     container.remove();
   });
 
@@ -54,7 +72,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     expect(typeof renderers.renderResultsScreen).toBe('function');
   });
 
-  test('startNewGame walks through every question and lands on Resultados with the right score', () => {
+  test('startNewGame walks through every question, acertando todas, and lands on Resultados with the right score', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -67,6 +85,21 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
     expect(container.textContent).toContain('10/10');
+  });
+
+  test('startNewGame walks through every question, fallando todas, and lands on Resultados without penalizing the score', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    for (let i = 0; i < 10; i += 1) {
+      answerCurrentQuestion(container, { correct: false });
+    }
+
+    expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
+    expect(container.textContent).toContain('0/10');
   });
 
   test('"Volver a jugar" resets game state and navigates to the first question of a new game', () => {
@@ -114,7 +147,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
     // let its promise chain settle before asserting on the DOM.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flushPromises();
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();
@@ -130,10 +163,87 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
+    const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
       expect(container.querySelector('.question-screen')).not.toBeNull();
+    });
+    jest.advanceTimersByTime(0);
+    return rendered;
+  });
+
+  describe('avance automático tras el temporizador (TRIOFSND-84)', () => {
+    test('acierto: advances to the next question on its own once the auto-advance delay elapses, without a "Siguiente" tap', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(2);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
+      const [correctButton] = container.querySelectorAll('.question-screen__option');
+      correctButton.click();
+
+      // Not enough time has passed yet: still on the same question.
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+      expect(container.querySelector('.question-screen__prompt').textContent).toBe(firstPrompt);
+
+      // Past MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS with no manual tap:
+      // the controller advances automatically.
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+    });
+
+    test('fallo: also advances automatically, carrying forward the unchanged score', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(2);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
+      const buttons = container.querySelectorAll('.question-screen__option');
+      buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
+
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+
+      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+    });
+
+    test('auto-advances straight to Resultados when the last question times out unanswered-via-"Siguiente"', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(1);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const [correctButton] = container.querySelectorAll('.question-screen__option');
+      correctButton.click();
+
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+
+      expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
+      expect(container.textContent).toContain('1/1');
+    });
+
+    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(3);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      answerCurrentQuestion(container, { correct: true });
+      const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
+
+      // The first question's now-stale auto-advance timer would fire around
+      // here if it hadn't been cancelled by the manual click above.
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+
+      expect(container.querySelector('.question-screen__prompt').textContent).toBe(secondPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
     });
   });
 });
