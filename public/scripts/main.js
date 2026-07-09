@@ -69,14 +69,24 @@
  * CommonJS `src/services/storage` module — this only resolves under
  * Node/Jest (or a future bundler); a real unbundled browser has no
  * `require`, so it always returns `null` there. For that case,
- * `createBrowserHomeStorage` implements the same three-method interface
- * directly against `window.localStorage` (namespaced the same way as
+ * `createBrowserHomeStorage` implements the same storage interface directly
+ * against `window.localStorage` (namespaced the same way as
  * `src/services/storage`, degrading to an in-memory object if localStorage
  * throws/is unavailable), the same way `loadHomeStrings` above fetches the
  * i18n resource natively instead of going through `src/i18n`'s loader. The
  * bootstrap below tries the CommonJS path first and falls back to the
  * native browser one, so the tooltip, its persisted "seen" flag and the
- * `first_tap_jugar` counter all work in the real, bundler-less PWA.
+ * analytics counters all work in the real, bundler-less PWA.
+ *
+ * Starting a game (TRIOFSND-67): the '¡Jugar!' click handler wired below
+ * records the aggregated, non-PII `partida_iniciada` event (via
+ * `storage.recordEvent`, which increments on every call — unlike the
+ * once-only `first_tap_jugar` counter above) before calling `startNewGame`,
+ * so every game start is counted even on replay-free single sessions. Both
+ * this handler and `homeScreen.js`'s own click listener (which dismisses the
+ * tooltip and fires `first_tap_jugar`) run synchronously off the same click
+ * event, so the tooltip closes and the first question renders in the same
+ * tick — no perceptible delay after the tap.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -306,6 +316,12 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -398,6 +414,12 @@
         }
         return Promise.resolve(counts[eventName]);
       },
+      recordEvent: function (eventName) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts[eventName] = (counts[eventName] || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+        return Promise.resolve(counts[eventName]);
+      },
     };
   }
 
@@ -444,6 +466,7 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
+              storage.recordEvent('partida_iniciada');
               startNewGame(container, renderers, questions, doc, fetchFn);
             }
           });
