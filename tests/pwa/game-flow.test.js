@@ -7,6 +7,7 @@ const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
+const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 
 function buildQuestion(id) {
   return {
@@ -28,6 +29,9 @@ function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+  // "Siguiente" stays disabled until MIN_ADVANCE_DELAY_MS elapses (AC-6),
+  // guaranteeing the dato curioso stays on screen long enough to read.
+  jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
@@ -39,10 +43,12 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     container.remove();
+    jest.useRealTimers();
   });
 
   test('resolveScreenRenderers resolves all three screens under Node/Jest', () => {
@@ -114,7 +120,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
     // let its promise chain settle before asserting on the DOM.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();

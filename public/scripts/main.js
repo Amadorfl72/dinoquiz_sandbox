@@ -306,6 +306,18 @@
     });
   }
 
+  /**
+   * Fetches the whole i18n resource once and hands back the three sections
+   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
+   * browser can render the global controls without a `require()` for
+   * `src/i18n`.
+   */
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -398,10 +410,37 @@
         }
         return Promise.resolve(counts[eventName]);
       },
+      // Also exposes the raw getItem/setItem shape `loadMutedState`/
+      // `persistMutedState` expect, so this same instance can double as
+      // `renderHome`'s mute-persistence backend (TRIOFSND-64) in a real,
+      // unbundled browser.
+      getItem: function (key) {
+        return backend ? backend.getItem(key) : null;
+      },
+      setItem: function (key, value) {
+        if (backend) {
+          backend.setItem(key, value);
+        }
+      },
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  /**
+   * `storage` (TRIOFSND-64/65) is a single, duck-typed argument: callers opt
+   * into whichever persistence it supports simply by passing an object that
+   * implements the matching methods, and get none of it by passing nothing.
+   * - `getItem`/`setItem` (a raw, localStorage-shaped backend) wires the mute
+   *   preference (`options.muted`/`options.onToggleMute`).
+   * - `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` (the
+   *   `dinoQuizStorage`/`createBrowserHomeStorage` shape) wires the first-run
+   *   tooltip and its `first_tap_jugar` counter.
+   * Omitting `storage` entirely keeps the older, storage-less behaviour
+   * (just the fetched strings) so callers that don't need persistence yet
+   * (e.g. tests) get back exactly what they passed in, nothing more.
+   * `onOpenPrivacyPolicy` (TRIOFSND-116), if given, is forwarded as-is so the
+   * Home privacy-policy button can navigate to the dedicated policy screen.
+   */
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -420,18 +459,20 @@
     }
 
     return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
-
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
+
       if (typeof onOpenPrivacyPolicy === 'function') {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+
+      if (storage && typeof storage.getItem === 'function') {
+        renderOptions.muted = loadMutedState(storage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, storage);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -452,16 +493,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
-        renderOptions.showTooltip = !seen;
-        renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
-        };
-        renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
-        };
-        return finishRender();
-      });
+      if (storage && typeof storage.hasSeenHomeTooltip === 'function') {
+        return storage.hasSeenHomeTooltip().then(function (seen) {
+          renderOptions.showTooltip = !seen;
+          renderOptions.onTooltipDismiss = function () {
+            storage.markHomeTooltipSeen();
+          };
+          renderOptions.onPlayButtonClick = function () {
+            storage.recordEventOnce('first_tap_jugar');
+          };
+          return finishRender();
+        });
+      }
+
+      return finishRender();
     });
   }
 
@@ -499,7 +544,8 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    var storage = loadDinoQuizStorage() || createBrowserHomeStorage();
+    return renderHome(doc, undefined, fetchFn, storage, function () {
       navigateToPrivacyPolicy(loc);
     });
   }
