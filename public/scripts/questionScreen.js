@@ -1,8 +1,9 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen: shows one question with its options and, once
- * the child taps an answer, the feedback for that answer.
+ * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88): shows one question
+ * with its options and, once the child taps an answer, the feedback and
+ * "dato curioso" for that answer (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -11,13 +12,27 @@
  * border) whether the child got it right or not; the wrong pick itself only
  * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
  * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
- * outcomes then reveal the same fun fact and "Siguiente" control, so the
- * flow to the next question is identical whether the answer was right or
- * wrong.
+ * outcomes then reveal the same fun fact (in a yellow "dato curioso" box)
+ * and "Siguiente" control, so the flow to the next question is identical
+ * whether the answer was right or wrong.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
- * the browser paints the new state on the very next frame.
+ * the browser paints the new state on the very next frame. `warmUpFeedbackAnimation`
+ * forces the browser to resolve the CSS keyframe's styles once, off-screen,
+ * right after the question mounts, so the child's first tap doesn't pay a
+ * first-run style-recalculation cost.
+ *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS` (4s),
+ * guaranteeing the dato curioso stays on screen long enough to read. The
+ * delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted.
+ *
+ * Accessibility (AC-14): the dato curioso paragraph is `aria-live="polite"`
+ * so TalkBack/VoiceOver announce it as soon as it's revealed, and the
+ * dinosaur illustration carries a descriptive `alt` built from the i18n
+ * `dinosaurNames` map instead of a generic label.
  *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
@@ -34,6 +49,13 @@
   var CORRECT_CLASS = 'question-screen__option--correct';
   var NEUTRAL_CLASS = 'question-screen__option--neutral';
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
+  var IMAGE_BASE_PATH = '/assets/images/';
+  var MIN_ADVANCE_DELAY_MS = 4000;
+
+  function resolveImageAlt(strings, dinosaur) {
+    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
+    return strings.imageAlt.replace('{dinosaur}', dinosaurName);
+  }
 
   function resolveStrings(options) {
     options = options || {};
@@ -87,6 +109,12 @@
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
 
+    var image = document.createElement('img');
+    image.className = 'question-screen__image';
+    image.src = IMAGE_BASE_PATH + question.image;
+    image.alt = resolveImageAlt(strings, question.dinosaur);
+    image.decoding = 'async';
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.setAttribute('aria-live', 'polite');
@@ -101,15 +129,20 @@
     feedback.className = 'question-screen__feedback';
     feedback.setAttribute('aria-live', 'polite');
 
+    var funFactBox = document.createElement('div');
+    funFactBox.className = 'question-screen__fun-fact-box';
+    funFactBox.hidden = true;
+
     var funFactHeading = document.createElement('h3');
     funFactHeading.className = 'question-screen__fun-fact-heading';
     funFactHeading.textContent = strings.funFactHeading;
-    funFactHeading.hidden = true;
 
     var funFact = document.createElement('p');
     funFact.className = 'question-screen__fun-fact';
     funFact.setAttribute('aria-live', 'polite');
-    funFact.hidden = true;
+
+    funFactBox.appendChild(funFactHeading);
+    funFactBox.appendChild(funFact);
 
     var nextButton = document.createElement('button');
     nextButton.type = 'button';
@@ -153,11 +186,14 @@
       feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
-      funFactHeading.hidden = false;
       funFact.textContent = question.funFact;
-      funFact.hidden = false;
+      funFactBox.hidden = false;
 
       nextButton.hidden = false;
+      nextButton.disabled = true;
+      setTimeout(function () {
+        nextButton.disabled = false;
+      }, MIN_ADVANCE_DELAY_MS);
 
       if (onAnswer) {
         onAnswer({
@@ -177,11 +213,11 @@
     });
 
     root.appendChild(prompt);
+    root.appendChild(image);
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
-    root.appendChild(funFactHeading);
-    root.appendChild(funFact);
+    root.appendChild(funFactBox);
     root.appendChild(nextButton);
     container.appendChild(root);
 
@@ -190,9 +226,11 @@
     return {
       root: root,
       prompt: prompt,
+      image: image,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
+      funFactBox: funFactBox,
       funFact: funFact,
       nextButton: nextButton,
       getScore: function () {
@@ -204,7 +242,11 @@
     };
   }
 
-  var api = { renderQuestionScreen: renderQuestionScreen, warmUpFeedbackAnimation: warmUpFeedbackAnimation };
+  var api = {
+    renderQuestionScreen: renderQuestionScreen,
+    warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
+  };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;

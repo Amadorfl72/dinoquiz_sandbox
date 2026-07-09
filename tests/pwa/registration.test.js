@@ -193,7 +193,10 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
 
     await renderHome(doc, renderHomeScreen, fetchFn);
 
-    expect(renderHomeScreen).toHaveBeenCalledWith({ id: 'app' }, { strings: homeStrings });
+    expect(renderHomeScreen).toHaveBeenCalledWith(
+      { id: 'app' },
+      expect.objectContaining({ strings: homeStrings })
+    );
   });
 
   test('renderHome shows the tooltip when the storage flag says it has not been seen yet', async () => {

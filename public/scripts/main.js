@@ -306,6 +306,15 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      if (!data) {
+        return null;
+      }
+      return { home: data.home, privacy: data.privacy, purchase: data.purchase };
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -401,7 +410,7 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -419,9 +428,18 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    // `storage` is duck-typed so a single argument can stand in for either
+    // collaborator a caller wants to fake: the raw getItem/setItem-shaped
+    // store used for the mute preference, or the higher-level
+    // hasSeenHomeTooltip/markHomeTooltipSeen/recordEventOnce tooltip
+    // backend. Either can be omitted; each falls back independently.
+    var storageObj = storage && typeof storage.getItem === 'function' ? storage : undefined;
+    var tooltipStorage =
+      storage && typeof storage.hasSeenHomeTooltip === 'function'
+        ? storage
+        : loadDinoQuizStorage() || createBrowserHomeStorage();
 
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
@@ -452,13 +470,13 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
+          tooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
+          tooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -499,7 +517,7 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    return renderHome(doc, undefined, fetchFn, undefined, function () {
       navigateToPrivacyPolicy(loc);
     });
   }

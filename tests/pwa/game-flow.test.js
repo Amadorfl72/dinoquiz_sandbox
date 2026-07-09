@@ -6,6 +6,7 @@ require('@testing-library/jest-dom');
 const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
+const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
 
 function buildQuestion(id) {
@@ -28,6 +29,9 @@ function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+  // "Siguiente" only becomes clickable after MIN_ADVANCE_DELAY_MS (AC-6);
+  // fast-forward that wall-clock timer instead of waiting for real time.
+  jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
@@ -39,9 +43,11 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     container.remove();
   });
 
@@ -114,7 +120,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
     // let its promise chain settle before asserting on the DOM.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();
