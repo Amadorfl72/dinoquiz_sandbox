@@ -40,7 +40,7 @@ function writeTempQuestionBank(questions) {
   return filePath;
 }
 
-describe('real question bank (src/data/questions.json)', () => {
+describe('real question bank (public/data/questions.json)', () => {
   const questions = loadQuestionBank();
 
   test('loads exactly the expected number of questions', () => {

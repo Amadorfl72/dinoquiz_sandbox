@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen: shows one question with its options and, once
- * the child taps an answer, the feedback and "dato curioso" for that answer
- * (TRIOFSND-83).
+ * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88): shows one question
+ * with its options and, once the child taps an answer, the feedback and
+ * "dato curioso" for that answer (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -36,8 +36,16 @@
  * so TalkBack/VoiceOver announce it as soon as it's revealed, and the
  * dinosaur illustration carries a descriptive `alt` built from the i18n
  * `dinosaurNames` map instead of a generic label.
+ *
+ * The implementation lives in public/scripts/questionScreen.js because the
+ * browser renders this screen directly, and without a bundler it must be
+ * loaded there as a `<script>` (see public/index.html) — the same rationale
+ * documented for public/scripts/homeScreen.js. This canonical `src/screens/`
+ * module re-exports it so Node/Jest keep a single source of truth (mirrors
+ * how src/i18n/index.js loads public/i18n/es.json).
  */
 
+ */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
 
