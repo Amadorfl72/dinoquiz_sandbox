@@ -11,6 +11,25 @@ const { question: strings } = require('../../public/i18n/es.json');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
+/** Reads the `:root { --token: value; }` design tokens (TRIOFSND-133) so CSS rules that reference them via `var(--token)` can be resolved to a concrete value below. */
+function readCssVariables(css) {
+  const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+  const variables = {};
+  if (rootMatch) {
+    const declarationPattern = /(--[\w-]+):\s*([^;]+);/g;
+    let declaration;
+    while ((declaration = declarationPattern.exec(rootMatch[1])) !== null) {
+      variables[declaration[1]] = declaration[2].trim();
+    }
+  }
+  return variables;
+}
+
+function resolveCssValue(value, variables) {
+  const varMatch = value.match(/^var\((--[\w-]+)\)$/);
+  return varMatch ? variables[varMatch[1]] || value : value;
+}
+
 function buildQuestion(overrides = {}) {
   return {
     id: 'trex-01',
@@ -26,14 +45,26 @@ function buildQuestion(overrides = {}) {
 
 describe('QuestionScreen', () => {
   let container;
+  let originalAudio;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
+
+    // jsdom has no real media playback, so swap in a stub before any test
+    // lets the default soundService construct a real `Audio` (see the
+    // "on a correct/incorrect answer" describes below) — this keeps these
+    // tests focused on the visual feedback contract; TRIOFSND-78's own
+    // mute/playback behavior is covered by src/services/sound/index.test.js.
+    originalAudio = window.Audio;
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
   });
 
   afterEach(() => {
     container.remove();
+    window.Audio = originalAudio;
   });
 
   test('renders the question prompt and one accessible button per option', () => {
@@ -56,11 +87,16 @@ describe('QuestionScreen', () => {
 
   test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const variables = readCssVariables(css);
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
     const rule = ruleMatch[1];
-    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
+    const declarationMatch = rule.match(/font-size:\s*([^;]+);/);
+    expect(declarationMatch).not.toBeNull();
+
+    const resolvedValue = resolveCssValue(declarationMatch[1].trim(), variables);
+    const fontSizeMatch = resolvedValue.match(/^([\d.]+)(px|rem)$/);
     expect(fontSizeMatch).not.toBeNull();
 
     const fontSizePx = fontSizeMatch[2] === 'rem'

@@ -306,6 +306,16 @@
     });
   }
 
+  /** Fetches the i18n resource once and returns the home/privacy/purchase sections `renderHome` needs (see the file-level doc comment on TRIOFSND-64). */
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      if (!data) {
+        return null;
+      }
+      return { home: data.home, privacy: data.privacy, purchase: data.purchase };
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -401,7 +411,30 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  /**
+   * `renderHome`'s 4th argument is duck-typed rather than a fixed positional
+   * slot, because callers only ever need one concern at a time: a plain
+   * function is the "open privacy policy" callback (TRIOFSND-116), an object
+   * with `getItem`/`setItem` is the mute storage backend (TRIOFSND-66), and
+   * an object with `hasSeenHomeTooltip` is the first-run tooltip storage
+   * (TRIOFSND-65). A single object can satisfy more than one shape at once
+   * (e.g. a real backend implementing both), so the checks aren't exclusive.
+   */
+  function resolveHomeStorageRoles(storageArg) {
+    var roles = {};
+    if (typeof storageArg === 'function') {
+      roles.onOpenPrivacyPolicy = storageArg;
+    }
+    if (storageArg && typeof storageArg.getItem === 'function') {
+      roles.muteStorageObj = storageArg;
+    }
+    if (storageArg && typeof storageArg.hasSeenHomeTooltip === 'function') {
+      roles.tooltipStorage = storageArg;
+    }
+    return roles;
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn, storageArg) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -419,19 +452,23 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    var roles = resolveHomeStorageRoles(storageArg);
 
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
-        renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
+
+      if (roles.onOpenPrivacyPolicy) {
+        renderOptions.onOpenPrivacyPolicy = roles.onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+
+      if (roles.muteStorageObj) {
+        renderOptions.muted = loadMutedState(roles.muteStorageObj);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, roles.muteStorageObj);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -452,16 +489,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
-        renderOptions.showTooltip = !seen;
-        renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
-        };
-        renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
-        };
-        return finishRender();
-      });
+      if (roles.tooltipStorage) {
+        return roles.tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+          renderOptions.showTooltip = !seen;
+          renderOptions.onTooltipDismiss = function () {
+            roles.tooltipStorage.markHomeTooltipSeen();
+          };
+          renderOptions.onPlayButtonClick = function () {
+            roles.tooltipStorage.recordEventOnce('first_tap_jugar');
+          };
+          return finishRender();
+        });
+      }
+
+      return finishRender();
     });
   }
 

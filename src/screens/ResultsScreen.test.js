@@ -17,6 +17,39 @@ const {
 } = require('./ResultsScreen');
 const { results: strings } = require('../../public/i18n/es.json');
 
+/** Reads the `:root { --token: value; }` design tokens (TRIOFSND-133) so CSS rules that reference them via `var(--token)` can be resolved to a concrete value below. */
+function readCssVariables(css) {
+  const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+  const variables = {};
+  if (rootMatch) {
+    const declarationPattern = /(--[\w-]+):\s*([^;]+);/g;
+    let declaration;
+    while ((declaration = declarationPattern.exec(rootMatch[1])) !== null) {
+      variables[declaration[1]] = declaration[2].trim();
+    }
+  }
+  return variables;
+}
+
+function resolveCssValue(value, variables) {
+  const varMatch = value.match(/^var\((--[\w-]+)\)$/);
+  return varMatch ? variables[varMatch[1]] || value : value;
+}
+
+/** Collects every resolved `px` value for declarations matched by `declarationPattern` (e.g. /min-height:\s*([^;]+);/g). */
+function collectResolvedPxValues(rule, variables, declarationPattern) {
+  const values = [];
+  let declaration;
+  while ((declaration = declarationPattern.exec(rule)) !== null) {
+    const resolved = resolveCssValue(declaration[1].trim(), variables);
+    const pxMatch = resolved.match(/^([\d.]+)px$/);
+    if (pxMatch) {
+      values.push(parseFloat(pxMatch[1]));
+    }
+  }
+  return values;
+}
+
 describe('calculateStars (tier logic)', () => {
   test.each([
     [0, 1],
@@ -202,16 +235,11 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
     expect(sharedRuleMatch).not.toBeNull();
     expect(specificRuleMatch).not.toBeNull();
 
+    const variables = readCssVariables(css);
     const combinedRule = `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`;
-    const minHeight = Math.max(
-      ...Array.from(combinedRule.matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
-    );
-    const minWidth = Math.max(
-      ...Array.from(combinedRule.matchAll(/min-width:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
-    );
-    const fontSizePx = Math.max(
-      ...Array.from(combinedRule.matchAll(/font-size:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
-    );
+    const minHeight = Math.max(...collectResolvedPxValues(combinedRule, variables, /min-height:\s*([^;]+);/g));
+    const minWidth = Math.max(...collectResolvedPxValues(combinedRule, variables, /min-width:\s*([^;]+);/g));
+    const fontSizePx = Math.max(...collectResolvedPxValues(combinedRule, variables, /font-size:\s*([^;]+);/g));
 
     expect(minHeight).toBeGreaterThanOrEqual(64);
     expect(minWidth).toBeGreaterThanOrEqual(48);

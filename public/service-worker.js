@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v4';
+const SW_VERSION = 'v5';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -24,6 +24,7 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/styles/main.css',
   '/scripts/scoring.js',
+  '/scripts/soundService.js',
   '/scripts/gameFlow.js',
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
@@ -32,6 +33,12 @@ const PRECACHE_URLS = [
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',
+  // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
+  // the app shell instead of left to runtime caching, so the very first
+  // answer in a fresh install can still play its sfx within the <300ms
+  // budget while offline.
+  '/assets/sounds/correct.wav',
+  '/assets/sounds/incorrect.wav',
   '/i18n/es.json',
   '/data/questions.json',
   '/offline.html',

@@ -6,6 +6,7 @@ require('@testing-library/jest-dom');
 const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
+const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
 
 function buildQuestion(id) {
@@ -24,25 +25,50 @@ function buildQuestionBank(count) {
   return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
 }
 
-function answerCurrentQuestion(container, { correct }) {
+// "Siguiente" stays disabled until MIN_ADVANCE_DELAY_MS elapses (AC-6), so
+// each answer needs fake timers advanced past that gate before it's
+// clickable — see the `jest.useFakeTimers()` set up per test below.
+async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+  await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
 describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a jugar / Salir', () => {
   let container;
+  let originalAudio;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     container = document.createElement('div');
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+
+    // jsdom has no real media playback; stub it out so answering questions
+    // here (which plays the TRIOFSND-78 feedback sfx) doesn't hit jsdom's
+    // "not implemented" HTMLMediaElement.play() warning.
+    originalAudio = window.Audio;
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
+
+    // jsdom dispatches the shared `window`'s `load` event exactly once, a
+    // real macrotask after the test document was constructed. Flush it here
+    // (with real timers, before any test requires main.js and registers its
+    // `window.addEventListener('load', ...)` bootstrap) so it can never
+    // later fire mid-test — e.g. when a subsequent `jest.advanceTimersByTimeAsync`
+    // yields to the event loop — and hijack `#app` by re-rendering Home.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     container.remove();
+    jest.useRealTimers();
+    window.Audio = originalAudio;
   });
 
   test('resolveScreenRenderers resolves all three screens under Node/Jest', () => {
@@ -54,7 +80,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     expect(typeof renderers.renderResultsScreen).toBe('function');
   });
 
-  test('startNewGame walks through every question and lands on Resultados with the right score', () => {
+  test('startNewGame walks through every question and lands on Resultados with the right score', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -62,14 +88,14 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     startNewGame(container, renderers, questions, document, undefined, () => 0);
 
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
 
     expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
     expect(container.textContent).toContain('10/10');
   });
 
-  test('"Volver a jugar" resets game state and navigates to the first question of a new game', () => {
+  test('"Volver a jugar" resets game state and navigates to the first question of a new game', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -77,7 +103,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     // First game: get every answer wrong (score stays 0), reach Resultados.
     startNewGame(container, renderers, questions, document, undefined, () => 0);
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: false });
+      await answerCurrentQuestion(container, { correct: false });
     }
     expect(container.textContent).toContain('0/10');
 
@@ -93,7 +119,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     // Finish the replayed game to confirm the reset score (not the old
     // game's answers) drives the new result.
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
     expect(container.textContent).toContain('10/10');
   });
@@ -106,7 +132,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     startNewGame(container, renderers, questions, document, undefined, () => 0);
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
@@ -114,7 +140,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
     // let its promise chain settle before asserting on the DOM.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();

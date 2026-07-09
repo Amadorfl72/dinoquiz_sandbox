@@ -37,17 +37,18 @@
  * dinosaur illustration carries a descriptive `alt` built from the i18n
  * `dinosaurNames` map instead of a generic label.
  *
- * The implementation lives in public/scripts/questionScreen.js because the
- * browser renders this screen directly, and without a bundler it must be
- * loaded there as a `<script>` (see public/index.html) — the same rationale
- * documented for public/scripts/homeScreen.js. This canonical `src/screens/`
- * module re-exports it so Node/Jest keep a single source of truth (mirrors
- * how src/i18n/index.js loads public/i18n/es.json).
- */
-
+ * Feedback sound effects (TRIOFSND-78, AC-5/AC-11): `soundService.preload()`
+ * runs right after mount, alongside `warmUpFeedbackAnimation`, so the first
+ * tap doesn't pay any decode/allocation cost. `handleSelect` then calls
+ * `playCorrect`/`playIncorrect` synchronously, in the same tick as the visual
+ * feedback classes — the service itself reads the persisted mute flag
+ * (localStorage, see `src/services/sound`) before every play and simply
+ * skips the audio when muted, so the visual feedback is identical either
+ * way.
  */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
+const { soundService: defaultSoundService } = require('../services/sound');
 
 const OPTION_CLASS = 'question-screen__option';
 const CORRECT_CLASS = 'question-screen__option--correct';
@@ -79,6 +80,7 @@ function renderQuestionScreen(container, question, options = {}) {
   const locale = options.locale || DEFAULT_LOCALE;
   const { question: strings } = getStrings(locale);
   const onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
+  const soundService = options.soundService || defaultSoundService;
 
   let score = options.score || 0;
   let answered = false;
@@ -151,6 +153,12 @@ function renderQuestionScreen(container, question, options = {}) {
     const previousScore = score;
     score = applyAnswerToScore(score, correct);
 
+    if (correct) {
+      soundService.playCorrect();
+    } else {
+      soundService.playIncorrect();
+    }
+
     optionButtons.forEach((button, index) => {
       button.disabled = true;
 
@@ -203,6 +211,7 @@ function renderQuestionScreen(container, question, options = {}) {
   container.appendChild(root);
 
   warmUpFeedbackAnimation();
+  soundService.preload();
 
   return {
     root,
