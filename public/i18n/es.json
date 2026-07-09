@@ -20,7 +20,7 @@
     "tooltip": {
       "message": "¡Toca aquí para jugar!"
     },
-    "privacyPolicyIconLabel": "Política de privacidad",
+    "privacyPolicyIconLabel": "Ver política de privacidad",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
   "privacyPolicy": {

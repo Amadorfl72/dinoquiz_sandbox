@@ -306,6 +306,12 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -401,7 +407,19 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  /**
+   * `renderHome`'s 4th/5th positional arguments are resolved by duck-typing
+   * rather than by fixed position: `onOpenPrivacyPolicy` (a function, wired
+   * to the legacy full-screen privacy route, TRIOFSND-116) and `storage` (an
+   * object) can arrive in either order, and `storage` itself may satisfy the
+   * localStorage-like `getItem`/`setItem` shape (mute persistence,
+   * TRIOFSND-66), the `hasSeenHomeTooltip`/... shape (first-run tooltip,
+   * TRIOFSND-65), or both at once (a merged adapter) -- each shape wires its
+   * own independent piece of `renderOptions`, so passing one never disables
+   * the other. Omitting `storage` entirely keeps the original, storage-less
+   * behaviour (`renderOptions` only carries the fetched strings).
+   */
+  function renderHome(doc, renderHomeScreen, fetchFn, arg4, arg5) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -419,19 +437,24 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    var onOpenPrivacyPolicy = typeof arg4 === 'function' ? arg4 : typeof arg5 === 'function' ? arg5 : null;
+    var storage = arg4 && typeof arg4 === 'object' ? arg4 : arg5 && typeof arg5 === 'object' ? arg5 : null;
 
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
+
+      if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+
+      if (storage && typeof storage.getItem === 'function') {
+        renderOptions.muted = loadMutedState(storage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, storage);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -452,16 +475,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
-        renderOptions.showTooltip = !seen;
-        renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
-        };
-        renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
-        };
-        return finishRender();
-      });
+      if (storage && typeof storage.hasSeenHomeTooltip === 'function') {
+        return storage.hasSeenHomeTooltip().then(function (seen) {
+          renderOptions.showTooltip = !seen;
+          renderOptions.onTooltipDismiss = function () {
+            storage.markHomeTooltipSeen();
+          };
+          renderOptions.onPlayButtonClick = function () {
+            storage.recordEventOnce('first_tap_jugar');
+          };
+          return finishRender();
+        });
+      }
+
+      return finishRender();
     });
   }
 
@@ -492,6 +519,34 @@
     });
   }
 
+  /**
+   * Real-browser `storage` argument for `renderHome` (see its docstring):
+   * merges the localStorage-like shape mute persistence needs with the
+   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` shape the
+   * first-run tooltip needs, so a single call wires both. `localStorage`
+   * access itself can throw (e.g. some locked-down browser policies), same
+   * as the private-mode case `createBrowserHomeStorage` already guards.
+   */
+  function resolveHomeStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var tooltipBackend = loadDinoQuizStorage() || createBrowserHomeStorage(win);
+
+    var localStorageBackend;
+    try {
+      localStorageBackend = win && win.localStorage;
+    } catch (error) {
+      localStorageBackend = undefined;
+    }
+
+    return {
+      getItem: localStorageBackend && localStorageBackend.getItem.bind(localStorageBackend),
+      setItem: localStorageBackend && localStorageBackend.setItem.bind(localStorageBackend),
+      hasSeenHomeTooltip: tooltipBackend.hasSeenHomeTooltip.bind(tooltipBackend),
+      markHomeTooltipSeen: tooltipBackend.markHomeTooltipSeen.bind(tooltipBackend),
+      recordEventOnce: tooltipBackend.recordEventOnce.bind(tooltipBackend),
+    };
+  }
+
   function renderRoute(doc, fetchFn, loc) {
     if (isPrivacyPolicyRoute(loc)) {
       return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
@@ -499,16 +554,23 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      resolveHomeStorage()
+    );
   }
 
   /**
    * Browser-only startup: fetch the i18n strings and the question bank once,
    * stash the play-ready data on `window.DinoQuiz` so `loadQuestions()` and
-   * the screens can read it synchronously, then render Home. Runs after the
-   * screen/game `<script>`s have registered themselves on `window.DinoQuiz`.
+   * the screens can read it synchronously. Rendering Home itself is left to
+   * `renderRoute` (called right after by the `load` listener below) so the
+   * app shell only fetches `/i18n/es.json` once instead of twice.
    */
   function bootstrapBrowserApp() {
     if (typeof window === 'undefined') {
@@ -519,7 +581,7 @@
 
     var fetchFn = typeof fetch === 'function' ? fetch : undefined;
     if (typeof fetchFn !== 'function') {
-      return renderHome();
+      return Promise.resolve(null);
     }
 
     return fetchJson(fetchFn, '/i18n/es.json')
@@ -532,9 +594,6 @@
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to prepare the game data', error);
-      })
-      .then(function () {
-        return renderHome();
       });
   }
 
