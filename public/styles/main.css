@@ -338,6 +338,31 @@ body {
  * highlights the correct option, never marks the option the child picked
  * as "wrong".
  */
+.question-screen__prompt {
+  font-size: 24px;
+  line-height: 1.3;
+  margin: 0 0 16px;
+}
+
+.question-screen__image {
+  display: block;
+  width: clamp(160px, 30vw, 280px);
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+}
+
+.question-screen__score {
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+
+.question-screen__feedback {
+  font-size: 20px;
+  margin: 8px 0;
+}
+
 .question-screen__options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -394,6 +419,60 @@ body {
   .question-screen__option--celebrate {
     animation: none;
   }
+}
+
+/*
+ * Dato curioso box (TRIOFSND-83): yellow highlight per the mockup. Colors
+ * mirror src/theme/questionScreenColors.js (QUESTION_SCREEN_COLORS.funFact),
+ * which contrast.test.js checks against WCAG AA (AC-13) — keep both in sync.
+ */
+.question-screen__fun-fact-box {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 3px solid #f9a825;
+  border-radius: 16px;
+  background-color: #fff9c4;
+  color: #5d4037;
+  text-align: left;
+}
+
+.question-screen__fun-fact-heading {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.question-screen__fun-fact {
+  margin: 0;
+  font-size: 20px;
+}
+
+/*
+ * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
+ * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
+ * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ */
+.question-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 32px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 32px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__next-button:disabled {
+  background-color: #a5d6a7;
+  cursor: default;
 }
 
 /* Visually hides content while keeping it available to screen readers. */

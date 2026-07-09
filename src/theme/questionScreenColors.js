@@ -12,6 +12,8 @@ const QUESTION_SCREEN_COLORS = Object.freeze({
   correct: Object.freeze({ background: '#2E7D32', text: '#FFFFFF' }),
   // Wrong pick: neutral (no red/negative color), just marks what was chosen.
   neutral: Object.freeze({ background: '#CFD8DC', text: '#263238' }),
+  // Dato curioso box (TRIOFSND-83): yellow highlight per the mockup.
+  funFact: Object.freeze({ background: '#FFF9C4', text: '#5D4037' }),
 });
 
 module.exports = { QUESTION_SCREEN_COLORS };
