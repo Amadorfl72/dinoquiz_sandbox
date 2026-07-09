@@ -20,6 +20,67 @@ body {
 }
 
 /*
+ * App shell — global controls (TRIOFSND-105). `.app-shell__controls` is a
+ * sibling of #app, not a child, so it stays mounted across every screen
+ * (Inicio, Quiz, Feedback, Resultados) instead of being wiped out by each
+ * screen's `container.innerHTML = ''` render.
+ */
+.app-shell__controls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.app-shell__mute-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.app-shell__mute-toggle:focus-visible {
+  outline: 3px solid #1a5276;
+  outline-offset: 2px;
+}
+
+.app-shell__mute-toggle:active {
+  transform: scale(0.96);
+}
+
+/* #2e7d32 vs white icon: contrast ratio ~5.1:1, passes WCAG AA (AC-13) */
+.app-shell__mute-toggle--unmuted {
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.app-shell__mute-toggle--unmuted:hover {
+  background-color: #256a29;
+}
+
+/* #616161 vs white icon: contrast ratio ~6.2:1, passes WCAG AA (AC-13) */
+.app-shell__mute-toggle--muted {
+  background-color: #616161;
+  color: #ffffff;
+}
+
+.app-shell__mute-toggle--muted:hover {
+  background-color: #525252;
+}
+
+/*
  * Home screen — tablet-first (the PRD's primary target is a horizontal
  * tablet), with graceful degradation down to small phones and up to
  * non-tablet desktop. `clamp()` keeps the title/mascot scaling smoothly
