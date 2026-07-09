@@ -7,6 +7,7 @@ const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
+const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 
 function buildQuestion(id) {
   return {
@@ -24,10 +25,13 @@ function buildQuestionBank(count) {
   return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
 }
 
-function answerCurrentQuestion(container, { correct }) {
+async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+  // "Siguiente" stays disabled for MIN_ADVANCE_DELAY_MS after answering
+  // (AC-6), so the fun fact stays readable before advancing.
+  await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
@@ -39,9 +43,11 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     container.remove();
   });
 
@@ -54,7 +60,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     expect(typeof renderers.renderResultsScreen).toBe('function');
   });
 
-  test('startNewGame walks through every question and lands on Resultados with the right score', () => {
+  test('startNewGame walks through every question and lands on Resultados with the right score', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -62,14 +68,14 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     startNewGame(container, renderers, questions, document, undefined, () => 0);
 
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
 
     expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
     expect(container.textContent).toContain('10/10');
   });
 
-  test('"Volver a jugar" resets game state and navigates to the first question of a new game', () => {
+  test('"Volver a jugar" resets game state and navigates to the first question of a new game', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -77,7 +83,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     // First game: get every answer wrong (score stays 0), reach Resultados.
     startNewGame(container, renderers, questions, document, undefined, () => 0);
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: false });
+      await answerCurrentQuestion(container, { correct: false });
     }
     expect(container.textContent).toContain('0/10');
 
@@ -93,7 +99,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     // Finish the replayed game to confirm the reset score (not the old
     // game's answers) drives the new result.
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
     expect(container.textContent).toContain('10/10');
   });
@@ -106,7 +112,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     startNewGame(container, renderers, questions, document, undefined, () => 0);
     for (let i = 0; i < 10; i += 1) {
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
     }
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
@@ -114,7 +120,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
     // let its promise chain settle before asserting on the DOM.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();

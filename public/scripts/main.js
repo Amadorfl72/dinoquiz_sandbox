@@ -306,6 +306,12 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -401,7 +407,7 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storageOrOnOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -419,19 +425,29 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    // The 4th argument is overloaded: a function is the privacy-policy route
+    // callback (see renderRoute), any other truthy value is a storage backend
+    // used for both the mute preference and the first-run tooltip.
+    var onOpenPrivacyPolicy =
+      typeof storageOrOnOpenPrivacyPolicy === 'function' ? storageOrOnOpenPrivacyPolicy : undefined;
+    var storage =
+      storageOrOnOpenPrivacyPolicy && typeof storageOrOnOpenPrivacyPolicy !== 'function'
+        ? storageOrOnOpenPrivacyPolicy
+        : undefined;
 
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
+      if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+      if (storage) {
+        renderOptions.muted = loadMutedState(storage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, storage);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -452,13 +468,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
+      if (!storage) {
+        return finishRender();
+      }
+
+      var tooltipStorage =
+        typeof storage.hasSeenHomeTooltip === 'function' ? storage : loadDinoQuizStorage() || createBrowserHomeStorage();
+
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
+          tooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
+          tooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -538,7 +561,16 @@
       });
   }
 
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  // Only self-bootstrap in a real, unbundled browser: under Node/Jest,
+  // `require` always exists and the test files drive `startNewGame`/
+  // `renderHome`/`renderRoute` explicitly against their own `#app` container,
+  // so attaching this would race a jsdom-dispatched `load` event against
+  // whatever container the test currently has mounted.
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.addEventListener === 'function' &&
+    typeof require !== 'function'
+  ) {
     window.addEventListener('load', function () {
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {

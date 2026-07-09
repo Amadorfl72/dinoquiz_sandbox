@@ -202,7 +202,20 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
     expect(sharedRuleMatch).not.toBeNull();
     expect(specificRuleMatch).not.toBeNull();
 
-    const combinedRule = `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`;
+    // Accessibility tokens (TRIOFSND-133) moved these rules onto CSS custom
+    // properties (e.g. `var(--tap-target-min)`); resolve them against :root
+    // so this still reads the effective px values instead of the var() call.
+    const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+    const rootVars = {};
+    if (rootMatch) {
+      Array.from(rootMatch[1].matchAll(/--([\w-]+):\s*([^;]+);/g)).forEach((match) => {
+        rootVars[match[1]] = match[2].trim();
+      });
+    }
+    const resolveVars = (rule) =>
+      rule.replace(/var\(\s*--([\w-]+)\s*\)/g, (whole, name) => rootVars[name] || whole);
+
+    const combinedRule = resolveVars(`${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`);
     const minHeight = Math.max(
       ...Array.from(combinedRule.matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
     );

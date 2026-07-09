@@ -145,6 +145,10 @@
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento! La respuesta correcta es esta:"
     },
+    "answerAnnouncement": {
+      "correct": "¡Genial, acertaste! La respuesta correcta era: {correctAnswer}",
+      "incorrect": "¡Buen intento! La respuesta correcta era: {correctAnswer}"
+    },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",

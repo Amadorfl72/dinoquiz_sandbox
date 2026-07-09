@@ -59,7 +59,17 @@ describe('QuestionScreen', () => {
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
-    const rule = ruleMatch[1];
+    // Accessibility tokens (TRIOFSND-133) moved this rule onto a CSS custom
+    // property (`var(--font-size-body)`); resolve it against :root so this
+    // still reads the effective px value instead of the var() call.
+    const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+    const rootVars = {};
+    if (rootMatch) {
+      Array.from(rootMatch[1].matchAll(/--([\w-]+):\s*([^;]+);/g)).forEach((match) => {
+        rootVars[match[1]] = match[2].trim();
+      });
+    }
+    const rule = ruleMatch[1].replace(/var\(\s*--([\w-]+)\s*\)/g, (whole, name) => rootVars[name] || whole);
     const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
     expect(fontSizeMatch).not.toBeNull();
 
@@ -100,6 +110,19 @@ describe('QuestionScreen', () => {
       optionButtons[question.correctAnswerIndex].click();
 
       expect(feedback).toHaveTextContent(strings.feedback.correct);
+    });
+
+    test('announces the hit and the correct answer text via an aria-live status region (TRIOFSND-79, AC-14)', () => {
+      const question = buildQuestion();
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcementEl).toHaveAttribute('aria-live', 'polite');
+      expect(announcementEl).toHaveAttribute('role', 'status');
+      expect(announcementEl).toHaveTextContent(
+        strings.answerAnnouncement.correct.replace('{correctAnswer}', question.options[question.correctAnswerIndex])
+      );
     });
 
     test('reveals the fun fact and the "Siguiente" control', () => {
@@ -175,6 +198,21 @@ describe('QuestionScreen', () => {
 
       expect(feedback).toHaveTextContent(strings.feedback.incorrect);
       expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
+    });
+
+    test('announces the miss and the correct answer text via an aria-live status region, without a sighted-only pointer like "esta" (TRIOFSND-79, AC-14)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      expect(announcementEl).toHaveAttribute('aria-live', 'polite');
+      expect(announcementEl).toHaveAttribute('role', 'status');
+      expect(announcementEl).toHaveTextContent(
+        strings.answerAnnouncement.incorrect.replace('{correctAnswer}', question.options[question.correctAnswerIndex])
+      );
+      expect(announcementEl).toHaveTextContent(question.options[question.correctAnswerIndex]);
     });
 
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
@@ -267,6 +305,44 @@ describe('QuestionScreen', () => {
       expect(image.src).toContain(question.image);
       expect(image.alt).toBe(strings.imageAlt.replace('{dinosaur}', strings.dinosaurNames.trex));
       expect(image.alt.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('answer announcement (TRIOFSND-79: accessible result announcement)', () => {
+    test('the announcement region is present from the first render, empty, and visually hidden (screen-reader-only)', () => {
+      const question = buildQuestion();
+      const { announcementEl } = renderQuestionScreen(container, question);
+
+      expect(announcementEl).toBeInTheDocument();
+      expect(announcementEl).toHaveClass('sr-only');
+      expect(announcementEl).toHaveTextContent('');
+    });
+
+    test('is written synchronously in the click handler, not gated on the fun-fact timer or any sound/visual cue', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+        optionButtons[question.correctAnswerIndex].click();
+
+        // No timer advanced yet: the announcement must already be set.
+        expect(announcementEl.textContent.length).toBeGreaterThan(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('a second tap after answering does not change the announcement', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+      const firstAnnouncement = announcementEl.textContent;
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcementEl).toHaveTextContent(firstAnnouncement);
     });
   });
 
