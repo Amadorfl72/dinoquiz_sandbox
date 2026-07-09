@@ -39,16 +39,37 @@
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
  *
- * Mute persistence (TRIOFSND-66): `src/services/storage` already models a
- * `muted` key with IndexedDB/localStorage/memory fallback, but it's a
- * CommonJS module graph (`require`d internally) that this no-bundler app
- * shell can't load as a plain `<script>`. `MUTE_STORAGE_KEY` below matches
- * the exact namespaced key that service writes (`dinoquiz:muted`, JSON-
- * encoded) so a future bundler-backed wiring of the real service reads back
- * the same value with no migration. Until then, this reads/writes
- * `localStorage` directly -- sufficient for a single boolean preference --
- * degrading to an in-memory default (unmuted) if `localStorage` throws
- * (e.g. Safari private mode).
+ * Mute persistence (TRIOFSND-66) and the first-run tooltip (TRIOFSND-65)
+ * share a single optional `storage` argument on `renderHome` (4th
+ * parameter): when omitted, `renderHome` renders with no mute/tooltip
+ * options at all (previous, storage-less behaviour); when given, it is used
+ * for BOTH concerns, each read defensively so a fixture implementing only
+ * one half of the interface (e.g. a test double with just `getItem`/
+ * `setItem`, or just `hasSeenHomeTooltip`/`markHomeTooltipSeen`/
+ * `recordEventOnce`) never throws:
+ *   - `loadMutedState`/`persistMutedState` call `storage.getItem`/
+ *     `storage.setItem` with the namespaced `MUTE_STORAGE_KEY`
+ *     (`dinoquiz:muted`, JSON-encoded) -- the same key
+ *     `src/services/storage` persists, so a future bundler-backed wiring of
+ *     the real service reads back the same value with no migration.
+ *   - the tooltip flow only runs when `storage.hasSeenHomeTooltip` is a
+ *     function; it then resolves whether the tooltip was already dismissed
+ *     and wires `onTooltipDismiss`/`onPlayButtonClick` to
+ *     `markHomeTooltipSeen`/`recordEventOnce`.
+ *
+ * Two backends can fill that argument in the real, bundler-less PWA (see
+ * `renderRoute` below, which resolves one and passes it through).
+ * `loadDinoQuizStorage` requires the CommonJS `src/services/storage`
+ * module — this only resolves under Node/Jest (or a future bundler); a real
+ * unbundled browser has no `require`, so it always returns `null` there.
+ * For that case, `createBrowserHomeStorage` implements the full interface
+ * (`getItem`/`setItem` plus the three tooltip/analytics methods) directly
+ * against `window.localStorage` (namespaced the same way as
+ * `src/services/storage`, degrading to an in-memory object if localStorage
+ * throws/is unavailable). `renderRoute` tries the CommonJS path first and
+ * falls back to the native browser one, so mute, the tooltip's persisted
+ * "seen" flag and the `first_tap_jugar` counter all work in the real,
+ * bundler-less PWA.
  *
  * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
  * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
@@ -59,24 +80,6 @@
  * sections as `options.strings`/`options.privacyStrings`/
  * `options.purchaseStrings`, giving the browser path the same pre-resolved
  * strings the Node/Jest path gets via `require`.
- *
- * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
- * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
- * whether the tooltip was already dismissed on this device and passes the
- * persistence/analytics callbacks through to `renderHomeScreen`.
- *
- * Two backends can fill that argument. `loadDinoQuizStorage` requires the
- * CommonJS `src/services/storage` module — this only resolves under
- * Node/Jest (or a future bundler); a real unbundled browser has no
- * `require`, so it always returns `null` there. For that case,
- * `createBrowserHomeStorage` implements the same three-method interface
- * directly against `window.localStorage` (namespaced the same way as
- * `src/services/storage`, degrading to an in-memory object if localStorage
- * throws/is unavailable), the same way `loadHomeStrings` above fetches the
- * i18n resource natively instead of going through `src/i18n`'s loader. The
- * bootstrap below tries the CommonJS path first and falls back to the
- * native browser one, so the tooltip, its persisted "seen" flag and the
- * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -404,10 +407,33 @@
         }
         return Promise.resolve(counts[eventName]);
       },
+      // Raw getItem/setItem so this same object also satisfies renderHome's
+      // mute persistence (loadMutedState/persistMutedState), which reads and
+      // JSON-encodes the value itself -- see MUTE_STORAGE_KEY above.
+      getItem: function (key) {
+        if (backend) {
+          try {
+            return backend.getItem(key);
+          } catch (error) {
+            // Fall through to null below (private-mode/no persistence).
+          }
+        }
+        return null;
+      },
+      setItem: function (key, value) {
+        if (backend) {
+          try {
+            backend.setItem(key, value);
+          } catch (error) {
+            // Quota exceeded or unavailable: same degrade-to-session-only
+            // behavior as writeJSON above.
+          }
+        }
+      },
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -426,18 +452,19 @@
     }
 
     return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
-
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
       if (typeof onOpenPrivacyPolicy === 'function') {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+
+      if (storage) {
+        renderOptions.muted = loadMutedState(storage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, storage);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -458,16 +485,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
-        renderOptions.showTooltip = !seen;
-        renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
-        };
-        renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
-        };
-        return finishRender();
-      });
+      if (storage && typeof storage.hasSeenHomeTooltip === 'function') {
+        return storage.hasSeenHomeTooltip().then(function (seen) {
+          renderOptions.showTooltip = !seen;
+          renderOptions.onTooltipDismiss = function () {
+            storage.markHomeTooltipSeen();
+          };
+          renderOptions.onPlayButtonClick = function () {
+            storage.recordEventOnce('first_tap_jugar');
+          };
+          return finishRender();
+        });
+      }
+
+      return finishRender();
     });
   }
 
@@ -498,14 +529,15 @@
     });
   }
 
-  function renderRoute(doc, fetchFn, loc) {
+  function renderRoute(doc, fetchFn, loc, storage) {
     if (isPrivacyPolicyRoute(loc)) {
       return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
         navigateHome(loc);
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    return renderHome(doc, undefined, fetchFn, storage, function () {
       navigateToPrivacyPolicy(loc);
     });
   }
