@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 require('@testing-library/jest-dom');
 const { getByRole, getByText } = require('@testing-library/dom');
 
@@ -176,5 +179,42 @@ describe('ResultsScreen rendering', () => {
     expect(getByText(container, strings.heading)).toBeInTheDocument();
     expect(container.textContent).toContain(strings.playAgainButton);
     expect(container.textContent).toContain(strings.exitButton);
+  });
+
+  test('both buttons meet the 48x48dp minimum touch target', () => {
+    const { playAgainButton, exitButton } = renderResultsScreen(container, { score: 6 });
+
+    expect(playAgainButton).toHaveClass('results-screen__play-again-button');
+    expect(exitButton).toHaveClass('results-screen__exit-button');
+  });
+});
+
+describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp text (AC-2/AC-23)', () => {
+  const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
+
+  test('the base and play-again-specific CSS rules together satisfy the minimums', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    const sharedRuleMatch = css.match(
+      /\.results-screen__play-again-button,\s*\n\.results-screen__exit-button\s*\{([^}]*)\}/
+    );
+    const specificRuleMatch = css.match(/\.results-screen__play-again-button\s*\{([^}]*)\}/);
+    expect(sharedRuleMatch).not.toBeNull();
+    expect(specificRuleMatch).not.toBeNull();
+
+    const combinedRule = `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`;
+    const minHeight = Math.max(
+      ...Array.from(combinedRule.matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+    const minWidth = Math.max(
+      ...Array.from(combinedRule.matchAll(/min-width:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+    const fontSizePx = Math.max(
+      ...Array.from(combinedRule.matchAll(/font-size:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+
+    expect(minHeight).toBeGreaterThanOrEqual(64);
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+    expect(fontSizePx).toBeGreaterThanOrEqual(24);
   });
 });

@@ -15,8 +15,12 @@ npm test
 
 ## Banco de preguntas
 
-El banco de 40 preguntas vive en [`src/data/questions.json`](src/data/questions.json) y se
-carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js).
+El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
+y se carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js). El JSON
+vive bajo `public/` (igual que [`public/i18n/es.json`](public/i18n/es.json)) para que el
+navegador pueda hacerle `fetch('/data/questions.json')` en tiempo de ejecución sin duplicarlo
+entre `src/` y `public/`; el service worker lo cachea (ver
+[`public/service-worker.js`](public/service-worker.js)).
 
 Cada pregunta sigue este esquema:
 
@@ -42,6 +46,28 @@ cada una de esas preguntas tiene su propio dato curioso.
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
 resto de textos de la UI.
+
+## Motor de selección aleatoria de preguntas
+
+[`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
+iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
+aleatoria:
+
+- `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el
+  array de entrada), dando a cada pregunta la misma probabilidad de salir en cualquier
+  posición.
+- `selectGameQuestions(questions, options)` devuelve los primeros `count` elementos (10 por
+  defecto) de ese barajado. Al salir de un `shuffle`, nunca hay dos posiciones con la misma
+  pregunta, así que la selección resultante nunca repite ninguna dentro de la misma partida
+  (AC-3). Lanza un error si el banco tiene menos preguntas que las solicitadas.
+- `randomFn` (por defecto `Math.random`) es inyectable, igual que en
+  `selectMotivationalMessage` de la pantalla de Resultados, para que los tests sean
+  deterministas.
+
+`src/game/questionSelector.test.js` cubre la ausencia de duplicados dentro de una partida,
+que toda pregunta seleccionada pertenezca al banco original, y la distribución: en un número
+alto de partidas simuladas, cada pregunta del banco sale seleccionada y a un ritmo similar
+al resto (sin preguntas "muertas" que nunca salgan).
 
 ## Pantalla de Inicio
 
@@ -79,10 +105,41 @@ Todos los textos se gestionan desde el recurso i18n en [`public/i18n/es.json`](p
 (cargado en Node a través de [`src/i18n/index.js`](src/i18n/index.js), y en el navegador con
 `fetch` desde `main.js`); v1 solo expone el locale `es`.
 
+### Controles globales: mute, política de privacidad y compra in-app
+
+`renderHomeScreen` también monta, junto al botón "¡Jugar!", un grupo de tres botones-icono
+(`role="group"`, ver `.home-screen__global-controls` en `main.css`): silenciar sonido, política
+de privacidad y eliminar anuncios (compra in-app). Los tres son `<button>` nativos de al menos
+48x48dp (`.home-screen__icon-button`), navegables por teclado y con `aria-label` propio, por lo
+que cumplen el mismo criterio táctil/accesible que el resto de controles de la app.
+
+- **Mute**: alterna `aria-pressed` y su `aria-label` (silenciar/activar) al pulsarlo. La pantalla
+  en sí no persiste nada -- delega en `options.onToggleMute`, igual que `onPlayAgain`/`onExit` en
+  `ResultsScreen` -- para seguir siendo un componente DOM puro y testeable. Quien la monta en el
+  navegador ([`public/scripts/main.js`](public/scripts/main.js)) lee/escribe el estado inicial en
+  `localStorage` bajo la misma clave con namespace (`dinoquiz:muted`, JSON-serializada) que ya usa
+  [`src/services/storage`](src/services/storage), de forma que ambos caminos son compatibles.
+- **Política de privacidad** y **eliminar anuncios**: cada botón despliega un panel
+  (`.home-screen__panel`, patrón WAI-ARIA de disclosure con `aria-expanded`/`aria-controls`) con
+  el contenido correspondiente, tomado de las claves `privacy` y `purchase` de `es.json` -- nunca
+  hardcodeado (AC-15). Como abrir el panel es un único toque desde Inicio, la política de
+  privacidad queda alcanzable en ≤2 taps (AC-16). El panel de compra incluye el precio y un botón
+  "Comprar ahora" que invoca `options.onPurchase`: es el punto de entrada al flujo de compra
+  in-app, no la integración de cobro en sí (pendiente de la pasarela de pago real). Ambos paneles
+  se cierran con su botón "Cerrar", con la tecla Escape, o devolviendo el foco al botón que los
+  abrió.
+
+Estos tres controles viven en `homeScreen.js` (no como `src/screens/*Screen.js` independientes)
+porque no son una "pantalla" navegable dentro del flujo Inicio → Quiz → Resultados: son paneles
+de contenido que se abren y cierran sin salir de Inicio.
+
 ## Pantalla de Pregunta/Feedback
 
-[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) renderiza una pregunta y,
-al pulsar una opción, aplica el feedback visual y el scoring (TRIOFSND-77):
+La pantalla de Pregunta la renderiza
+[`public/scripts/questionScreen.js`](public/scripts/questionScreen.js) (el navegador la
+carga como `<script>`, sin bundler; [`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js)
+la re-exporta para Node/Jest). Al pulsar una opción, aplica el feedback visual y el scoring
+(TRIOFSND-77):
 
 - La opción correcta siempre se resalta en verde con borde grueso
   (`question-screen__option--correct`), acierte o falle el niño.
@@ -101,16 +158,37 @@ animación es un `@keyframes` CSS que solo anima `transform` (compositor, sin re
 `warmUpFeedbackAnimation()` resuelve ese keyframe una vez, fuera de pantalla, justo al montar
 la pregunta, para que el primer toque real del niño no pague ese coste.
 
-Los tokens de color de cada estado (normal/correcto/neutro) viven en
+Los tokens de color de cada estado (normal/correcto/neutro/dato curioso) viven en
 [`src/theme/questionScreenColors.js`](src/theme/questionScreenColors.js) y
 [`src/theme/contrast.js`](src/theme/contrast.js) los valida contra el umbral WCAG AA
 (≥4.5:1, AC-13) en `src/theme/contrast.test.js`, en sincronía con las reglas de
 `public/styles/main.css`.
 
+### Feedback y dato curioso (TRIOFSND-83)
+
+Tras responder, además del resaltado de la opción correcta, la pantalla muestra:
+
+- La ilustración del dinosaurio de la pregunta (`question-screen__image`), con un `alt`
+  descriptivo generado a partir de `question.dinosaur` y el mapa `dinosaurNames` del
+  recurso i18n (`question.dinosaurNames` en `es.json`), nunca un texto genérico como
+  "imagen".
+- El dato curioso en un recuadro amarillo (`question-screen__fun-fact-box`), con
+  tipografía ≥20sp y `aria-live="polite"` para que TalkBack/VoiceOver lo lean en cuanto
+  aparece.
+- El botón "Siguiente" (`question-screen__next-button`, área táctil ≥48x48dp), que se
+  muestra deshabilitado y solo se habilita tras `MIN_ADVANCE_DELAY_MS` (4s, ver
+  `src/screens/QuestionScreen.js`) para garantizar que el dato curioso esté visible al
+  menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
+  ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
+
+
+
 ## Pantalla de Resultados
 
-[`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js) renderiza la pantalla de
-Resultados al terminar una partida: puntuación (`X/10`), estrellas por tramos
+La pantalla de Resultados la renderiza
+[`public/scripts/resultsScreen.js`](public/scripts/resultsScreen.js) (cargada por el
+navegador como `<script>`, sin bundler; [`src/screens/ResultsScreen.js`](src/screens/ResultsScreen.js)
+la re-exporta para Node/Jest) al terminar una partida: puntuación (`X/10`), estrellas por tramos
 (0-3 → 1 estrella, 4-6 → 2 estrellas, 7-10 → 3 estrellas, ver `calculateStars`), un mensaje
 motivador siempre positivo elegido al azar entre `results.messages` (`es.json`), un botón
 prominente "Volver a jugar" y un botón secundario opcional "Salir".
@@ -123,5 +201,28 @@ test, no solo por revisión manual.
 Accesibilidad: además de los elementos visibles (puntuación, estrellas con
 `role="img"`/`aria-label`, mensaje), la pantalla incluye una región `role="status"` con
 `aria-live="polite"` (oculta visualmente con `.sr-only`) que anuncia la puntuación, las
-estrellas y el mensaje como una sola frase a los lectores de pantalla. Los botones cumplen
-el área táctil mínima de 48x48dp y el contraste de texto respeta WCAG AA.
+estrellas y el mensaje como una sola frase a los lectores de pantalla. El botón "Volver a
+jugar" cumple la altura visual mínima de 64dp (AC-2/AC-23, ver
+`.results-screen__play-again-button` en `public/styles/main.css`) y ambos botones cumplen
+el área táctil mínima de 48x48dp; el contraste de texto respeta WCAG AA.
+
+### Navegación Inicio → Quiz → Resultados
+
+[`public/scripts/main.js`](public/scripts/main.js) es quien conecta las tres pantallas en
+el flujo lineal cerrado del PRD: al pulsar "¡Jugar!" en Inicio (o "Volver a jugar" en
+Resultados) arranca una partida nueva con `startNewGame` — que resetea el estado de
+partida (puntuación, índice de pregunta y respuestas, ver
+[`src/game/gameFlow.js`](src/game/gameFlow.js)) y selecciona un subconjunto aleatorio de
+10 preguntas distinto del anterior (AC-9) — y navega a la primera pregunta de esa partida.
+Al responder la última pregunta se muestra Resultados; su botón "Salir" vuelve a renderizar
+Inicio.
+
+Como no hay bundler, todo lo que el navegador ejecuta (scoring, gameFlow y las tres
+pantallas) se carga como `<script>` desde `public/scripts/` y se registra en
+`window.DinoQuiz` (ver el orden en [`public/index.html`](public/index.html)). Al arrancar,
+`main.js` hace `fetch` de `/i18n/es.json` y `/data/questions.json`, prepara el banco (resuelve
+cada `dato_curioso` a su texto de dato curioso) y lo deja en `window.DinoQuiz` para que
+`loadQuestions()` y las pantallas lo lean de forma síncrona. `resolveScreenRenderers`,
+`resolveGameFlow` y `loadQuestions` resuelven desde `window.DinoQuiz` en el navegador o vía
+`require` bajo Node/Jest, por lo que el flujo corre igual en la PWA real y en los tests sin
+bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
