@@ -186,6 +186,68 @@ describe('QuestionScreen', () => {
     });
   });
 
+  describe('fail sound (TRIOFSND-89: neutral sound integrated with mute mode)', () => {
+    test('plays the neutral fail sound on a miss', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not play any sound on a hit', () => {
+      const question = buildQuestion();
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(playFailSound).not.toHaveBeenCalled();
+    });
+
+    test('forwards options.muted through to the sound player, so silent mode stays silent', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound, muted: true });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledWith(expect.objectContaining({ muted: true }));
+    });
+
+    test('defaults muted to false when options.muted is not provided', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledWith(expect.objectContaining({ muted: false }));
+    });
+
+    test('the fun fact and "Siguiente" are already visible by the time the sound player is called', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      let funFactVisibleAtCallTime = null;
+      let nextButtonVisibleAtCallTime = null;
+      const playFailSound = jest.fn(() => {
+        funFactVisibleAtCallTime = !funFact.hidden;
+        nextButtonVisibleAtCallTime = !nextButton.hidden;
+      });
+
+      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question, { playFailSound });
+      optionButtons[wrongIndex].click();
+
+      expect(funFactVisibleAtCallTime).toBe(true);
+      expect(nextButtonVisibleAtCallTime).toBe(true);
+    });
+  });
+
   test('starts from a given running score and only adds on a hit', () => {
     const question = buildQuestion();
     const { optionButtons, getScore } = renderQuestionScreen(container, question, { score: 4 });
