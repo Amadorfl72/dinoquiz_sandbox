@@ -19,6 +19,15 @@
  * synchronously inside the click handler — no timers, no awaited work — so
  * the browser paints the new state on the very next frame.
  *
+ * Fail sound (TRIOFSND-89): a wrong pick additionally plays a soft, neutral
+ * effect via public/scripts/audio.js's `playFailSound` — never a harsh/error
+ * sound, matching AC-7's "no penalization, no negative language". It's
+ * muted-aware: `options.muted` (the global mute preference from
+ * public/scripts/main.js, TRIOFSND-66) is forwarded straight through, so in
+ * silent mode the miss is communicated only visually, exactly like the
+ * existing feedback styling. `options.playFailSound` lets callers override
+ * the resolved audio module (used by tests).
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -55,6 +64,13 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
   }
 
+  function resolveAudio() {
+    if (typeof require === 'function') {
+      return require('./audio');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
+  }
+
   function warmUpFeedbackAnimation() {
     if (typeof document === 'undefined') return;
 
@@ -73,6 +89,13 @@
     options = options || {};
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
+    var audio = resolveAudio();
+    var playFailSound =
+      typeof options.playFailSound === 'function'
+        ? options.playFailSound
+        : audio && typeof audio.playFailSound === 'function'
+        ? audio.playFailSound
+        : null;
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
 
     var score = options.score || 0;
@@ -158,6 +181,10 @@
       funFact.hidden = false;
 
       nextButton.hidden = false;
+
+      if (!correct && playFailSound) {
+        playFailSound({ muted: !!options.muted });
+      }
 
       if (onAnswer) {
         onAnswer({

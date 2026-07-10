@@ -48,7 +48,10 @@
  * the same value with no migration. Until then, this reads/writes
  * `localStorage` directly -- sufficient for a single boolean preference --
  * degrading to an in-memory default (unmuted) if `localStorage` throws
- * (e.g. Safari private mode).
+ * (e.g. Safari private mode). `renderQuestionAt` reads this same state via
+ * `loadMutedState` and forwards it as `options.muted` to
+ * `renderQuestionScreen`, which is how the neutral fail sound (TRIOFSND-89)
+ * respects "modo silencio" without questionScreen.js touching storage.
  *
  * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
  * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
@@ -213,11 +216,12 @@
   }
 
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
-  function renderQuestionAt(container, renderers, session, onGameComplete) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
     var question = session.questions[session.state.questionIndex];
 
     return renderers.renderQuestionScreen(container, question, {
       score: session.state.score,
+      muted: loadMutedState(storageObj),
       onAnswer: function (result) {
         session.state.score = result.score;
         session.state.answers = session.state.answers.concat([
@@ -235,18 +239,18 @@
         if (session.state.questionIndex >= session.questions.length) {
           onGameComplete(session.state);
         } else {
-          renderQuestionAt(container, renderers, session, onGameComplete);
+          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
         }
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn);
@@ -255,7 +259,7 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -263,9 +267,15 @@
 
     var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
 
-    renderQuestionAt(container, renderers, session, function (finalState) {
-      renderResultsFor(container, renderers, questions, finalState, doc, fetchFn);
-    });
+    renderQuestionAt(
+      container,
+      renderers,
+      session,
+      function (finalState) {
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+      },
+      storageObj
+    );
 
     return session;
   }
@@ -321,7 +331,6 @@
       return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
-
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -467,7 +476,7 @@
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
               storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
             }
           });
         }

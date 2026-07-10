@@ -193,6 +193,10 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
 
     await renderHome(doc, renderHomeScreen, fetchFn);
 
+    // Without an explicit storage argument, renderHome falls back to
+    // loadDinoQuizStorage()/createBrowserHomeStorage() (TRIOFSND-65) and the
+    // global controls (TRIOFSND-66) — so the tooltip/mute options are still
+    // wired, just backed by the default storage instead of a test double.
     expect(renderHomeScreen).toHaveBeenCalledWith(
       { id: 'app' },
       expect.objectContaining({
@@ -374,15 +378,20 @@ describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the br
     });
     const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
+    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
 
-    const { getByRole, fireEvent } = require('@testing-library/dom');
-    const privacyButton = getByRole(container, 'button', { name: home.globalControls.privacyButton });
+    const { getByRole, within, fireEvent } = require('@testing-library/dom');
+    // Home also has a standalone privacy-policy icon button (TRIOFSND-116,
+    // navigates to the full policy screen) sharing the same accessible name
+    // as this one, so this scopes the query to the global controls group
+    // (TRIOFSND-66) that opens the inline disclosure panel this test checks.
+    const globalControls = getByRole(container, 'group', { name: home.globalControls.groupLabel });
+    const privacyButton = within(globalControls).getByRole('button', { name: home.globalControls.privacyButton });
     fireEvent.click(privacyButton);
     expect(container).toHaveTextContent(privacy.heading);
     expect(container).toHaveTextContent(privacy.intro);
 
-    const purchaseButton = getByRole(container, 'button', { name: home.globalControls.purchaseButton });
+    const purchaseButton = within(globalControls).getByRole('button', { name: home.globalControls.purchaseButton });
     fireEvent.click(purchaseButton);
     expect(container).toHaveTextContent(purchase.heading);
     expect(container).toHaveTextContent(purchase.priceLabel);
