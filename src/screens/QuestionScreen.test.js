@@ -1,10 +1,15 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
+
+const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
 function buildQuestion(overrides = {}) {
   return {
@@ -49,6 +54,21 @@ describe('QuestionScreen', () => {
     expect(getByText(container, `${strings.scoreLabel}: 0`)).toBeInTheDocument();
   });
 
+  test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const rule = ruleMatch[1];
+    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
+    expect(fontSizeMatch).not.toBeNull();
+
+    const fontSizePx = fontSizeMatch[2] === 'rem'
+      ? parseFloat(fontSizeMatch[1]) * 16
+      : parseFloat(fontSizeMatch[1]);
+    expect(fontSizePx).toBeGreaterThanOrEqual(20);
+  });
+
   describe('on a correct answer', () => {
     test('adds +1 to the score, highlights the option green, and plays the celebration animation', () => {
       const question = buildQuestion();
@@ -84,10 +104,12 @@ describe('QuestionScreen', () => {
 
     test('reveals the fun fact and the "Siguiente" control', () => {
       const question = buildQuestion();
-      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question);
+      const { optionButtons, funFactBox, funFact, nextButton } = renderQuestionScreen(container, question);
 
       optionButtons[question.correctAnswerIndex].click();
 
+      expect(funFactBox).toBeVisible();
+      expect(funFactBox).toHaveClass('question-screen__fun-fact-box');
       expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
@@ -134,10 +156,11 @@ describe('QuestionScreen', () => {
     test('still reveals the fun fact and the "Siguiente" control, same as a hit', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
-      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question);
+      const { optionButtons, funFactBox, funFact, nextButton } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
+      expect(funFactBox).toBeVisible();
       expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
@@ -174,15 +197,21 @@ describe('QuestionScreen', () => {
     });
 
     test('advancing via "Siguiente" carries forward the unchanged score', () => {
-      const question = buildQuestion();
-      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
-      const onNext = jest.fn();
-      const { optionButtons, nextButton } = renderQuestionScreen(container, question, { score: 6, onNext });
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+        const onNext = jest.fn();
+        const { optionButtons, nextButton } = renderQuestionScreen(container, question, { score: 6, onNext });
 
-      optionButtons[wrongIndex].click();
-      nextButton.click();
+        optionButtons[wrongIndex].click();
+        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+        nextButton.click();
 
-      expect(onNext).toHaveBeenCalledWith(6);
+        expect(onNext).toHaveBeenCalledWith(6);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
@@ -281,14 +310,74 @@ describe('QuestionScreen', () => {
       optionButtons[question.correctAnswerIndex].click();
       const elapsed = performance.now() - start;
 
-      // No timer needed to advance for the feedback to already be present —
-      // it isn't scheduled on a timer at all.
+      // Feedback classes land before any timer fires — only the advance
+      // timer (gating "Siguiente", see below) is scheduled.
       expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
       expect(elapsed).toBeLessThan(300);
-      expect(jest.getTimerCount()).toBe(0);
+      expect(jest.getTimerCount()).toBe(1);
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  describe('image (AC-14: alt-text for screen readers)', () => {
+    test('renders the dinosaur illustration with a descriptive alt built from the i18n dinosaur name', () => {
+      const question = buildQuestion();
+      const { image } = renderQuestionScreen(container, question);
+
+      expect(image.tagName).toBe('IMG');
+      expect(image.src).toContain(question.image);
+      expect(image.alt).toBe(strings.imageAlt.replace('{dinosaur}', strings.dinosaurNames.trex));
+      expect(image.alt.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('"Siguiente" advance timer (AC-6: dato curioso visible >=4s before advancing)', () => {
+    test('shows "Siguiente" disabled as soon as the answer is revealed', () => {
+      const question = buildQuestion();
+      const { optionButtons, nextButton } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(nextButton).toBeVisible();
+      expect(nextButton).toBeDisabled();
+    });
+
+    test('clicking "Siguiente" before the timer elapses does not advance', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const onNext = jest.fn();
+        const { optionButtons, nextButton } = renderQuestionScreen(container, question, { onNext });
+
+        optionButtons[question.correctAnswerIndex].click();
+        nextButton.click();
+        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS - 1);
+
+        expect(nextButton).toBeDisabled();
+        expect(onNext).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('enables "Siguiente" once MIN_ADVANCE_DELAY_MS has elapsed, letting the child advance', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const onNext = jest.fn();
+        const { optionButtons, nextButton, getScore } = renderQuestionScreen(container, question, { onNext });
+
+        optionButtons[question.correctAnswerIndex].click();
+        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+
+        expect(nextButton).not.toBeDisabled();
+        nextButton.click();
+        expect(onNext).toHaveBeenCalledWith(getScore());
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   test('does not hardcode copy — text is sourced from the es locale resource file', () => {

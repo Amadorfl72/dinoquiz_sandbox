@@ -47,6 +47,28 @@ El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) baj
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
 resto de textos de la UI.
 
+## Motor de selección aleatoria de preguntas
+
+[`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
+iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
+aleatoria:
+
+- `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el
+  array de entrada), dando a cada pregunta la misma probabilidad de salir en cualquier
+  posición.
+- `selectGameQuestions(questions, options)` devuelve los primeros `count` elementos (10 por
+  defecto) de ese barajado. Al salir de un `shuffle`, nunca hay dos posiciones con la misma
+  pregunta, así que la selección resultante nunca repite ninguna dentro de la misma partida
+  (AC-3). Lanza un error si el banco tiene menos preguntas que las solicitadas.
+- `randomFn` (por defecto `Math.random`) es inyectable, igual que en
+  `selectMotivationalMessage` de la pantalla de Resultados, para que los tests sean
+  deterministas.
+
+`src/game/questionSelector.test.js` cubre la ausencia de duplicados dentro de una partida,
+que toda pregunta seleccionada pertenezca al banco original, y la distribución: en un número
+alto de partidas simuladas, cada pregunta del banco sale seleccionada y a un ritmo similar
+al resto (sin preguntas "muertas" que nunca salgan).
+
 ## Pantalla de Inicio
 
 [`public/scripts/homeScreen.js`](public/scripts/homeScreen.js) renderiza la pantalla de
@@ -136,11 +158,30 @@ animación es un `@keyframes` CSS que solo anima `transform` (compositor, sin re
 `warmUpFeedbackAnimation()` resuelve ese keyframe una vez, fuera de pantalla, justo al montar
 la pregunta, para que el primer toque real del niño no pague ese coste.
 
-Los tokens de color de cada estado (normal/correcto/neutro) viven en
+Los tokens de color de cada estado (normal/correcto/neutro/dato curioso) viven en
 [`src/theme/questionScreenColors.js`](src/theme/questionScreenColors.js) y
 [`src/theme/contrast.js`](src/theme/contrast.js) los valida contra el umbral WCAG AA
 (≥4.5:1, AC-13) en `src/theme/contrast.test.js`, en sincronía con las reglas de
 `public/styles/main.css`.
+
+### Feedback y dato curioso (TRIOFSND-83)
+
+Tras responder, además del resaltado de la opción correcta, la pantalla muestra:
+
+- La ilustración del dinosaurio de la pregunta (`question-screen__image`), con un `alt`
+  descriptivo generado a partir de `question.dinosaur` y el mapa `dinosaurNames` del
+  recurso i18n (`question.dinosaurNames` en `es.json`), nunca un texto genérico como
+  "imagen".
+- El dato curioso en un recuadro amarillo (`question-screen__fun-fact-box`), con
+  tipografía ≥20sp y `aria-live="polite"` para que TalkBack/VoiceOver lo lean en cuanto
+  aparece.
+- El botón "Siguiente" (`question-screen__next-button`, área táctil ≥48x48dp), que se
+  muestra deshabilitado y solo se habilita tras `MIN_ADVANCE_DELAY_MS` (4s, ver
+  `src/screens/QuestionScreen.js`) para garantizar que el dato curioso esté visible al
+  menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
+  ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
+
+
 
 ## Pantalla de Resultados
 

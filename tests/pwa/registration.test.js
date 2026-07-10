@@ -182,7 +182,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     expect(loadDinoQuizStorage(requireFn)).toBe(fakeInstance);
   });
 
-  test('renderHome without a storage argument keeps its previous, tooltip-less behaviour', async () => {
+  test('renderHome without a storage argument falls back to a default storage backend and still wires the tooltip', async () => {
     const { renderHome } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
     const renderHomeScreen = jest.fn();
@@ -199,12 +199,13 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     // wired, just backed by the default storage instead of a test double.
     expect(renderHomeScreen).toHaveBeenCalledWith(
       { id: 'app' },
-      expect.objectContaining({ strings: homeStrings })
+      expect.objectContaining({
+        strings: homeStrings,
+        showTooltip: expect.any(Boolean),
+        onTooltipDismiss: expect.any(Function),
+        onPlayButtonClick: expect.any(Function),
+      })
     );
-    const options = renderHomeScreen.mock.calls[0][1];
-    expect(typeof options.showTooltip).toBe('boolean');
-    expect(typeof options.onTooltipDismiss).toBe('function');
-    expect(typeof options.onPlayButtonClick).toBe('function');
   });
 
   test('renderHome shows the tooltip when the storage flag says it has not been seen yet', async () => {
@@ -316,6 +317,20 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     expect(win.localStorage.setItem).toHaveBeenCalledWith(
       'dinoquiz:analyticsEventCounts',
       JSON.stringify({ first_tap_jugar: 1 })
+    );
+  });
+
+  test('recordEvent is a non-PII local counter that increments on every call', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ partida_iniciada: 2 })
     );
   });
 

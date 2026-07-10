@@ -14,7 +14,7 @@
         "muteLabel": "Silenciar sonido",
         "unmuteLabel": "Activar sonido"
       },
-      "privacyButton": "Política de privacidad",
+      "privacyButton": "Resumen de privacidad",
       "purchaseButton": "Eliminar anuncios"
     },
     "tooltip": {
@@ -147,7 +147,17 @@
     },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
-    "nextButton": "Siguiente"
+    "nextButton": "Siguiente",
+    "imageAlt": "Ilustración de un {dinosaur}",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon"
+    }
   },
   "funFacts": {
     "trex-01": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",

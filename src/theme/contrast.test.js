@@ -46,6 +46,11 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
     const { background, text } = QUESTION_SCREEN_COLORS.neutral;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
+
+  test('the dato curioso yellow box meets AA', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.funFact;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purchase controls)', () => {
