@@ -1,14 +1,11 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88).
- *
- * The implementation lives in public/scripts/questionScreen.js because the
- * browser renders this screen directly, and without a bundler it must be
- * loaded there as a `<script>` (see public/index.html) — the same rationale
- * documented for public/scripts/homeScreen.js. This canonical `src/screens/`
- * module re-exports it so Node/Jest keep a single source of truth (mirrors
- * how src/i18n/index.js loads public/i18n/es.json).
+ * Re-export of the Question screen from public/scripts for testing.
+ * The canonical implementation lives in public/scripts/questionScreen.js
+ * to support the browser-loaded PWA (no bundler).
  */
 
-module.exports = require('../../public/scripts/questionScreen');
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = require('../../public/scripts/questionScreen');
+}
