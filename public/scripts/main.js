@@ -8,8 +8,9 @@
  * public/scripts/homeScreen.js, loaded before this file in index.html).
  *
  * `registerServiceWorker`/`loadHomeStrings`/`loadHomeResources`/`renderHome`/
- * `renderRoute` accept explicit overrides so each is unit-testable under Node
- * without touching the global `navigator`/`document`/`fetch`/`location`.
+ * `renderRoute`/`renderMuteToggle` accept explicit overrides so each is
+ * unit-testable under Node without touching the global
+ * `navigator`/`document`/`fetch`/`location`.
  *
  * A minimal hash router (no bundler, no server-side rewrites needed — works
  * offline behind the service worker) switches #app between Home and the
@@ -39,6 +40,12 @@
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
  *
+ * Global mute toggle (TRIOFSND-105, AC-11): it also mounts the mute/unmute
+ * button into `#mute-toggle`, a container that lives outside `#app` in the
+ * shared app shell (see public/index.html and public/scripts/appShell.js) so
+ * it stays mounted across every screen instead of being wiped on each screen
+ * render.
+ *
  * Mute persistence (TRIOFSND-66): `src/services/storage` already models a
  * `muted` key with IndexedDB/localStorage/memory fallback, but it's a
  * CommonJS module graph (`require`d internally) that this no-bundler app
@@ -51,7 +58,10 @@
  * (e.g. Safari private mode). `renderQuestionAt` reads this same state via
  * `loadMutedState` and forwards it as `options.muted` to
  * `renderQuestionScreen`, which is how the neutral fail sound (TRIOFSND-89)
- * respects "modo silencio" without questionScreen.js touching storage.
+ * respects "modo silencio" without questionScreen.js touching storage. The
+ * `renderMuteToggle` button reads/writes the same state via `loadMutedState`/
+ * `persistMutedState`, so toggling it from any screen and answering a
+ * question afterwards stay in sync.
  *
  * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
  * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
@@ -497,6 +507,30 @@
     });
   }
 
+  function renderMuteToggle(doc, renderMuteToggleButton, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderMuteToggleButton =
+      renderMuteToggleButton ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.appShell &&
+        window.DinoQuiz.appShell.renderMuteToggleButton);
+
+    if (!doc || typeof renderMuteToggleButton !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('mute-toggle');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return fetchI18nResource(fetchFn).then(function (data) {
+      var strings = data && data.muteButton;
+      return renderMuteToggleButton(container, strings ? { strings: strings } : {});
+    });
+  }
+
   function renderPrivacyPolicy(doc, renderPrivacyPolicyScreen, fetchFn, onBack) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderPrivacyPolicyScreen =
@@ -569,12 +603,12 @@
         return renderHome();
       });
   }
-
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('load', function () {
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {
         renderRoute();
+        renderMuteToggle();
       });
     });
     window.addEventListener('hashchange', function () {
@@ -607,6 +641,7 @@
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      renderMuteToggle: renderMuteToggle,
     };
   }
 })();
