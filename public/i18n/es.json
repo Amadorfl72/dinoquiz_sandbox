@@ -153,6 +153,7 @@
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",
     "imageAlt": "Ilustración de un {dinosaur}",
+    "imageAltFunFact": "Dato curioso: {funFact}",
     "dinosaurNames": {
       "trex": "Tyrannosaurus Rex",
       "triceratops": "Triceratops",
