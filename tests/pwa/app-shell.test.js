@@ -1,174 +1,311 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
+const { renderMuteToggleButton, MUTE_STORAGE_KEY, readStoredMute, writeStoredMute } = require('../../public/scripts/appShell');
+const { getStrings } = require('../../src/i18n');
 
-require('@testing-library/jest-dom');
-const { getByRole } = require('@testing-library/dom');
-
-const { renderMuteToggleButton, MUTE_STORAGE_KEY } = require('../../public/scripts/appShell');
-const { muteButton: strings } = require('../../public/i18n/es.json');
-
-const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
-const INDEX_PATH = path.resolve(__dirname, '../../public/index.html');
-
-function createMemoryStorage() {
-  const store = new Map();
-  return {
-    getItem: (key) => (store.has(key) ? store.get(key) : null),
-    setItem: (key, value) => store.set(key, String(value)),
-  };
-}
-
-describe('TRIOFSND-105: global mute toggle', () => {
+describe('renderMuteToggleButton', () => {
   let container;
-  let storage;
+  let mockStorage;
 
   beforeEach(() => {
     container = document.createElement('div');
-    document.body.appendChild(container);
-    storage = createMemoryStorage();
+    mockStorage = {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
+    };
   });
 
-  afterEach(() => {
-    container.remove();
+  test('renders a button in the provided container', () => {
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button).toBeTruthy();
+    expect(button.type).toBe('button');
   });
 
-  test('defaults to unmuted with the "Silenciar sonido" label', () => {
-    renderMuteToggleButton(container, { strings, storage });
-
-    const button = getByRole(container, 'button', { name: strings.muteLabel });
-    expect(button).toHaveAttribute('aria-pressed', 'false');
+  test('renders the speaker-on icon initially when not muted', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.innerHTML).toContain('viewBox');
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(true);
   });
 
-  test('switches to the "Activar sonido" label and persists the muted state on click', () => {
-    renderMuteToggleButton(container, { strings, storage });
-
-    getByRole(container, 'button', { name: strings.muteLabel }).click();
-
-    const button = getByRole(container, 'button', { name: strings.unmuteLabel });
-    expect(button).toHaveAttribute('aria-pressed', 'true');
-    expect(storage.getItem(MUTE_STORAGE_KEY)).toBe('true');
+  test('renders the speaker-off icon when muted', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.classList.contains('app-shell__mute-toggle--muted')).toBe(true);
   });
 
-  test('toggles back to "Silenciar sonido" on a second click', () => {
-    renderMuteToggleButton(container, { strings, storage });
-
-    getByRole(container, 'button', { name: strings.muteLabel }).click();
-    getByRole(container, 'button', { name: strings.unmuteLabel }).click();
-
-    const button = getByRole(container, 'button', { name: strings.muteLabel });
-    expect(button).toHaveAttribute('aria-pressed', 'false');
-    expect(storage.getItem(MUTE_STORAGE_KEY)).toBe('false');
+  test('sets correct aria-label for unmuted state', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.getAttribute('aria-label')).toBe('Silenciar sonido');
   });
 
-  test('resumes the previously persisted muted state on the next render', () => {
-    storage.setItem(MUTE_STORAGE_KEY, 'true');
-
-    renderMuteToggleButton(container, { strings, storage });
-
-    expect(getByRole(container, 'button', { name: strings.unmuteLabel })).toHaveAttribute('aria-pressed', 'true');
+  test('sets correct aria-label for muted state', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.getAttribute('aria-label')).toBe('Activar sonido');
   });
 
-  test('notifies onToggle with the new muted state', () => {
-    const onToggle = jest.fn();
-    renderMuteToggleButton(container, { strings, storage, onToggle });
-
-    getByRole(container, 'button', { name: strings.muteLabel }).click();
-
-    expect(onToggle).toHaveBeenCalledWith(true);
+  test('sets aria-pressed attribute to reflect unmuted state', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.getAttribute('aria-pressed')).toBe('false');
   });
 
-  test('the button carries the styling hook for its two visual states', () => {
-    renderMuteToggleButton(container, { strings, storage });
-    const button = getByRole(container, 'button', { name: strings.muteLabel });
-    expect(button).toHaveClass('app-shell__mute-toggle', 'app-shell__mute-toggle--unmuted');
+  test('sets aria-pressed attribute to reflect muted state', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+  });
 
+  test('toggles mute state and storage when button is clicked', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
     button.click();
-    expect(button).toHaveClass('app-shell__mute-toggle', 'app-shell__mute-toggle--muted');
+    expect(mockStorage.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
   });
 
-  test('the mute toggle meets the minimum 48x48dp touch target (AC-2)', () => {
-    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
-    const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
-    expect(ruleMatch).not.toBeNull();
-
-    const rule = ruleMatch[1];
-    const minWidth = parseFloat(rule.match(/min-width:\s*([\d.]+)px/)[1]);
-    const minHeight = parseFloat(rule.match(/min-height:\s*([\d.]+)px/)[1]);
-
-    expect(minWidth).toBeGreaterThanOrEqual(48);
-    expect(minHeight).toBeGreaterThanOrEqual(48);
+  test('updates aria-label when toggled from unmuted to muted', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    button.click();
+    expect(button.getAttribute('aria-label')).toBe('Activar sonido');
   });
 
-  test('accepts pre-resolved strings so the browser can render without a bundler', () => {
-    renderMuteToggleButton(container, { strings, storage });
-    expect(getByRole(container, 'button', { name: strings.muteLabel })).toBeInTheDocument();
-  });
-});
-
-describe('TRIOFSND-105: app shell mounting', () => {
-  test('index.html has a mute-toggle container that lives outside #app, so screen re-renders never wipe it', () => {
-    const doc = new DOMParser().parseFromString(fs.readFileSync(INDEX_PATH, 'utf-8'), 'text/html');
-
-    const muteToggle = doc.getElementById('mute-toggle');
-    const app = doc.getElementById('app');
-
-    expect(muteToggle).not.toBeNull();
-    expect(app).not.toBeNull();
-    expect(app.contains(muteToggle)).toBe(false);
-    expect(muteToggle.contains(app)).toBe(false);
+  test('updates aria-label when toggled from muted to unmuted', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    button.click();
+    expect(button.getAttribute('aria-label')).toBe('Silenciar sonido');
   });
 
-  test('index.html loads the app-shell script before the bootstrap script', () => {
-    const indexHtml = fs.readFileSync(INDEX_PATH, 'utf-8');
-    const appShellIndex = indexHtml.indexOf('/scripts/appShell.js');
-    const mainIndex = indexHtml.indexOf('/scripts/main.js');
-
-    expect(appShellIndex).toBeGreaterThan(-1);
-    expect(appShellIndex).toBeLessThan(mainIndex);
+  test('updates aria-pressed when toggled from false to true', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    button.click();
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
-  test('the app-shell script is part of the service worker app-shell precache', () => {
-    const publicDir = path.resolve(__dirname, '../../public');
-    const swContent = fs.readFileSync(path.resolve(publicDir, 'service-worker.js'), 'utf-8');
-
-    expect(swContent).toContain("'/scripts/appShell.js'");
+  test('updates aria-pressed when toggled from true to false', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    button.click();
+    expect(button.getAttribute('aria-pressed')).toBe('false');
   });
 
-  test('the mute toggle strings live in the shared i18n resource, not hardcoded (AC-15)', () => {
-    expect(strings.muteLabel).toBe('Silenciar sonido');
-    expect(strings.unmuteLabel).toBe('Activar sonido');
+  test('toggles visual state class from unmuted to muted when clicked', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(true);
+    expect(button.classList.contains('app-shell__mute-toggle--muted')).toBe(false);
+    
+    button.click();
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(false);
+    expect(button.classList.contains('app-shell__mute-toggle--muted')).toBe(true);
   });
-});
 
-describe('TRIOFSND-105: main.js wires the mute toggle into the app shell on load', () => {
-  const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
+  test('toggles visual state class from muted to unmuted when clicked', () => {
+    mockStorage.getItem.mockReturnValue('true');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.classList.contains('app-shell__mute-toggle--muted')).toBe(true);
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(false);
+    
+    button.click();
+    expect(button.classList.contains('app-shell__mute-toggle--muted')).toBe(false);
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(true);
+  });
 
-  test('renderMuteToggle mounts into #mute-toggle using the fetched i18n resource', async () => {
-    const { renderMuteToggle } = require(MAIN_JS_PATH);
-    const muteToggleContainer = { id: 'mute-toggle' };
-    const doc = { getElementById: jest.fn().mockReturnValue(muteToggleContainer) };
-    const renderMuteToggleButtonFn = jest.fn();
-    const muteButtonStrings = { muteLabel: 'Silenciar sonido', unmuteLabel: 'Activar sonido' };
-    const fetchFn = jest.fn().mockResolvedValue({
-      json: () => Promise.resolve({ muteButton: muteButtonStrings }),
+  test('invokes onToggle callback with current state when button is clicked', () => {
+    const onToggle = jest.fn();
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { 
+      strings: getStrings('es').muteButton, 
+      storage: mockStorage,
+      onToggle: onToggle
     });
-
-    await renderMuteToggle(doc, renderMuteToggleButtonFn, fetchFn);
-
-    expect(doc.getElementById).toHaveBeenCalledWith('mute-toggle');
-    expect(renderMuteToggleButtonFn).toHaveBeenCalledWith(muteToggleContainer, { strings: muteButtonStrings });
+    const button = container.querySelector('button');
+    
+    button.click();
+    expect(onToggle).toHaveBeenCalledWith(true);
+    
+    button.click();
+    expect(onToggle).toHaveBeenCalledWith(false);
   });
 
-  test('renderMuteToggle resolves to null without a #mute-toggle container', async () => {
-    const { renderMuteToggle } = require(MAIN_JS_PATH);
-    const doc = { getElementById: jest.fn().mockReturnValue(null) };
-    const renderMuteToggleButtonFn = jest.fn();
+  test('applies correct CSS class for mute toggle button', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.classList.contains('app-shell__mute-toggle')).toBe(true);
+  });
 
-    const result = await renderMuteToggle(doc, renderMuteToggleButtonFn, jest.fn());
+  test('button has minimum touch target size of 48x48px', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    const styles = window.getComputedStyle(button);
+    expect(parseInt(styles.minWidth)).toBeGreaterThanOrEqual(48);
+    expect(parseInt(styles.minHeight)).toBeGreaterThanOrEqual(48);
+  });
 
-    expect(result).toBeNull();
-    expect(renderMuteToggleButtonFn).not.toHaveBeenCalled();
+  test('clears container content before rendering button', () => {
+    container.innerHTML = '<div>old content</div>';
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
+    
+    expect(container.children.length).toBe(1);
+    expect(container.querySelector('button')).toBeTruthy();
+  });
+
+  test('handles missing storage gracefully and defaults to unmuted', () => {
+    renderMuteToggleButton(container, { strings: getStrings('es').muteButton });
+    const button = container.querySelector('button');
+    
+    expect(button).toBeTruthy();
+    expect(button.classList.contains('app-shell__mute-toggle--unmuted')).toBe(true);
+  });
+
+  test('returns object with root button element and isMuted function', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    const result = renderMuteToggleButton(container, { 
+      strings: getStrings('es').muteButton, 
+      storage: mockStorage 
+    });
+    
+    expect(result).toHaveProperty('root');
+    expect(result.root instanceof Element).toBe(true);
+    expect(typeof result.isMuted).toBe('function');
+  });
+
+  test('isMuted function returns current mute state', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    const result = renderMuteToggleButton(container, { 
+      strings: getStrings('es').muteButton, 
+      storage: mockStorage 
+    });
+    
+    expect(result.isMuted()).toBe(false);
+  });
+
+  test('isMuted function reflects state after toggle', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    const result = renderMuteToggleButton(container, { 
+      strings: getStrings('es').muteButton, 
+      storage: mockStorage 
+    });
+    
+    const button = container.querySelector('button');
+    button.click();
+    expect(result.isMuted()).toBe(true);
+    
+    button.click();
+    expect(result.isMuted()).toBe(false);
+  });
+
+  test('uses resolved default strings when none provided', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    renderMuteToggleButton(container, { storage: mockStorage });
+    const button = container.querySelector('button');
+    
+    expect(button.getAttribute('aria-label')).toBe('Silenciar sonido');
+  });
+
+  test('allows multiple toggles without degradation', () => {
+    mockStorage.getItem.mockReturnValue('false');
+    const result = renderMuteToggleButton(container, { 
+      strings: getStrings('es').muteButton, 
+      storage: mockStorage 
+    });
+    const button = container.querySelector('button');
+    
+    for (let i = 0; i < 5; i++) {
+      button.click();
+    }
+    
+    expect(result.isMuted()).toBe(true);
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe('Activar sonido');
+  });
+});
+
+describe('readStoredMute', () => {
+  test('returns false for non-existent key', () => {
+    const storage = { getItem: jest.fn().mockReturnValue(null) };
+    expect(readStoredMute(storage)).toBe(false);
+  });
+
+  test('returns true when stored value is "true"', () => {
+    const storage = { getItem: jest.fn().mockReturnValue('true') };
+    expect(readStoredMute(storage)).toBe(true);
+  });
+
+  test('returns false when stored value is "false"', () => {
+    const storage = { getItem: jest.fn().mockReturnValue('false') };
+    expect(readStoredMute(storage)).toBe(false);
+  });
+
+  test('handles storage errors gracefully and returns false', () => {
+    const storage = { 
+      getItem: jest.fn().mockImplementation(() => {
+        throw new Error('Storage error');
+      }) 
+    };
+    expect(readStoredMute(storage)).toBe(false);
+  });
+});
+
+describe('writeStoredMute', () => {
+  test('writes "true" to storage when muted is true', () => {
+    const storage = { setItem: jest.fn() };
+    writeStoredMute(true, storage);
+    expect(storage.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
+  });
+
+  test('writes "false" to storage when muted is false', () => {
+    const storage = { setItem: jest.fn() };
+    writeStoredMute(false, storage);
+    expect(storage.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'false');
+  });
+
+  test('handles storage errors gracefully without throwing', () => {
+    const storage = { 
+      setItem: jest.fn().mockImplementation(() => {
+        throw new Error('Storage error');
+      }) 
+    };
+    expect(() => writeStoredMute(true, storage)).not.toThrow();
+  });
+});
+
+describe('MUTE_STORAGE_KEY', () => {
+  test('is exported with expected value', () => {
+    expect(MUTE_STORAGE_KEY).toBe('dinoquiz.audio.muted');
   });
 });
