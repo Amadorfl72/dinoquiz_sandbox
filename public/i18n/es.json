@@ -11,7 +11,120 @@
     "parentalNotice": {
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
-    }
+    },
+    "globalControls": {
+      "groupLabel": "Controles globales",
+      "muteButton": {
+        "muteLabel": "Silenciar sonido",
+        "unmuteLabel": "Activar sonido"
+      },
+      "privacyButton": "Resumen de privacidad",
+      "purchaseButton": "Eliminar anuncios"
+    },
+    "tooltip": {
+      "message": "¡Toca aquí para jugar!"
+    },
+    "privacyPolicyIconLabel": "Política de privacidad",
+    "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
+  },
+  "privacyPolicy": {
+    "screenTitle": "Política de privacidad",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "updatedAt": "Última actualización: julio de 2026",
+    "kidsCallout": {
+      "heading": "Para ti, peque 🦖",
+      "body": "DinoQuiz no te pregunta tu nombre, ni tu foto, ni dónde vives. Solo guardamos en este aparato tu mejor puntuación y los datos curiosos que ya descubriste, para que los veas la próxima vez que juegues."
+    },
+    "sections": [
+      {
+        "id": "que-datos",
+        "heading": "¿Qué información usamos?",
+        "paragraphs": [
+          "DinoQuiz no pide ni guarda datos personales de niñas y niños: no hay registro, no hay nombre, no hay foto, no hay ubicación ni contactos.",
+          "Todo lo que necesita la app para jugar (preguntas, imágenes, sonidos) viene ya incluido y funciona sin conexión a internet.",
+          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos y si el sonido está silenciado. Esta información nunca sale del dispositivo.",
+          "De forma anónima y agregada podemos recibir información técnica como el modelo del dispositivo, la versión del sistema, el idioma o el tamaño de pantalla, y estadísticas de uso (por ejemplo, si una partida se completó). Estos datos no permiten identificar a ninguna persona."
+        ]
+      },
+      {
+        "id": "para-que",
+        "heading": "¿Para qué usamos esta información?",
+        "paragraphs": [
+          "Usamos las estadísticas anónimas y agregadas únicamente para mejorar la aplicación: saber si las partidas se completan, si alguna pregunta es demasiado difícil, o si hay algún fallo técnico (crash) que debamos corregir.",
+          "Nunca usamos esta información para mostrar publicidad personalizada ni para elaborar perfiles de niñas o niños."
+        ]
+      },
+      {
+        "id": "terceros",
+        "heading": "¿Compartimos información con terceros?",
+        "paragraphs": [
+          "No vendemos ni compartimos datos personales con terceros porque no los recopilamos.",
+          "Si en algún momento se muestran anuncios o se ofrece una compra dentro de la app, estos servicios no reciben datos personales de niñas o niños y no incluyen publicidad personalizada ni de seguimiento individual."
+        ]
+      },
+      {
+        "id": "derechos",
+        "heading": "Tus derechos (y los de tu hija o hijo)",
+        "paragraphs": [
+          "Como no recogemos datos personales, no existe un perfil que consultar, corregir o eliminar en nuestros sistemas.",
+          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador.",
+          "Si tienes cualquier duda sobre privacidad, o crees que en algún momento se ha recogido un dato que no debería, puedes ejercer tus derechos de acceso, rectificación, supresión, oposición y portabilidad escribiéndonos a la dirección de contacto indicada más abajo."
+        ]
+      },
+      {
+        "id": "responsable",
+        "heading": "¿Quién es el responsable?",
+        "paragraphs": [
+          "El responsable del tratamiento de la información descrita en esta política es el equipo de DinoQuiz.",
+          "Puedes contactarnos por correo electrónico en privacidad@dinoquiz-app.com para cualquier consulta relacionada con la privacidad de la aplicación."
+        ]
+      },
+      {
+        "id": "cambios",
+        "heading": "Cambios en esta política",
+        "paragraphs": [
+          "Si esta política cambia, lo indicaremos actualizando la fecha de esta página. Te recomendamos consultarla de vez en cuando junto a tu hija o hijo."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "heading": "Política de privacidad",
+    "closeButton": "Cerrar",
+    "intro": "DinoQuiz está pensado para que jueguen niños y niñas, así que cuidamos mucho su privacidad. Aquí explicamos, en lenguaje sencillo, qué pasa con la información cuando usas la app.",
+    "sections": [
+      {
+        "heading": "¿Qué datos recogemos?",
+        "body": "Ninguno personal. DinoQuiz no pide nombre, edad, foto, email ni ningún otro dato que identifique a quien juega. No hay cuentas ni inicio de sesión."
+      },
+      {
+        "heading": "¿Dónde se guarda el progreso?",
+        "body": "La puntuación, la racha de aciertos y los datos curiosos descubiertos se guardan solo en este dispositivo (localStorage/IndexedDB). Nunca se envían a ningún servidor."
+      },
+      {
+        "heading": "¿Qué datos anónimos se usan?",
+        "body": "Se recogen estadísticas agregadas y anónimas (por ejemplo, partidas iniciadas o completadas) para mejorar la app. Estos datos no incluyen nombre, ubicación exacta ni ningún identificador publicitario, y nunca se usan con fines de publicidad personalizada."
+      },
+      {
+        "heading": "¿Se comparte con terceros?",
+        "body": "No se vende ni se comparte ningún dato personal con terceros. DinoQuiz no incluye SDKs de publicidad comportamental ni de seguimiento individual."
+      },
+      {
+        "heading": "¿Cuáles son tus derechos?",
+        "body": "Como no guardamos datos personales, no hay nada que borrar, corregir o exportar a nivel individual. Si tienes cualquier duda, puedes escribirnos."
+      },
+      {
+        "heading": "Contacto",
+        "body": "Para cualquier consulta sobre privacidad, escribe a privacidad@dinoquiz.app."
+      }
+    ]
+  },
+  "purchase": {
+    "heading": "Eliminar anuncios",
+    "closeButton": "Cerrar",
+    "description": "Con una única compra puedes eliminar los anuncios de DinoQuiz para siempre y desbloquear todos los packs de preguntas, ahora y en el futuro.",
+    "priceLabel": "Pago único de 3,99 €",
+    "purchaseButton": "Comprar ahora"
   },
   "results": {
     "heading": "¡Resultados!",
@@ -38,7 +151,17 @@
     },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
-    "nextButton": "Siguiente"
+    "nextButton": "Siguiente",
+    "imageAlt": "Ilustración de un {dinosaur}",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon"
+    }
   },
   "funFacts": {
     "trex-01": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",

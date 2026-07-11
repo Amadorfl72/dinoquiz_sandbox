@@ -4,7 +4,14 @@ const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { DEFAULT_STATE } = require('./types');
 
 const NAMESPACE = 'dinoquiz:';
-const PERSISTED_KEYS = ['bestScore', 'maxStreak', 'discoveredFunFacts', 'muted'];
+const PERSISTED_KEYS = [
+  'bestScore',
+  'maxStreak',
+  'discoveredFunFacts',
+  'muted',
+  'homeTooltipSeen',
+  'analyticsEventCounts',
+];
 
 function namespacedKey(key) {
   return `${NAMESPACE}${key}`;
@@ -29,7 +36,7 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [] };
+  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
   #listeners = new Map();
   #initPromise = null;
 
@@ -130,7 +137,11 @@ class DinoQuizStorage {
 
   /** Synchronous read of the current in-memory cache (safe to call before init() resolves). */
   snapshot() {
-    return { ...this.#cache, discoveredFunFacts: [...this.#cache.discoveredFunFacts] };
+    return {
+      ...this.#cache,
+      discoveredFunFacts: [...this.#cache.discoveredFunFacts],
+      analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+    };
   }
 
   async get(key) {
@@ -234,6 +245,46 @@ class DinoQuizStorage {
     const muted = await this.get('muted');
     const next = !muted;
     await this.set('muted', next);
+    return next;
+  }
+
+  /** Whether the first-run "¡Jugar!" tooltip has already been dismissed on this device. */
+  async hasSeenHomeTooltip() {
+    return this.get('homeTooltipSeen');
+  }
+
+  async markHomeTooltipSeen() {
+    await this.set('homeTooltipSeen', true);
+  }
+
+  /**
+   * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
+   * Idempotent per `eventName`: only the first call for a given name increments the
+   * count, which is what "first_*"-style events (e.g. first_tap_jugar) need.
+   */
+  async recordEventOnce(eventName) {
+    const counts = await this.get('analyticsEventCounts');
+    if (counts[eventName]) {
+      return counts[eventName];
+    }
+    await this.set('analyticsEventCounts', { ...counts, [eventName]: 1 });
+    return 1;
+  }
+
+  async getEventCount(eventName) {
+    const counts = await this.get('analyticsEventCounts');
+    return counts[eventName] || 0;
+  }
+
+  /**
+   * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
+   * Unlike `recordEventOnce`, increments on every call -- this is what repeatable
+   * product events (e.g. partida_iniciada, one per game start) need.
+   */
+  async recordEvent(eventName) {
+    const counts = await this.get('analyticsEventCounts');
+    const next = (counts[eventName] || 0) + 1;
+    await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
   }
 }

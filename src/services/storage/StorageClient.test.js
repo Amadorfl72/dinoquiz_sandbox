@@ -27,6 +27,8 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('maxStreak')).toBe(0);
     expect(await storage.get('discoveredFunFacts')).toEqual([]);
     expect(await storage.get('muted')).toBe(false);
+    expect(await storage.get('homeTooltipSeen')).toBe(false);
+    expect(await storage.get('analyticsEventCounts')).toEqual({});
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -158,5 +160,82 @@ describe('DinoQuizStorage', () => {
 
     expect(first).toBe(true);
     expect(second).toBe(false);
+  });
+
+  it('marks the home tooltip as seen so it does not reappear on later opens', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(false);
+
+    await storage.markHomeTooltipSeen();
+
+    expect(await storage.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  it('persists the home tooltip flag across instances sharing the same backend', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+    const storage = new DinoQuizStorage([adapter()]);
+    await storage.markHomeTooltipSeen();
+
+    const reopened = new DinoQuizStorage([adapter()]);
+    expect(await reopened.hasSeenHomeTooltip()).toBe(true);
+  });
+
+  it('recordEventOnce is a non-PII local counter that only increments the first time', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getEventCount('first_tap_jugar')).toBe(0);
+
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('first_tap_jugar');
+
+    expect(await storage.getEventCount('first_tap_jugar')).toBe(1);
+  });
+
+  it('recordEventOnce tracks distinct event names independently', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordEventOnce('first_tap_jugar');
+    await storage.recordEventOnce('mute_toggled');
+
+    expect(await storage.get('analyticsEventCounts')).toEqual({
+      first_tap_jugar: 1,
+      mute_toggled: 1,
+    });
+  });
+
+  it('recordEvent is a non-PII local counter that increments on every call', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getEventCount('partida_iniciada')).toBe(0);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+
+    expect(await storage.getEventCount('partida_iniciada')).toBe(3);
+  });
+
+  it('recordEvent tracks distinct event names independently', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('replay_pulsado');
+
+    expect(await storage.get('analyticsEventCounts')).toEqual({
+      partida_iniciada: 2,
+      replay_pulsado: 1,
+    });
   });
 });

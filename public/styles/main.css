@@ -1,11 +1,51 @@
+/*
+ * Design tokens (TRIOFSND-133 accessibility audit) — sizes/colors reused
+ * across every screen so text stays >=18-20sp, tap targets stay >=48x48dp
+ * and text/background contrast clears WCAG AA (>=4.5:1) in every state
+ * (normal, hover/pressed, disabled, feedback), per PRD AC-2/AC-4/AC-13.
+ *
+ * These mirror src/theme/designTokens.js, which designTokens.test.js checks
+ * against WCAG AA for every state without needing a browser — keep both in
+ * sync when a value changes here.
+ */
+:root {
+  --font-size-min: 18px;
+  --font-size-body: 20px;
+  --font-size-heading-sm: 24px;
+  --font-size-button: 20px;
+  --font-size-button-lg: 24px;
+
+  --tap-target-min: 48px;
+
+  --color-bg: #fff8e1;
+  --color-text: #1b5e20;
+  --color-white: #ffffff;
+
+  --color-primary: #2e7d32;
+  --color-primary-hover: #236627;
+  --color-primary-pressed: #1a541e;
+
+  --color-neutral-bg: #cfd8dc;
+  --color-neutral-text: #263238;
+
+  --color-option-bg: #ffffff;
+  --color-option-bg-hover: #e8f5e9;
+  --color-option-bg-pressed: #c8e6c9;
+
+  --color-focus-ring-on-dark: #fbc02d;
+  --color-focus-ring-on-light: #0d47a1;
+
+  --color-stars: #9c6500;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   min-height: 100%;
   font-family: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
-  background-color: #fff8e1;
-  color: #1b5e20;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 #app {
@@ -105,7 +145,7 @@ body {
   font-size: clamp(2rem, 6vw, 3.5rem);
   line-height: 1.1;
   font-weight: 700;
-  color: #1b5e20;
+  color: var(--color-text);
 }
 
 .home-screen__mascot {
@@ -120,41 +160,243 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 64px;
-  min-width: 48px;
+  min-width: var(--tap-target-min);
   padding: 12px 48px;
-  font-size: 1.5rem;
+  font-size: var(--font-size-button-lg);
   line-height: 1.2;
   font-weight: 700;
   font-family: inherit;
-  color: #ffffff;
-  background-color: #2e7d32;
+  color: var(--color-white);
+  background-color: var(--color-primary);
   border: none;
   border-radius: 32px;
-  box-shadow: 0 4px 0 #1b5e20;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
   cursor: pointer;
   touch-action: manipulation;
 }
 
+/*
+ * Hover used to lighten to #388e3c, which only gave 4.12:1 against the white
+ * label (below the 4.5:1 AA floor, PRD AC-13). Hover/pressed now darken
+ * instead, so contrast only improves as the state escalates.
+ */
 .home-screen__play-button:hover {
-  background-color: #388e3c;
+  background-color: var(--color-primary-hover);
 }
 
 .home-screen__play-button:focus-visible {
-  outline: 4px solid #fbc02d;
+  outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
 
 .home-screen__play-button:active {
+  background-color: var(--color-primary-pressed);
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #1b5e20;
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.home-screen__privacy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__privacy-button:hover {
+  background-color: #f1f8e9;
+}
+
+.home-screen__privacy-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
 }
 
 .home-screen__parental-notice {
   max-width: 60ch;
-  font-size: 0.9rem;
-  color: #1b5e20;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
 }
 
+/*
+ * First-run tooltip (TRIOFSND-65): a small speech bubble with an upward
+ * arrow pointing at the play button above it. Shown only once, so the
+ * bounce animation is meant to catch a first-time player's eye — it is
+ * disabled under prefers-reduced-motion, same as the question feedback
+ * celebration animation.
+ */
+.home-screen__tooltip {
+  position: relative;
+  margin: 0;
+  max-width: 280px;
+  padding: 10px 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  /* #1b5e20 on #fbc02d is ~4.75:1, meeting WCAG AA (>=4.5:1, PRD AC-13) —
+     white text on this yellow only reaches ~1.66:1. */
+  color: #1b5e20;
+  background-color: #fbc02d;
+  border-radius: 16px;
+  box-shadow: 0 3px 0 #c79100;
+}
+
+.home-screen__tooltip::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #fbc02d;
+}
+
+.home-screen__tooltip--animated {
+  animation: home-screen-tooltip-bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes home-screen-tooltip-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-screen__tooltip--animated {
+    animation: none;
+  }
+}
+
+/*
+ * Global controls (TRIOFSND-66): mute toggle, privacy policy and remove-ads
+ * purchase entry points. Every icon button keeps a >=48x48dp tap target
+ * (AC-2/AC-13 sibling rule) regardless of viewport, and the disclosure
+ * panels reuse the same white-background/dark-green-text pair validated in
+ * src/theme/globalControlsColors.js against WCAG AA.
+ */
+.home-screen__global-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.home-screen__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px 14px;
+  gap: 8px;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-family: inherit;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__icon-button:hover {
+  background-color: #e8f5e9;
+}
+
+.home-screen__icon-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.home-screen__mute-button[aria-pressed='true'] {
+  background-color: #cfd8dc;
+  border-color: #607d8b;
+  color: #263238;
+}
+
+.home-screen__panel {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 8px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  text-align: left;
+  background-color: #ffffff;
+  color: #1b5e20;
+  border: 2px solid #1b5e20;
+  border-radius: 16px;
+}
+
+.home-screen__panel-heading {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.home-screen__panel-body h3 {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.home-screen__panel-body p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.home-screen__panel-price {
+  font-weight: 700;
+}
+
+.home-screen__panel-close-button,
+.home-screen__purchase-confirm-button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__purchase-confirm-button {
+  display: block;
+  margin: 12px 0;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+}
+
+.home-screen__panel-close-button {
+  color: #1b5e20;
+  background-color: transparent;
+  border: 2px solid #1b5e20;
+}
+
+.home-screen__panel-close-button:focus-visible,
+.home-screen__purchase-confirm-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
 /* Tablet landscape: the primary target — give the mascot and title more room. */
 @media (min-width: 900px) and (orientation: landscape) {
   .home-screen {
@@ -203,6 +445,32 @@ body {
  * highlights the correct option, never marks the option the child picked
  * as "wrong".
  */
+.question-screen__prompt {
+  font-size: var(--font-size-heading-sm);
+  line-height: 1.3;
+  margin: 0 0 16px;
+  color: var(--color-text);
+}
+
+.question-screen__image {
+  display: block;
+  width: clamp(160px, 30vw, 280px);
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+}
+
+.question-screen__score {
+  font-size: var(--font-size-body);
+  margin: 0 0 16px;
+  color: var(--color-text);
+}
+
+.question-screen__feedback {
+  font-size: var(--font-size-body);
+  margin: 8px 0;
+}
 .question-screen__options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -210,16 +478,29 @@ body {
 }
 
 .question-screen__option {
-  min-width: 48px;
-  min-height: 48px;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
   padding: 16px 20px;
-  font-size: 20px;
+  font-size: var(--font-size-button);
   font-family: inherit;
   border-radius: 16px;
-  border: 3px solid #1b5e20;
-  background-color: #ffffff;
-  color: #1b5e20;
+  border: 3px solid var(--color-text);
+  background-color: var(--color-option-bg);
+  color: var(--color-text);
   cursor: pointer;
+}
+
+.question-screen__option:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.question-screen__option:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.question-screen__option:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }
 
 .question-screen__option:disabled {
@@ -228,15 +509,68 @@ body {
 
 .question-screen__option--correct {
   border-width: 6px;
-  border-color: #1b5e20;
-  background-color: #2e7d32;
-  color: #ffffff;
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+  color: var(--color-white);
 }
 
 .question-screen__option--neutral {
   border-color: #607d8b;
-  background-color: #cfd8dc;
-  color: #263238;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.question-screen__feedback {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__fun-fact-heading {
+  font-size: var(--font-size-heading-sm);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__fun-fact {
+  font-size: var(--font-size-body);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.question-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.question-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
 }
 
 .question-screen__option--celebrate {
@@ -259,6 +593,60 @@ body {
   .question-screen__option--celebrate {
     animation: none;
   }
+}
+
+/*
+ * Dato curioso box (TRIOFSND-83): yellow highlight per the mockup. Colors
+ * mirror src/theme/questionScreenColors.js (QUESTION_SCREEN_COLORS.funFact),
+ * which contrast.test.js checks against WCAG AA (AC-13) — keep both in sync.
+ */
+.question-screen__fun-fact-box {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 3px solid #f9a825;
+  border-radius: 16px;
+  background-color: #fff9c4;
+  color: #5d4037;
+  text-align: left;
+}
+
+.question-screen__fun-fact-heading {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.question-screen__fun-fact {
+  margin: 0;
+  font-size: 20px;
+}
+
+/*
+ * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
+ * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
+ * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ */
+.question-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 32px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 32px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__next-button:disabled {
+  background-color: #a5d6a7;
+  cursor: default;
 }
 
 /* Visually hides content while keeping it available to screen readers. */
@@ -285,23 +673,31 @@ body {
 .results-screen__heading {
   font-size: 32px;
   margin: 0;
+  color: var(--color-text);
 }
 
 .results-screen__score {
-  font-size: 24px;
+  font-size: var(--font-size-heading-sm);
   font-weight: bold;
   margin: 0;
+  color: var(--color-text);
 }
 
+/*
+ * The original gold (#f9a825) was only 1.85:1 against the cream page
+ * background — this shade clears the large-text AA floor (>=3:1, the
+ * stars render at 40px) with margin (PRD AC-13).
+ */
 .results-screen__stars {
   font-size: 40px;
-  color: #f9a825;
+  color: var(--color-stars);
   letter-spacing: 4px;
 }
 
 .results-screen__message {
-  font-size: 20px;
+  font-size: var(--font-size-body);
   margin: 0;
+  color: var(--color-text);
 }
 
 .results-screen__actions {
@@ -314,26 +710,133 @@ body {
 
 .results-screen__play-again-button,
 .results-screen__exit-button {
-  min-width: 48px;
-  min-height: 48px;
-  font-size: 20px;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
   padding: 12px 32px;
   border-radius: 999px;
   border: none;
   cursor: pointer;
   box-sizing: border-box;
+  touch-action: manipulation;
 }
 
 .results-screen__play-again-button {
-  background-color: #2e7d32;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-white);
   font-weight: bold;
-  font-size: 24px;
+  font-size: var(--font-size-button-lg);
+  min-height: 64px;
   padding: 16px 40px;
+}
+
+.results-screen__play-again-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.results-screen__play-again-button:active {
+  background-color: var(--color-primary-pressed);
+}
+
+.results-screen__play-again-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
 }
 
 .results-screen__exit-button {
   background-color: transparent;
+  color: var(--color-text);
+  border: 2px solid var(--color-text);
+}
+
+.results-screen__exit-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.results-screen__exit-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.results-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
+ * Privacy policy screen (TRIOFSND-116) — reuses the home-screen palette
+ * (#1b5e20 text / #fff8e1 background, #2e7d32 accents), already checked
+ * against WCAG AA in src/theme/contrast.test.js, so the whole app stays on
+ * one verified color system instead of introducing a second one.
+ */
+.privacy-policy-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 4px 32px;
+  text-align: left;
+  font-size: 1.125rem;
+  line-height: 1.6;
   color: #1b5e20;
-  border: 2px solid #1b5e20;
+}
+
+.privacy-policy-screen__back-button {
+  align-self: flex-start;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.privacy-policy-screen__back-button:hover {
+  background-color: #388e3c;
+}
+
+.privacy-policy-screen__back-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.privacy-policy-screen__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__title:focus {
+  outline: none;
+}
+
+.privacy-policy-screen__updated-at {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__callout {
+  background-color: #f1f8e9;
+  border: 2px solid #2e7d32;
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.privacy-policy-screen__callout h2 {
+  margin-top: 0;
+  color: #1b5e20;
+}
+
+.privacy-policy-screen__section h2 {
+  color: #1b5e20;
+  font-size: 1.25rem;
 }

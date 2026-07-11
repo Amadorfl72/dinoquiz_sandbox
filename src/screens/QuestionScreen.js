@@ -1,8 +1,9 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen: shows one question with its options and, once
- * the child taps an answer, the feedback for that answer.
+ * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88): shows one question
+ * with its options and, once the child taps an answer, the feedback and
+ * "dato curioso" for that answer (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -11,9 +12,9 @@
  * border) whether the child got it right or not; the wrong pick itself only
  * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
  * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
- * outcomes then reveal the same fun fact and "Siguiente" control, so the
- * flow to the next question is identical whether the answer was right or
- * wrong.
+ * outcomes then reveal the same fun fact (in a yellow "dato curioso" box)
+ * and "Siguiente" control, so the flow to the next question is identical
+ * whether the answer was right or wrong.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
@@ -23,8 +24,28 @@
  * the browser to resolve that keyframe's styles once, off-screen, right
  * after the question mounts, so the child's first tap doesn't pay a
  * first-run style-recalculation cost.
+ *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
+ * (4s), guaranteeing the dato curioso stays on screen long enough to read.
+ * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted (no audio
+ * dependency).
+ *
+ * Accessibility (AC-14): the dato curioso paragraph is `aria-live="polite"`
+ * so TalkBack/VoiceOver announce it as soon as it's revealed, and the
+ * dinosaur illustration carries a descriptive `alt` built from the i18n
+ * `dinosaurNames` map instead of a generic label.
+ *
+ * The implementation lives in public/scripts/questionScreen.js because the
+ * browser renders this screen directly, and without a bundler it must be
+ * loaded there as a `<script>` (see public/index.html) — the same rationale
+ * documented for public/scripts/homeScreen.js. This canonical `src/screens/`
+ * module re-exports it so Node/Jest keep a single source of truth (mirrors
+ * how src/i18n/index.js loads public/i18n/es.json).
  */
 
+ */
 const { DEFAULT_LOCALE, getStrings } = require('../i18n');
 const { isAnswerCorrect, applyAnswerToScore } = require('../game/scoring');
 
@@ -32,6 +53,13 @@ const OPTION_CLASS = 'question-screen__option';
 const CORRECT_CLASS = 'question-screen__option--correct';
 const NEUTRAL_CLASS = 'question-screen__option--neutral';
 const CELEBRATE_CLASS = 'question-screen__option--celebrate';
+const IMAGE_BASE_PATH = '/assets/images/';
+const MIN_ADVANCE_DELAY_MS = 4000;
+
+function resolveImageAlt(strings, dinosaur) {
+  const dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
+  return strings.imageAlt.replace('{dinosaur}', dinosaurName);
+}
 
 function warmUpFeedbackAnimation() {
   if (typeof document === 'undefined') return;
@@ -64,6 +92,12 @@ function renderQuestionScreen(container, question, options = {}) {
   prompt.className = 'question-screen__prompt';
   prompt.textContent = question.question;
 
+  const image = document.createElement('img');
+  image.className = 'question-screen__image';
+  image.src = `${IMAGE_BASE_PATH}${question.image}`;
+  image.alt = resolveImageAlt(strings, question.dinosaur);
+  image.decoding = 'async';
+
   const scoreEl = document.createElement('p');
   scoreEl.className = 'question-screen__score';
   scoreEl.setAttribute('aria-live', 'polite');
@@ -78,15 +112,20 @@ function renderQuestionScreen(container, question, options = {}) {
   feedback.className = 'question-screen__feedback';
   feedback.setAttribute('aria-live', 'polite');
 
+  const funFactBox = document.createElement('div');
+  funFactBox.className = 'question-screen__fun-fact-box';
+  funFactBox.hidden = true;
+
   const funFactHeading = document.createElement('h3');
   funFactHeading.className = 'question-screen__fun-fact-heading';
   funFactHeading.textContent = strings.funFactHeading;
-  funFactHeading.hidden = true;
 
   const funFact = document.createElement('p');
   funFact.className = 'question-screen__fun-fact';
   funFact.setAttribute('aria-live', 'polite');
-  funFact.hidden = true;
+
+  funFactBox.appendChild(funFactHeading);
+  funFactBox.appendChild(funFact);
 
   const nextButton = document.createElement('button');
   nextButton.type = 'button';
@@ -128,11 +167,14 @@ function renderQuestionScreen(container, question, options = {}) {
     feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
     scoreEl.textContent = `${strings.scoreLabel}: ${score}`;
 
-    funFactHeading.hidden = false;
     funFact.textContent = question.funFact;
-    funFact.hidden = false;
+    funFactBox.hidden = false;
 
     nextButton.hidden = false;
+    nextButton.disabled = true;
+    setTimeout(() => {
+      nextButton.disabled = false;
+    }, MIN_ADVANCE_DELAY_MS);
 
     if (onAnswer) {
       onAnswer({
@@ -152,11 +194,11 @@ function renderQuestionScreen(container, question, options = {}) {
   });
 
   root.appendChild(prompt);
+  root.appendChild(image);
   root.appendChild(scoreEl);
   root.appendChild(optionsGroup);
   root.appendChild(feedback);
-  root.appendChild(funFactHeading);
-  root.appendChild(funFact);
+  root.appendChild(funFactBox);
   root.appendChild(nextButton);
   container.appendChild(root);
 
@@ -165,9 +207,11 @@ function renderQuestionScreen(container, question, options = {}) {
   return {
     root,
     prompt,
+    image,
     scoreEl,
     optionButtons,
     feedback,
+    funFactBox,
     funFact,
     nextButton,
     getScore: () => score,
@@ -175,4 +219,4 @@ function renderQuestionScreen(container, question, options = {}) {
   };
 }
 
-module.exports = { renderQuestionScreen, warmUpFeedbackAnimation };
+module.exports = { renderQuestionScreen, warmUpFeedbackAnimation, MIN_ADVANCE_DELAY_MS };
