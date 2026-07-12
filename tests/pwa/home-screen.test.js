@@ -307,6 +307,58 @@ describe('HomeScreen global controls (TRIOFSND-66: mute, privacy policy, remove-
     expect(onPurchase).toHaveBeenCalledTimes(1);
   });
 
+  test('confirming the purchase while offline shows a reconnect notice instead of calling onPurchase (TRIOFSND-112)', () => {
+    const onPurchase = jest.fn();
+    const { purchaseButton, purchaseConfirmButton, purchaseOfflineNotice } = renderHomeScreen(container, {
+      onPurchase,
+      isOnline: () => false,
+    });
+
+    fireEvent.click(purchaseButton);
+    expect(purchaseOfflineNotice.hidden).toBe(true);
+
+    fireEvent.click(purchaseConfirmButton);
+
+    expect(onPurchase).not.toHaveBeenCalled();
+    expect(purchaseOfflineNotice.hidden).toBe(false);
+    expect(purchaseOfflineNotice).toHaveTextContent(purchaseStrings.offlineNotice);
+    expect(purchaseOfflineNotice).toHaveAttribute('role', 'alert');
+  });
+
+  test('does not block the rest of the app while offline: the panel stays open and other controls stay usable', () => {
+    const { purchaseButton, purchaseConfirmButton, purchasePanel, privacyButton, privacyPanel } = renderHomeScreen(
+      container,
+      { isOnline: () => false }
+    );
+
+    fireEvent.click(purchaseButton);
+    fireEvent.click(purchaseConfirmButton);
+
+    expect(purchasePanel.hidden).toBe(false);
+
+    fireEvent.click(privacyButton);
+    expect(privacyPanel.hidden).toBe(false);
+  });
+
+  test('retrying the purchase once back online hides the reconnect notice and invokes onPurchase', () => {
+    const onPurchase = jest.fn();
+    let online = false;
+    const { purchaseButton, purchaseConfirmButton, purchaseOfflineNotice } = renderHomeScreen(container, {
+      onPurchase,
+      isOnline: () => online,
+    });
+
+    fireEvent.click(purchaseButton);
+    fireEvent.click(purchaseConfirmButton);
+    expect(purchaseOfflineNotice.hidden).toBe(false);
+
+    online = true;
+    fireEvent.click(purchaseConfirmButton);
+
+    expect(purchaseOfflineNotice.hidden).toBe(true);
+    expect(onPurchase).toHaveBeenCalledTimes(1);
+  });
+
   test('global controls are grouped under an accessible, labeled group', () => {
     const { globalControls } = renderHomeScreen(container);
 
