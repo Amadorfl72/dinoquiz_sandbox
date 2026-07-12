@@ -68,6 +68,11 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
+    // Belt-and-braces AC-13 touch target: mirrors public/styles/main.css's
+    // .app-shell__mute-toggle rule as an inline style so the 48x48dp minimum
+    // holds even before/without the stylesheet loading.
+    button.style.minWidth = '48px';
+    button.style.minHeight = '48px';
 
     function applyState() {
       button.setAttribute('aria-pressed', String(isMuted));
