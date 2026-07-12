@@ -520,7 +520,7 @@
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
+      if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
       if (muteStorageObj) {
@@ -663,7 +663,17 @@
         return renderHome();
       });
   }
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+
+  // Only self-bootstrap in a real, unbundled browser: under Node/Jest,
+  // `require` always exists and the test files drive `startNewGame`/
+  // `renderHome`/`renderRoute` explicitly against their own `#app` container,
+  // so attaching this would race a jsdom-dispatched `load` event against
+  // whatever container the test currently has mounted.
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.addEventListener === 'function' &&
+    typeof require !== 'function'
+  ) {
     window.addEventListener('load', function () {
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {

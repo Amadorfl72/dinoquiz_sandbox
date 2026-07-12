@@ -24,7 +24,7 @@
     "tooltip": {
       "message": "¡Toca aquí para jugar!"
     },
-    "privacyPolicyIconLabel": "Política de privacidad",
+    "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
   "privacyPolicy": {
@@ -148,6 +148,10 @@
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento! La respuesta correcta es esta:"
+    },
+    "answerAnnouncement": {
+      "correct": "¡Genial, acertaste! La respuesta correcta era: {correctAnswer}",
+      "incorrect": "¡Buen intento! La respuesta correcta era: {correctAnswer}"
     },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",

@@ -32,16 +32,18 @@
  * audio cue — so the flow works identically with sound muted (no audio
  * dependency).
  *
- * Accessibility (AC-14): the dato curioso paragraph is `aria-live="polite"`
- * so TalkBack/VoiceOver announce it as soon as it's revealed, and the
+ * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
+ * visible `feedback` paragraph are both `aria-live="polite"`, and the
  * dinosaur illustration carries a descriptive `alt` built from the i18n
- * `dinosaurNames` map instead of a generic label.
- *
- * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
- * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS` (4s),
- * guaranteeing the dato curioso stays on screen long enough to read. The
- * delay is a plain `setTimeout` — a wall-clock timer, never gated on an
- * audio cue — so the flow works identically with sound muted.
+ * `dinosaurNames` map instead of a generic label. But neither states
+ * *which* option was correct in words — a sighted child sees the green
+ * highlight, a screen reader user would not. `announcementEl`
+ * (`role="status"`, `aria-live="polite"`, visually hidden via `.sr-only`)
+ * closes that gap: it is written synchronously in the same click handler
+ * that applies the visual/score feedback (no timers, no dependency on the
+ * fun-fact reveal or the mute state), so TalkBack/VoiceOver announce
+ * acierto/fallo *and* the correct option's text immediately after the tap,
+ * exactly like the summary announcement in public/scripts/resultsScreen.js.
  *
  * Fail sound (TRIOFSND-89): a wrong pick additionally plays a soft, neutral
  * effect via public/scripts/audio.js's `playFailSound` — never a harsh/error
@@ -106,6 +108,12 @@
       return require('./scoring');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
+
+  function formatTemplate(template, values) {
+    return Object.keys(values).reduce(function (result, key) {
+      return result.split('{' + key + '}').join(values[key]);
+    }, template);
   }
 
   // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
@@ -212,10 +220,14 @@
     feedback.className = 'question-screen__feedback';
     feedback.setAttribute('aria-live', 'polite');
 
+    var announcementEl = document.createElement('p');
+    announcementEl.className = 'question-screen__announcement sr-only';
+    announcementEl.setAttribute('role', 'status');
+    announcementEl.setAttribute('aria-live', 'polite');
+
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
     funFactBox.hidden = true;
-
     var funFactHeading = document.createElement('h3');
     funFactHeading.className = 'question-screen__fun-fact-heading';
     funFactHeading.textContent = strings.funFactHeading;
@@ -252,6 +264,7 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
+      var correctAnswerText = question.options[question.correctAnswerIndex];
 
       optionButtons.forEach(function (button, index) {
         button.disabled = true;
@@ -269,6 +282,13 @@
       feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo and the correct option's text immediately after the
+      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
+      announcementEl.textContent = formatTemplate(
+        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
+        { correctAnswer: correctAnswerText }
+      );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
@@ -304,6 +324,7 @@
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
+    root.appendChild(announcementEl);
     root.appendChild(funFactBox);
     root.appendChild(nextButton);
     container.appendChild(root);
@@ -317,6 +338,7 @@
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
+      announcementEl: announcementEl,
       funFactBox: funFactBox,
       funFact: funFact,
       nextButton: nextButton,
