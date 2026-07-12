@@ -554,4 +554,111 @@ describe('QuestionScreen', () => {
     expect(container.textContent).toContain(strings.feedback.incorrect);
     expect(nextButton).toHaveTextContent(strings.nextButton);
   });
+
+  describe('rewarded-ad CTA for an extra dato curioso (TRIOFSND-86)', () => {
+    function fakeAdService(overrides = {}) {
+      return {
+        isAvailable: () => true,
+        request: () => Promise.resolve({ granted: true }),
+        ...overrides,
+      };
+    }
+
+    test('stays hidden when the ads hook reports no rewarded ad is available, and never blocks "Siguiente"', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const rewardedAdService = fakeAdService({ isAvailable: () => false });
+        const onNext = jest.fn();
+        const { optionButtons, rewardedAdCta, nextButton } = renderQuestionScreen(container, question, {
+          rewardedAdService,
+          onNext,
+        });
+
+        optionButtons[question.correctAnswerIndex].click();
+
+        expect(rewardedAdCta.hidden).toBe(true);
+
+        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+        expect(nextButton).not.toBeDisabled();
+        nextButton.click();
+        expect(onNext).toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('is revealed, clearly labeled as an ad, once the answer is fed back and the ads hook reports availability', () => {
+      const question = buildQuestion();
+      const { optionButtons, rewardedAdCta } = renderQuestionScreen(container, question, {
+        rewardedAdService: fakeAdService(),
+      });
+
+      expect(rewardedAdCta.hidden).toBe(true);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(rewardedAdCta.hidden).toBe(false);
+      expect(rewardedAdCta).toHaveAccessibleName(strings.rewardedAd.ctaAriaLabel);
+      expect(rewardedAdCta.textContent.toLowerCase()).toContain('anuncio');
+    });
+
+    test('reveals the extra dato curioso once the rewarded ad is watched to completion, without touching "Siguiente"', async () => {
+      const question = buildQuestion();
+      const rewardedAdService = fakeAdService({ request: () => Promise.resolve({ granted: true }) });
+      const { optionButtons, rewardedAdCta, extraFunFactBox, extraFunFact, nextButton } = renderQuestionScreen(
+        container,
+        question,
+        { rewardedAdService }
+      );
+
+      optionButtons[question.correctAnswerIndex].click();
+      expect(nextButton).toBeDisabled();
+
+      rewardedAdCta.click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(extraFunFactBox.hidden).toBe(false);
+      expect(extraFunFact).toHaveTextContent(strings.rewardedAd.extraFacts.trex);
+      expect(rewardedAdCta.hidden).toBe(true);
+      // Watching the ad never re-enables "Siguiente" early, nor disables it further.
+      expect(nextButton).toBeDisabled();
+    });
+
+    test('shows a neutral status and keeps the game going when the rewarded ad is not completed', async () => {
+      const question = buildQuestion();
+      const rewardedAdService = fakeAdService({ request: () => Promise.resolve({ granted: false }) });
+      const onNext = jest.fn();
+      const { optionButtons, rewardedAdCta, rewardedAdStatus, extraFunFactBox, nextButton } = renderQuestionScreen(
+        container,
+        question,
+        { rewardedAdService, onNext }
+      );
+
+      optionButtons[question.correctAnswerIndex].click();
+      rewardedAdCta.click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(extraFunFactBox.hidden).toBe(true);
+      expect(rewardedAdStatus).toHaveTextContent(strings.rewardedAd.notCompletedMessage);
+      expect(rewardedAdCta).toBeDisabled();
+    });
+
+    test('disables itself immediately on click so a double-tap only requests the ad once', () => {
+      const question = buildQuestion();
+      const request = jest.fn().mockResolvedValue({ granted: true });
+      const { optionButtons, rewardedAdCta } = renderQuestionScreen(container, question, {
+        rewardedAdService: fakeAdService({ request }),
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+      rewardedAdCta.click();
+      rewardedAdCta.click();
+
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(rewardedAdCta).toBeDisabled();
+    });
+  });
 });

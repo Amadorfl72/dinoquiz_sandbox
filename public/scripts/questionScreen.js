@@ -82,6 +82,21 @@
  * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
  * `imageAltFunFact`, so screen readers announce a descriptive name + fact
  * for every question in the 40-question bank instead of a generic label.
+ *
+ * Rewarded-ad CTA (TRIOFSND-86): an optional, clearly-labeled "watch an ad
+ * for an extra dato curioso" button appears once the answer is revealed,
+ * but only when the rewarded-ad service (resolved the same
+ * `require`-else-`window.DinoQuiz` way as scoring above) reports an ad is
+ * actually available. In the browser that resolves to
+ * `window.DinoQuiz.ads.rewardedAdService`, registered by
+ * public/scripts/adsService.js (loaded before this file in index.html);
+ * under Node/Jest it resolves via `require('../../src/services/ads/
+ * rewardedAdService')`, which re-exports that same browser module. v1 ships
+ * without a real ad network, so that service's default provider always
+ * reports the ad as unavailable and the CTA stays hidden until a future ad
+ * adapter is plugged into it. Whatever the ad service resolves with, the
+ * CTA never touches `nextButton` or its advance timer — the game always
+ * continues.
  */
 
 (function () {
@@ -180,6 +195,23 @@
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
   }
+
+  function resolveRewardedAdService(options) {
+    if (options && options.rewardedAdService) {
+      return options.rewardedAdService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/ads/rewardedAdService').rewardedAdService;
+      } catch (error) {
+        return null;
+      }
+    }
+    // public/scripts/adsService.js registers the shared instance here; its
+    // default provider reports the ad as unavailable until a real ad
+    // adapter is plugged in, so the CTA stays hidden in v1.
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.ads && window.DinoQuiz.ads.rewardedAdService) || null;
+  }
   function warmUpFeedbackAnimation() {
     if (typeof document === 'undefined') return;
 
@@ -206,6 +238,7 @@
         ? audio.playFailSound
         : null;
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
+    var rewardedAdService = resolveRewardedAdService(options);
 
     var score = options.score || 0;
     var answered = false;
@@ -256,6 +289,52 @@
 
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
+
+    var rewardedAdStrings = strings.rewardedAd || {};
+
+    var rewardedAdCta = document.createElement('button');
+    rewardedAdCta.type = 'button';
+    rewardedAdCta.className = 'question-screen__rewarded-ad-cta';
+    rewardedAdCta.textContent = rewardedAdStrings.ctaLabel;
+    rewardedAdCta.setAttribute('aria-label', rewardedAdStrings.ctaAriaLabel);
+    rewardedAdCta.hidden = true;
+
+    var rewardedAdStatus = document.createElement('p');
+    rewardedAdStatus.className = 'question-screen__rewarded-ad-status';
+    rewardedAdStatus.setAttribute('aria-live', 'polite');
+
+    var extraFunFactBox = document.createElement('div');
+    extraFunFactBox.className = 'question-screen__fun-fact-box question-screen__extra-fun-fact-box';
+    extraFunFactBox.hidden = true;
+
+    var extraFunFactHeading = document.createElement('h3');
+    extraFunFactHeading.className = 'question-screen__fun-fact-heading';
+    extraFunFactHeading.textContent = rewardedAdStrings.extraFactHeading;
+
+    var extraFunFact = document.createElement('p');
+    extraFunFact.className = 'question-screen__fun-fact';
+    extraFunFact.setAttribute('aria-live', 'polite');
+
+    extraFunFactBox.appendChild(extraFunFactHeading);
+    extraFunFactBox.appendChild(extraFunFact);
+
+    rewardedAdCta.addEventListener('click', function () {
+      if (rewardedAdCta.disabled) return;
+      rewardedAdCta.disabled = true;
+      rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
+
+      rewardedAdService.request().then(function (result) {
+        if (result && result.granted) {
+          var extraFact = (rewardedAdStrings.extraFacts && rewardedAdStrings.extraFacts[question.dinosaur]) || '';
+          extraFunFact.textContent = extraFact;
+          extraFunFactBox.hidden = false;
+          rewardedAdStatus.textContent = '';
+          rewardedAdCta.hidden = true;
+        } else {
+          rewardedAdStatus.textContent = rewardedAdStrings.notCompletedMessage;
+        }
+      });
+    });
 
     var nextButton = document.createElement('button');
     nextButton.type = 'button';
@@ -310,6 +389,10 @@
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
+        rewardedAdCta.hidden = false;
+      }
+
       nextButton.hidden = false;
       nextButton.disabled = true;
       setTimeout(function () {
@@ -344,6 +427,9 @@
     root.appendChild(feedback);
     root.appendChild(announcementEl);
     root.appendChild(funFactBox);
+    root.appendChild(rewardedAdCta);
+    root.appendChild(rewardedAdStatus);
+    root.appendChild(extraFunFactBox);
     root.appendChild(nextButton);
     container.appendChild(root);
 
@@ -359,6 +445,10 @@
       announcementEl: announcementEl,
       funFactBox: funFactBox,
       funFact: funFact,
+      rewardedAdCta: rewardedAdCta,
+      rewardedAdStatus: rewardedAdStatus,
+      extraFunFactBox: extraFunFactBox,
+      extraFunFact: extraFunFact,
       nextButton: nextButton,
       getScore: function () {
         return score;

@@ -381,6 +381,12 @@
     });
   }
 
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
+
   function navigateToPrivacyPolicy(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
