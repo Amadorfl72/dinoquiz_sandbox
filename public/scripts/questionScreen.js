@@ -2,9 +2,9 @@
 
 /**
  * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88): shows
- * one question with its dinosaur illustration and options and, once the
- * child taps an answer, the feedback and "dato curioso" for that answer
- * (TRIOFSND-83).
+ * the dinosaur illustration, a large centered enunciado (TRIOFSND-72, AC-4:
+ * >=20sp) and its options, and, once the child taps an answer, the feedback
+ * and "dato curioso" for that answer (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -16,6 +16,19 @@
  * outcomes then reveal the same fun fact (in a yellow "dato curioso" box)
  * and "Siguiente" control, so the flow to the next question is identical
  * whether the answer was right or wrong.
+ *
+ * Screen-reader accessibility on a miss (TRIOFSND-90, AC-7/AC-14): the
+ * `feedback` paragraph (`aria-live="polite"`, neutral tone) spells out the
+ * correct option's text, not just "la respuesta correcta es esta" — a
+ * TalkBack/VoiceOver user relying on the announcement rather than the
+ * visual border needs the answer in words. The correct button also gets a
+ * descriptive `aria-label` ("Respuesta correcta: …") so it reads
+ * unambiguously if the user swipes onto it afterwards, and the (wrong)
+ * option that was tapped gets a neutral "Tu respuesta: …" label instead of
+ * a "wrong"/"incorrect" one. The dinosaur illustration's `alt` text is set
+ * once from the question data and is never cleared or replaced on answer,
+ * so it stays descriptive in the failure state exactly as it was before
+ * answering.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
@@ -105,6 +118,7 @@
   var NEUTRAL_CLASS = 'question-screen__option--neutral';
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
+  var IMAGE_SRC_BASE = IMAGE_BASE_PATH;
   var MIN_ADVANCE_DELAY_MS = 4000;
 
   function resolveImageAlt(strings, dinosaur, funFact) {
@@ -129,6 +143,37 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.question : null;
+  }
+
+  function resolveDinosaurNames(options) {
+    options = options || {};
+    if (options.dinosaurNames) {
+      return options.dinosaurNames;
+    }
+    if (typeof require === 'function') {
+      var i18n = require('../../src/i18n');
+      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).dinosaurNames;
+    }
+    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
+    return bundle ? bundle.dinosaurNames : null;
+  }
+
+  /** "Ilustración de un {dinosaur}" -> "Ilustración de un Tyrannosaurus Rex" (AC-14: descriptive alt-text). */
+  function buildImageAlt(strings, dinosaurNames, dinosaur) {
+    var format = strings && strings.imageAltFormat;
+    if (typeof format !== 'string') {
+      return '';
+    }
+    var name = (dinosaurNames && dinosaurNames[dinosaur]) || dinosaur || '';
+    return format.replace('{dinosaur}', name);
+  }
+
+  /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
+  function formatAnswerTemplate(format, answerText) {
+    if (typeof format !== 'string') {
+      return answerText;
+    }
+    return format.replace('{answer}', answerText);
   }
 
   function resolveScoring() {
@@ -229,6 +274,7 @@
   function renderQuestionScreen(container, question, options) {
     options = options || {};
     var strings = resolveStrings(options);
+    var dinosaurNames = resolveDinosaurNames(options);
     var scoring = resolveScoring();
     var audio = resolveAudio();
     var playFailSound =
@@ -247,6 +293,12 @@
 
     var root = document.createElement('div');
     root.className = 'question-screen';
+
+    var image = document.createElement('img');
+    image.className = 'question-screen__image';
+    image.src = IMAGE_SRC_BASE + question.image;
+    image.alt = buildImageAlt(strings, dinosaurNames, question.dinosaur);
+    image.decoding = 'async';
 
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
@@ -371,12 +423,26 @@
           if (correct) {
             button.classList.add(CELEBRATE_CLASS);
           }
+          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
+          // this as the correct answer even without seeing the green border.
+          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
+          // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
+          button.setAttribute('aria-label', formatAnswerTemplate(strings.selectedOptionAriaLabelFormat, button.textContent));
         }
       });
 
-      feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
+      if (correct) {
+        feedback.textContent = strings.feedback.correct;
+      } else {
+        // Spell out the correct answer's text in the aria-live announcement
+        // (TRIOFSND-90, AC-7): a TalkBack/VoiceOver user hears this instead of
+        // relying on the visual border to know which option was right.
+        var correctAnswerText = question.options[question.correctAnswerIndex];
+        feedback.textContent =
+          strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
+      }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
       // Written synchronously, right here, so TalkBack/VoiceOver announce
@@ -420,6 +486,7 @@
       }
     });
 
+    root.appendChild(image);
     root.appendChild(prompt);
     root.appendChild(image);
     root.appendChild(scoreEl);
@@ -437,6 +504,7 @@
 
     return {
       root: root,
+      image: image,
       prompt: prompt,
       image: image,
       scoreEl: scoreEl,

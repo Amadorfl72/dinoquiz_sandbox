@@ -29,4 +29,17 @@ const QUESTION_SCREEN_COLORS = Object.freeze({
   extraFunFact: Object.freeze({ background: '#E3F2FD', text: '#0D47A1' }),
 });
 
-module.exports = { QUESTION_SCREEN_COLORS };
+/**
+ * Unanswered-state option colors (TRIOFSND-72: "3-4 opciones de respuesta
+ * grandes y de colores distintos"), applied in this order to the 3-4 option
+ * buttons via `:nth-child` in public/styles/main.css. None of them is red,
+ * so nothing here is ever confused with a negative/error signal (AC-7).
+ */
+const QUESTION_OPTION_PALETTE = Object.freeze([
+  Object.freeze({ background: '#1565C0', text: '#FFFFFF' }), // blue
+  Object.freeze({ background: '#6A1B9A', text: '#FFFFFF' }), // purple
+  Object.freeze({ background: '#00695C', text: '#FFFFFF' }), // teal
+  Object.freeze({ background: '#FBC02D', text: '#1B5E20' }), // amber
+]);
+
+module.exports = { QUESTION_SCREEN_COLORS, QUESTION_OPTION_PALETTE };

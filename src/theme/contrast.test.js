@@ -1,7 +1,7 @@
 'use strict';
 
 const { contrastRatio, meetsWcagAA } = require('./contrast');
-const { QUESTION_SCREEN_COLORS } = require('./questionScreenColors');
+const { QUESTION_SCREEN_COLORS, QUESTION_OPTION_PALETTE } = require('./questionScreenColors');
 const { GLOBAL_CONTROLS_COLORS } = require('./globalControlsColors');
 const { HOME_SCREEN_COLORS } = require('./homeScreenColors');
 const { MUTE_TOGGLE_COLORS } = require('./appShellColors');
@@ -46,6 +46,12 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
   test('the neutral incorrect-pick state meets AA', () => {
     const { background, text } = QUESTION_SCREEN_COLORS.neutral;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('every unanswered-state option color in the palette (TRIOFSND-72) meets AA', () => {
+    QUESTION_OPTION_PALETTE.forEach(({ background, text }) => {
+      expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+    });
   });
 
   test('the dato curioso yellow box meets AA', () => {

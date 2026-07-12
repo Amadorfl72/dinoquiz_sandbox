@@ -95,6 +95,16 @@ describe('QuestionScreen', () => {
     });
   });
 
+  test('renders the dinosaur illustration above the prompt with a descriptive alt-text (TRIOFSND-72, AC-4/AC-14)', () => {
+    const question = buildQuestion();
+    const { image, prompt } = renderQuestionScreen(container, question);
+
+    expect(image.tagName).toBe('IMG');
+    expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+    expect(image.alt).toContain('Tyrannosaurus Rex');
+    expect(image.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   test('starts the score at 0 by default', () => {
     renderQuestionScreen(container, buildQuestion());
 
@@ -253,6 +263,46 @@ describe('QuestionScreen', () => {
 
       expect(feedback).toHaveTextContent(strings.feedback.incorrect);
       expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
+    });
+
+    test('the aria-live feedback announcement spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, feedback } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      expect(feedback).toHaveAttribute('aria-live', 'polite');
+      expect(feedback).toHaveTextContent(question.options[question.correctAnswerIndex]);
+    });
+
+    test('gives the correct option a descriptive "Respuesta correcta" aria-label, and the tapped option a neutral one (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      const correctButton = optionButtons[question.correctAnswerIndex];
+      const wrongButton = optionButtons[wrongIndex];
+
+      expect(correctButton.getAttribute('aria-label')).toContain(question.options[question.correctAnswerIndex]);
+      expect(correctButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+      expect(wrongButton.getAttribute('aria-label')).toContain(question.options[wrongIndex]);
+      expect(wrongButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+    });
+
+    test('keeps the dinosaur illustration and its descriptive alt-text unchanged after a miss (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, image } = renderQuestionScreen(container, question);
+      const altBeforeAnswering = image.alt;
+
+      optionButtons[wrongIndex].click();
+
+      expect(image.alt).toBe(altBeforeAnswering);
+      expect(image.alt).toContain('Tyrannosaurus Rex');
+      expect(image).toBeVisible();
     });
 
     test('announces the miss and the correct answer text via an aria-live status region, without a sighted-only pointer like "esta" (TRIOFSND-79, AC-14)', () => {

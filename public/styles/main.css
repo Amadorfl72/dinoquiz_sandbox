@@ -435,6 +435,44 @@ body {
 }
 
 /*
+ * Question screen — layout (TRIOFSND-72): dinosaur illustration on top, a
+ * large centered enunciado (AC-4: >=20sp) in the middle, then the options
+ * grid. `clamp()` scales sizes smoothly for the tablet-horizontal target
+ * down to small phones, mirroring the .home-screen approach above.
+ */
+.question-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.question-screen__image {
+  display: block;
+  width: clamp(140px, 30vw, 280px);
+  height: auto;
+  max-width: 100%;
+}
+
+.question-screen__prompt {
+  margin: 0;
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+  line-height: 1.3;
+  font-weight: 700;
+  color: #1b5e20;
+  text-align: center;
+}
+
+.question-screen__score {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/*
  * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
  * Colors mirror src/theme/questionScreenColors.js, which contrast.test.js
@@ -475,13 +513,15 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  width: 100%;
 }
 
 .question-screen__option {
-  min-width: var(--tap-target-min);
-  min-height: var(--tap-target-min);
-  padding: 16px 20px;
   font-size: var(--font-size-button);
+  font-weight: 700;
+  padding: 16px 20px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
   font-family: inherit;
   border-radius: 16px;
   border: 3px solid var(--color-text);
@@ -505,6 +545,38 @@ body {
 
 .question-screen__option:disabled {
   cursor: default;
+}
+
+/*
+ * Unanswered-state option colors (TRIOFSND-72: "3-4 opciones de respuesta
+ * grandes y de colores distintos"). Values mirror
+ * QUESTION_OPTION_PALETTE in src/theme/questionScreenColors.js, which
+ * contrast.test.js checks against WCAG AA — keep both in sync. Placed
+ * before the `--correct`/`--neutral` rules below so those still win once
+ * answered (same specificity, later source order).
+ */
+.question-screen__option:nth-child(4n + 1) {
+  background-color: #1565c0;
+  border-color: #0d47a1;
+  color: #ffffff;
+}
+
+.question-screen__option:nth-child(4n + 2) {
+  background-color: #6a1b9a;
+  border-color: #4a0072;
+  color: #ffffff;
+}
+
+.question-screen__option:nth-child(4n + 3) {
+  background-color: #00695c;
+  border-color: #003d33;
+  color: #ffffff;
+}
+
+.question-screen__option:nth-child(4n + 4) {
+  background-color: #fbc02d;
+  border-color: #f57f17;
+  color: #1b5e20;
 }
 
 .question-screen__option--correct {
@@ -610,6 +682,12 @@ body {
   text-align: left;
 }
 
+.question-screen__feedback {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .question-screen__fun-fact-heading {
   margin: 0 0 8px;
   font-size: 20px;
@@ -618,6 +696,7 @@ body {
 .question-screen__fun-fact {
   margin: 0;
   font-size: 20px;
+  max-width: 60ch;
 }
 
 /*
@@ -670,6 +749,9 @@ body {
  * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
  * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
  * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ * The hover/focus-visible/active states (TRIOFSND-90) give sighted and
+ * keyboard users the same clear affordance screen-reader users get from
+ * the aria-live feedback announcement.
  */
 .question-screen__next-button {
   display: inline-flex;
@@ -690,11 +772,23 @@ body {
   touch-action: manipulation;
 }
 
+.question-screen__next-button:hover {
+  background-color: #388e3c;
+}
+
+.question-screen__next-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.question-screen__next-button:active {
+  transform: translateY(2px);
+}
+
 .question-screen__next-button:disabled {
   background-color: #a5d6a7;
   cursor: default;
 }
-
 /* Visually hides content while keeping it available to screen readers. */
 .sr-only {
   position: absolute;
