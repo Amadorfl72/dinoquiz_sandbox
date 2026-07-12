@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="braquiosaurioTitle">
+  <title id="braquiosaurioTitle">Braquiosaurio</title>
+  <!-- Tail -->
+  <path d="M90 310 q-40 0 -50 -40" fill="none" stroke="#7CB342" stroke-width="26" stroke-linecap="round"/>
+  <!-- Body -->
+  <ellipse cx="200" cy="280" rx="110" ry="70" fill="#8BC34A" stroke="#33691E" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="205" cy="298" rx="62" ry="38" fill="#F1F8E9"/>
+  <!-- Legs -->
+  <ellipse cx="150" cy="365" rx="24" ry="16" fill="#7CB342" stroke="#33691E" stroke-width="6"/>
+  <ellipse cx="255" cy="365" rx="24" ry="16" fill="#7CB342" stroke="#33691E" stroke-width="6"/>
+  <!-- Long neck -->
+  <path d="M280 250 q40 -110 70 -160" fill="none" stroke="#8BC34A" stroke-width="38" stroke-linecap="round"/>
+  <!-- Head -->
+  <ellipse cx="358" cy="80" rx="30" ry="22" fill="#8BC34A" stroke="#33691E" stroke-width="7"/>
+  <!-- Eye -->
+  <circle cx="365" cy="74" r="6" fill="#33691E"/>
+  <circle cx="367" cy="72" r="2" fill="#FFFFFF"/>
+</svg>

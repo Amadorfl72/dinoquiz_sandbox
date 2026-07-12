@@ -34,7 +34,7 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
 }
 ```
 

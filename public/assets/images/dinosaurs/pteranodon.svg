@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="pteranodonTitle">
+  <title id="pteranodonTitle">Pteranodon</title>
+  <!-- Wings -->
+  <path d="M200 220 q-120 -60 -170 -10 q60 10 100 60 z" fill="#5C6BC0" stroke="#1A237E" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M230 220 q120 -60 170 -10 q-60 10 -100 60 z" fill="#5C6BC0" stroke="#1A237E" stroke-width="7" stroke-linejoin="round"/>
+  <!-- Body -->
+  <ellipse cx="215" cy="240" rx="45" ry="60" fill="#7986CB" stroke="#1A237E" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="215" cy="255" rx="24" ry="34" fill="#E8EAF6"/>
+  <!-- Head -->
+  <circle cx="225" cy="160" r="40" fill="#7986CB" stroke="#1A237E" stroke-width="8"/>
+  <!-- Crest -->
+  <path d="M225 125 q10 -46 46 -46 q-18 24 -20 52 z" fill="#5C6BC0" stroke="#1A237E" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Beak -->
+  <path d="M258 168 l58 6 -58 20 z" fill="#FBC02D" stroke="#1A237E" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Eye -->
+  <circle cx="235" cy="150" r="8" fill="#1A237E"/>
+  <circle cx="238" cy="147" r="2.5" fill="#FFFFFF"/>
+</svg>
