@@ -61,6 +61,21 @@ describe('TRIOFSND-110: service worker registration', () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
+
+  test('TRIOFSND-113: resolves to null and logs instead of throwing when register() throws synchronously', async () => {
+    const { registerServiceWorker } = require(MAIN_JS_PATH);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const register = jest.fn(() => {
+      throw new Error('register is not implemented in this webview');
+    });
+    const nav = { serviceWorker: { register } };
+
+    const result = await registerServiceWorker(nav);
+
+    expect(result).toBeNull();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {

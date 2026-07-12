@@ -333,15 +333,27 @@
       return Promise.resolve(null);
     }
 
-    return nav.serviceWorker
-      .register(swPath)
-      .then(function (registration) {
-        return registration;
-      })
-      .catch(function (error) {
-        console.error('DinoQuiz: service worker registration failed', error);
-        return null;
-      });
+    // Some tablets/embedded webviews expose `navigator.serviceWorker` but
+    // throw synchronously from `.register()` instead of rejecting a promise
+    // (e.g. insecure context, disabled SW support behind a flag). Without
+    // this try/catch that throw would escape registerServiceWorker() and
+    // abort the `window.load` handler in main.js before it reaches
+    // `bootstrapBrowserApp()`/`renderRoute()`, breaking the game for a
+    // browser that otherwise works fine over plain HTTP fetches (TRIOFSND-113).
+    try {
+      return nav.serviceWorker
+        .register(swPath)
+        .then(function (registration) {
+          return registration;
+        })
+        .catch(function (error) {
+          console.error('DinoQuiz: service worker registration failed', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('DinoQuiz: service worker registration failed', error);
+      return Promise.resolve(null);
+    }
   }
 
   function fetchJson(fetchFn, resourcePath) {
