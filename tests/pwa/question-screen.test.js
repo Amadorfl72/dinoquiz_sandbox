@@ -1,5 +1,7 @@
 'use strict';
 
+require('@testing-library/jest-dom');
+
 const { renderQuestionScreen } = require('../../public/scripts/questionScreen');
 const scoring = require('../../public/scripts/scoring');
 
@@ -17,9 +19,11 @@ describe('Question Screen (TRIOFSND-72)', () => {
       scoreLabel: 'Puntuación',
       optionsGroupLabel: 'Opciones de respuesta',
       funFactHeading: 'Dato curioso',
-      nextButtonLabel: 'Siguiente',
-      correctFeedback: '¡Correcto!',
-      incorrectFeedback: 'La respuesta correcta es',
+      nextButton: 'Siguiente',
+      feedback: {
+        correct: '¡Correcto!',
+        incorrect: 'La respuesta correcta es',
+      },
     };
 
     mockDinosaurNames = {

@@ -123,7 +123,7 @@
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
 
-    var scoreEl = document.createElement('p');
+    var scoreEl = document.createElement('div');
     scoreEl.className = 'question-screen__score';
     scoreEl.setAttribute('aria-live', 'polite');
     scoreEl.textContent = strings.scoreLabel + ': ' + score;
@@ -133,7 +133,7 @@
     optionsGroup.setAttribute('role', 'group');
     optionsGroup.setAttribute('aria-label', strings.optionsGroupLabel);
 
-    var feedback = document.createElement('p');
+    var feedback = document.createElement('div');
     feedback.className = 'question-screen__feedback';
     feedback.setAttribute('aria-live', 'polite');
 
@@ -142,7 +142,7 @@
     funFactHeading.textContent = strings.funFactHeading;
     funFactHeading.hidden = true;
 
-    var funFact = document.createElement('p');
+    var funFact = document.createElement('div');
     funFact.className = 'question-screen__fun-fact';
     funFact.setAttribute('aria-live', 'polite');
     funFact.hidden = true;
@@ -151,7 +151,6 @@
     nextButton.type = 'button';
     nextButton.className = 'question-screen__next-button';
     nextButton.textContent = strings.nextButton;
-    nextButton.hidden = true;
 
     var optionButtons = question.options.map(function (optionText, index) {
       var button = document.createElement('button');
@@ -193,7 +192,7 @@
       funFact.textContent = question.funFact;
       funFact.hidden = false;
 
-      nextButton.hidden = false;
+      root.appendChild(nextButton);
 
       if (onAnswer) {
         onAnswer({
@@ -219,7 +218,6 @@
     root.appendChild(feedback);
     root.appendChild(funFactHeading);
     root.appendChild(funFact);
-    root.appendChild(nextButton);
     container.appendChild(root);
 
     warmUpFeedbackAnimation();

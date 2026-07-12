@@ -23,7 +23,7 @@ describe('QuestionScreen module exports', () => {
       scoreLabel: 'Score',
       optionsGroupLabel: 'Options',
       funFactHeading: 'Fun Fact',
-      nextButtonLabel: 'Next',
+      nextButton: 'Next',
     };
 
     expect(() => {
