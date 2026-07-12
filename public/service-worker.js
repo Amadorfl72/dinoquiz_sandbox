@@ -24,6 +24,7 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/styles/main.css',
   '/scripts/scoring.js',
+  '/scripts/adsService.js',
   '/scripts/gameFlow.js',
   '/scripts/audio.js',
   '/scripts/appShell.js',

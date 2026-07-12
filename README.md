@@ -217,7 +217,36 @@ Tras responder, además del resaltado de la opción correcta, la pantalla muestr
   menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
   ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
 
+### CTA opcional de anuncio con recompensa (TRIOFSND-86)
 
+Junto al dato curioso gratuito, la pantalla de feedback ofrece un CTA opcional y
+claramente etiquetado ("🎬 Ver anuncio: ¡dato extra!", `question-screen__rewarded-ad-cta`)
+para desbloquear un segundo dato curioso viendo un anuncio con recompensa. El CTA llama al
+único punto de entrada de anuncios de la app,
+[`src/services/ads/rewardedAdService.js`](src/services/ads/rewardedAdService.js), en vez de
+hablar con un SDK de anuncios directamente — así, cuando en el futuro se integre una red de
+anuncios real, solo hay que sustituir el `provider` de ese servicio, sin tocar la pantalla.
+
+- El CTA solo se muestra si `rewardedAdService.isAvailable()` responde `true`. La v1 no
+  integra ningún SDK de anuncios (ver `open_risks` del PRD: "sin SDK publicitario
+  comportamental"), así que el proveedor por defecto siempre informa que no hay anuncio
+  disponible y el CTA permanece oculto — el mecanismo completo queda implementado y
+  probado (con un proveedor simulado inyectable) listo para activarse.
+- `rewardedAdService.request()` nunca rechaza la promesa: si el anuncio no está disponible,
+  no se completa o el proveedor lanza un error, siempre resuelve
+  `{ granted: false, reason: ... }`. La pantalla nunca necesita `try/catch` ni bloquea el
+  flujo — "Siguiente" y su temporizador son completamente independientes del CTA.
+- Si el niño ve el anuncio hasta el final (`granted: true`), se revela un segundo recuadro
+  de dato curioso (`question-screen__extra-fun-fact-box`, azul para diferenciarlo del
+  amarillo del dato curioso gratuito) con un dato adicional del mismo dinosaurio
+  (`question.rewardedAd.extraFacts` en `es.json`).
+- Si no se completa, se muestra un mensaje neutro y no bloqueante
+  (`question-screen__rewarded-ad-status`, `aria-live="polite"`) y la partida continúa igual.
+
+Como el resto de pantallas, la implementación real vive en
+[`public/scripts/questionScreen.js`](public/scripts/questionScreen.js) (con la misma
+resolución `require`-o-`window.DinoQuiz` que usa para scoring/i18n) y
+[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) la re-exporta para Node/Jest.
 
 ## Pantalla de Resultados
 
@@ -262,3 +291,18 @@ cada `dato_curioso` a su texto de dato curioso) y lo deja en `window.DinoQuiz` p
 `resolveGameFlow` y `loadQuestions` resuelven desde `window.DinoQuiz` en el navegador o vía
 `require` bajo Node/Jest, por lo que el flujo corre igual en la PWA real y en los tests sin
 bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
+
+### Blindaje contra enlaces externos navegables (TRIOFSND-121)
+
+Ninguna de las tres pantallas del flujo cerrado (ni la política de privacidad) renderiza hoy
+un `<a>`, pero el PRD exige que un niño de 6-8 años nunca pueda salir de la app de un toque,
+ni siquiera si una futura pantalla, cadena i18n o integración de anuncios/compra introdujera
+un enlace por error. [`installExternalLinkGuard`](public/scripts/appShell.js) instala un único
+listener de clic en fase de captura sobre la raíz del app-shell (cubre `#app` y
+`#mute-toggle`, es decir toda pantalla presente y futura) que cancela cualquier clic sobre un
+`<a>` cuyo `href` resuelva a un origen distinto o cuyo `target` sea `_blank`, y neutraliza
+`window.open` para que tampoco un popup lanzado por script pueda sacar al niño de la app. La
+navegación interna (la ruta por hash de la política de privacidad, TRIOFSND-116) no usa
+`<a>` ni `window.open`, así que no se ve afectada. `public/scripts/main.js` lo instala una vez
+al arrancar (`installLinkGuard`, en el listener `load`), junto al registro del service worker
+(ver [`tests/pwa/external-link-guard.test.js`](tests/pwa/external-link-guard.test.js)).

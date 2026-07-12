@@ -1,23 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="trexTitle">
-  <title id="trexTitle">Tyrannosaurus Rex, un gran cazador de dientes afilados</title>
+  <title id="trexTitle">Tyrannosaurus Rex</title>
   <!-- Tail -->
-  <path d="M90 290 q-50 10 -60 -40 q40 20 66 8 z" fill="#E57373" stroke="#B71C1C" stroke-width="8" stroke-linejoin="round"/>
-  <!-- Body -->
-  <ellipse cx="190" cy="260" rx="100" ry="80" fill="#E57373" stroke="#B71C1C" stroke-width="8"/>
-  <!-- Belly -->
-  <ellipse cx="195" cy="280" rx="60" ry="46" fill="#FFF8E1"/>
+  <path d="M70 300 q-40 -10 -46 -46" fill="none" stroke="#E57373" stroke-width="34" stroke-linecap="round"/>
   <!-- Legs -->
-  <ellipse cx="150" cy="345" rx="30" ry="20" fill="#C62828" stroke="#B71C1C" stroke-width="6"/>
-  <ellipse cx="250" cy="345" rx="30" ry="20" fill="#C62828" stroke="#B71C1C" stroke-width="6"/>
-  <!-- Tiny arm -->
-  <path d="M215 260 q20 10 18 30" fill="none" stroke="#E57373" stroke-width="14" stroke-linecap="round"/>
-  <!-- Neck/Head -->
-  <circle cx="300" cy="150" r="66" fill="#E57373" stroke="#B71C1C" stroke-width="8"/>
+  <ellipse cx="170" cy="345" rx="28" ry="20" fill="#C62828" stroke="#7F0000" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="28" ry="20" fill="#C62828" stroke="#7F0000" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="210" cy="250" rx="120" ry="95" fill="#E57373" stroke="#7F0000" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="210" cy="270" rx="70" ry="55" fill="#FFF3E0"/>
+  <!-- Tiny arms -->
+  <path d="M150 240 q-20 10 -18 30" fill="none" stroke="#E57373" stroke-width="14" stroke-linecap="round"/>
+  <path d="M270 240 q20 10 18 30" fill="none" stroke="#E57373" stroke-width="14" stroke-linecap="round"/>
+  <!-- Head -->
+  <ellipse cx="300" cy="140" rx="78" ry="62" fill="#E57373" stroke="#7F0000" stroke-width="8"/>
   <!-- Jaw -->
-  <path d="M300 175 q60 -6 68 24 q-34 18 -66 4 z" fill="#E57373" stroke="#B71C1C" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M240 175 q80 40 140 -5 q-10 30 -70 32 q-50 0 -70 -27 z" fill="#FFFFFF" stroke="#7F0000" stroke-width="6"/>
   <!-- Teeth -->
-  <path d="M320 197 l6 10 l6 -10 M340 200 l6 10 l6 -10" fill="none" stroke="#FFF8E1" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#FFFFFF" stroke="#7F0000" stroke-width="2">
+    <path d="M255 178 l6 12 6 -12 z"/>
+    <path d="M280 190 l6 12 6 -12 z"/>
+    <path d="M305 195 l6 12 6 -12 z"/>
+  </g>
   <!-- Eye -->
-  <circle cx="315" cy="128" r="10" fill="#B71C1C"/>
-  <circle cx="318" cy="124" r="3" fill="#FFFFFF"/>
+  <circle cx="315" cy="115" r="12" fill="#7F0000"/>
+  <circle cx="319" cy="111" r="4" fill="#FFFFFF"/>
 </svg>

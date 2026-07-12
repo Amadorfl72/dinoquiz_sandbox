@@ -1,23 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="velociraptorTitle">
-  <title id="velociraptorTitle">Velociraptor, veloz y cazador en manada</title>
+  <title id="velociraptorTitle">Velociraptor</title>
   <!-- Tail -->
-  <path d="M110 280 q-60 -10 -70 -70 q46 30 76 26 z" fill="#4DB6AC" stroke="#00695C" stroke-width="8" stroke-linejoin="round"/>
-  <!-- Body -->
-  <ellipse cx="210" cy="255" rx="86" ry="62" fill="#4DB6AC" stroke="#00695C" stroke-width="8"/>
-  <!-- Belly -->
-  <ellipse cx="215" cy="268" rx="50" ry="34" fill="#FFF8E1"/>
+  <path d="M90 280 q-50 -20 -50 -70" fill="none" stroke="#8E24AA" stroke-width="24" stroke-linecap="round"/>
   <!-- Legs -->
-  <path d="M170 300 q-6 40 -30 46" fill="none" stroke="#00897B" stroke-width="16" stroke-linecap="round"/>
-  <path d="M250 300 q6 40 30 46" fill="none" stroke="#00897B" stroke-width="16" stroke-linecap="round"/>
+  <ellipse cx="190" cy="345" rx="22" ry="18" fill="#6A1B9A" stroke="#38006B" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="22" ry="18" fill="#6A1B9A" stroke="#38006B" stroke-width="6"/>
   <!-- Claw -->
-  <path d="M280 346 l18 8" fill="none" stroke="#FFF8E1" stroke-width="5" stroke-linecap="round"/>
+  <path d="M270 335 l24 -10 -4 18 z" fill="#FFF8E1" stroke="#38006B" stroke-width="4"/>
+  <!-- Body -->
+  <ellipse cx="220" cy="255" rx="95" ry="70" fill="#8E24AA" stroke="#38006B" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="220" cy="268" rx="55" ry="40" fill="#FFF3E0"/>
+  <!-- Arms -->
+  <path d="M170 235 q-24 6 -30 28" fill="none" stroke="#8E24AA" stroke-width="12" stroke-linecap="round"/>
   <!-- Neck/Head -->
-  <path d="M270 230 q60 -30 70 -80 q30 6 20 46 q-10 34 -50 54 z" fill="#4DB6AC" stroke="#00695C" stroke-width="8" stroke-linejoin="round"/>
-  <!-- Snout -->
-  <path d="M340 160 q26 -6 30 14 q-18 12 -34 4 z" fill="#4DB6AC" stroke="#00695C" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="315" cy="165" rx="55" ry="40" fill="#8E24AA" stroke="#38006B" stroke-width="8"/>
+  <path d="M340 150 l55 -14 -22 40 z" fill="#8E24AA" stroke="#38006B" stroke-width="6"/>
   <!-- Feather crest -->
-  <path d="M300 105 l10 -22 M314 100 l12 -20 M328 100 l10 -18" fill="none" stroke="#00695C" stroke-width="5" stroke-linecap="round"/>
+  <g fill="#FBC02D" stroke="#38006B" stroke-width="4">
+    <path d="M280 125 l10 -26 12 22 z"/>
+    <path d="M300 118 l10 -28 12 24 z"/>
+  </g>
   <!-- Eye -->
-  <circle cx="322" cy="140" r="8" fill="#00695C"/>
-  <circle cx="325" cy="137" r="2.5" fill="#FFFFFF"/>
+  <circle cx="330" cy="150" r="9" fill="#38006B"/>
+  <circle cx="333" cy="147" r="3" fill="#FFFFFF"/>
 </svg>
