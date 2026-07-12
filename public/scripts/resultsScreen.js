@@ -35,7 +35,9 @@
 
   // Content-guide guard: words that would read as negative/discouraging to a
   // 6-8 year old. Motivational messages must never contain any of these
-  // (matched as whole, accent-stripped words, not substrings).
+  // (matched as whole, accent-stripped words, not substrings). Exported so
+  // other screens (e.g. QuestionScreen's failure feedback, TRIOFSND-91) can
+  // audit their own copy against the same list instead of duplicating it.
   var BANNED_WORDS = new Set([
     'mal',
     'malo',
@@ -244,6 +246,7 @@
     MAX_STARS: MAX_STARS,
     STAR_TIERS: STAR_TIERS,
     BANNED_WORDS: BANNED_WORDS,
+    normalizeToWords: normalizeToWords,
     calculateStars: calculateStars,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
