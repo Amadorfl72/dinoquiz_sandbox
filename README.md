@@ -255,3 +255,18 @@ cada `dato_curioso` a su texto de dato curioso) y lo deja en `window.DinoQuiz` p
 `resolveGameFlow` y `loadQuestions` resuelven desde `window.DinoQuiz` en el navegador o vía
 `require` bajo Node/Jest, por lo que el flujo corre igual en la PWA real y en los tests sin
 bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
+
+### Blindaje contra enlaces externos navegables (TRIOFSND-121)
+
+Ninguna de las tres pantallas del flujo cerrado (ni la política de privacidad) renderiza hoy
+un `<a>`, pero el PRD exige que un niño de 6-8 años nunca pueda salir de la app de un toque,
+ni siquiera si una futura pantalla, cadena i18n o integración de anuncios/compra introdujera
+un enlace por error. [`installExternalLinkGuard`](public/scripts/appShell.js) instala un único
+listener de clic en fase de captura sobre la raíz del app-shell (cubre `#app` y
+`#mute-toggle`, es decir toda pantalla presente y futura) que cancela cualquier clic sobre un
+`<a>` cuyo `href` resuelva a un origen distinto o cuyo `target` sea `_blank`, y neutraliza
+`window.open` para que tampoco un popup lanzado por script pueda sacar al niño de la app. La
+navegación interna (la ruta por hash de la política de privacidad, TRIOFSND-116) no usa
+`<a>` ni `window.open`, así que no se ve afectada. `public/scripts/main.js` lo instala una vez
+al arrancar (`installLinkGuard`, en el listener `load`), junto al registro del service worker
+(ver [`tests/pwa/external-link-guard.test.js`](tests/pwa/external-link-guard.test.js)).

@@ -275,6 +275,18 @@ class DinoQuizStorage {
     const counts = await this.get('analyticsEventCounts');
     return counts[eventName] || 0;
   }
+
+  /**
+   * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
+   * Unlike `recordEventOnce`, increments on every call -- this is what repeatable
+   * product events (e.g. partida_iniciada, one per game start) need.
+   */
+  async recordEvent(eventName) {
+    const counts = await this.get('analyticsEventCounts');
+    const next = (counts[eventName] || 0) + 1;
+    await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
+    return next;
+  }
 }
 
 module.exports = { DinoQuizStorage };
