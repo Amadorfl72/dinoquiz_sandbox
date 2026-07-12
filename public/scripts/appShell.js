@@ -68,6 +68,12 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
+    // Belt-and-braces alongside the CSS rule (public/styles/main.css): jsdom's
+    // getComputedStyle doesn't resolve external stylesheets, so this inline
+    // style guarantees the 48x48dp touch target (AC-2) is verifiable in
+    // tests and holds even if the stylesheet fails to load in the browser.
+    button.style.minWidth = '48px';
+    button.style.minHeight = '48px';
 
     function applyState() {
       button.setAttribute('aria-pressed', String(isMuted));
