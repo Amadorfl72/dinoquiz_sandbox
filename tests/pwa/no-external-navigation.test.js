@@ -57,6 +57,19 @@ const FORBIDDEN_PATTERNS = [
       src.includes('location.replace') ||
       src.includes('location.href'),
   },
+  {
+    // Security (TRIOFSND-121): a protocol-relative URL such as '//evil.example'
+    // is a real escape hatch -- it inherits the current scheme and navigates
+    // off the PWA, yet a naive "starts with '/' => internal" check would treat
+    // it as safe. Forbid any protocol-relative or external-scheme URL *string
+    // literal* in the child-flow screens (a leading quote distinguishes it from
+    // a harmless `//` JS comment, so this never false-positives on comments).
+    name: 'protocol-relative or external URL literal',
+    matches: (src) =>
+      /["']\/\//.test(src) ||
+      /["']https?:\/\//.test(src) ||
+      /["'](?:mailto|tel):/.test(src),
+  },
 ];
 
 function assertNoExternalEscapeHatches(container) {
