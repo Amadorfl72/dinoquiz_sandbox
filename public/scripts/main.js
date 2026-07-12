@@ -290,6 +290,26 @@
     return session;
   }
 
+  /**
+   * Resolves and installs `appShell.js`'s `installExternalLinkGuard`
+   * (TRIOFSND-121), the same way `resolveScreenRenderers`/`resolveGameFlow`
+   * resolve their browser-global vs. `require`d counterparts. A missing
+   * resolver (e.g. appShell.js failed to load) just means no guard installs
+   * -- it never blocks the rest of the bootstrap.
+   */
+  function installLinkGuard(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var installer =
+      (win && win.DinoQuiz && win.DinoQuiz.appShell && win.DinoQuiz.appShell.installExternalLinkGuard) ||
+      (typeof require === 'function' ? require('./appShell').installExternalLinkGuard : undefined);
+
+    if (typeof installer !== 'function') {
+      return null;
+    }
+
+    return installer(win && win.document, win);
+  }
+
   function registerServiceWorker(nav, swPath) {
     nav = nav || (typeof navigator !== 'undefined' ? navigator : undefined);
     swPath = swPath || '/service-worker.js';
@@ -605,6 +625,7 @@
   }
   if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('load', function () {
+      installLinkGuard();
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {
         renderRoute();
@@ -620,6 +641,7 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
