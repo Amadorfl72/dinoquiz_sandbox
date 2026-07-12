@@ -104,13 +104,15 @@
  * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
  * is threaded through `startNewGame` -> `renderQuestionAt` ->
  * `renderResultsFor` (replay reuses it too) as `analyticsStorage`, so the
- * `onAnswer` handler in `renderQuestionAt` can record the aggregated,
- * non-PII `pregunta_respondida_fallo` event via `storage.recordEvent`
- * whenever `result.isCorrect` is false -- this is the "acierto/fallo" half
- * of the PRD's `pregunta_respondida` logging event (see
- * logging_observability), kept as its own counter since the client-only
+ * `onAnswer` handler in `renderQuestionAt` records the canonical, non-PII
+ * `pregunta_respondida` event (AC-18) via `storage.recordEvent` on every
+ * answered question, and additionally records `pregunta_respondida_fallo`
+ * whenever `result.isCorrect` is false. Since the client-only
  * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
- * per-event payloads.
+ * per-event payloads, the failure count travels as its own counter instead
+ * of a field on `pregunta_respondida` -- comparing the two counters is what
+ * yields the aggregated "% acierto por pregunta" the PRD's
+ * logging_observability calls for.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -254,8 +256,12 @@
           },
         ]);
 
-        if (analyticsStorage && !result.isCorrect) {
-          analyticsStorage.recordEvent('pregunta_respondida_fallo');
+        if (analyticsStorage) {
+          analyticsStorage.recordEvent('pregunta_respondida');
+
+          if (!result.isCorrect) {
+            analyticsStorage.recordEvent('pregunta_respondida_fallo');
+          }
         }
       },
       onNext: function () {

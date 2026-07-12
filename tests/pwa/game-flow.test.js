@@ -186,7 +186,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     });
   });
 
-  test('TRIOFSND-92: an incorrect answer records the aggregated, non-PII pregunta_respondida_fallo event', () => {
+  test('TRIOFSND-92: an incorrect answer records the aggregated, non-PII pregunta_respondida and pregunta_respondida_fallo events', () => {
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -212,11 +212,12 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
         jest.useRealTimers();
       }
 
+      expect(storage.recordEvent).toHaveBeenCalledWith('pregunta_respondida');
       expect(storage.recordEvent).toHaveBeenCalledWith('pregunta_respondida_fallo');
     });
   });
 
-  test('TRIOFSND-92: a correct answer does not record the pregunta_respondida_fallo event', () => {
+  test('TRIOFSND-92: a correct answer records the pregunta_respondida event but not the pregunta_respondida_fallo event', () => {
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -242,6 +243,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
         jest.useRealTimers();
       }
 
+      expect(storage.recordEvent).toHaveBeenCalledWith('pregunta_respondida');
       expect(storage.recordEvent).not.toHaveBeenCalledWith('pregunta_respondida_fallo');
     });
   });
