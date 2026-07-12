@@ -72,6 +72,47 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(typeof renderers.renderResultsScreen).toBe('function');
   });
 
+  test('acierto: reveals the "Dato Curioso" for the answered question before "Siguiente" is used to advance', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(2);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    const [correctButton] = container.querySelectorAll('.question-screen__option');
+    correctButton.click();
+
+    const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+    expect(funFactBox.hidden).toBe(false);
+    expect(funFactBox.textContent).toContain(questions[0].funFact);
+
+    jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+
+    expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+  });
+
+  test('fallo: also reveals the "Dato Curioso" (no penalty, no negative copy) before advancing to the next question', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(2);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    const buttons = container.querySelectorAll('.question-screen__option');
+    buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
+
+    const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+    expect(funFactBox.hidden).toBe(false);
+    expect(funFactBox.textContent).toContain(questions[0].funFact);
+    expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+
+    jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+
+    expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+  });
+
   test('startNewGame walks through every question, acertando todas, and lands on Resultados with the right score', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
