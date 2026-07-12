@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88).
+ * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88 / TRIOFSND-83 / TRIOFSND-135 / TRIOFSND-79).
  *
  * The implementation lives in public/scripts/questionScreen.js because the
  * browser renders this screen directly, and without a bundler it must be

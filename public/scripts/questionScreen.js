@@ -13,13 +13,47 @@
  * border) whether the child got it right or not; the wrong pick itself only
  * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
  * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
- * outcomes then reveal the same fun fact (in a "dato curioso" box) and
- * "Siguiente" control, so the flow to the next question is identical
+ * outcomes then reveal the same fun fact (in a yellow "dato curioso" box)
+ * and "Siguiente" control, so the flow to the next question is identical
  * whether the answer was right or wrong.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
- * the browser paints the new state on the very next frame.
+ * the browser paints the new state on the very next frame. The only
+ * animation used is the CSS keyframe in main.css (transform/opacity only,
+ * compositor-driven, no layout thrashing). `warmUpFeedbackAnimation` forces
+ * the browser to resolve that keyframe's styles once, off-screen, right
+ * after the question mounts, so the child's first tap doesn't pay a
+ * first-run style-recalculation cost.
+ *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
+ * (4s), guaranteeing the dato curioso stays on screen long enough to read.
+ * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted (no audio
+ * dependency).
+ *
+ * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
+ * visible `feedback` paragraph are both `aria-live="polite"`, and the
+ * dinosaur illustration carries a descriptive `alt` built from the i18n
+ * `dinosaurNames` map instead of a generic label. But neither states
+ * *which* option was correct in words — a sighted child sees the green
+ * highlight, a screen reader user would not. `announcementEl`
+ * (`role="status"`, `aria-live="polite"`, visually hidden via `.sr-only`)
+ * closes that gap: it is written synchronously in the same click handler
+ * that applies the visual/score feedback (no timers, no dependency on the
+ * fun-fact reveal or the mute state), so TalkBack/VoiceOver announce
+ * acierto/fallo *and* the correct option's text immediately after the tap,
+ * exactly like the summary announcement in public/scripts/resultsScreen.js.
+ *
+ * Fail sound (TRIOFSND-89): a wrong pick additionally plays a soft, neutral
+ * effect via public/scripts/audio.js's `playFailSound` — never a harsh/error
+ * sound, matching AC-7's "no penalization, no negative language". It's
+ * muted-aware: `options.muted` (the global mute preference from
+ * public/scripts/main.js, TRIOFSND-66) is forwarded straight through, so in
+ * silent mode the miss is communicated only visually, exactly like the
+ * existing feedback styling. `options.playFailSound` lets callers override
+ * the resolved audio module (used by tests).
  *
  * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
  * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
@@ -41,6 +75,13 @@
  * the `src/i18n` loader under Node — never a hardcoded string (AC-15). It
  * registers on `window.DinoQuiz.screens.renderQuestionScreen`; the canonical
  * `src/screens/QuestionScreen.js` re-exports this file.
+ *
+ * Dinosaur image alt-text (TRIOFSND-135, AC-14): the illustration's `alt` is
+ * built from the question bank data — the dinosaur's display name (i18n
+ * `dinosaurNames` map) plus the resolved `question.funFact` (the same
+ * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
+ * `imageAltFunFact`, so screen readers announce a descriptive name + fact
+ * for every question in the 40-question bank instead of a generic label.
  */
 
 (function () {
@@ -50,6 +91,17 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+
+  function resolveImageAlt(strings, dinosaur, funFact) {
+    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
+    var alt = strings.imageAlt.replace('{dinosaur}', dinosaurName);
+
+    if (typeof funFact === 'string' && funFact.trim() !== '') {
+      alt += ' ' + strings.imageAltFunFact.replace('{funFact}', funFact);
+    }
+
+    return alt;
+  }
 
   function resolveStrings(options) {
     options = options || {};
@@ -76,6 +128,58 @@
     return strings.imageAlt.replace('{dinosaur}', dinosaurName);
   }
 
+  function formatTemplate(template, values) {
+    return Object.keys(values).reduce(function (result, key) {
+      return result.split('{' + key + '}').join(values[key]);
+    }, template);
+  }
+
+  // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
+  // curioso heading are the copy a child sees right after a miss, so they are
+  // held to the same no-reproach standard as ResultsScreen's motivational
+  // messages — reusing that same banned-word list rather than a second one.
+  // Only invoked by the audit tests under Node/Jest, never during rendering,
+  // so it resolves `resultsScreen` lazily instead of at module load (the
+  // browser never calls it, so it never needs `require` to exist there).
+  function validateFeedbackCopy(strings) {
+    if (typeof require !== 'function') {
+      return ['validateFeedbackCopy requires a CommonJS `require` (Node/Jest only)'];
+    }
+    var resultsScreen = require('./resultsScreen');
+    var errors = [];
+    var fieldsToCheck = [
+      ['feedback.correct', strings && strings.feedback && strings.feedback.correct],
+      ['feedback.incorrect', strings && strings.feedback && strings.feedback.incorrect],
+      ['funFactHeading', strings && strings.funFactHeading],
+      ['nextButton', strings && strings.nextButton],
+    ];
+
+    fieldsToCheck.forEach(function (field) {
+      var name = field[0];
+      var value = field[1];
+
+      if (typeof value !== 'string' || value.trim() === '') {
+        errors.push(name + ' must be a non-empty string');
+        return;
+      }
+
+      var bannedWordsFound = resultsScreen.normalizeToWords(value).filter(function (word) {
+        return resultsScreen.BANNED_WORDS.has(word);
+      });
+      if (bannedWordsFound.length > 0) {
+        errors.push(name + ' ("' + value + '") contains negative language: ' + bannedWordsFound.join(', '));
+      }
+    });
+
+    return errors;
+  }
+
+  function resolveAudio() {
+    if (typeof require === 'function') {
+      return require('./audio');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
+  }
   function warmUpFeedbackAnimation() {
     if (typeof document === 'undefined') return;
 
@@ -94,6 +198,13 @@
     options = options || {};
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
+    var audio = resolveAudio();
+    var playFailSound =
+      typeof options.playFailSound === 'function'
+        ? options.playFailSound
+        : audio && typeof audio.playFailSound === 'function'
+        ? audio.playFailSound
+        : null;
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
 
     var score = options.score || 0;
@@ -113,7 +224,6 @@
     image.src = IMAGE_BASE_PATH + question.image;
     image.alt = resolveImageAlt(strings, question.dinosaur);
     image.decoding = 'async';
-
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.setAttribute('aria-live', 'polite');
@@ -128,10 +238,14 @@
     feedback.className = 'question-screen__feedback';
     feedback.setAttribute('aria-live', 'polite');
 
+    var announcementEl = document.createElement('p');
+    announcementEl.className = 'question-screen__announcement sr-only';
+    announcementEl.setAttribute('role', 'status');
+    announcementEl.setAttribute('aria-live', 'polite');
+
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
     funFactBox.hidden = true;
-
     var funFactHeading = document.createElement('h3');
     funFactHeading.className = 'question-screen__fun-fact-heading';
     funFactHeading.textContent = strings.funFactHeading;
@@ -168,6 +282,7 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
+      var correctAnswerText = question.options[question.correctAnswerIndex];
 
       optionButtons.forEach(function (button, index) {
         button.disabled = true;
@@ -185,6 +300,13 @@
       feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo and the correct option's text immediately after the
+      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
+      announcementEl.textContent = formatTemplate(
+        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
+        { correctAnswer: correctAnswerText }
+      );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
@@ -193,6 +315,10 @@
       setTimeout(function () {
         nextButton.disabled = false;
       }, MIN_ADVANCE_DELAY_MS);
+
+      if (!correct && playFailSound) {
+        playFailSound({ muted: !!options.muted });
+      }
 
       if (onAnswer) {
         onAnswer({
@@ -216,6 +342,7 @@
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
+    root.appendChild(announcementEl);
     root.appendChild(funFactBox);
     root.appendChild(nextButton);
     container.appendChild(root);
@@ -229,6 +356,7 @@
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
+      announcementEl: announcementEl,
       funFactBox: funFactBox,
       funFact: funFact,
       nextButton: nextButton,
@@ -244,6 +372,7 @@
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    validateFeedbackCopy: validateFeedbackCopy,
     MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };
 
