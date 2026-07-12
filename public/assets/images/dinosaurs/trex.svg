@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="trexTitle">
+  <title id="trexTitle">Tyrannosaurus Rex, un gran cazador de dientes afilados</title>
+  <!-- Tail -->
+  <path d="M90 290 q-50 10 -60 -40 q40 20 66 8 z" fill="#E57373" stroke="#B71C1C" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Body -->
+  <ellipse cx="190" cy="260" rx="100" ry="80" fill="#E57373" stroke="#B71C1C" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="195" cy="280" rx="60" ry="46" fill="#FFF8E1"/>
+  <!-- Legs -->
+  <ellipse cx="150" cy="345" rx="30" ry="20" fill="#C62828" stroke="#B71C1C" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="30" ry="20" fill="#C62828" stroke="#B71C1C" stroke-width="6"/>
+  <!-- Tiny arm -->
+  <path d="M215 260 q20 10 18 30" fill="none" stroke="#E57373" stroke-width="14" stroke-linecap="round"/>
+  <!-- Neck/Head -->
+  <circle cx="300" cy="150" r="66" fill="#E57373" stroke="#B71C1C" stroke-width="8"/>
+  <!-- Jaw -->
+  <path d="M300 175 q60 -6 68 24 q-34 18 -66 4 z" fill="#E57373" stroke="#B71C1C" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Teeth -->
+  <path d="M320 197 l6 10 l6 -10 M340 200 l6 10 l6 -10" fill="none" stroke="#FFF8E1" stroke-width="4" stroke-linecap="round"/>
+  <!-- Eye -->
+  <circle cx="315" cy="128" r="10" fill="#B71C1C"/>
+  <circle cx="318" cy="124" r="3" fill="#FFFFFF"/>
+</svg>

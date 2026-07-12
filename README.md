@@ -61,7 +61,7 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
 }
 ```
 
@@ -69,6 +69,15 @@ Cada pregunta sigue este esquema:
 respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
+
+Las ilustraciones referenciadas por `image` viven en
+[`public/assets/images/dinosaurs/`](public/assets/images/dinosaurs) — un SVG cartoon por
+especie (trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
+pteranodon), en el mismo estilo que la mascota. Son ligeros y no requieren red, por lo que el
+service worker los precachea junto al resto del app shell (ver
+[`public/service-worker.js`](public/service-worker.js)) y quedan disponibles offline desde el
+primer arranque; `src/data/questionBank.test.js` verifica que cada `image` del banco resuelva
+a un fichero real bajo esa carpeta.
 
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el

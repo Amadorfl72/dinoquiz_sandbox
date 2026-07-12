@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="pteranodonTitle">
+  <title id="pteranodonTitle">Pteranodon, un reptil volador con una gran cresta en la cabeza</title>
+  <!-- Wings -->
+  <path d="M200 200 q-110 -50 -170 10 q80 -10 150 40 z" fill="#4FC3F7" stroke="#01579B" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M220 200 q110 -50 170 10 q-80 -10 -150 40 z" fill="#4FC3F7" stroke="#01579B" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Body -->
+  <ellipse cx="210" cy="230" rx="46" ry="60" fill="#4FC3F7" stroke="#01579B" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="210" cy="245" rx="26" ry="36" fill="#FFF8E1"/>
+  <!-- Head -->
+  <ellipse cx="225" cy="145" rx="36" ry="28" fill="#4FC3F7" stroke="#01579B" stroke-width="8"/>
+  <!-- Beak -->
+  <path d="M255 150 q50 -4 56 14 q-46 14 -60 0 z" fill="#4FC3F7" stroke="#01579B" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Crest -->
+  <path d="M215 118 q10 -46 46 -56 q-18 34 -30 60 z" fill="#0288D1" stroke="#01579B" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Eye -->
+  <circle cx="235" cy="140" r="7" fill="#01579B"/>
+  <circle cx="238" cy="137" r="2.5" fill="#FFFFFF"/>
+</svg>
