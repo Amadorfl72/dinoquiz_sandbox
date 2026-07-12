@@ -51,6 +51,7 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
   afterEach(() => {
     jest.useRealTimers();
     container.remove();
+    jest.useRealTimers();
   });
 
   test('resolveScreenRenderers resolves all three screens under Node/Jest', () => {

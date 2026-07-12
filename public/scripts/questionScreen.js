@@ -1,9 +1,10 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88): shows one question
- * with its options and, once the child taps an answer, the feedback and
- * "dato curioso" for that answer (TRIOFSND-83).
+ * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88): shows
+ * one question with its dinosaur illustration and options and, once the
+ * child taps an answer, the feedback and "dato curioso" for that answer
+ * (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -53,6 +54,18 @@
  * silent mode the miss is communicated only visually, exactly like the
  * existing feedback styling. `options.playFailSound` lets callers override
  * the resolved audio module (used by tests).
+ *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
+ * (4s), guaranteeing the dato curioso stays on screen long enough to read.
+ * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted (no audio
+ * dependency).
+ *
+ * Accessibility (AC-4/AC-14): the dinosaur illustration carries a
+ * descriptive `alt` built from the i18n `dinosaurNames` map instead of a
+ * generic label, and the dato curioso is `aria-live="polite"` so
+ * TalkBack/VoiceOver announce it as soon as it's revealed.
  *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
@@ -108,6 +121,11 @@
       return require('./scoring');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
+
+  function resolveImageAlt(strings, dinosaur) {
+    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
+    return strings.imageAlt.replace('{dinosaur}', dinosaurName);
   }
 
   function formatTemplate(template, values) {
@@ -204,7 +222,7 @@
     var image = document.createElement('img');
     image.className = 'question-screen__image';
     image.src = IMAGE_BASE_PATH + question.image;
-    image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
+    image.alt = resolveImageAlt(strings, question.dinosaur);
     image.decoding = 'async';
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';

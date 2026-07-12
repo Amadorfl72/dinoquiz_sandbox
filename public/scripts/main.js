@@ -364,6 +364,12 @@
     });
   }
 
+  /**
+   * Fetches the whole i18n resource once and hands back the three sections
+   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
+   * browser can render the global controls without a `require()` for
+   * `src/i18n`.
+   */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
@@ -540,9 +546,11 @@
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
+
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
+
       if (muteStorageObj) {
         renderOptions.muted = loadMutedState(muteStorageObj);
         renderOptions.onToggleMute = function (muted) {

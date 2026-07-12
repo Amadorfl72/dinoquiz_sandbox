@@ -462,7 +462,7 @@ body {
 }
 
 .question-screen__score {
-  font-size: var(--font-size-body);
+  font-size: 20px;
   margin: 0 0 16px;
   color: var(--color-text);
 }
@@ -710,9 +710,9 @@ body {
 
 .results-screen__play-again-button,
 .results-screen__exit-button {
-  min-width: var(--tap-target-min);
-  min-height: var(--tap-target-min);
-  font-size: var(--font-size-button);
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 20px;
   font-family: inherit;
   padding: 12px 32px;
   border-radius: 999px;
@@ -726,7 +726,7 @@ body {
   background-color: var(--color-primary);
   color: var(--color-white);
   font-weight: bold;
-  font-size: var(--font-size-button-lg);
+  font-size: 24px;
   min-height: 64px;
   padding: 16px 40px;
 }
