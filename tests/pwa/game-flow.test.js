@@ -185,4 +185,64 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
       expect(storage.recordEvent).toHaveBeenCalledWith('partida_iniciada');
     });
   });
+
+  test('TRIOFSND-92: an incorrect answer records the aggregated, non-PII pregunta_respondida_fallo event', () => {
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn().mockResolvedValue(undefined),
+      recordEventOnce: jest.fn().mockResolvedValue(1),
+      recordEvent: jest.fn().mockResolvedValue(1),
+    };
+
+    jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+      getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+
+      jest.useFakeTimers();
+      try {
+        answerCurrentQuestion(container, { correct: false });
+      } finally {
+        jest.useRealTimers();
+      }
+
+      expect(storage.recordEvent).toHaveBeenCalledWith('pregunta_respondida_fallo');
+    });
+  });
+
+  test('TRIOFSND-92: a correct answer does not record the pregunta_respondida_fallo event', () => {
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn().mockResolvedValue(undefined),
+      recordEventOnce: jest.fn().mockResolvedValue(1),
+      recordEvent: jest.fn().mockResolvedValue(1),
+    };
+
+    jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+      getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+
+      jest.useFakeTimers();
+      try {
+        answerCurrentQuestion(container, { correct: true });
+      } finally {
+        jest.useRealTimers();
+      }
+
+      expect(storage.recordEvent).not.toHaveBeenCalledWith('pregunta_respondida_fallo');
+    });
+  });
 });

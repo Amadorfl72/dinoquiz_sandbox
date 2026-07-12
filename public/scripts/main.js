@@ -100,6 +100,17 @@
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
+ *
+ * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
+ * is threaded through `startNewGame` -> `renderQuestionAt` ->
+ * `renderResultsFor` (replay reuses it too) as `analyticsStorage`, so the
+ * `onAnswer` handler in `renderQuestionAt` can record the aggregated,
+ * non-PII `pregunta_respondida_fallo` event via `storage.recordEvent`
+ * whenever `result.isCorrect` is false -- this is the "acierto/fallo" half
+ * of the PRD's `pregunta_respondida` logging event (see
+ * logging_observability), kept as its own counter since the client-only
+ * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
+ * per-event payloads.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -226,7 +237,7 @@
   }
 
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage) {
     var question = session.questions[session.state.questionIndex];
 
     return renderers.renderQuestionScreen(container, question, {
@@ -242,6 +253,10 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        if (analyticsStorage && !result.isCorrect) {
+          analyticsStorage.recordEvent('pregunta_respondida_fallo');
+        }
       },
       onNext: function () {
         session.state.questionIndex += 1;
@@ -249,18 +264,18 @@
         if (session.state.questionIndex >= session.questions.length) {
           onGameComplete(session.state);
         } else {
-          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+          renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage);
         }
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn);
@@ -269,7 +284,7 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -282,9 +297,10 @@
       renderers,
       session,
       function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage);
       },
-      storageObj
+      storageObj,
+      analyticsStorage
     );
 
     return session;
@@ -486,7 +502,7 @@
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
               storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage);
             }
           });
         }

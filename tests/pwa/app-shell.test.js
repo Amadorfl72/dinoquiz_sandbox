@@ -1,7 +1,12 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 const { renderMuteToggleButton, MUTE_STORAGE_KEY, readStoredMute, writeStoredMute } = require('../../public/scripts/appShell');
 const { getStrings } = require('../../src/i18n');
+
+const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
 describe('renderMuteToggleButton', () => {
   let container;
@@ -169,10 +174,16 @@ describe('renderMuteToggleButton', () => {
     mockStorage.getItem.mockReturnValue('false');
     renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
     const button = container.querySelector('button');
-    
-    const styles = window.getComputedStyle(button);
-    expect(parseInt(styles.minWidth)).toBeGreaterThanOrEqual(48);
-    expect(parseInt(styles.minHeight)).toBeGreaterThanOrEqual(48);
+    expect(button.classList.contains('app-shell__mute-toggle')).toBe(true);
+
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const minWidth = parseFloat(ruleMatch[1].match(/min-width:\s*([\d.]+)px/)[1]);
+    const minHeight = parseFloat(ruleMatch[1].match(/min-height:\s*([\d.]+)px/)[1]);
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+    expect(minHeight).toBeGreaterThanOrEqual(48);
   });
 
   test('clears container content before rendering button', () => {
