@@ -192,6 +192,42 @@ describe('QuestionScreen', () => {
       expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
     });
 
+    test('the aria-live feedback announcement spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, feedback } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      expect(feedback).toHaveAttribute('aria-live', 'polite');
+      expect(feedback).toHaveTextContent(question.options[question.correctAnswerIndex]);
+    });
+
+    test('gives the correct option a descriptive "Respuesta correcta" aria-label, and the tapped option a neutral one (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      const correctButton = optionButtons[question.correctAnswerIndex];
+      const wrongButton = optionButtons[wrongIndex];
+
+      expect(correctButton.getAttribute('aria-label')).toContain(question.options[question.correctAnswerIndex]);
+      expect(correctButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+      expect(wrongButton.getAttribute('aria-label')).toContain(question.options[wrongIndex]);
+      expect(wrongButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+    });
+
+    test('does not label the correct option on a hit — only a miss adds the "Respuesta correcta" aria-label (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(optionButtons[question.correctAnswerIndex]).not.toHaveAttribute('aria-label');
+    });
+
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);

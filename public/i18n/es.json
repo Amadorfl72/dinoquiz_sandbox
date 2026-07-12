@@ -149,6 +149,9 @@
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento! La respuesta correcta es esta:"
     },
+    "correctAnswerAnnouncement": "La respuesta correcta es: {answer}.",
+    "correctOptionAriaLabel": "Respuesta correcta: {answer}",
+    "selectedOptionAriaLabel": "Tu respuesta: {answer}",
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",

@@ -15,6 +15,17 @@
  * flow to the next question is identical whether the answer was right or
  * wrong.
  *
+ * Screen-reader accessibility on a miss (TRIOFSND-90, AC-7/AC-14): the green
+ * "correct" border and the tapped option's neutral marker are purely visual
+ * cues, so a TalkBack/VoiceOver user who can't see them still needs to know
+ * which option was right. The `feedback` announcement (already
+ * `aria-live="polite"`) spells out the correct answer's text instead of just
+ * "la respuesta correcta es esta", and the correct button additionally gets
+ * a descriptive `aria-label` ("Respuesta correcta: …") so it reads
+ * unambiguously if the user swipes onto it afterwards. The tapped (wrong)
+ * option gets a neutral "Tu respuesta: …" label — never a "wrong"/
+ * "incorrect" one, matching AC-7's no-penalty tone.
+ *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
  * the browser paints the new state on the very next frame.
@@ -58,6 +69,14 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+
+  /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
+  function formatAnswerTemplate(format, answerText) {
+    if (typeof format !== 'string') {
+      return answerText;
+    }
+    return format.replace('{answer}', answerText);
+  }
 
   function resolveImageAlt(strings, dinosaur, funFact) {
     var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
@@ -204,13 +223,31 @@
           button.classList.add(CORRECT_CLASS);
           if (correct) {
             button.classList.add(CELEBRATE_CLASS);
+          } else {
+            // Descriptive label (TRIOFSND-90, AC-14), only needed on a miss:
+            // a screen reader announces this as the correct answer even
+            // without seeing the green border. On a hit the tapped/correct
+            // option are the same button, already covered by the "¡Genial,
+            // acertaste!" feedback below, so no extra label is added.
+            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
+          // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
+          button.setAttribute('aria-label', formatAnswerTemplate(strings.selectedOptionAriaLabel, button.textContent));
         }
       });
 
-      feedback.textContent = correct ? strings.feedback.correct : strings.feedback.incorrect;
+      if (correct) {
+        feedback.textContent = strings.feedback.correct;
+      } else {
+        // Spell out the correct answer's text in the aria-live announcement
+        // (TRIOFSND-90, AC-7): a TalkBack/VoiceOver user hears this instead of
+        // relying on the visual border to know which option was right.
+        var correctAnswerText = question.options[question.correctAnswerIndex];
+        feedback.textContent =
+          strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncement, correctAnswerText);
+      }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
       funFact.textContent = question.funFact;
