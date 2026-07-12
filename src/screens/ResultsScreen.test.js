@@ -223,7 +223,6 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
       const varMatch = rawValue.trim().match(/^var\((--[\w-]+)\)$/);
       return varMatch ? tokens[varMatch[1]] : rawValue.trim();
     };
-
     const sharedRuleMatch = css.match(
       /\.results-screen__play-again-button,\s*\n\.results-screen__exit-button\s*\{([^}]*)\}/
     );

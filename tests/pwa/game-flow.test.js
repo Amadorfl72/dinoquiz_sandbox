@@ -6,6 +6,7 @@ require('@testing-library/jest-dom');
 const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
+const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
 const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 

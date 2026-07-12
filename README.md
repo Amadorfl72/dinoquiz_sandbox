@@ -13,6 +13,33 @@ npm install
 npm test
 ```
 
+## PWA: instalación y despliegue (TRIOFSND-139)
+
+DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
+
+- **Manifest** ([`public/manifest.json`](public/manifest.json)): `name`/`short_name`,
+  `start_url`, `display: "standalone"`, `background_color`/`theme_color` e iconos
+  192x192/512x512 (ver [`tests/pwa/manifest.test.js`](tests/pwa/manifest.test.js)).
+  Enlazado desde [`public/index.html`](public/index.html) vía `<link rel="manifest">`.
+- **Service worker** ([`public/service-worker.js`](public/service-worker.js)): precachea el
+  app shell completo (HTML/CSS/JS, manifest, iconos, i18n, banco de preguntas) en el
+  evento `install` y sirve en **cache-first** cualquier asset que se añada después (imágenes
+  de dinosaurios, audio, JSON), cacheándolo la primera vez que se pide (ver
+  [`tests/pwa/service-worker.test.js`](tests/pwa/service-worker.test.js)). Las navegaciones
+  HTML son network-first con caída a caché y, si no hay nada cacheado, a
+  [`public/offline.html`](public/offline.html) — así una partida ya iniciada sigue jugable sin
+  red. Se registra desde [`public/scripts/main.js`](public/scripts/main.js) (`registerServiceWorker`,
+  ver [`tests/pwa/registration.test.js`](tests/pwa/registration.test.js)).
+- **HTTPS**: los service workers solo se registran en un
+  [contexto seguro](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts)
+  (HTTPS, o `http://localhost` en desarrollo); sin HTTPS el navegador ignora el registro y la
+  PWA deja de ser instalable y de funcionar offline. Al no haber backend, cualquier hosting
+  estático con HTTPS gestionado (GitHub Pages, Netlify, Vercel, Cloudflare Pages, etc.) sirve:
+  basta con desplegar el contenido de `public/` tal cual (no requiere build) detrás de ese
+  hosting. `npm test` no puede verificar la configuración de HTTPS del entorno de despliegue en
+  sí (no forma parte del código fuente), pero si se sirve la app por HTTP en producción el
+  navegador desactivará el service worker aunque el resto de la implementación sea correcta.
+
 ## Banco de preguntas
 
 El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
@@ -34,7 +61,7 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
 }
 ```
 
@@ -42,6 +69,15 @@ Cada pregunta sigue este esquema:
 respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
+
+Las ilustraciones referenciadas por `image` viven en
+[`public/assets/images/dinosaurs/`](public/assets/images/dinosaurs) — un SVG cartoon por
+especie (trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
+pteranodon), en el mismo estilo que la mascota. Son ligeros y no requieren red, por lo que el
+service worker los precachea junto al resto del app shell (ver
+[`public/service-worker.js`](public/service-worker.js)) y quedan disponibles offline desde el
+primer arranque; `src/data/questionBank.test.js` verifica que cada `image` del banco resuelva
+a un fichero real bajo esa carpeta.
 
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
