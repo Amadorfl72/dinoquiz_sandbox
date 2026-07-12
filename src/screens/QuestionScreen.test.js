@@ -88,11 +88,28 @@ describe('QuestionScreen', () => {
 
   test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rule
+    // itself — resolve `var(--x)` against that :root map before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue;
+    };
+
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
     const rule = ruleMatch[1];
-    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
+    const fontSizeRaw = resolve(rule.match(/font-size:\s*([^;]+);/)[1].trim());
+    const fontSizeMatch = fontSizeRaw.match(/^([\d.]+)(px|rem)$/);
     expect(fontSizeMatch).not.toBeNull();
 
     const fontSizePx = fontSizeMatch[2] === 'rem'
