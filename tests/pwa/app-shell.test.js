@@ -9,12 +9,17 @@ describe('renderMuteToggleButton', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
+    document.body.appendChild(container);
     mockStorage = {
       getItem: jest.fn(),
       setItem: jest.fn(),
       removeItem: jest.fn(),
       clear: jest.fn(),
     };
+  });
+
+  afterEach(() => {
+    container.remove();
   });
 
   test('renders a button in the provided container', () => {
