@@ -1,11 +1,51 @@
+/*
+ * Design tokens (TRIOFSND-133 accessibility audit) — sizes/colors reused
+ * across every screen so text stays >=18-20sp, tap targets stay >=48x48dp
+ * and text/background contrast clears WCAG AA (>=4.5:1) in every state
+ * (normal, hover/pressed, disabled, feedback), per PRD AC-2/AC-4/AC-13.
+ *
+ * These mirror src/theme/designTokens.js, which designTokens.test.js checks
+ * against WCAG AA for every state without needing a browser — keep both in
+ * sync when a value changes here.
+ */
+:root {
+  --font-size-min: 18px;
+  --font-size-body: 20px;
+  --font-size-heading-sm: 24px;
+  --font-size-button: 20px;
+  --font-size-button-lg: 24px;
+
+  --tap-target-min: 48px;
+
+  --color-bg: #fff8e1;
+  --color-text: #1b5e20;
+  --color-white: #ffffff;
+
+  --color-primary: #2e7d32;
+  --color-primary-hover: #236627;
+  --color-primary-pressed: #1a541e;
+
+  --color-neutral-bg: #cfd8dc;
+  --color-neutral-text: #263238;
+
+  --color-option-bg: #ffffff;
+  --color-option-bg-hover: #e8f5e9;
+  --color-option-bg-pressed: #c8e6c9;
+
+  --color-focus-ring-on-dark: #fbc02d;
+  --color-focus-ring-on-light: #0d47a1;
+
+  --color-stars: #9c6500;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   min-height: 100%;
   font-family: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
-  background-color: #fff8e1;
-  color: #1b5e20;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 #app {
@@ -17,6 +57,67 @@ body {
   text-align: center;
   padding: 24px;
   box-sizing: border-box;
+}
+
+/*
+ * App shell — global controls (TRIOFSND-105). `.app-shell__controls` is a
+ * sibling of #app, not a child, so it stays mounted across every screen
+ * (Inicio, Quiz, Feedback, Resultados) instead of being wiped out by each
+ * screen's `container.innerHTML = ''` render.
+ */
+.app-shell__controls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.app-shell__mute-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.app-shell__mute-toggle:focus-visible {
+  outline: 3px solid #1a5276;
+  outline-offset: 2px;
+}
+
+.app-shell__mute-toggle:active {
+  transform: scale(0.96);
+}
+
+/* #2e7d32 vs white icon: contrast ratio ~5.1:1, passes WCAG AA (AC-13) */
+.app-shell__mute-toggle--unmuted {
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.app-shell__mute-toggle--unmuted:hover {
+  background-color: #256a29;
+}
+
+/* #616161 vs white icon: contrast ratio ~6.2:1, passes WCAG AA (AC-13) */
+.app-shell__mute-toggle--muted {
+  background-color: #616161;
+  color: #ffffff;
+}
+
+.app-shell__mute-toggle--muted:hover {
+  background-color: #525252;
 }
 
 /*
@@ -44,7 +145,7 @@ body {
   font-size: clamp(2rem, 6vw, 3.5rem);
   line-height: 1.1;
   font-weight: 700;
-  color: #1b5e20;
+  color: var(--color-text);
 }
 
 .home-screen__mascot {
@@ -59,33 +160,39 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 64px;
-  min-width: 48px;
+  min-width: var(--tap-target-min);
   padding: 12px 48px;
-  font-size: 1.5rem;
+  font-size: var(--font-size-button-lg);
   line-height: 1.2;
   font-weight: 700;
   font-family: inherit;
-  color: #ffffff;
-  background-color: #2e7d32;
+  color: var(--color-white);
+  background-color: var(--color-primary);
   border: none;
   border-radius: 32px;
-  box-shadow: 0 4px 0 #1b5e20;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
   cursor: pointer;
   touch-action: manipulation;
 }
 
+/*
+ * Hover used to lighten to #388e3c, which only gave 4.12:1 against the white
+ * label (below the 4.5:1 AA floor, PRD AC-13). Hover/pressed now darken
+ * instead, so contrast only improves as the state escalates.
+ */
 .home-screen__play-button:hover {
-  background-color: #388e3c;
+  background-color: var(--color-primary-hover);
 }
 
 .home-screen__play-button:focus-visible {
-  outline: 4px solid #fbc02d;
+  outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
 
 .home-screen__play-button:active {
+  background-color: var(--color-primary-pressed);
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #1b5e20;
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
 }
 
 .home-screen__privacy-button {
@@ -118,8 +225,8 @@ body {
 
 .home-screen__parental-notice {
   max-width: 60ch;
-  font-size: 0.9rem;
-  color: #1b5e20;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
 }
 
 /*
@@ -376,6 +483,32 @@ body {
  * highlights the correct option, never marks the option the child picked
  * as "wrong".
  */
+.question-screen__prompt {
+  font-size: var(--font-size-heading-sm);
+  line-height: 1.3;
+  margin: 0 0 16px;
+  color: var(--color-text);
+}
+
+.question-screen__image {
+  display: block;
+  width: clamp(160px, 30vw, 280px);
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+}
+
+.question-screen__score {
+  font-size: 20px;
+  margin: 0 0 16px;
+  color: var(--color-text);
+}
+
+.question-screen__feedback {
+  font-size: var(--font-size-body);
+  margin: 8px 0;
+}
 .question-screen__options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -384,17 +517,30 @@ body {
 }
 
 .question-screen__option {
-  min-width: 48px;
-  min-height: 64px;
-  padding: 16px 20px;
-  font-size: 20px;
+  font-size: var(--font-size-button);
   font-weight: 700;
+  padding: 16px 20px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
   font-family: inherit;
   border-radius: 16px;
-  border: 3px solid #1b5e20;
-  background-color: #ffffff;
-  color: #1b5e20;
+  border: 3px solid var(--color-text);
+  background-color: var(--color-option-bg);
+  color: var(--color-text);
   cursor: pointer;
+}
+
+.question-screen__option:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.question-screen__option:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.question-screen__option:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }
 
 .question-screen__option:disabled {
@@ -435,15 +581,68 @@ body {
 
 .question-screen__option--correct {
   border-width: 6px;
-  border-color: #1b5e20;
-  background-color: #2e7d32;
-  color: #ffffff;
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+  color: var(--color-white);
 }
 
 .question-screen__option--neutral {
   border-color: #607d8b;
-  background-color: #cfd8dc;
-  color: #263238;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.question-screen__feedback {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__fun-fact-heading {
+  font-size: var(--font-size-heading-sm);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__fun-fact {
+  font-size: var(--font-size-body);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.question-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.question-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.question-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
 }
 
 .question-screen__option--celebrate {
@@ -468,6 +667,21 @@ body {
   }
 }
 
+/*
+ * Dato curioso box (TRIOFSND-83): yellow highlight per the mockup. Colors
+ * mirror src/theme/questionScreenColors.js (QUESTION_SCREEN_COLORS.funFact),
+ * which contrast.test.js checks against WCAG AA (AC-13) — keep both in sync.
+ */
+.question-screen__fun-fact-box {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 3px solid #f9a825;
+  border-radius: 16px;
+  background-color: #fff9c4;
+  color: #5d4037;
+  text-align: left;
+}
+
 .question-screen__feedback {
   margin: 0;
   font-size: 20px;
@@ -475,7 +689,7 @@ body {
 }
 
 .question-screen__fun-fact-heading {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 20px;
 }
 
@@ -485,21 +699,75 @@ body {
   max-width: 60ch;
 }
 
+/*
+ * Rewarded-ad CTA (TRIOFSND-86): purple fill, distinct from the green
+ * "Siguiente" button, so its optional/ad nature reads at a glance. Colors
+ * mirror src/theme/questionScreenColors.js (QUESTION_SCREEN_COLORS.rewardedAdCta),
+ * checked against WCAG AA (AC-13) in contrast.test.js — keep both in sync.
+ * It never gates "Siguiente" (see QuestionScreen.js): the two controls are
+ * fully independent.
+ */
+.question-screen__rewarded-ad-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  margin-top: 12px;
+  padding: 12px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #6a1b9a;
+  border: none;
+  border-radius: 32px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-screen__rewarded-ad-cta:disabled {
+  background-color: #ce93d8;
+  cursor: default;
+}
+
+.question-screen__rewarded-ad-status {
+  margin: 8px 0 0;
+  font-size: 18px;
+  color: #5d4037;
+}
+
+/* Extra dato curioso unlocked by the rewarded ad: blue highlight, distinct
+ * from the free dato curioso's yellow box above. */
+.question-screen__extra-fun-fact-box {
+  border-color: #0d47a1;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+/*
+ * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
+ * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
+ * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ * The hover/focus-visible/active states (TRIOFSND-90) give sighted and
+ * keyboard users the same clear affordance screen-reader users get from
+ * the aria-live feedback announcement.
+ */
 .question-screen__next-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 64px;
   min-width: 48px;
-  padding: 12px 48px;
-  font-size: 1.25rem;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 32px;
+  font-size: 20px;
   font-weight: 700;
   font-family: inherit;
   color: #ffffff;
   background-color: #2e7d32;
   border: none;
   border-radius: 32px;
-  box-shadow: 0 4px 0 #1b5e20;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -515,9 +783,12 @@ body {
 
 .question-screen__next-button:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #1b5e20;
 }
 
+.question-screen__next-button:disabled {
+  background-color: #a5d6a7;
+  cursor: default;
+}
 /* Visually hides content while keeping it available to screen readers. */
 .sr-only {
   position: absolute;
@@ -542,23 +813,31 @@ body {
 .results-screen__heading {
   font-size: 32px;
   margin: 0;
+  color: var(--color-text);
 }
 
 .results-screen__score {
-  font-size: 24px;
+  font-size: var(--font-size-heading-sm);
   font-weight: bold;
   margin: 0;
+  color: var(--color-text);
 }
 
+/*
+ * The original gold (#f9a825) was only 1.85:1 against the cream page
+ * background — this shade clears the large-text AA floor (>=3:1, the
+ * stars render at 40px) with margin (PRD AC-13).
+ */
 .results-screen__stars {
   font-size: 40px;
-  color: #f9a825;
+  color: var(--color-stars);
   letter-spacing: 4px;
 }
 
 .results-screen__message {
-  font-size: 20px;
+  font-size: var(--font-size-body);
   margin: 0;
+  color: var(--color-text);
 }
 
 .results-screen__actions {
@@ -574,26 +853,54 @@ body {
   min-width: 48px;
   min-height: 48px;
   font-size: 20px;
+  font-family: inherit;
   padding: 12px 32px;
   border-radius: 999px;
   border: none;
   cursor: pointer;
   box-sizing: border-box;
+  touch-action: manipulation;
 }
 
 .results-screen__play-again-button {
-  background-color: #2e7d32;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-white);
   font-weight: bold;
   font-size: 24px;
   min-height: 64px;
   padding: 16px 40px;
 }
 
+.results-screen__play-again-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.results-screen__play-again-button:active {
+  background-color: var(--color-primary-pressed);
+}
+
+.results-screen__play-again-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
 .results-screen__exit-button {
   background-color: transparent;
-  color: #1b5e20;
-  border: 2px solid #1b5e20;
+  color: var(--color-text);
+  border: 2px solid var(--color-text);
+}
+
+.results-screen__exit-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.results-screen__exit-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.results-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }
 
 /*

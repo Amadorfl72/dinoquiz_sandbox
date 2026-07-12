@@ -4,6 +4,7 @@ const { contrastRatio, meetsWcagAA } = require('./contrast');
 const { QUESTION_SCREEN_COLORS, QUESTION_OPTION_PALETTE } = require('./questionScreenColors');
 const { GLOBAL_CONTROLS_COLORS } = require('./globalControlsColors');
 const { HOME_SCREEN_COLORS } = require('./homeScreenColors');
+const { MUTE_TOGGLE_COLORS } = require('./appShellColors');
 
 describe('contrastRatio', () => {
   test('is 21 for black on white (the maximum possible ratio)', () => {
@@ -52,6 +53,21 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
       expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
     });
   });
+
+  test('the dato curioso yellow box meets AA', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.funFact;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the rewarded-ad CTA button meets AA (TRIOFSND-86)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.rewardedAdCta;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the extra dato curioso blue box unlocked by the rewarded ad meets AA (TRIOFSND-86)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.extraFunFact;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purchase controls)', () => {
@@ -84,5 +100,17 @@ describe('privacy policy screen color tokens (PRD AC-13, TRIOFSND-116)', () => {
 
   test('the screen body text (green on the app cream background) meets AA', () => {
     expect(contrastRatio('#1b5e20', '#fff8e1')).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('mute toggle color tokens (PRD AC-2/AC-13/AC-14: WCAG AA in every mute state)', () => {
+  test('the unmuted state meets AA', () => {
+    const { background, icon } = MUTE_TOGGLE_COLORS.unmuted;
+    expect(contrastRatio(background, icon)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the muted state meets AA', () => {
+    const { background, icon } = MUTE_TOGGLE_COLORS.muted;
+    expect(contrastRatio(background, icon)).toBeGreaterThanOrEqual(4.5);
   });
 });
