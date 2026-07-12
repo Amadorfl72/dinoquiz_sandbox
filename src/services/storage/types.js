@@ -6,6 +6,7 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
+ * @property {boolean} adsRemoved
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -16,6 +17,7 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
+  adsRemoved: false,
 };
 
 /**

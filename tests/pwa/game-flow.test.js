@@ -186,3 +186,99 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     });
   });
 });
+
+describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads purchase flag', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('shows the banner and rewarded ad on Resultados when the purchase has not been made', () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
+      for (let i = 0; i < 10; i += 1) {
+        answerCurrentQuestion(container, { correct: true });
+      }
+
+      expect(storageObj.getItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY);
+      expect(container.querySelector('.results-screen__ads')).not.toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('hides the banner and rewarded ad on Resultados once the purchase has been made', () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const storageObj = {
+        getItem: jest.fn((key) => (key === ADS_REMOVED_STORAGE_KEY ? 'true' : null)),
+        setItem: jest.fn(),
+      };
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
+      for (let i = 0; i < 10; i += 1) {
+        answerCurrentQuestion(container, { correct: true });
+      }
+
+      expect(container.querySelector('.results-screen__ads')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('a purchase confirmed on Home hides ads on the very next game\'s Resultados screen', () => {
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const { home: homeStrings, purchase: purchaseStrings } = require('../../public/i18n/es.json');
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings, purchase: purchaseStrings }),
+    });
+    const memoryBackend = {};
+    const storageObj = {
+      getItem: jest.fn((key) => (Object.prototype.hasOwnProperty.call(memoryBackend, key) ? memoryBackend[key] : null)),
+      setItem: jest.fn((key, value) => {
+        memoryBackend[key] = value;
+      }),
+    };
+
+    jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, undefined, storageObj).then(() => {
+      const purchaseButton = getByRole(container, 'button', { name: homeStrings.globalControls.purchaseButton });
+      purchaseButton.click();
+      const purchaseConfirmButton = getByRole(container, 'button', { name: purchaseStrings.purchaseButton });
+      purchaseConfirmButton.click();
+
+      const playButton = getByRole(container, 'button', { name: homeStrings.playButton });
+      jest.useFakeTimers();
+      try {
+        playButton.click();
+        for (let i = 0; i < 10; i += 1) {
+          answerCurrentQuestion(container, { correct: true });
+        }
+      } finally {
+        jest.useRealTimers();
+      }
+
+      expect(container.querySelector('.results-screen__ads')).toBeNull();
+    });
+  });
+});

@@ -764,6 +764,80 @@ body {
 }
 
 /*
+ * Results screen ads (TRIOFSND-97, AC-20/AC-21) — a discreet banner plus an
+ * optional, clearly labeled rewarded ad button. Only rendered while the
+ * remove-ads purchase has not been made (see resultsScreen.js). Reuses the
+ * neutral gray tokens (already AA-checked in designTokens.test.js) for the
+ * banner so it stays visually muted/non-intrusive next to the primary
+ * "Volver a jugar" call to action, and the same outline-button treatment as
+ * `.results-screen__exit-button` for the rewarded button.
+ */
+.results-screen__ads {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.results-screen__ad-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.results-screen__ad-badge {
+  font-size: var(--font-size-min);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.results-screen__ad-banner-message {
+  margin: 0;
+  font-size: var(--font-size-min);
+}
+
+.results-screen__rewarded-ad-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 2px solid var(--color-text);
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-screen__rewarded-ad-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.results-screen__rewarded-ad-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.results-screen__rewarded-ad-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
  * Privacy policy screen (TRIOFSND-116) — reuses the home-screen palette
  * (#1b5e20 text / #fff8e1 background, #2e7d32 accents), already checked
  * against WCAG AA in src/theme/contrast.test.js, so the whole app stays on
