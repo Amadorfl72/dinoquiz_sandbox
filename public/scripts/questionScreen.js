@@ -1,8 +1,9 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen: shows one question with its options and, once
- * the child taps an answer, the feedback for that answer.
+ * Pregunta/Feedback screen (TRIOFSND-77 / TRIOFSND-88): shows one question
+ * with its options and, once the child taps an answer, the feedback and
+ * "dato curioso" for that answer (TRIOFSND-83).
  *
  * Correctness (TRIOFSND-77 / TRIOFSND-88, AC-7): a wrong pick is never
  * penalized — the score keeps whatever value it already had (+0), via
@@ -11,13 +12,30 @@
  * border) whether the child got it right or not; the wrong pick itself only
  * gets a neutral marker (`NEUTRAL_CLASS`) — never a "bad"/red one. A hit
  * additionally gets `CELEBRATE_CLASS` for the happy animation. Both
- * outcomes then reveal the same fun fact and "Siguiente" control, so the
- * flow to the next question is identical whether the answer was right or
- * wrong.
+ * outcomes then reveal the same fun fact (in a yellow "dato curioso" box)
+ * and "Siguiente" control, so the flow to the next question is identical
+ * whether the answer was right or wrong.
  *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
- * the browser paints the new state on the very next frame.
+ * the browser paints the new state on the very next frame. The only
+ * animation used is the CSS keyframe in main.css (transform/opacity only,
+ * compositor-driven, no layout thrashing). `warmUpFeedbackAnimation` forces
+ * the browser to resolve that keyframe's styles once, off-screen, right
+ * after the question mounts, so the child's first tap doesn't pay a
+ * first-run style-recalculation cost.
+ *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
+ * (4s), guaranteeing the dato curioso stays on screen long enough to read.
+ * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted (no audio
+ * dependency).
+ *
+ * Accessibility (AC-14): the dato curioso paragraph is `aria-live="polite"`
+ * so TalkBack/VoiceOver announce it as soon as it's revealed, and the
+ * dinosaur illustration carries a descriptive `alt` built from the i18n
+ * `dinosaurNames` map instead of a generic label.
  *
  * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
  * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS` (4s),
@@ -90,13 +108,52 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
   }
 
+  // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
+  // curioso heading are the copy a child sees right after a miss, so they are
+  // held to the same no-reproach standard as ResultsScreen's motivational
+  // messages — reusing that same banned-word list rather than a second one.
+  // Only invoked by the audit tests under Node/Jest, never during rendering,
+  // so it resolves `resultsScreen` lazily instead of at module load (the
+  // browser never calls it, so it never needs `require` to exist there).
+  function validateFeedbackCopy(strings) {
+    if (typeof require !== 'function') {
+      return ['validateFeedbackCopy requires a CommonJS `require` (Node/Jest only)'];
+    }
+    var resultsScreen = require('./resultsScreen');
+    var errors = [];
+    var fieldsToCheck = [
+      ['feedback.correct', strings && strings.feedback && strings.feedback.correct],
+      ['feedback.incorrect', strings && strings.feedback && strings.feedback.incorrect],
+      ['funFactHeading', strings && strings.funFactHeading],
+      ['nextButton', strings && strings.nextButton],
+    ];
+
+    fieldsToCheck.forEach(function (field) {
+      var name = field[0];
+      var value = field[1];
+
+      if (typeof value !== 'string' || value.trim() === '') {
+        errors.push(name + ' must be a non-empty string');
+        return;
+      }
+
+      var bannedWordsFound = resultsScreen.normalizeToWords(value).filter(function (word) {
+        return resultsScreen.BANNED_WORDS.has(word);
+      });
+      if (bannedWordsFound.length > 0) {
+        errors.push(name + ' ("' + value + '") contains negative language: ' + bannedWordsFound.join(', '));
+      }
+    });
+
+    return errors;
+  }
+
   function resolveAudio() {
     if (typeof require === 'function') {
       return require('./audio');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
   }
-
   function warmUpFeedbackAnimation() {
     if (typeof document === 'undefined') return;
 
@@ -141,7 +198,6 @@
     image.src = IMAGE_BASE_PATH + question.image;
     image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
     image.decoding = 'async';
-
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.setAttribute('aria-live', 'polite');
@@ -276,6 +332,7 @@
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    validateFeedbackCopy: validateFeedbackCopy,
     MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };
 

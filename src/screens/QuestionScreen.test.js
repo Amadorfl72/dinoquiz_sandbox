@@ -6,7 +6,7 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, validateFeedbackCopy } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
 
@@ -38,6 +38,38 @@ function buildQuestion(overrides = {}) {
     ...overrides,
   };
 }
+
+describe('content-guide validation of failure feedback copy (TRIOFSND-91)', () => {
+  test('the real es.json question strings contain no negative language', () => {
+    expect(validateFeedbackCopy(strings)).toEqual([]);
+  });
+
+  test('flags a feedback.incorrect string containing banned negative language', () => {
+    const errors = validateFeedbackCopy({
+      ...strings,
+      feedback: { ...strings.feedback, incorrect: '¡Vaya, fallaste! Inténtalo mejor la próxima vez.' },
+    });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/feedback\.incorrect/);
+    expect(errors[0]).toMatch(/negative language/);
+  });
+
+  test('flags an empty or missing field', () => {
+    const errors = validateFeedbackCopy({ ...strings, funFactHeading: '' });
+
+    expect(errors).toContainEqual(expect.stringContaining('funFactHeading'));
+  });
+
+  test('does not flag words that merely contain a banned word as a substring', () => {
+    expect(
+      validateFeedbackCopy({
+        ...strings,
+        feedback: { ...strings.feedback, incorrect: '¡Aprender sobre dinosaurios mola muchísimo!' },
+      })
+    ).toEqual([]);
+  });
+});
 
 describe('QuestionScreen', () => {
   let container;
@@ -71,6 +103,22 @@ describe('QuestionScreen', () => {
 
   test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rule
+    // itself — resolve `var(--x)` against that :root map before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue;
+    };
+
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
