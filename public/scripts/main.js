@@ -584,6 +584,8 @@
       return Promise.resolve(null);
     }
 
+    storage = storage || resolveHomeStorage(doc.defaultView);
+
     var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
     var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
 
@@ -614,8 +616,10 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              if (storage && typeof storage.recordEvent === 'function') {
+                storage.recordEvent('partida_iniciada');
+              }
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage);
             }
           });
         }
