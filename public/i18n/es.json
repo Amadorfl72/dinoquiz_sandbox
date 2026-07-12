@@ -14,7 +14,7 @@
         "muteLabel": "Silenciar sonido",
         "unmuteLabel": "Activar sonido"
       },
-      "privacyButton": "Política de privacidad",
+      "privacyButton": "Aviso rápido de privacidad",
       "purchaseButton": "Eliminar anuncios"
     },
     "tooltip": {
@@ -144,7 +144,7 @@
     "imageAltFormat": "Ilustración de un {dinosaur}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
-      "incorrect": "¡Buen intento! La respuesta correcta es esta:"
+      "incorrect": "¡Buen intento!"
     },
     "correctAnswerAnnouncementFormat": "La respuesta correcta es: {answer}.",
     "correctOptionAriaLabelFormat": "Respuesta correcta: {answer}",

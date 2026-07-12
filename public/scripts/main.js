@@ -39,17 +39,6 @@
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
  *
- * Mute persistence (TRIOFSND-66): `src/services/storage` already models a
- * `muted` key with IndexedDB/localStorage/memory fallback, but it's a
- * CommonJS module graph (`require`d internally) that this no-bundler app
- * shell can't load as a plain `<script>`. `MUTE_STORAGE_KEY` below matches
- * the exact namespaced key that service writes (`dinoquiz:muted`, JSON-
- * encoded) so a future bundler-backed wiring of the real service reads back
- * the same value with no migration. Until then, this reads/writes
- * `localStorage` directly -- sufficient for a single boolean preference --
- * degrading to an in-memory default (unmuted) if `localStorage` throws
- * (e.g. Safari private mode).
- *
  * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
  * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
  * `require('../../src/i18n')`, but that CommonJS path only exists under
@@ -60,23 +49,34 @@
  * `options.purchaseStrings`, giving the browser path the same pre-resolved
  * strings the Node/Jest path gets via `require`.
  *
- * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
- * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
- * whether the tooltip was already dismissed on this device and passes the
- * persistence/analytics callbacks through to `renderHomeScreen`.
+ * `renderHome`'s optional `storage` argument is a single object, duck-typed
+ * against two independent interfaces so callers can opt into either or both:
+ *   - `getItem`/`setItem` (a plain `localStorage`-shaped backend) wires the
+ *     mute toggle (TRIOFSND-66): `MUTE_STORAGE_KEY` matches the namespaced
+ *     key `src/services/storage` itself writes (`dinoquiz:muted`,
+ *     JSON-encoded), so any backend sharing that key round-trips with it.
+ *   - `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` wires the
+ *     first-run '¡Jugar!' tooltip (TRIOFSND-65): when present, `renderHome`
+ *     resolves whether the tooltip was already dismissed on this device and
+ *     passes the persistence/analytics callbacks through to
+ *     `renderHomeScreen`. Neither interface is required -- omitting
+ *     `storage` entirely (as direct callers of `renderHome` may for tests)
+ *     skips both.
  *
- * Two backends can fill that argument. `loadDinoQuizStorage` requires the
- * CommonJS `src/services/storage` module — this only resolves under
- * Node/Jest (or a future bundler); a real unbundled browser has no
- * `require`, so it always returns `null` there. For that case,
- * `createBrowserHomeStorage` implements the same three-method interface
- * directly against `window.localStorage` (namespaced the same way as
- * `src/services/storage`, degrading to an in-memory object if localStorage
- * throws/is unavailable), the same way `loadHomeStrings` above fetches the
- * i18n resource natively instead of going through `src/i18n`'s loader. The
- * bootstrap below tries the CommonJS path first and falls back to the
- * native browser one, so the tooltip, its persisted "seen" flag and the
- * `first_tap_jugar` counter all work in the real, bundler-less PWA.
+ * `resolveHomeStorage` builds the real, combined backend used by the actual
+ * app-shell entry points (`renderRoute`, "Salir" from Resultados). Two
+ * sources can fill it. `loadDinoQuizStorage` requires the CommonJS
+ * `src/services/storage` module — this only resolves under Node/Jest (or a
+ * future bundler); a real unbundled browser has no `require`, so it always
+ * returns `null` there. For that case, `createBrowserHomeStorage`
+ * implements both interfaces directly against `window.localStorage`
+ * (namespaced the same way as `src/services/storage`, degrading to an
+ * in-memory object if localStorage throws/is unavailable), the same way
+ * `loadHomeStrings` above fetches the i18n resource natively instead of
+ * going through `src/i18n`'s loader. `resolveHomeStorage` tries the
+ * CommonJS path first and falls back to the native browser one, so mute,
+ * the tooltip, its persisted "seen" flag and the `first_tap_jugar` counter
+ * all work in the real, bundler-less PWA.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -239,7 +239,9 @@
         startNewGame(container, renderers, questions, doc, fetchFn);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn);
+        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
+          navigateToPrivacyPolicy();
+        });
       },
     });
   }
@@ -404,10 +406,41 @@
         }
         return Promise.resolve(counts[eventName]);
       },
+      // Plain, synchronous localStorage-shaped surface (TRIOFSND-66) so the
+      // same object also satisfies renderHome's mute duck-type — real users
+      // get mute persistence and the tooltip/analytics counters from one
+      // resolved backend (see resolveHomeStorage below).
+      getItem: function (key) {
+        if (backend) {
+          try {
+            return backend.getItem(key);
+          } catch (error) {
+            // Fall through to the in-memory value below.
+          }
+        }
+        return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null;
+      },
+      setItem: function (key, value) {
+        memory[key] = value;
+        if (backend) {
+          try {
+            backend.setItem(key, value);
+          } catch (error) {
+            // Quota exceeded or unavailable: the write still lands in
+            // `memory` above so the app stays correct for the rest of this
+            // session, it just won't persist past it.
+          }
+        }
+      },
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  /** Resolves the combined mute + tooltip/analytics storage backend for the real app-shell entry points. */
+  function resolveHomeStorage(win) {
+    return loadDinoQuizStorage() || createBrowserHomeStorage(win);
+  }
+
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -426,18 +459,19 @@
     }
 
     return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
-
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
       if (typeof onOpenPrivacyPolicy === 'function') {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
+
+      if (storage && typeof storage.getItem === 'function') {
+        renderOptions.muted = loadMutedState(storage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, storage);
+        };
+      }
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -458,16 +492,20 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
-        renderOptions.showTooltip = !seen;
-        renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
-        };
-        renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
-        };
-        return finishRender();
-      });
+      if (storage && typeof storage.hasSeenHomeTooltip === 'function') {
+        return storage.hasSeenHomeTooltip().then(function (seen) {
+          renderOptions.showTooltip = !seen;
+          renderOptions.onTooltipDismiss = function () {
+            storage.markHomeTooltipSeen();
+          };
+          renderOptions.onPlayButtonClick = function () {
+            storage.recordEventOnce('first_tap_jugar');
+          };
+          return finishRender();
+        });
+      }
+
+      return finishRender();
     });
   }
 
@@ -505,16 +543,19 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
       navigateToPrivacyPolicy(loc);
     });
   }
 
   /**
-   * Browser-only startup: fetch the i18n strings and the question bank once,
-   * stash the play-ready data on `window.DinoQuiz` so `loadQuestions()` and
-   * the screens can read it synchronously, then render Home. Runs after the
-   * screen/game `<script>`s have registered themselves on `window.DinoQuiz`.
+   * Browser-only startup: fetch the i18n strings and the question bank once
+   * and stash the play-ready data on `window.DinoQuiz` so `loadQuestions()`
+   * and the screens can read it synchronously. Runs after the screen/game
+   * `<script>`s have registered themselves on `window.DinoQuiz`; the actual
+   * first paint is left to the `renderRoute()` call that follows it in the
+   * `load` listener below, so the route (Home vs. the privacy policy hash)
+   * is only ever rendered once.
    */
   function bootstrapBrowserApp() {
     if (typeof window === 'undefined') {
@@ -525,7 +566,7 @@
 
     var fetchFn = typeof fetch === 'function' ? fetch : undefined;
     if (typeof fetchFn !== 'function') {
-      return renderHome();
+      return Promise.resolve(null);
     }
 
     return fetchJson(fetchFn, '/i18n/es.json')
@@ -538,9 +579,6 @@
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to prepare the game data', error);
-      })
-      .then(function () {
-        return renderHome();
       });
   }
 
@@ -564,6 +602,7 @@
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
+      resolveHomeStorage: resolveHomeStorage,
       loadPrivacyPolicyStrings: loadPrivacyPolicyStrings,
       navigateToPrivacyPolicy: navigateToPrivacyPolicy,
       navigateHome: navigateHome,
