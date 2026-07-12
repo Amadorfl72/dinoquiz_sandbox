@@ -30,12 +30,18 @@
  *
  * Rewarded-ad CTA (TRIOFSND-86): an optional, clearly-labeled "watch an ad
  * for an extra dato curioso" button appears once the answer is revealed,
- * but only when `src/services/ads/rewardedAdService` (resolved the same
+ * but only when the rewarded-ad service (resolved the same
  * `require`-else-`window.DinoQuiz` way as scoring above) reports an ad is
- * actually available — v1 ships without a real ad network, so that resolver
- * returns nothing in a real, unbundled browser and the CTA simply never
- * renders there yet. Whatever the ad service resolves with, the CTA never
- * touches `nextButton` or its advance timer — the game always continues.
+ * actually available. In the browser that resolves to
+ * `window.DinoQuiz.ads.rewardedAdService`, registered by
+ * public/scripts/adsService.js (loaded before this file in index.html);
+ * under Node/Jest it resolves via `require('../../src/services/ads/
+ * rewardedAdService')`, which re-exports that same browser module. v1 ships
+ * without a real ad network, so that service's default provider always
+ * reports the ad as unavailable and the CTA stays hidden until a future ad
+ * adapter is plugged into it. Whatever the ad service resolves with, the
+ * CTA never touches `nextButton` or its advance timer — the game always
+ * continues.
  */
 
 (function () {
@@ -75,9 +81,9 @@
         return null;
       }
     }
-    // No ad SDK is wired into the real, unbundled browser yet (v1): the CTA
-    // simply stays hidden there until a future ad adapter registers itself
-    // on window.DinoQuiz.ads.rewardedAdService.
+    // public/scripts/adsService.js registers the shared instance here; its
+    // default provider reports the ad as unavailable until a real ad
+    // adapter is plugged in, so the CTA stays hidden in v1.
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.ads && window.DinoQuiz.ads.rewardedAdService) || null;
   }
 
