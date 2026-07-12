@@ -34,8 +34,16 @@ function buildValidQuestion(overrides = {}) {
   };
 }
 
+// Only alphanumeric characters survive, so the resulting name can never carry
+// path separators or ".." segments into `path.join` below (semgrep
+// path-join-resolve-traversal).
+function safeTempFileName(suffix) {
+  const safeSuffix = String(suffix).replace(/[^a-zA-Z0-9]/g, '');
+  return `dinoquiz-questions-${safeSuffix}.json`;
+}
+
 function writeTempQuestionBank(questions) {
-  const filePath = path.join(os.tmpdir(), `dinoquiz-questions-${process.hrtime.bigint()}.json`);
+  const filePath = path.join(os.tmpdir(), safeTempFileName(process.hrtime.bigint()));
   fs.writeFileSync(filePath, JSON.stringify(questions), 'utf-8');
   return filePath;
 }
@@ -336,7 +344,7 @@ describe('loadQuestionBank', () => {
   });
 
   test('throws a descriptive error for malformed JSON', () => {
-    const filePath = path.join(os.tmpdir(), `dinoquiz-questions-broken-${process.hrtime.bigint()}.json`);
+    const filePath = path.join(os.tmpdir(), safeTempFileName(`broken-${process.hrtime.bigint()}`));
     fs.writeFileSync(filePath, '{ not valid json', 'utf-8');
     try {
       expect(() => loadQuestionBank({ filePath })).toThrow(/Failed to parse question bank JSON/);
