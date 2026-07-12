@@ -1,5 +1,9 @@
 {
   "locale": "es",
+  "muteButton": {
+    "muteLabel": "Silenciar sonido",
+    "unmuteLabel": "Activar sonido"
+  },
   "home": {
     "title": "DinoQuiz",
     "mascotAlt": "Dino, la mascota de DinoQuiz: un simpático dinosaurio verde saludando con la pata",
@@ -14,7 +18,7 @@
         "muteLabel": "Silenciar sonido",
         "unmuteLabel": "Activar sonido"
       },
-      "privacyButton": "Aviso de privacidad",
+      "privacyButton": "Resumen de privacidad",
       "purchaseButton": "Eliminar anuncios"
     },
     "tooltip": {
@@ -149,6 +153,7 @@
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",
     "imageAlt": "Ilustración de un {dinosaur}",
+    "imageAltFunFact": "Dato curioso: {funFact}",
     "dinosaurNames": {
       "trex": "Tyrannosaurus Rex",
       "triceratops": "Triceratops",

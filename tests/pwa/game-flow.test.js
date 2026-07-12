@@ -155,4 +155,34 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
       expect(container.querySelector('.question-screen')).not.toBeNull();
     });
   });
+
+  test("TRIOFSND-67: Home's '¡Jugar!' button records the aggregated, non-PII partida_iniciada event and closes the tooltip immediately", () => {
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(false),
+      markHomeTooltipSeen: jest.fn().mockResolvedValue(undefined),
+      recordEventOnce: jest.fn().mockResolvedValue(1),
+      recordEvent: jest.fn().mockResolvedValue(1),
+    };
+
+    jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+      expect(container.querySelector('.home-screen__tooltip')).not.toBeNull();
+
+      getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+
+      // Immediate, synchronous transition off the same click: the tooltip is
+      // gone and the first question is already on screen, no awaited step
+      // in between.
+      expect(container.querySelector('.home-screen__tooltip')).toBeNull();
+      expect(container.querySelector('.question-screen')).not.toBeNull();
+      expect(storage.recordEvent).toHaveBeenCalledWith('partida_iniciada');
+    });
+  });
 });

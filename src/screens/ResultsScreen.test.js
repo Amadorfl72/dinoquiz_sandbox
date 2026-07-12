@@ -17,6 +17,20 @@ const {
 } = require('./ResultsScreen');
 const { results: strings } = require('../../public/i18n/es.json');
 
+// Design tokens (TRIOFSND-133) moved these values into `:root` custom
+// properties, so a rule's literal px values must be resolved through
+// `var(--token)` before pattern-matching them here.
+function resolveCssCustomProperties(css, ruleText) {
+  const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+  const tokens = {};
+  Array.from((rootMatch ? rootMatch[1] : '').matchAll(/--([\w-]+):\s*([^;]+);/g)).forEach((match) => {
+    tokens[match[1]] = match[2].trim();
+  });
+  return ruleText.replace(/var\(--([\w-]+)\)/g, (fullMatch, name) =>
+    Object.prototype.hasOwnProperty.call(tokens, name) ? tokens[name] : fullMatch
+  );
+}
+
 describe('calculateStars (tier logic)', () => {
   test.each([
     [0, 1],
@@ -217,7 +231,7 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
     expect(sharedRuleMatch).not.toBeNull();
     expect(specificRuleMatch).not.toBeNull();
 
-    const combinedRule = `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`;
+    const combinedRule = resolveCssCustomProperties(css, `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`);
     const minHeight = Math.max(
       ...Array.from(combinedRule.matchAll(/min-height:\s*([^;]+);/g)).map((match) => parseFloat(resolve(match[1])))
     );

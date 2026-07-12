@@ -8,8 +8,23 @@ const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
 const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, validateFeedbackCopy } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
+const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
+
+// Design tokens (TRIOFSND-133) moved these values into `:root` custom
+// properties, so a rule's literal px/rem values must be resolved through
+// `var(--token)` before pattern-matching them here.
+function resolveCssCustomProperties(css, ruleText) {
+  const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
+  const tokens = {};
+  Array.from((rootMatch ? rootMatch[1] : '').matchAll(/--([\w-]+):\s*([^;]+);/g)).forEach((match) => {
+    tokens[match[1]] = match[2].trim();
+  });
+  return ruleText.replace(/var\(--([\w-]+)\)/g, (fullMatch, name) =>
+    Object.prototype.hasOwnProperty.call(tokens, name) ? tokens[name] : fullMatch
+  );
+}
 
 function buildQuestion(overrides = {}) {
   return {
@@ -107,9 +122,8 @@ describe('QuestionScreen', () => {
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
-    const rule = ruleMatch[1];
-    const fontSizeRaw = resolve(rule.match(/font-size:\s*([^;]+);/)[1].trim());
-    const fontSizeMatch = fontSizeRaw.match(/^([\d.]+)(px|rem)$/);
+    const rule = resolveCssCustomProperties(css, ruleMatch[1]);
+    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
     expect(fontSizeMatch).not.toBeNull();
 
     const fontSizePx = fontSizeMatch[2] === 'rem'
@@ -264,6 +278,68 @@ describe('QuestionScreen', () => {
     });
   });
 
+  describe('fail sound (TRIOFSND-89: neutral sound integrated with mute mode)', () => {
+    test('plays the neutral fail sound on a miss', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not play any sound on a hit', () => {
+      const question = buildQuestion();
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(playFailSound).not.toHaveBeenCalled();
+    });
+
+    test('forwards options.muted through to the sound player, so silent mode stays silent', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound, muted: true });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledWith(expect.objectContaining({ muted: true }));
+    });
+
+    test('defaults muted to false when options.muted is not provided', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const playFailSound = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { playFailSound });
+
+      optionButtons[wrongIndex].click();
+
+      expect(playFailSound).toHaveBeenCalledWith(expect.objectContaining({ muted: false }));
+    });
+
+    test('the fun fact and "Siguiente" are already visible by the time the sound player is called', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      let funFactVisibleAtCallTime = null;
+      let nextButtonVisibleAtCallTime = null;
+      const playFailSound = jest.fn(() => {
+        funFactVisibleAtCallTime = !funFact.hidden;
+        nextButtonVisibleAtCallTime = !nextButton.hidden;
+      });
+
+      const { optionButtons, funFact, nextButton } = renderQuestionScreen(container, question, { playFailSound });
+      optionButtons[wrongIndex].click();
+
+      expect(funFactVisibleAtCallTime).toBe(true);
+      expect(nextButtonVisibleAtCallTime).toBe(true);
+    });
+  });
+
   test('starts from a given running score and only adds on a hit', () => {
     const question = buildQuestion();
     const { optionButtons, getScore } = renderQuestionScreen(container, question, { score: 4 });
@@ -308,14 +384,45 @@ describe('QuestionScreen', () => {
   });
 
   describe('image (AC-14: alt-text for screen readers)', () => {
-    test('renders the dinosaur illustration with a descriptive alt built from the i18n dinosaur name', () => {
+    test('renders the dinosaur illustration with a descriptive alt built from the i18n dinosaur name and its fun fact', () => {
       const question = buildQuestion();
       const { image } = renderQuestionScreen(container, question);
 
+      const expectedAlt = [
+        strings.imageAlt.replace('{dinosaur}', strings.dinosaurNames.trex),
+        strings.imageAltFunFact.replace('{funFact}', question.funFact),
+      ].join(' ');
+
       expect(image.tagName).toBe('IMG');
       expect(image.src).toContain(question.image);
+      expect(image.alt).toBe(expectedAlt);
+      expect(image.alt).toContain(strings.dinosaurNames.trex);
+      expect(image.alt).toContain(question.funFact);
+    });
+
+    test('falls back to just the dinosaur name when no fun fact is available', () => {
+      const question = buildQuestion({ funFact: undefined });
+      const { image } = renderQuestionScreen(container, question);
+
       expect(image.alt).toBe(strings.imageAlt.replace('{dinosaur}', strings.dinosaurNames.trex));
-      expect(image.alt.length).toBeGreaterThan(0);
+    });
+
+    test('TRIOFSND-135: every question in the 40-question bank gets a non-empty alt with its dinosaur name and dato curioso', () => {
+      const questions = loadQuestionBank();
+      const allStrings = require('../i18n').getStrings('es');
+
+      expect(questions).toHaveLength(40);
+
+      questions.forEach((question) => {
+        const funFact = resolveDatoCurioso(allStrings, question.dato_curioso);
+        const { image } = renderQuestionScreen(container, { ...question, funFact });
+
+        const dinosaurName = strings.dinosaurNames[question.dinosaur] || question.dinosaur;
+
+        expect(image.alt.length).toBeGreaterThan(0);
+        expect(image.alt).toContain(dinosaurName);
+        expect(image.alt).toContain(funFact);
+      });
     });
   });
 

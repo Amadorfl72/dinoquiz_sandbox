@@ -37,6 +37,21 @@
  * dinosaur illustration carries a descriptive `alt` built from the i18n
  * `dinosaurNames` map instead of a generic label.
  *
+ * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
+ * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS` (4s),
+ * guaranteeing the dato curioso stays on screen long enough to read. The
+ * delay is a plain `setTimeout` — a wall-clock timer, never gated on an
+ * audio cue — so the flow works identically with sound muted.
+ *
+ * Fail sound (TRIOFSND-89): a wrong pick additionally plays a soft, neutral
+ * effect via public/scripts/audio.js's `playFailSound` — never a harsh/error
+ * sound, matching AC-7's "no penalization, no negative language". It's
+ * muted-aware: `options.muted` (the global mute preference from
+ * public/scripts/main.js, TRIOFSND-66) is forwarded straight through, so in
+ * silent mode the miss is communicated only visually, exactly like the
+ * existing feedback styling. `options.playFailSound` lets callers override
+ * the resolved audio module (used by tests).
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -45,6 +60,13 @@
  * the `src/i18n` loader under Node — never a hardcoded string (AC-15). It
  * registers on `window.DinoQuiz.screens.renderQuestionScreen`; the canonical
  * `src/screens/QuestionScreen.js` re-exports this file.
+ *
+ * Dinosaur image alt-text (TRIOFSND-135, AC-14): the illustration's `alt` is
+ * built from the question bank data — the dinosaur's display name (i18n
+ * `dinosaurNames` map) plus the resolved `question.funFact` (the same
+ * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
+ * `imageAltFunFact`, so screen readers announce a descriptive name + fact
+ * for every question in the 40-question bank instead of a generic label.
  */
 
 (function () {
@@ -54,6 +76,17 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+
+  function resolveImageAlt(strings, dinosaur, funFact) {
+    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
+    var alt = strings.imageAlt.replace('{dinosaur}', dinosaurName);
+
+    if (typeof funFact === 'string' && funFact.trim() !== '') {
+      alt += ' ' + strings.imageAltFunFact.replace('{funFact}', funFact);
+    }
+
+    return alt;
+  }
 
   function resolveStrings(options) {
     options = options || {};
@@ -115,11 +148,12 @@
     return errors;
   }
 
-  function resolveImageAlt(strings, dinosaur) {
-    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
-    return strings.imageAlt.replace('{dinosaur}', dinosaurName);
+  function resolveAudio() {
+    if (typeof require === 'function') {
+      return require('./audio');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
   }
-
   function warmUpFeedbackAnimation() {
     if (typeof document === 'undefined') return;
 
@@ -138,6 +172,13 @@
     options = options || {};
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
+    var audio = resolveAudio();
+    var playFailSound =
+      typeof options.playFailSound === 'function'
+        ? options.playFailSound
+        : audio && typeof audio.playFailSound === 'function'
+        ? audio.playFailSound
+        : null;
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
 
     var score = options.score || 0;
@@ -155,9 +196,8 @@
     var image = document.createElement('img');
     image.className = 'question-screen__image';
     image.src = IMAGE_BASE_PATH + question.image;
-    image.alt = resolveImageAlt(strings, question.dinosaur);
+    image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
     image.decoding = 'async';
-
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.setAttribute('aria-live', 'polite');
@@ -237,6 +277,10 @@
       setTimeout(function () {
         nextButton.disabled = false;
       }, MIN_ADVANCE_DELAY_MS);
+
+      if (!correct && playFailSound) {
+        playFailSound({ muted: !!options.muted });
+      }
 
       if (onAnswer) {
         onAnswer({
