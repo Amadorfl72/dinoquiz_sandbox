@@ -18,7 +18,11 @@
  * (via `require`) and as a plain `<script>` in the browser with no bundler.
  */
 (function () {
-  var MUTE_STORAGE_KEY = 'dinoquiz.audio.muted';
+  // Canonical key (TRIOFSND-84): must match public/scripts/main.js's
+  // MUTE_STORAGE_KEY and the `dinoquiz:muted` key src/services/storage
+  // namespaces internally, so toggling mute from this shared app-shell
+  // control is actually read by the Home/question rendering flow.
+  var MUTE_STORAGE_KEY = 'dinoquiz:muted';
 
   var SPEAKER_ON_ICON =
     '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">' +

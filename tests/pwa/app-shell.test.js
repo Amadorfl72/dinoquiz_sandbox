@@ -305,7 +305,7 @@ describe('writeStoredMute', () => {
 });
 
 describe('MUTE_STORAGE_KEY', () => {
-  test('is exported with expected value', () => {
-    expect(MUTE_STORAGE_KEY).toBe('dinoquiz.audio.muted');
+  test('matches the canonical dinoquiz:muted key read by Home/question rendering', () => {
+    expect(MUTE_STORAGE_KEY).toBe('dinoquiz:muted');
   });
 });
