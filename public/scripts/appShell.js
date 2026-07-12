@@ -68,6 +68,8 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
+    button.style.minWidth = '48px';
+    button.style.minHeight = '48px';
 
     function applyState() {
       button.setAttribute('aria-pressed', String(isMuted));
