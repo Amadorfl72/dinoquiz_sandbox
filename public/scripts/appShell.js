@@ -68,6 +68,12 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
+    // Inline fallback for the >=48x48dp tap target (AC-11/AC-13): keeps the
+    // touch target correct even if public/styles/main.css hasn't loaded yet,
+    // and lets jsdom-based tests assert it via getComputedStyle without a
+    // real stylesheet in the document.
+    button.style.minWidth = '48px';
+    button.style.minHeight = '48px';
 
     function applyState() {
       button.setAttribute('aria-pressed', String(isMuted));
