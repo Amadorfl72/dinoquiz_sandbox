@@ -273,6 +273,12 @@
     };
   }
 
+  // Exposed on the function itself (not just the module's `api` below) so
+  // the app-shell flow controller (public/scripts/main.js, TRIOFSND-84) can
+  // derive its auto-advance delay from `renderers.renderQuestionScreen`
+  // without a second require of this module.
+  renderQuestionScreen.MIN_ADVANCE_DELAY_MS = MIN_ADVANCE_DELAY_MS;
+
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
