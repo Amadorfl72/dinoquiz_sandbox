@@ -49,6 +49,18 @@
  * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
  * `imageAltFunFact`, so screen readers announce a descriptive name + fact
  * for every question in the 40-question bank instead of a generic label.
+ *
+ * Accessible result announcement (TRIOFSND-79, AC-14): answering used to
+ * mark `feedback`, `scoreEl` and `funFact` as independent `aria-live`
+ * regions that all changed in the same synchronous click handler — screen
+ * readers receive simultaneous live-region updates in an unpredictable
+ * order, so a wrong answer's "la respuesta correcta es esta" pointed at a
+ * highlighted button with no accessible link to its text. Those three nodes
+ * are now plain (non-live) visual elements, and a single `announcement`
+ * node (`role="status"`, `aria-live="polite"`, visually hidden via
+ * `.sr-only`, same pattern as `resultsScreen.js`'s `announcementEl`) states
+ * the outcome, the correct answer's text and the updated score as one
+ * coherent sentence.
  */
 
 (function () {
@@ -111,6 +123,25 @@
     probe.remove();
   }
 
+  function buildResultAnnouncement(strings, question, correct, score) {
+    var parts = [correct ? strings.feedback.correct : strings.feedback.incorrect];
+
+    parts.push(
+      strings.correctAnswerAnnouncement.replace(
+        '{correctAnswer}',
+        question.options[question.correctAnswerIndex]
+      )
+    );
+
+    if (typeof question.funFact === 'string' && question.funFact.trim() !== '') {
+      parts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
+    }
+
+    parts.push(strings.scoreLabel + ': ' + score);
+
+    return parts.join(' ');
+  }
+
   function renderQuestionScreen(container, question, options) {
     options = options || {};
     var strings = resolveStrings(options);
@@ -144,7 +175,6 @@
 
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
-    scoreEl.setAttribute('aria-live', 'polite');
     scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
     var optionsGroup = document.createElement('div');
@@ -154,7 +184,6 @@
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
-    feedback.setAttribute('aria-live', 'polite');
 
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
@@ -166,10 +195,14 @@
 
     var funFact = document.createElement('p');
     funFact.className = 'question-screen__fun-fact';
-    funFact.setAttribute('aria-live', 'polite');
 
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
+
+    var announcement = document.createElement('p');
+    announcement.className = 'question-screen__announcement sr-only';
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
 
     var nextButton = document.createElement('button');
     nextButton.type = 'button';
@@ -216,6 +249,8 @@
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
+
       nextButton.hidden = false;
       nextButton.disabled = true;
       setTimeout(function () {
@@ -249,6 +284,7 @@
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
     root.appendChild(funFactBox);
+    root.appendChild(announcement);
     root.appendChild(nextButton);
     container.appendChild(root);
 
@@ -263,6 +299,7 @@
       feedback: feedback,
       funFactBox: funFactBox,
       funFact: funFact,
+      announcement: announcement,
       nextButton: nextButton,
       getScore: function () {
         return score;
@@ -276,6 +313,7 @@
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    buildResultAnnouncement: buildResultAnnouncement,
     MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };
 

@@ -152,6 +152,7 @@
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",
+    "correctAnswerAnnouncement": "La respuesta correcta era: {correctAnswer}.",
     "imageAlt": "Ilustración de un {dinosaur}",
     "imageAltFunFact": "Dato curioso: {funFact}",
     "dinosaurNames": {

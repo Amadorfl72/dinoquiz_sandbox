@@ -6,7 +6,7 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
 
@@ -423,6 +423,70 @@ describe('QuestionScreen', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('accessible result announcement (TRIOFSND-79, AC-14)', () => {
+    test('exposes a single aria-live status region, separate from the visual feedback/score/fun-fact text', () => {
+      const question = buildQuestion();
+      const { announcement } = renderQuestionScreen(container, question);
+
+      expect(announcement).toHaveAttribute('aria-live', 'polite');
+      expect(getByRole(container, 'status')).toBe(announcement);
+      expect(announcement).toHaveTextContent('');
+    });
+
+    test('on a hit, announces the celebratory feedback, the correct answer and the updated score as one sentence', () => {
+      const question = buildQuestion();
+      const { optionButtons, announcement, getScore } = renderQuestionScreen(container, question, { score: 3 });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcement).toHaveTextContent(strings.feedback.correct);
+      expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
+      expect(announcement).toHaveTextContent(question.funFact);
+      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: ${getScore()}`);
+    });
+
+    test('on a miss, announces the neutral feedback plus the actual text of the correct answer (not just a visual highlight)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcement } = renderQuestionScreen(container, question, { score: 5 });
+
+      optionButtons[wrongIndex].click();
+
+      expect(announcement).toHaveTextContent(strings.feedback.incorrect);
+      expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
+      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: 5`);
+    });
+
+    test('is visually hidden but present in the accessibility tree (.sr-only)', () => {
+      const question = buildQuestion();
+      const { announcement } = renderQuestionScreen(container, question);
+
+      expect(announcement).toHaveClass('sr-only');
+    });
+
+    test('buildResultAnnouncement composes the outcome, correct answer, fun fact and score into one string', () => {
+      const question = buildQuestion();
+
+      const hitAnnouncement = buildResultAnnouncement(strings, question, true, 4);
+      expect(hitAnnouncement).toContain(strings.feedback.correct);
+      expect(hitAnnouncement).toContain(question.options[question.correctAnswerIndex]);
+      expect(hitAnnouncement).toContain(question.funFact);
+      expect(hitAnnouncement).toContain(`${strings.scoreLabel}: 4`);
+
+      const missAnnouncement = buildResultAnnouncement(strings, question, false, 4);
+      expect(missAnnouncement).toContain(strings.feedback.incorrect);
+      expect(missAnnouncement).toContain(question.options[question.correctAnswerIndex]);
+    });
+
+    test('omits the fun-fact segment instead of announcing "undefined" when the question has no fun fact', () => {
+      const question = buildQuestion({ funFact: undefined });
+
+      const announcementText = buildResultAnnouncement(strings, question, true, 1);
+
+      expect(announcementText).not.toMatch(/undefined/);
     });
   });
 
