@@ -33,40 +33,13 @@
     { maxScore: MAX_SCORE, stars: 3 },
   ]);
 
-  // Content-guide guard: words that would read as negative/discouraging to a
-  // 6-8 year old. Motivational messages must never contain any of these
-  // (matched as whole, accent-stripped words, not substrings).
-  var BANNED_WORDS = new Set([
-    'mal',
-    'malo',
-    'mala',
-    'malos',
-    'malas',
-    'fallo',
-    'fallos',
-    'fallaste',
-    'fallar',
-    'fallado',
-    'perdiste',
-    'perder',
-    'perdido',
-    'error',
-    'errores',
-    'incorrecto',
-    'incorrecta',
-    'triste',
-    'nunca',
-    'fracaso',
-    'fracasar',
-    'peor',
-    'pena',
-    'lastima',
-    'lento',
-    'lenta',
-    'torpe',
-    'tonto',
-    'tonta',
-  ]);
+  // Content-guide guard (TRIOFSND-91, AC-7): motivational messages must never
+  // contain negative/discouraging language. The banned-word list lives in
+  // src/i18n/contentGuide.js so it stays in sync with the same guard applied
+  // to the wrong-answer feedback in public/scripts/questionScreen.js.
+  function resolveContentGuide() {
+    return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
+  }
 
   function resolveStrings(options) {
     options = options || {};
@@ -79,16 +52,6 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.results : null;
-  }
-
-  function normalizeToWords(text) {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean);
   }
 
   function calculateStars(score) {
@@ -109,16 +72,15 @@
       return ['messages must be a non-empty array of strings'];
     }
 
+    var contentGuide = resolveContentGuide();
+
     messages.forEach(function (message, index) {
       if (typeof message !== 'string' || message.trim() === '') {
         errors.push('message at index ' + index + ' must be a non-empty string');
         return;
       }
 
-      var words = normalizeToWords(message);
-      var bannedWordsFound = words.filter(function (word) {
-        return BANNED_WORDS.has(word);
-      });
+      var bannedWordsFound = contentGuide ? contentGuide.findBannedWords(message) : [];
       if (bannedWordsFound.length > 0) {
         errors.push(
           'message at index ' + index + ' ("' + message + '") contains negative language: ' + bannedWordsFound.join(', ')
@@ -243,7 +205,6 @@
     MAX_SCORE: MAX_SCORE,
     MAX_STARS: MAX_STARS,
     STAR_TIERS: STAR_TIERS,
-    BANNED_WORDS: BANNED_WORDS,
     calculateStars: calculateStars,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,

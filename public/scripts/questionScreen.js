@@ -83,6 +83,23 @@
     return bundle ? bundle.question : null;
   }
 
+  // Content-guide audit (TRIOFSND-91, AC-7): the wrong-answer feedback must
+  // never contain negative/discouraging language. Shares its banned-word
+  // list with the motivational messages guarded in
+  // public/scripts/resultsScreen.js via src/i18n/contentGuide.js.
+  function resolveContentGuide() {
+    return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
+  }
+
+  /** Audits the incorrect-answer feedback copy; returns an error string, or null if it is clean. */
+  function validateFailureCopy(strings) {
+    var contentGuide = resolveContentGuide();
+    if (!contentGuide || !strings || !strings.feedback) {
+      return null;
+    }
+    return contentGuide.validateCopy(strings.feedback.incorrect, 'question.feedback.incorrect');
+  }
+
   function resolveScoring() {
     if (typeof require === 'function') {
       return require('./scoring');
@@ -276,6 +293,7 @@
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    validateFailureCopy: validateFailureCopy,
     MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };
 
