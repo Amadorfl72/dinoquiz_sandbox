@@ -1,7 +1,12 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 const { renderMuteToggleButton, MUTE_STORAGE_KEY, readStoredMute, writeStoredMute } = require('../../public/scripts/appShell');
 const { getStrings } = require('../../src/i18n');
+
+const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
 describe('renderMuteToggleButton', () => {
   let container;
@@ -169,10 +174,26 @@ describe('renderMuteToggleButton', () => {
     mockStorage.getItem.mockReturnValue('false');
     renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
     const button = container.querySelector('button');
-    
-    const styles = window.getComputedStyle(button);
-    expect(parseInt(styles.minWidth)).toBeGreaterThanOrEqual(48);
-    expect(parseInt(styles.minHeight)).toBeGreaterThanOrEqual(48);
+
+    expect(button.classList.contains('app-shell__mute-toggle')).toBe(true);
+
+    // jsdom does not load the external stylesheet, so `.app-shell__mute-toggle`'s
+    // declared min-width/min-height never reach window.getComputedStyle() here.
+    // Read the declared rule from the stylesheet instead, same approach as
+    // ResultsScreen.test.js uses for its own 48dp/64dp touch-target checks.
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
+    expect(ruleMatch).not.toBeNull();
+
+    const minWidth = Math.max(
+      ...Array.from(ruleMatch[1].matchAll(/min-width:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+    const minHeight = Math.max(
+      ...Array.from(ruleMatch[1].matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+
+    expect(minWidth).toBeGreaterThanOrEqual(48);
+    expect(minHeight).toBeGreaterThanOrEqual(48);
   });
 
   test('clears container content before rendering button', () => {
