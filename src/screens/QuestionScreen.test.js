@@ -59,13 +59,30 @@ describe('QuestionScreen', () => {
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rule
+    // itself (TRIOFSND-133) — resolve `var(--x)` against that :root map
+    // before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue;
+    };
+
     const rule = ruleMatch[1];
-    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
+    const fontSizeMatch = rule.match(/font-size:\s*([^;]+);/);
     expect(fontSizeMatch).not.toBeNull();
 
-    const fontSizePx = fontSizeMatch[2] === 'rem'
-      ? parseFloat(fontSizeMatch[1]) * 16
-      : parseFloat(fontSizeMatch[1]);
+    const resolvedFontSize = resolve(fontSizeMatch[1].trim());
+    const unitMatch = resolvedFontSize.match(/(px|rem)$/);
+    const fontSizePx = unitMatch && unitMatch[1] === 'rem'
+      ? parseFloat(resolvedFontSize) * 16
+      : parseFloat(resolvedFontSize);
     expect(fontSizePx).toBeGreaterThanOrEqual(20);
   });
 

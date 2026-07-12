@@ -60,10 +60,16 @@
  * `options.purchaseStrings`, giving the browser path the same pre-resolved
  * strings the Node/Jest path gets via `require`.
  *
- * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
- * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
- * whether the tooltip was already dismissed on this device and passes the
- * persistence/analytics callbacks through to `renderHomeScreen`.
+ * `renderHome`'s optional `storage` argument (4th positional param) is a
+ * single object that fills two independent roles, each resolved by duck-
+ * typing rather than assuming a fixed shape: when it exposes `getItem`, it
+ * is used directly to load/persist the mute preference (TRIOFSND-66); when
+ * it exposes `hasSeenHomeTooltip`, it is used to resolve whether the
+ * first-run '¡Jugar!' tooltip (TRIOFSND-65) was already dismissed and wires
+ * the persistence/`first_tap_jugar` callbacks through to `renderHomeScreen`.
+ * Omitting `storage` entirely keeps `renderHome`'s previous, simpler
+ * behaviour (strings only, no mute/tooltip wiring) — every real caller below
+ * passes one explicitly via `resolveAnalyticsStorage`.
  *
  * Two backends can fill that argument. `loadDinoQuizStorage` requires the
  * CommonJS `src/services/storage` module — this only resolves under
@@ -76,7 +82,9 @@
  * i18n resource natively instead of going through `src/i18n`'s loader. The
  * bootstrap below tries the CommonJS path first and falls back to the
  * native browser one, so the tooltip, its persisted "seen" flag and the
- * `first_tap_jugar` counter all work in the real, bundler-less PWA.
+ * `first_tap_jugar` counter all work in the real, bundler-less PWA. Neither
+ * backend exposes `getItem`, so the mute preference still reads/writes
+ * `localStorage` directly (see the comment above `MUTE_STORAGE_KEY`).
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -255,7 +263,7 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn);
+        renderHome(doc, renderers.renderHomeScreen, fetchFn, storage);
       },
     });
   }
@@ -448,7 +456,7 @@
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -467,18 +475,12 @@
     }
 
     return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
-
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
       if (typeof onOpenPrivacyPolicy === 'function') {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
-      };
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -497,6 +499,20 @@
         }
 
         return homeApi;
+      }
+
+      if (!storage) {
+        return finishRender();
+      }
+
+      var muteStorageObj = typeof storage.getItem === 'function' ? storage : undefined;
+      renderOptions.muted = loadMutedState(muteStorageObj);
+      renderOptions.onToggleMute = function (muted) {
+        persistMutedState(muted, muteStorageObj);
+      };
+
+      if (typeof storage.hasSeenHomeTooltip !== 'function') {
+        return finishRender();
       }
 
       return storage.hasSeenHomeTooltip().then(function (seen) {
@@ -546,7 +562,7 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    return renderHome(doc, undefined, fetchFn, resolveAnalyticsStorage(), function () {
       navigateToPrivacyPolicy(loc);
     });
   }
