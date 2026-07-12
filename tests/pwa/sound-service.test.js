@@ -53,6 +53,12 @@ describe('soundService feedback playback', function () {
     window.localStorage.clear();
   });
 
+  function playerFor(audioFactory, src) {
+    return audioFactory.players.filter(function (player) {
+      return player.src === src;
+    })[0];
+  }
+
   describe('normal mode (mute not persisted)', function () {
     it('plays the positive chime on a correct answer', function () {
       var audioFactory = createRecordingAudioFactory();
@@ -63,6 +69,8 @@ describe('soundService feedback playback', function () {
       expect(service.isMuted()).toBe(false);
       expect(played).toBe(true);
       expect(audioFactory.totalPlayCalls()).toBe(1);
+      // The play() call lands specifically on the positive-chime player.
+      expect(playerFor(audioFactory, soundModule.SOUND_SRC.correct).playCalls).toBe(1);
     });
 
     it('plays the soft neutral tone on an incorrect answer', function () {
@@ -73,6 +81,8 @@ describe('soundService feedback playback', function () {
 
       expect(played).toBe(true);
       expect(audioFactory.totalPlayCalls()).toBe(1);
+      // ...and on the neutral-tone player, never the positive one.
+      expect(playerFor(audioFactory, soundModule.SOUND_SRC.incorrect).playCalls).toBe(1);
     });
 
     it('treats an explicitly false persisted flag as unmuted', function () {
