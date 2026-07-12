@@ -112,6 +112,28 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     }
   });
 
+  test('TRIOFSND-80: resolving a question records pregunta_respondida (id_pregunta + acierto/fallo, no PII)', () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const storage = { recordQuestionAnswered: jest.fn().mockResolvedValue({ attempts: 1, correct: 1 }) };
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, storage);
+
+      answerCurrentQuestion(container, { correct: true });
+      expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(1, 'q-0', true);
+
+      answerCurrentQuestion(container, { correct: false });
+      expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(2, 'q-1', false);
+
+      expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('"Salir" navigates back to Inicio', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();

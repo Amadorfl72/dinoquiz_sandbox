@@ -226,7 +226,7 @@
   }
 
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, storage) {
     var question = session.questions[session.state.questionIndex];
 
     return renderers.renderQuestionScreen(container, question, {
@@ -242,6 +242,10 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        if (storage && typeof storage.recordQuestionAnswered === 'function') {
+          storage.recordQuestionAnswered(question.id, result.isCorrect);
+        }
       },
       onNext: function () {
         session.state.questionIndex += 1;
@@ -249,18 +253,18 @@
         if (session.state.questionIndex >= session.questions.length) {
           onGameComplete(session.state);
         } else {
-          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+          renderQuestionAt(container, renderers, session, onGameComplete, storageObj, storage);
         }
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, storage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn);
@@ -269,7 +273,7 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, storage) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -282,9 +286,10 @@
       renderers,
       session,
       function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, storage);
       },
-      storageObj
+      storageObj,
+      storage
     );
 
     return session;
@@ -382,6 +387,7 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -389,6 +395,7 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[QUESTION_STATS_KEY] = {};
 
     function readJSON(key) {
       if (backend) {
@@ -439,6 +446,23 @@
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
       },
+      // TRIOFSND-80: registers 'pregunta_respondida' (no PII, just the
+      // question id and hit/miss) and incrementally updates that question's
+      // attempts/correct counters for the historic % de acierto.
+      recordQuestionAnswered: function (questionId, isCorrect) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.pregunta_respondida = (counts.pregunta_respondida || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { attempts: 0, correct: 0 };
+        stats[questionId] = {
+          attempts: current.attempts + 1,
+          correct: current.correct + (isCorrect ? 1 : 0),
+        };
+        writeJSON(QUESTION_STATS_KEY, stats);
+        return Promise.resolve(stats[questionId]);
+      },
     };
   }
 
@@ -486,7 +510,7 @@
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
               storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage);
             }
           });
         }

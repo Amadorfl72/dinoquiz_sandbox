@@ -1,4 +1,10 @@
 /**
+ * @typedef {Object} QuestionStats
+ * @property {number} attempts
+ * @property {number} correct
+ */
+
+/**
  * @typedef {Object} DinoQuizPersistedState
  * @property {number} bestScore
  * @property {number} maxStreak
@@ -6,6 +12,7 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
+ * @property {Object.<string, QuestionStats>} questionStats
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -16,6 +23,7 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
+  questionStats: {},
 };
 
 /**

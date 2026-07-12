@@ -29,6 +29,7 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('muted')).toBe(false);
     expect(await storage.get('homeTooltipSeen')).toBe(false);
     expect(await storage.get('analyticsEventCounts')).toEqual({});
+    expect(await storage.get('questionStats')).toEqual({});
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -237,5 +238,46 @@ describe('DinoQuizStorage', () => {
       partida_iniciada: 2,
       replay_pulsado: 1,
     });
+  });
+
+  it('recordQuestionAnswered registers pregunta_respondida without any PII payload', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+
+    expect(await storage.getEventCount('pregunta_respondida')).toBe(1);
+    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 1, correct: 1 });
+  });
+
+  it('recordQuestionAnswered incrementally aggregates attempts and hits per question', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionAnswered('trex-01', true);
+
+    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 3, correct: 2 });
+    expect(await storage.getQuestionAccuracy('trex-01')).toBeCloseTo(2 / 3);
+    expect(await storage.getEventCount('pregunta_respondida')).toBe(3);
+  });
+
+  it('recordQuestionAnswered tracks distinct questions independently', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('triceratops-01', false);
+    await storage.recordQuestionAnswered('triceratops-01', false);
+
+    expect(await storage.get('questionStats')).toEqual({
+      'trex-01': { attempts: 1, correct: 1 },
+      'triceratops-01': { attempts: 2, correct: 0 },
+    });
+  });
+
+  it('getQuestionStats/getQuestionAccuracy default to zero for a question that was never answered', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getQuestionStats('never-answered')).toEqual({ attempts: 0, correct: 0 });
+    expect(await storage.getQuestionAccuracy('never-answered')).toBe(0);
   });
 });

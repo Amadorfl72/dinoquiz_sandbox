@@ -11,6 +11,7 @@ const PERSISTED_KEYS = [
   'muted',
   'homeTooltipSeen',
   'analyticsEventCounts',
+  'questionStats',
 ];
 
 function namespacedKey(key) {
@@ -36,7 +37,7 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
+  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {}, questionStats: {} };
   #listeners = new Map();
   #initPromise = null;
 
@@ -141,6 +142,7 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+      questionStats: { ...this.#cache.questionStats },
     };
   }
 
@@ -286,6 +288,38 @@ class DinoQuizStorage {
     const next = (counts[eventName] || 0) + 1;
     await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
+  }
+
+  /**
+   * Registers a resolved question locally (TRIOFSND-80, AC-18): records the
+   * aggregated, non-PII `pregunta_respondida` event -- no data beyond the
+   * question id and whether it was a hit/miss, never anything personal --
+   * and incrementally updates that question's attempts/correct counters so
+   * its historic accuracy (`getQuestionAccuracy`) can be derived at any time
+   * without replaying individual answers.
+   */
+  async recordQuestionAnswered(questionId, isCorrect) {
+    await this.recordEvent('pregunta_respondida');
+
+    const stats = await this.get('questionStats');
+    const current = stats[questionId] || { attempts: 0, correct: 0 };
+    const next = {
+      attempts: current.attempts + 1,
+      correct: current.correct + (isCorrect ? 1 : 0),
+    };
+    await this.set('questionStats', { ...stats, [questionId]: next });
+    return next;
+  }
+
+  async getQuestionStats(questionId) {
+    const stats = await this.get('questionStats');
+    return stats[questionId] || { attempts: 0, correct: 0 };
+  }
+
+  /** Historic % de acierto for a question, as a 0-1 ratio (0 if it has never been answered). */
+  async getQuestionAccuracy(questionId) {
+    const { attempts, correct } = await this.getQuestionStats(questionId);
+    return attempts > 0 ? correct / attempts : 0;
   }
 }
 

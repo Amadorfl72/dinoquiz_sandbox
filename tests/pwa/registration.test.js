@@ -334,6 +334,24 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     );
   });
 
+  test('TRIOFSND-80: recordQuestionAnswered registers pregunta_respondida and aggregates per-question accuracy, no PII', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ pregunta_respondida: 2 })
+    );
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:questionStats',
+      JSON.stringify({ 'trex-01': { attempts: 2, correct: 1 } })
+    );
+  });
+
   test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
     const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
     const win = {
