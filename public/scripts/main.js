@@ -100,6 +100,14 @@
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
+ *
+ * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
+ * question 10 was just answered, derives the game's racha (longest run of
+ * consecutive hits) from `session.state.answers` via
+ * `gameFlow.calculateMaxStreak`, and stashes it on `session.state.maxStreak`
+ * next to the already-tracked final `score`. `renderResultsFor` then forwards
+ * both into `renderResultsScreen`'s options, so the closed Quiz -> Resultados
+ * loop always hands off both pieces of end-of-game data together.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -247,6 +255,12 @@
         session.state.questionIndex += 1;
 
         if (session.state.questionIndex >= session.questions.length) {
+          // TRIOFSND-95: question 10 was just answered — the final score is
+          // already tracked incrementally on session.state.score, but the
+          // racha (longest run of consecutive hits) only makes sense once
+          // every answer of the game is known, so it's derived here, right
+          // before handing the finished game off to Resultados.
+          session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
           onGameComplete(session.state);
         } else {
           renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
@@ -259,6 +273,7 @@
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
+      maxStreak: finalState.maxStreak,
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
