@@ -152,6 +152,43 @@
     }
   }
 
+  // Ads-removal purchase flag (TRIOFSND-97, AC-20/AC-21): same rationale and
+  // namespaced-key convention as MUTE_STORAGE_KEY above -- src/services/storage
+  // models `adsRemoved` too (see StorageClient#hasRemovedAds/#setAdsRemoved),
+  // but this no-bundler browser path reads/writes localStorage directly under
+  // the same `dinoquiz:adsRemoved` key so both paths agree once a bundler
+  // wires the real service in. Results gates its banner/rewarded ad on this
+  // flag; the home purchase confirm button (see homeScreen.js's
+  // `options.onPurchase`) sets it to `true`, once and for good, on this device.
+  var ADS_REMOVED_STORAGE_KEY = 'dinoquiz:adsRemoved';
+
+  function loadAdsRemovedState(storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return false;
+    }
+
+    try {
+      var raw = storageObj.getItem(ADS_REMOVED_STORAGE_KEY);
+      return raw !== null ? JSON.parse(raw) === true : false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function persistAdsRemovedState(adsRemoved, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(ADS_REMOVED_STORAGE_KEY, JSON.stringify(adsRemoved));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist the ads-removed preference', error);
+    }
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   function resolveScreenRenderers(win) {
@@ -327,6 +364,8 @@
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
+      // AC-20/AC-21: the banner/rewarded ad only render while this is false.
+      adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
@@ -650,13 +689,19 @@
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-
       if (muteStorageObj) {
         renderOptions.muted = loadMutedState(muteStorageObj);
         renderOptions.onToggleMute = function (muted) {
           persistMutedState(muted, muteStorageObj);
         };
       }
+      // TRIOFSND-97: the single remove-ads purchase has no real payment SDK
+      // in this offline-first PWA (see CONVENTIONS.md: "Sin backend"), so
+      // confirming it locally marks the purchase as done -- from here on
+      // Resultados stops rendering the banner/rewarded ad (AC-21).
+      renderOptions.onPurchase = function () {
+        persistAdsRemovedState(true, storageObj);
+      };
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -844,6 +889,9 @@
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
       AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
+      loadAdsRemovedState: loadAdsRemovedState,
+      persistAdsRemovedState: persistAdsRemovedState,
+      ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }
