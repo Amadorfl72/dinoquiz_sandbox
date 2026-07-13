@@ -178,6 +178,30 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
       expect(openSpy).not.toHaveBeenCalled();
       assertNoExternalEscapeHatches(container);
     });
+
+    test('showing and dismissing the first-run tooltip never opens an external window/tab', () => {
+      // The tooltip installs a document-level click listener to dismiss on the
+      // first tap anywhere — exercise that gesture too, since it is an
+      // interactive path the child triggers before pressing "¡Jugar!".
+      const { playButton } = renderHomeScreen(container, { showTooltip: true });
+      assertNoExternalEscapeHatches(container);
+
+      playButton.click();
+
+      expect(openSpy).not.toHaveBeenCalled();
+      assertNoExternalEscapeHatches(container);
+    });
+
+    test('closing an opened disclosure panel never opens an external window/tab', () => {
+      const { privacyButton, privacyPanel } = renderHomeScreen(container);
+
+      privacyButton.click();
+      const closeButton = privacyPanel.querySelector('.home-screen__panel-close-button');
+      closeButton.click();
+
+      expect(openSpy).not.toHaveBeenCalled();
+      assertNoExternalEscapeHatches(container);
+    });
   });
 
   describe('Quiz (Pregunta)', () => {
