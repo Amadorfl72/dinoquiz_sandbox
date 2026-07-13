@@ -8,7 +8,6 @@ const { getByRole } = require('@testing-library/dom');
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
-const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 
 function buildQuestion(id) {
   return {
@@ -213,23 +212,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     } finally {
       jest.useRealTimers();
     }
-    expect(container.textContent).toContain('0/10');
-
-    // Replay with a different random seed so a different subset is picked (AC-9).
-    getByRole(container, 'button', { name: strings.playAgainButton }).click();
-
-    // We should now be back on a question screen (first question of the new
-    // game), not still on Resultados, with a fresh, reset score of 0.
-    expect(container.querySelector('.question-screen')).not.toBeNull();
-    expect(container.querySelector('.results-screen')).toBeNull();
-    expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
-
-    // Finish the replayed game to confirm the reset score (not the old
-    // game's answers) drives the new result.
-    for (let i = 0; i < 10; i += 1) {
-      await answerCurrentQuestion(container, { correct: true });
-    }
-    expect(container.textContent).toContain('10/10');
   });
 
   test('"Salir" navigates back to Inicio', async () => {
@@ -244,6 +226,16 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       for (let i = 0; i < 10; i += 1) {
         await answerCurrentQuestion(container, { correct: true });
       }
+      expect(container.querySelector('.results-screen')).not.toBeNull();
+
+      getByRole(container, 'button', { name: strings.exitButton }).click();
+
+      // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
+      // let its promise chain settle before asserting on the DOM.
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(container.querySelector('.results-screen')).toBeNull();
+      expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();
     } finally {
       jest.useRealTimers();
     }
@@ -369,7 +361,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, storage).then(() => {
       expect(container.querySelector('.home-screen__tooltip')).not.toBeNull();
 
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();

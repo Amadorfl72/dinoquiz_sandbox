@@ -91,7 +91,15 @@ describe('real question bank (public/data/questions.json)', () => {
   test('every question image reference resolves to a real file under public/assets/images', () => {
     const imagesDir = path.join(__dirname, '..', '..', 'public', 'assets', 'images');
     questions.forEach((question) => {
+      // Reject anything but a relative, traversal-free path before it ever reaches path.join.
+      expect(question.image).toMatch(/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/);
+      expect(question.image).not.toMatch(/\.\./);
+
       const imagePath = path.join(imagesDir, question.image);
+      const relativeToImagesDir = path.relative(imagesDir, imagePath);
+      expect(relativeToImagesDir.startsWith('..')).toBe(false);
+      expect(path.isAbsolute(relativeToImagesDir)).toBe(false);
+
       expect(fs.existsSync(imagePath)).toBe(true);
     });
   });

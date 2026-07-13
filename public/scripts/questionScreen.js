@@ -144,7 +144,6 @@
   var NEUTRAL_CLASS = 'question-screen__option--neutral';
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
-  var IMAGE_SRC_BASE = IMAGE_BASE_PATH;
   var MIN_ADVANCE_DELAY_MS = 4000;
 
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
@@ -218,7 +217,6 @@
     var name = (dinosaurNames && dinosaurNames[dinosaur]) || dinosaur || '';
     return format.replace('{dinosaur}', name);
   }
-
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
     if (typeof format !== 'string') {
@@ -231,11 +229,6 @@
       return require('./scoring');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
-  }
-
-  function resolveImageAlt(strings, dinosaur) {
-    var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
-    return strings.imageAlt.replace('{dinosaur}', dinosaurName);
   }
 
   function formatTemplate(template, values) {
@@ -343,7 +336,6 @@
   function renderQuestionScreen(container, question, options) {
     options = options || {};
     var strings = resolveStrings(options);
-    var dinosaurNames = resolveDinosaurNames(options);
     var scoring = resolveScoring();
     var audio = resolveAudio();
     var playFailSound =
@@ -365,19 +357,14 @@
 
     var image = document.createElement('img');
     image.className = 'question-screen__image';
-    image.src = IMAGE_SRC_BASE + question.image;
-    image.alt = buildImageAlt(strings, dinosaurNames, question.dinosaur);
+    image.src = IMAGE_BASE_PATH + question.image;
+    image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
     image.decoding = 'async';
 
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
 
-    var image = document.createElement('img');
-    image.className = 'question-screen__image';
-    image.src = IMAGE_BASE_PATH + question.image;
-    image.alt = resolveImageAlt(strings, question.dinosaur);
-    image.decoding = 'async';
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.textContent = strings.scoreLabel + ': ' + score;
@@ -566,7 +553,6 @@
 
     root.appendChild(image);
     root.appendChild(prompt);
-    root.appendChild(image);
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
@@ -585,7 +571,6 @@
       root: root,
       image: image,
       prompt: prompt,
-      image: image,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
