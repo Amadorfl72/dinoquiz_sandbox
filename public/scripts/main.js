@@ -276,9 +276,17 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
-          navigateToPrivacyPolicy();
-        });
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage,
+          homeStorage
+        );
       },
     });
   }
@@ -556,17 +564,18 @@
   }
 
   /**
-   * `storage`, when given, doubles as two independent optional backends,
-   * told apart by shape: a raw `getItem`/`setItem` object (matching
-   * `localStorage`, TRIOFSND-66) persists the mute preference, while a
-   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` object
-   * (matching `src/services/storage`'s `dinoQuizStorage` or
-   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip.
-   * Passing neither renders Home with plain strings only, so callers that
-   * don't care about mute/tooltip persistence (e.g. a bare unit render) get
-   * back exactly the options they'd expect with no surprise side effects.
+   * `tooltipStorage`/`muteStorage` are two independent optional backends:
+   * `tooltipStorage` (matching `src/services/storage`'s `dinoQuizStorage` or
+   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip and
+   * defaults to `loadDinoQuizStorage()`/`createBrowserHomeStorage()` when
+   * omitted, so the tooltip stays wired even without an explicit argument;
+   * `muteStorage` (a raw `getItem`/`setItem` object matching `localStorage`,
+   * TRIOFSND-66) persists the mute preference and defaults to
+   * `window.localStorage`. Either can be passed as an explicit falsy-shaped
+   * stand-in to opt out (e.g. a bare unit render with a `renderHomeScreen`
+   * mock that only cares about the fetched strings).
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, tooltipStorage, muteStorage) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -584,8 +593,12 @@
       return Promise.resolve(null);
     }
 
-    var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
-    var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
+    tooltipStorage = tooltipStorage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    muteStorage = muteStorage || (typeof window !== 'undefined' ? window.localStorage : undefined);
+
+    var muteStorageObj = muteStorage && typeof muteStorage.getItem === 'function' ? muteStorage : null;
+    var tooltipStorageObj =
+      tooltipStorage && typeof tooltipStorage.hasSeenHomeTooltip === 'function' ? tooltipStorage : null;
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
@@ -614,8 +627,10 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              if (tooltipStorageObj && typeof tooltipStorageObj.recordEvent === 'function') {
+                tooltipStorageObj.recordEvent('partida_iniciada');
+              }
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, muteStorageObj);
             }
           });
         }
@@ -623,17 +638,17 @@
         return homeApi;
       }
 
-      if (!tooltipStorage) {
+      if (!tooltipStorageObj) {
         return finishRender();
       }
 
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return tooltipStorageObj.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorage.markHomeTooltipSeen();
+          tooltipStorageObj.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorage.recordEventOnce('first_tap_jugar');
+          tooltipStorageObj.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -698,9 +713,17 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      homeStorage,
+      homeStorage
+    );
   }
 
   /**
