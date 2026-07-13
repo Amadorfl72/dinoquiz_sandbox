@@ -79,6 +79,14 @@ describe('real question bank (public/data/questions.json)', () => {
     });
   });
 
+  test('every question image reference resolves to a real file under public/assets/images', () => {
+    const imagesDir = path.join(__dirname, '..', '..', 'public', 'assets', 'images');
+    questions.forEach((question) => {
+      const imagePath = path.join(imagesDir, question.image);
+      expect(fs.existsSync(imagePath)).toBe(true);
+    });
+  });
+
   test('every question dato_curioso key resolves to a non-empty i18n string', () => {
     const strings = getStrings('es');
     expect(getDatoCuriosoTranslationErrors(questions, strings)).toEqual([]);
