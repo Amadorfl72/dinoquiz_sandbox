@@ -213,4 +213,29 @@ describe('DinoQuizStorage', () => {
       mute_toggled: 1,
     });
   });
+
+  it('recordEvent is a non-PII local counter that increments on every call', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getEventCount('partida_iniciada')).toBe(0);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+
+    expect(await storage.getEventCount('partida_iniciada')).toBe(3);
+  });
+
+  it('recordEvent tracks distinct event names independently', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('replay_pulsado');
+
+    expect(await storage.get('analyticsEventCounts')).toEqual({
+      partida_iniciada: 2,
+      replay_pulsado: 1,
+    });
+  });
 });

@@ -8,8 +8,9 @@
  * public/scripts/homeScreen.js, loaded before this file in index.html).
  *
  * `registerServiceWorker`/`loadHomeStrings`/`loadHomeResources`/`renderHome`/
- * `renderRoute` accept explicit overrides so each is unit-testable under Node
- * without touching the global `navigator`/`document`/`fetch`/`location`.
+ * `renderRoute`/`renderMuteToggle` accept explicit overrides so each is
+ * unit-testable under Node without touching the global
+ * `navigator`/`document`/`fetch`/`location`.
  *
  * A minimal hash router (no bundler, no server-side rewrites needed — works
  * offline behind the service worker) switches #app between Home and the
@@ -39,6 +40,29 @@
  * in the browser and fall back to `require` under Node/Jest, so the whole
  * flow runs identically in the real PWA and in the unit tests.
  *
+ * Global mute toggle (TRIOFSND-105, AC-11): it also mounts the mute/unmute
+ * button into `#mute-toggle`, a container that lives outside `#app` in the
+ * shared app shell (see public/index.html and public/scripts/appShell.js) so
+ * it stays mounted across every screen instead of being wiped on each screen
+ * render.
+ *
+ * Mute persistence (TRIOFSND-66): `src/services/storage` already models a
+ * `muted` key with IndexedDB/localStorage/memory fallback, but it's a
+ * CommonJS module graph (`require`d internally) that this no-bundler app
+ * shell can't load as a plain `<script>`. `MUTE_STORAGE_KEY` below matches
+ * the exact namespaced key that service writes (`dinoquiz:muted`, JSON-
+ * encoded) so a future bundler-backed wiring of the real service reads back
+ * the same value with no migration. Until then, this reads/writes
+ * `localStorage` directly -- sufficient for a single boolean preference --
+ * degrading to an in-memory default (unmuted) if `localStorage` throws
+ * (e.g. Safari private mode). `renderQuestionAt` reads this same state via
+ * `loadMutedState` and forwards it as `options.muted` to
+ * `renderQuestionScreen`, which is how the neutral fail sound (TRIOFSND-89)
+ * respects "modo silencio" without questionScreen.js touching storage. The
+ * `renderMuteToggle` button reads/writes the same state via `loadMutedState`/
+ * `persistMutedState`, so toggling it from any screen and answering a
+ * question afterwards stay in sync.
+ *
  * i18n sections for the global controls (TRIOFSND-66): `homeScreen.js`'s
  * `resolveDefaultStrings`/`resolveDefaultLocaleStrings` fall back to
  * `require('../../src/i18n')`, but that CommonJS path only exists under
@@ -59,8 +83,11 @@
  *     first-run '¡Jugar!' tooltip (TRIOFSND-65): when present, `renderHome`
  *     resolves whether the tooltip was already dismissed on this device and
  *     passes the persistence/analytics callbacks through to
- *     `renderHomeScreen`. Neither interface is required — omitting `storage`
- *     entirely (as direct callers of `renderHome` may for tests) skips both.
+ *     `renderHomeScreen`. Neither interface is required -- omitting
+ *     `storage` entirely (as direct callers of `renderHome` may for tests)
+ *     skips both; passing neither argument at all renders Home with plain
+ *     strings only (no surprise mute/tooltip side effects) -- useful for
+ *     bare unit renders.
  *
  * `resolveHomeStorage` builds the real, combined backend used by the actual
  * app-shell entry points (`renderRoute`, "Salir" from Resultados). Two
@@ -74,8 +101,18 @@
  * `loadHomeStrings` above fetches the i18n resource natively instead of
  * going through `src/i18n`'s loader. `resolveHomeStorage` tries the
  * CommonJS path first and falls back to the native browser one, so mute,
- * the tooltip, its persisted "seen" flag and the `first_tap_jugar` counter
- * all work in the real, bundler-less PWA.
+ * the tooltip, its persisted "seen" flag, the analytics counters and the
+ * `first_tap_jugar` counter all work in the real, bundler-less PWA.
+ *
+ * Starting a game (TRIOFSND-67): the '¡Jugar!' click handler wired below
+ * records the aggregated, non-PII `partida_iniciada` event (via
+ * `storage.recordEvent`, which increments on every call — unlike the
+ * once-only `first_tap_jugar` counter above) before calling `startNewGame`,
+ * so every game start is counted even on replay-free single sessions. Both
+ * this handler and `homeScreen.js`'s own click listener (which dismisses the
+ * tooltip and fires `first_tap_jugar`) run synchronously off the same click
+ * event, so the tooltip closes and the first question renders in the same
+ * tick — no perceptible delay after the tap.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -219,7 +256,7 @@
    * through the same `advance()` so a game is only ever walked forward once
    * per question, whichever trigger fires first.
    */
-  function renderQuestionAt(container, renderers, session, onGameComplete) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
@@ -249,6 +286,7 @@
 
     return renderers.renderQuestionScreen(container, question, {
       score: session.state.score,
+      muted: loadMutedState(storageObj),
       onAnswer: function (result) {
         session.state.score = result.score;
         session.state.answers = session.state.answers.concat([
@@ -269,11 +307,11 @@
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
@@ -284,7 +322,7 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -292,11 +330,37 @@
 
     var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
 
-    renderQuestionAt(container, renderers, session, function (finalState) {
-      renderResultsFor(container, renderers, questions, finalState, doc, fetchFn);
-    });
+    renderQuestionAt(
+      container,
+      renderers,
+      session,
+      function (finalState) {
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+      },
+      storageObj
+    );
 
     return session;
+  }
+
+  /**
+   * Resolves and installs `appShell.js`'s `installExternalLinkGuard`
+   * (TRIOFSND-121), the same way `resolveScreenRenderers`/`resolveGameFlow`
+   * resolve their browser-global vs. `require`d counterparts. A missing
+   * resolver (e.g. appShell.js failed to load) just means no guard installs
+   * -- it never blocks the rest of the bootstrap.
+   */
+  function installLinkGuard(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var installer =
+      (win && win.DinoQuiz && win.DinoQuiz.appShell && win.DinoQuiz.appShell.installExternalLinkGuard) ||
+      (typeof require === 'function' ? require('./appShell').installExternalLinkGuard : undefined);
+
+    if (typeof installer !== 'function') {
+      return null;
+    }
+
+    return installer(win && win.document, win);
   }
 
   function registerServiceWorker(nav, swPath) {
@@ -339,21 +403,38 @@
       });
   }
 
-  function loadHomeStrings(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data && data.home;
-    });
-  }
-
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
 
+  function loadHomeStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.home;
+    });
+  }
+
+  /**
+   * Fetches the whole i18n resource once and hands back the three sections
+   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
+   * browser can render the global controls without a `require()` for
+   * `src/i18n`.
+   */
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+    });
+  }
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
+    });
+  }
+
+  function loadHomeResources(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
 
@@ -469,14 +550,60 @@
           }
         }
       },
+      recordEvent: function (eventName) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts[eventName] = (counts[eventName] || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+        return Promise.resolve(counts[eventName]);
+      },
     };
   }
 
-  /** Resolves the combined mute + tooltip/analytics storage backend for the real app-shell entry points. */
+  /**
+   * Resolves the real, production storage backend for `renderHome`: the
+   * tooltip/analytics half (`loadDinoQuizStorage()`, falling back to
+   * `createBrowserHomeStorage()` in a real unbundled browser) merged with a
+   * `getItem`/`setItem` pass-through to `window.localStorage` for the mute
+   * preference, so both halves of `renderHome`'s duck-typed `storage`
+   * argument resolve from the one object the bootstrap passes in.
+   */
   function resolveHomeStorage(win) {
-    return loadDinoQuizStorage() || createBrowserHomeStorage(win);
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var tooltipBackend = loadDinoQuizStorage() || createBrowserHomeStorage(win);
+    var localStorageBackend = win && win.localStorage;
+
+    return {
+      hasSeenHomeTooltip: function () {
+        return tooltipBackend.hasSeenHomeTooltip();
+      },
+      markHomeTooltipSeen: function () {
+        return tooltipBackend.markHomeTooltipSeen();
+      },
+      recordEventOnce: function (eventName) {
+        return tooltipBackend.recordEventOnce(eventName);
+      },
+      getItem: function (key) {
+        return localStorageBackend ? localStorageBackend.getItem(key) : null;
+      },
+      setItem: function (key, value) {
+        if (localStorageBackend) {
+          localStorageBackend.setItem(key, value);
+        }
+      },
+    };
   }
 
+  /**
+   * `storage`, when given, doubles as two independent optional backends,
+   * told apart by shape: a raw `getItem`/`setItem` object (matching
+   * `localStorage`, TRIOFSND-66) persists the mute preference, while a
+   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` object
+   * (matching `src/services/storage`'s `dinoQuizStorage` or
+   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip.
+   * Passing neither renders Home with plain strings only, so callers that
+   * don't care about mute/tooltip persistence (e.g. a bare unit render) get
+   * back exactly the options they'd expect with no surprise side effects.
+   */
   function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
@@ -495,18 +622,22 @@
       return Promise.resolve(null);
     }
 
+    var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
+    var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
+
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
+
+      if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
 
-      if (storage && typeof storage.getItem === 'function') {
-        renderOptions.muted = loadMutedState(storage);
+      if (muteStorageObj) {
+        renderOptions.muted = loadMutedState(muteStorageObj);
         renderOptions.onToggleMute = function (muted) {
-          persistMutedState(muted, storage);
+          persistMutedState(muted, muteStorageObj);
         };
       }
 
@@ -521,7 +652,8 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              startNewGame(container, renderers, questions, doc, fetchFn);
+              storage.recordEvent('partida_iniciada');
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
             }
           });
         }
@@ -529,20 +661,44 @@
         return homeApi;
       }
 
-      if (storage && typeof storage.hasSeenHomeTooltip === 'function') {
-        return storage.hasSeenHomeTooltip().then(function (seen) {
-          renderOptions.showTooltip = !seen;
-          renderOptions.onTooltipDismiss = function () {
-            storage.markHomeTooltipSeen();
-          };
-          renderOptions.onPlayButtonClick = function () {
-            storage.recordEventOnce('first_tap_jugar');
-          };
-          return finishRender();
-        });
+      if (!tooltipStorage) {
+        return finishRender();
       }
 
-      return finishRender();
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+        renderOptions.showTooltip = !seen;
+        renderOptions.onTooltipDismiss = function () {
+          tooltipStorage.markHomeTooltipSeen();
+        };
+        renderOptions.onPlayButtonClick = function () {
+          tooltipStorage.recordEventOnce('first_tap_jugar');
+        };
+        return finishRender();
+      });
+    });
+  }
+
+  function renderMuteToggle(doc, renderMuteToggleButton, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderMuteToggleButton =
+      renderMuteToggleButton ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.appShell &&
+        window.DinoQuiz.appShell.renderMuteToggleButton);
+
+    if (!doc || typeof renderMuteToggleButton !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('mute-toggle');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return fetchI18nResource(fetchFn).then(function (data) {
+      var strings = data && data.muteButton;
+      return renderMuteToggleButton(container, strings ? { strings: strings } : {});
     });
   }
 
@@ -619,11 +775,22 @@
       });
   }
 
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  // Only self-bootstrap in a real, unbundled browser: under Node/Jest,
+  // `require` always exists and the test files drive `startNewGame`/
+  // `renderHome`/`renderRoute` explicitly against their own `#app` container,
+  // so attaching this would race a jsdom-dispatched `load` event against
+  // whatever container the test currently has mounted.
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.addEventListener === 'function' &&
+    typeof require !== 'function'
+  ) {
     window.addEventListener('load', function () {
+      installLinkGuard();
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {
         renderRoute();
+        renderMuteToggle();
       });
     });
     window.addEventListener('hashchange', function () {
@@ -635,7 +802,9 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
+      resolveHomeStorage: resolveHomeStorage,
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
@@ -658,6 +827,7 @@
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
       AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
+      renderMuteToggle: renderMuteToggle,
     };
   }
 })();

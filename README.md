@@ -13,6 +13,33 @@ npm install
 npm test
 ```
 
+## PWA: instalación y despliegue (TRIOFSND-139)
+
+DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
+
+- **Manifest** ([`public/manifest.json`](public/manifest.json)): `name`/`short_name`,
+  `start_url`, `display: "standalone"`, `background_color`/`theme_color` e iconos
+  192x192/512x512 (ver [`tests/pwa/manifest.test.js`](tests/pwa/manifest.test.js)).
+  Enlazado desde [`public/index.html`](public/index.html) vía `<link rel="manifest">`.
+- **Service worker** ([`public/service-worker.js`](public/service-worker.js)): precachea el
+  app shell completo (HTML/CSS/JS, manifest, iconos, i18n, banco de preguntas) en el
+  evento `install` y sirve en **cache-first** cualquier asset que se añada después (imágenes
+  de dinosaurios, audio, JSON), cacheándolo la primera vez que se pide (ver
+  [`tests/pwa/service-worker.test.js`](tests/pwa/service-worker.test.js)). Las navegaciones
+  HTML son network-first con caída a caché y, si no hay nada cacheado, a
+  [`public/offline.html`](public/offline.html) — así una partida ya iniciada sigue jugable sin
+  red. Se registra desde [`public/scripts/main.js`](public/scripts/main.js) (`registerServiceWorker`,
+  ver [`tests/pwa/registration.test.js`](tests/pwa/registration.test.js)).
+- **HTTPS**: los service workers solo se registran en un
+  [contexto seguro](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts)
+  (HTTPS, o `http://localhost` en desarrollo); sin HTTPS el navegador ignora el registro y la
+  PWA deja de ser instalable y de funcionar offline. Al no haber backend, cualquier hosting
+  estático con HTTPS gestionado (GitHub Pages, Netlify, Vercel, Cloudflare Pages, etc.) sirve:
+  basta con desplegar el contenido de `public/` tal cual (no requiere build) detrás de ese
+  hosting. `npm test` no puede verificar la configuración de HTTPS del entorno de despliegue en
+  sí (no forma parte del código fuente), pero si se sirve la app por HTTP en producción el
+  navegador desactivará el service worker aunque el resto de la implementación sea correcta.
+
 ## Banco de preguntas
 
 El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
@@ -34,7 +61,7 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.png" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
 }
 ```
 
@@ -42,6 +69,15 @@ Cada pregunta sigue este esquema:
 respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
+
+Las ilustraciones referenciadas por `image` viven en
+[`public/assets/images/dinosaurs/`](public/assets/images/dinosaurs) — un SVG cartoon por
+especie (trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
+pteranodon), en el mismo estilo que la mascota. Son ligeros y no requieren red, por lo que el
+service worker los precachea junto al resto del app shell (ver
+[`public/service-worker.js`](public/service-worker.js)) y quedan disponibles offline desde el
+primer arranque; `src/data/questionBank.test.js` verifica que cada `image` del banco resuelva
+a un fichero real bajo esa carpeta.
 
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
@@ -181,7 +217,36 @@ Tras responder, además del resaltado de la opción correcta, la pantalla muestr
   menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
   ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
 
+### CTA opcional de anuncio con recompensa (TRIOFSND-86)
 
+Junto al dato curioso gratuito, la pantalla de feedback ofrece un CTA opcional y
+claramente etiquetado ("🎬 Ver anuncio: ¡dato extra!", `question-screen__rewarded-ad-cta`)
+para desbloquear un segundo dato curioso viendo un anuncio con recompensa. El CTA llama al
+único punto de entrada de anuncios de la app,
+[`src/services/ads/rewardedAdService.js`](src/services/ads/rewardedAdService.js), en vez de
+hablar con un SDK de anuncios directamente — así, cuando en el futuro se integre una red de
+anuncios real, solo hay que sustituir el `provider` de ese servicio, sin tocar la pantalla.
+
+- El CTA solo se muestra si `rewardedAdService.isAvailable()` responde `true`. La v1 no
+  integra ningún SDK de anuncios (ver `open_risks` del PRD: "sin SDK publicitario
+  comportamental"), así que el proveedor por defecto siempre informa que no hay anuncio
+  disponible y el CTA permanece oculto — el mecanismo completo queda implementado y
+  probado (con un proveedor simulado inyectable) listo para activarse.
+- `rewardedAdService.request()` nunca rechaza la promesa: si el anuncio no está disponible,
+  no se completa o el proveedor lanza un error, siempre resuelve
+  `{ granted: false, reason: ... }`. La pantalla nunca necesita `try/catch` ni bloquea el
+  flujo — "Siguiente" y su temporizador son completamente independientes del CTA.
+- Si el niño ve el anuncio hasta el final (`granted: true`), se revela un segundo recuadro
+  de dato curioso (`question-screen__extra-fun-fact-box`, azul para diferenciarlo del
+  amarillo del dato curioso gratuito) con un dato adicional del mismo dinosaurio
+  (`question.rewardedAd.extraFacts` en `es.json`).
+- Si no se completa, se muestra un mensaje neutro y no bloqueante
+  (`question-screen__rewarded-ad-status`, `aria-live="polite"`) y la partida continúa igual.
+
+Como el resto de pantallas, la implementación real vive en
+[`public/scripts/questionScreen.js`](public/scripts/questionScreen.js) (con la misma
+resolución `require`-o-`window.DinoQuiz` que usa para scoring/i18n) y
+[`src/screens/QuestionScreen.js`](src/screens/QuestionScreen.js) la re-exporta para Node/Jest.
 
 ## Pantalla de Resultados
 
@@ -253,3 +318,18 @@ como automático, están cubiertos en
 Pregunta/Feedback que el navegador carga como `<script>` (ver
 [`public/index.html`](public/index.html)); `src/screens/QuestionScreen.js` la re-exporta
 para Node/Jest, igual que el resto de pantallas (`resultsScreen.js`, `homeScreen.js`).
+
+### Blindaje contra enlaces externos navegables (TRIOFSND-121)
+
+Ninguna de las tres pantallas del flujo cerrado (ni la política de privacidad) renderiza hoy
+un `<a>`, pero el PRD exige que un niño de 6-8 años nunca pueda salir de la app de un toque,
+ni siquiera si una futura pantalla, cadena i18n o integración de anuncios/compra introdujera
+un enlace por error. [`installExternalLinkGuard`](public/scripts/appShell.js) instala un único
+listener de clic en fase de captura sobre la raíz del app-shell (cubre `#app` y
+`#mute-toggle`, es decir toda pantalla presente y futura) que cancela cualquier clic sobre un
+`<a>` cuyo `href` resuelva a un origen distinto o cuyo `target` sea `_blank`, y neutraliza
+`window.open` para que tampoco un popup lanzado por script pueda sacar al niño de la app. La
+navegación interna (la ruta por hash de la política de privacidad, TRIOFSND-116) no usa
+`<a>` ni `window.open`, así que no se ve afectada. `public/scripts/main.js` lo instala una vez
+al arrancar (`installLinkGuard`, en el listener `load`), junto al registro del service worker
+(ver [`tests/pwa/external-link-guard.test.js`](tests/pwa/external-link-guard.test.js)).
