@@ -320,7 +320,7 @@
       if (session.state.questionIndex >= session.questions.length) {
         onGameComplete(session.state);
       } else {
-        renderQuestionAt(container, renderers, session, onGameComplete);
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
       }
     }
 
@@ -883,6 +883,7 @@
       loadQuestions: loadQuestions,
       prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
+      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
       loadMutedState: loadMutedState,

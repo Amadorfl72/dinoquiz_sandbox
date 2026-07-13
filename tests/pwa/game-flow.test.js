@@ -382,6 +382,89 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       expect(storage.recordEvent).toHaveBeenCalledWith('partida_iniciada');
     });
   });
+
+  describe('avance automático tras el temporizador (TRIOFSND-84)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('acierto: advances to the next question on its own once the auto-advance delay elapses, without a "Siguiente" tap', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(2);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
+      const [correctButton] = container.querySelectorAll('.question-screen__option');
+      correctButton.click();
+
+      // Not enough time has passed yet: still on the same question.
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+      expect(container.querySelector('.question-screen__prompt').textContent).toBe(firstPrompt);
+
+      // Past MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS with no manual tap:
+      // the controller advances automatically.
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+    });
+
+    test('fallo: also advances automatically, carrying forward the unchanged score', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(2);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
+      const buttons = container.querySelectorAll('.question-screen__option');
+      buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
+
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+
+      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+    });
+
+    test('auto-advances straight to Resultados when the last question times out unanswered-via-"Siguiente"', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(1);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      const [correctButton] = container.querySelectorAll('.question-screen__option');
+      correctButton.click();
+
+      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+
+      expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
+      expect(container.textContent).toContain('1/1');
+    });
+
+    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
+      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(3);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+      answerCurrentQuestion(container, { correct: true });
+      const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
+
+      // The first question's now-stale auto-advance timer would fire around
+      // here if it hadn't been cancelled by the manual click above.
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+
+      expect(container.querySelector('.question-screen__prompt').textContent).toBe(secondPrompt);
+      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+    });
+  });
 });
 
 describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then navigates to Resultados', () => {

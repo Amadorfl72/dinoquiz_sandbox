@@ -33,7 +33,11 @@
  * `window.open`.
  */
 (function () {
-  var MUTE_STORAGE_KEY = 'dinoquiz.audio.muted';
+  // Canonical key (TRIOFSND-84): must match public/scripts/main.js's
+  // MUTE_STORAGE_KEY and the `dinoquiz:muted` key src/services/storage
+  // namespaces internally, so toggling mute from this shared app-shell
+  // control is actually read by the Home/question rendering flow.
+  var MUTE_STORAGE_KEY = 'dinoquiz:muted';
 
   var SPEAKER_ON_ICON =
     '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">' +
@@ -83,11 +87,11 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
-    // Belt-and-braces alongside the `.app-shell__mute-toggle` rule in
-    // main.css: inline styles guarantee the AC-2/AC-11 48x48dp touch target
-    // even before that stylesheet loads or in contexts that skip it entirely
-    // (e.g. jsdom's getComputedStyle, which doesn't resolve external
-    // stylesheets).
+    // Inline min-width/min-height mirror public/styles/main.css so the
+    // ≥48x48dp touch target (AC-2/AC-11/AC-23) holds even where the
+    // stylesheet isn't loaded (e.g. unit tests rendering into a bare
+    // container) or doesn't resolve external stylesheets (e.g. jsdom's
+    // getComputedStyle).
     button.style.minWidth = '48px';
     button.style.minHeight = '48px';
 
