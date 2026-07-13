@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88 / TRIOFSND-83 / TRIOFSND-135 / TRIOFSND-79).
+ * Pregunta/Feedback screen (TRIOFSND-72 / TRIOFSND-77 / TRIOFSND-88 / TRIOFSND-83 / TRIOFSND-84 / TRIOFSND-135 / TRIOFSND-79).
  *
  * Rewarded-ad CTA (TRIOFSND-86): once the feedback is revealed, an optional,
  * clearly-labeled "watch an ad for an extra dato curioso" button appears
