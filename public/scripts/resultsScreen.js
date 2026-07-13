@@ -82,6 +82,14 @@
     'tonta',
   ]);
 
+  // Content-guide guard (TRIOFSND-91, AC-7): motivational messages must never
+  // contain negative/discouraging language. Also exposed through
+  // src/i18n/contentGuide.js so other screens (e.g. QuestionScreen's
+  // wrong-answer feedback) can share this same list without duplicating it.
+  function resolveContentGuide() {
+    return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
+  }
+
   function resolveStrings(options) {
     options = options || {};
     if (options.strings) {
@@ -93,16 +101,6 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.results : null;
-  }
-
-  function normalizeToWords(text) {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean);
   }
 
   function calculateStars(score) {
@@ -123,16 +121,15 @@
       return ['messages must be a non-empty array of strings'];
     }
 
+    var contentGuide = resolveContentGuide();
+
     messages.forEach(function (message, index) {
       if (typeof message !== 'string' || message.trim() === '') {
         errors.push('message at index ' + index + ' must be a non-empty string');
         return;
       }
 
-      var words = normalizeToWords(message);
-      var bannedWordsFound = words.filter(function (word) {
-        return BANNED_WORDS.has(word);
-      });
+      var bannedWordsFound = contentGuide ? contentGuide.findBannedWords(message) : [];
       if (bannedWordsFound.length > 0) {
         errors.push(
           'message at index ' + index + ' ("' + message + '") contains negative language: ' + bannedWordsFound.join(', ')
