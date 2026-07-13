@@ -203,6 +203,65 @@ describe('ResultsScreen rendering', () => {
   });
 });
 
+describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('shows a discreet banner and a rewarded ad button by default (purchase not made)', () => {
+    const { adsSection, adBanner, rewardedAdButton } = renderResultsScreen(container, { score: 5 });
+
+    expect(adsSection).not.toBeNull();
+    expect(adBanner).not.toBeNull();
+    expect(rewardedAdButton).not.toBeNull();
+    expect(container.contains(adsSection)).toBe(true);
+  });
+
+  test('the banner and rewarded ad are both clearly labeled as an ad', () => {
+    const { adBanner, rewardedAdButton } = renderResultsScreen(container, { score: 5 });
+
+    expect(adBanner).toHaveTextContent(strings.ads.bannerBadge);
+    expect(rewardedAdButton).toHaveAccessibleName(`${strings.ads.rewardedBadge}: ${strings.ads.rewardedButton}`);
+  });
+
+  test('clicking the rewarded ad button calls onWatchRewardedAd', () => {
+    const onWatchRewardedAd = jest.fn();
+    const { rewardedAdButton } = renderResultsScreen(container, { score: 5, onWatchRewardedAd });
+
+    rewardedAdButton.click();
+
+    expect(onWatchRewardedAd).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the banner and rewarded ad once the remove-ads purchase has been made', () => {
+    const { adsSection, adBanner, rewardedAdButton } = renderResultsScreen(container, {
+      score: 5,
+      adsRemoved: true,
+    });
+
+    expect(adsSection).toBeNull();
+    expect(adBanner).toBeNull();
+    expect(rewardedAdButton).toBeNull();
+    expect(container.querySelector('.results-screen__ads')).toBeNull();
+  });
+
+  test('never blocks "Volver a jugar" — it still works while ads are showing', () => {
+    const onPlayAgain = jest.fn();
+    const { playAgainButton } = renderResultsScreen(container, { score: 5, onPlayAgain });
+
+    playAgainButton.click();
+
+    expect(onPlayAgain).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp text (AC-2/AC-23)', () => {
   const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 

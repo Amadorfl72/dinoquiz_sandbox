@@ -6,9 +6,10 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFeedbackCopy } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
+const { findBannedWords } = require('../i18n/contentGuide');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
@@ -262,7 +263,7 @@ describe('QuestionScreen', () => {
       optionButtons[wrongIndex].click();
 
       expect(feedback).toHaveTextContent(strings.feedback.incorrect);
-      expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
+      expect(findBannedWords(feedback.textContent)).toEqual([]);
     });
 
     test('the aria-live feedback announcement spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
@@ -292,6 +293,15 @@ describe('QuestionScreen', () => {
       expect(wrongButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
     });
 
+    test('does not label the correct option on a hit — only a miss adds the "Respuesta correcta" aria-label (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(optionButtons[question.correctAnswerIndex]).not.toHaveAttribute('aria-label');
+    });
+
     test('keeps the dinosaur illustration and its descriptive alt-text unchanged after a miss (TRIOFSND-90)', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
@@ -319,7 +329,6 @@ describe('QuestionScreen', () => {
       );
       expect(announcementEl).toHaveTextContent(question.options[question.correctAnswerIndex]);
     });
-
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
@@ -355,6 +364,27 @@ describe('QuestionScreen', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('TRIOFSND-91: content-guide audit of the failure copy (AC-7)', () => {
+    test('the real es.json incorrect-answer feedback contains no negative language', () => {
+      expect(validateFailureCopy(strings)).toBeNull();
+    });
+
+    test('flags a strings bundle whose incorrect-answer feedback uses banned negative language', () => {
+      const badStrings = { ...strings, feedback: { ...strings.feedback, incorrect: '¡Qué mal, fallaste!' } };
+
+      const error = validateFailureCopy(badStrings);
+
+      expect(error).toMatch(/negative language/);
+      expect(error).toMatch(/mal/);
+      expect(error).toMatch(/fallaste/);
+    });
+
+    test('returns null when there is no feedback copy to audit', () => {
+      expect(validateFailureCopy({})).toBeNull();
+      expect(validateFailureCopy(null)).toBeNull();
     });
   });
 
