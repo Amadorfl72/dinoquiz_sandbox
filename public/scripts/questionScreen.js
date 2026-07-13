@@ -30,6 +30,17 @@
  * so it stays descriptive in the failure state exactly as it was before
  * answering.
  *
+ * Screen-reader accessibility on a miss (TRIOFSND-90, AC-7/AC-14): the green
+ * "correct" border and the tapped option's neutral marker are purely visual
+ * cues, so a TalkBack/VoiceOver user who can't see them still needs to know
+ * which option was right. The `feedback` announcement (already
+ * `aria-live="polite"`) spells out the correct answer's text instead of just
+ * "la respuesta correcta es esta", and the correct button additionally gets
+ * a descriptive `aria-label` ("Respuesta correcta: …") so it reads
+ * unambiguously if the user swipes onto it afterwards. The tapped (wrong)
+ * option gets a neutral "Tu respuesta: …" label — never a "wrong"/
+ * "incorrect" one, matching AC-7's no-penalty tone.
+ *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
  * the browser paints the new state on the very next frame. The only
@@ -44,7 +55,10 @@
  * (4s), guaranteeing the dato curioso stays on screen long enough to read.
  * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
  * audio cue — so the flow works identically with sound muted (no audio
- * dependency).
+ * dependency). It is exposed on the exported `renderQuestionScreen` function
+ * (and in the CommonJS/window API below) so the app-shell flow controller
+ * (public/scripts/main.js, TRIOFSND-84) can derive its own auto-advance
+ * delay from the same single source of truth instead of duplicating 4000.
  *
  * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
  * visible `feedback` paragraph are both `aria-live="polite"`, and the
@@ -96,6 +110,18 @@
  * `imageAltFunFact`, so screen readers announce a descriptive name + fact
  * for every question in the 40-question bank instead of a generic label.
  *
+ * Accessible result announcement (TRIOFSND-79, AC-14): answering used to
+ * mark `feedback`, `scoreEl` and `funFact` as independent `aria-live`
+ * regions that all changed in the same synchronous click handler — screen
+ * readers receive simultaneous live-region updates in an unpredictable
+ * order, so a wrong answer's "la respuesta correcta es esta" pointed at a
+ * highlighted button with no accessible link to its text. Those three nodes
+ * are now plain (non-live) visual elements, and a single `announcement`
+ * node (`role="status"`, `aria-live="polite"`, visually hidden via
+ * `.sr-only`, same pattern as `resultsScreen.js`'s `announcementEl`) states
+ * the outcome, the correct answer's text and the updated score as one
+ * coherent sentence.
+ *
  * Rewarded-ad CTA (TRIOFSND-86): an optional, clearly-labeled "watch an ad
  * for an extra dato curioso" button appears once the answer is revealed,
  * but only when the rewarded-ad service (resolved the same
@@ -119,6 +145,14 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+
+  /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
+  function formatAnswerTemplate(format, answerText) {
+    if (typeof format !== 'string') {
+      return answerText;
+    }
+    return format.replace('{answer}', answerText);
+  }
 
   function resolveImageAlt(strings, dinosaur, funFact) {
     var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
@@ -144,6 +178,45 @@
     return bundle ? bundle.question : null;
   }
 
+  // Content-guide audit (TRIOFSND-91, AC-7): the wrong-answer feedback must
+  // never contain negative/discouraging language. Shares its banned-word
+  // list with the motivational messages guarded in
+  // public/scripts/resultsScreen.js via src/i18n/contentGuide.js.
+  function resolveContentGuide() {
+    return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
+  }
+
+  /** Audits the incorrect-answer feedback copy; returns an error string, or null if it is clean. */
+  function validateFailureCopy(strings) {
+    var contentGuide = resolveContentGuide();
+    if (!contentGuide || !strings || !strings.feedback) {
+      return null;
+    }
+    return contentGuide.validateCopy(strings.feedback.incorrect, 'question.feedback.incorrect');
+  }
+
+  function resolveDinosaurNames(options) {
+    options = options || {};
+    if (options.dinosaurNames) {
+      return options.dinosaurNames;
+    }
+    if (typeof require === 'function') {
+      var i18n = require('../../src/i18n');
+      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).dinosaurNames;
+    }
+    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
+    return bundle ? bundle.dinosaurNames : null;
+  }
+
+  /** "Ilustración de un {dinosaur}" -> "Ilustración de un Tyrannosaurus Rex" (AC-14: descriptive alt-text). */
+  function buildImageAlt(strings, dinosaurNames, dinosaur) {
+    var format = strings && strings.imageAltFormat;
+    if (typeof format !== 'string') {
+      return '';
+    }
+    var name = (dinosaurNames && dinosaurNames[dinosaur]) || dinosaur || '';
+    return format.replace('{dinosaur}', name);
+  }
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
     if (typeof format !== 'string') {
@@ -151,7 +224,6 @@
     }
     return format.replace('{answer}', answerText);
   }
-
   function resolveScoring() {
     if (typeof require === 'function') {
       return require('./scoring');
@@ -242,6 +314,25 @@
     probe.remove();
   }
 
+  function buildResultAnnouncement(strings, question, correct, score) {
+    var parts = [correct ? strings.feedback.correct : strings.feedback.incorrect];
+
+    parts.push(
+      strings.correctAnswerAnnouncement.replace(
+        '{correctAnswer}',
+        question.options[question.correctAnswerIndex]
+      )
+    );
+
+    if (typeof question.funFact === 'string' && question.funFact.trim() !== '') {
+      parts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
+    }
+
+    parts.push(strings.scoreLabel + ': ' + score);
+
+    return parts.join(' ');
+  }
+
   function renderQuestionScreen(container, question, options) {
     options = options || {};
     var strings = resolveStrings(options);
@@ -276,7 +367,6 @@
 
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
-    scoreEl.setAttribute('aria-live', 'polite');
     scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
     var optionsGroup = document.createElement('div');
@@ -286,7 +376,6 @@
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
-    feedback.setAttribute('aria-live', 'polite');
 
     var announcementEl = document.createElement('p');
     announcementEl.className = 'question-screen__announcement sr-only';
@@ -302,10 +391,14 @@
 
     var funFact = document.createElement('p');
     funFact.className = 'question-screen__fun-fact';
-    funFact.setAttribute('aria-live', 'polite');
 
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
+
+    var announcement = document.createElement('p');
+    announcement.className = 'question-screen__announcement sr-only';
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
 
     var rewardedAdStrings = strings.rewardedAd || {};
 
@@ -352,7 +445,6 @@
         }
       });
     });
-
     var nextButton = document.createElement('button');
     nextButton.type = 'button';
     nextButton.className = 'question-screen__next-button';
@@ -387,6 +479,13 @@
           button.classList.add(CORRECT_CLASS);
           if (correct) {
             button.classList.add(CELEBRATE_CLASS);
+          } else {
+            // Descriptive label (TRIOFSND-90, AC-14), only needed on a miss:
+            // a screen reader announces this as the correct answer even
+            // without seeing the green border. On a hit the tapped/correct
+            // option are the same button, already covered by the "¡Genial,
+            // acertaste!" feedback below, so no extra label is added.
+            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
           // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
           // this as the correct answer even without seeing the green border.
@@ -420,10 +519,11 @@
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
+
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
       }
-
       nextButton.hidden = false;
       nextButton.disabled = true;
       setTimeout(function () {
@@ -458,6 +558,7 @@
     root.appendChild(feedback);
     root.appendChild(announcementEl);
     root.appendChild(funFactBox);
+    root.appendChild(announcement);
     root.appendChild(rewardedAdCta);
     root.appendChild(rewardedAdStatus);
     root.appendChild(extraFunFactBox);
@@ -476,6 +577,7 @@
       announcementEl: announcementEl,
       funFactBox: funFactBox,
       funFact: funFact,
+      announcement: announcement,
       rewardedAdCta: rewardedAdCta,
       rewardedAdStatus: rewardedAdStatus,
       extraFunFactBox: extraFunFactBox,
@@ -490,9 +592,17 @@
     };
   }
 
+  // Exposed on the function itself (not just the module's `api` below) so
+  // the app-shell flow controller (public/scripts/main.js, TRIOFSND-84) can
+  // derive its auto-advance delay from `renderers.renderQuestionScreen`
+  // without a second require of this module.
+  renderQuestionScreen.MIN_ADVANCE_DELAY_MS = MIN_ADVANCE_DELAY_MS;
+
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
+    buildResultAnnouncement: buildResultAnnouncement,
+    validateFailureCopy: validateFailureCopy,
     validateFeedbackCopy: validateFeedbackCopy,
     MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };

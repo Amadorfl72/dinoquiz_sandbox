@@ -134,6 +134,21 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
   });
 
+  test('TRIOFSND-97: renderHome wires onPurchase so confirming persists the ads-removed flag to storage', async () => {
+    const { renderHome, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+
+    const { onPurchase } = renderHomeScreen.mock.calls[0][1];
+    onPurchase();
+
+    expect(storageObj.setItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY, 'true');
+  });
+
   test('renderHome resolves to null without a #app container', async () => {
     const { renderHome } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue(null) };
