@@ -33,10 +33,47 @@
     { maxScore: MAX_SCORE, stars: 3 },
   ]);
 
+  // Content-guide guard: words that would read as negative/discouraging to a
+  // 6-8 year old. Motivational messages must never contain any of these
+  // (matched as whole, accent-stripped words, not substrings). Exported so
+  // other screens (e.g. QuestionScreen's failure feedback, TRIOFSND-91) can
+  // audit their own copy against the same list instead of duplicating it.
+  var BANNED_WORDS = new Set([
+    'mal',
+    'malo',
+    'mala',
+    'malos',
+    'malas',
+    'fallo',
+    'fallos',
+    'fallaste',
+    'fallar',
+    'fallado',
+    'perdiste',
+    'perder',
+    'perdido',
+    'error',
+    'errores',
+    'incorrecto',
+    'incorrecta',
+    'triste',
+    'nunca',
+    'fracaso',
+    'fracasar',
+    'peor',
+    'pena',
+    'lastima',
+    'lento',
+    'lenta',
+    'torpe',
+    'tonto',
+    'tonta',
+  ]);
+
   // Content-guide guard (TRIOFSND-91, AC-7): motivational messages must never
-  // contain negative/discouraging language. The banned-word list lives in
-  // src/i18n/contentGuide.js so it stays in sync with the same guard applied
-  // to the wrong-answer feedback in public/scripts/questionScreen.js.
+  // contain negative/discouraging language. Also exposed through
+  // src/i18n/contentGuide.js so other screens (e.g. QuestionScreen's
+  // wrong-answer feedback) can share this same list without duplicating it.
   function resolveContentGuide() {
     return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
   }
@@ -205,6 +242,8 @@
     MAX_SCORE: MAX_SCORE,
     MAX_STARS: MAX_STARS,
     STAR_TIERS: STAR_TIERS,
+    BANNED_WORDS: BANNED_WORDS,
+    normalizeToWords: normalizeToWords,
     calculateStars: calculateStars,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
