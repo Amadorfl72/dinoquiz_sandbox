@@ -24,12 +24,19 @@ const path = require('path');
 const { renderHomeScreen } = require('../../public/scripts/homeScreen');
 const { renderQuestionScreen } = require('../../public/scripts/questionScreen');
 const { renderResultsScreen } = require('../../public/scripts/resultsScreen');
+const { renderPrivacyPolicyScreen } = require('../../public/scripts/privacyPolicyScreen');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
+// The three screens of the child's closed linear flow (Inicio -> Quiz ->
+// Resultados) plus the Privacy Policy view, which is the ONLY other screen a
+// child can reach by tapping an interactive element inside the flow (Home's
+// privacy icon). Auditing it too keeps the "no interactive element opens an
+// external URL" guarantee closed over everything one tap can surface.
 const CHILD_FLOW_SCREEN_FILES = [
   path.resolve(__dirname, '../../public/scripts/homeScreen.js'),
   path.resolve(__dirname, '../../public/scripts/questionScreen.js'),
   path.resolve(__dirname, '../../public/scripts/resultsScreen.js'),
+  path.resolve(__dirname, '../../public/scripts/privacyPolicyScreen.js'),
 ];
 
 const FORBIDDEN_PATTERNS = [
@@ -292,6 +299,42 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
 
       expect(openSpy).not.toHaveBeenCalled();
       expect(onExit).toHaveBeenCalledTimes(1);
+      assertNoExternalEscapeHatches(container);
+    });
+  });
+
+  // Reachable from the flow: Home's privacy icon opens this view in-app. A
+  // child could land here, so its only interactive control ("Volver") must
+  // also stay inside the PWA and never expose a navigable external URL.
+  describe('Política de privacidad (reachable from Home)', () => {
+    let container;
+    let openSpy;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+    });
+
+    afterEach(() => {
+      openSpy.mockRestore();
+      container.remove();
+    });
+
+    test('renders with no anchors, hrefs or blank-target elements', () => {
+      renderPrivacyPolicyScreen(container);
+
+      assertNoExternalEscapeHatches(container);
+    });
+
+    test('"Volver" only calls back into the app, never a real navigation', () => {
+      const onBack = jest.fn();
+      const { backButton } = renderPrivacyPolicyScreen(container, { onBack });
+
+      backButton.click();
+
+      expect(openSpy).not.toHaveBeenCalled();
+      expect(onBack).toHaveBeenCalledTimes(1);
       assertNoExternalEscapeHatches(container);
     });
   });
