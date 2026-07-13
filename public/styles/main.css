@@ -365,6 +365,12 @@ body {
   font-weight: 700;
 }
 
+.home-screen__purchase-offline-notice {
+  font-weight: 700;
+  padding-left: 12px;
+  border-left: 4px solid #1b5e20;
+}
+
 .home-screen__panel-close-button,
 .home-screen__purchase-confirm-button {
   min-width: 48px;
