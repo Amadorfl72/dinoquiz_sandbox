@@ -85,7 +85,8 @@
     button.className = 'app-shell__mute-toggle';
     // Belt-and-braces alongside the `.app-shell__mute-toggle` rule in
     // main.css: inline styles guarantee the AC-2/AC-11 48x48dp touch target
-    // even in contexts that don't load that stylesheet (e.g. jsdom tests).
+    // even in contexts that don't load that stylesheet (e.g. jsdom's
+    // getComputedStyle, which doesn't resolve external stylesheets).
     button.style.minWidth = '48px';
     button.style.minHeight = '48px';
 
