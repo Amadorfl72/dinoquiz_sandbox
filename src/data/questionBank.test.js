@@ -40,6 +40,19 @@ function writeTempQuestionBank(questions) {
   return filePath;
 }
 
+// Rejects traversal segments/absolute paths in an "image" field pulled from the
+// question bank JSON before it is ever joined onto a filesystem path.
+function sanitizeImageReference(imageRef) {
+  if (typeof imageRef !== 'string' || imageRef.indexOf('..') !== -1) {
+    throw new Error(`Invalid image reference: ${imageRef}`);
+  }
+  const isAllowedRelativePath = /^[a-zA-Z0-9][a-zA-Z0-9/_-]*\.(png|jpg|jpeg|svg|webp)$/.test(imageRef);
+  if (!isAllowedRelativePath) {
+    throw new Error(`Invalid image reference: ${imageRef}`);
+  }
+  return imageRef;
+}
+
 describe('real question bank (public/data/questions.json)', () => {
   const questions = loadQuestionBank();
 
@@ -82,7 +95,8 @@ describe('real question bank (public/data/questions.json)', () => {
   test('every question image reference resolves to a real file under public/assets/images', () => {
     const imagesDir = path.join(__dirname, '..', '..', 'public', 'assets', 'images');
     questions.forEach((question) => {
-      const imagePath = path.join(imagesDir, question.image);
+      const imagePath = path.join(imagesDir, sanitizeImageReference(question.image));
+      expect(imagePath.startsWith(imagesDir + path.sep)).toBe(true);
       expect(fs.existsSync(imagePath)).toBe(true);
     });
   });
