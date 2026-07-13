@@ -203,12 +203,85 @@ describe('ResultsScreen rendering', () => {
   });
 });
 
+describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('shows a discreet banner and a rewarded ad button by default (purchase not made)', () => {
+    const { adsSection, adBanner, rewardedAdButton } = renderResultsScreen(container, { score: 5 });
+
+    expect(adsSection).not.toBeNull();
+    expect(adBanner).not.toBeNull();
+    expect(rewardedAdButton).not.toBeNull();
+    expect(container.contains(adsSection)).toBe(true);
+  });
+
+  test('the banner and rewarded ad are both clearly labeled as an ad', () => {
+    const { adBanner, rewardedAdButton } = renderResultsScreen(container, { score: 5 });
+
+    expect(adBanner).toHaveTextContent(strings.ads.bannerBadge);
+    expect(rewardedAdButton).toHaveAccessibleName(`${strings.ads.rewardedBadge}: ${strings.ads.rewardedButton}`);
+  });
+
+  test('clicking the rewarded ad button calls onWatchRewardedAd', () => {
+    const onWatchRewardedAd = jest.fn();
+    const { rewardedAdButton } = renderResultsScreen(container, { score: 5, onWatchRewardedAd });
+
+    rewardedAdButton.click();
+
+    expect(onWatchRewardedAd).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the banner and rewarded ad once the remove-ads purchase has been made', () => {
+    const { adsSection, adBanner, rewardedAdButton } = renderResultsScreen(container, {
+      score: 5,
+      adsRemoved: true,
+    });
+
+    expect(adsSection).toBeNull();
+    expect(adBanner).toBeNull();
+    expect(rewardedAdButton).toBeNull();
+    expect(container.querySelector('.results-screen__ads')).toBeNull();
+  });
+
+  test('never blocks "Volver a jugar" — it still works while ads are showing', () => {
+    const onPlayAgain = jest.fn();
+    const { playAgainButton } = renderResultsScreen(container, { score: 5, onPlayAgain });
+
+    playAgainButton.click();
+
+    expect(onPlayAgain).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp text (AC-2/AC-23)', () => {
   const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
   test('the base and play-again-specific CSS rules together satisfy the minimums', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
 
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rules
+    // themselves — resolve `var(--x)` against that :root map before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.trim().match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue.trim();
+    };
     const sharedRuleMatch = css.match(
       /\.results-screen__play-again-button,\s*\n\.results-screen__exit-button\s*\{([^}]*)\}/
     );
@@ -216,15 +289,19 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
     expect(sharedRuleMatch).not.toBeNull();
     expect(specificRuleMatch).not.toBeNull();
 
+    // Accessibility tokens (TRIOFSND-133) moved these rules onto CSS custom
+    // properties (e.g. `var(--tap-target-min)`); resolve them via the shared
+    // helper so this still reads the effective px values instead of the
+    // var() call.
     const combinedRule = resolveCssCustomProperties(css, `${sharedRuleMatch[1]}\n${specificRuleMatch[1]}`);
     const minHeight = Math.max(
-      ...Array.from(combinedRule.matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+      ...Array.from(combinedRule.matchAll(/min-height:\s*([^;]+);/g)).map((match) => parseFloat(resolve(match[1])))
     );
     const minWidth = Math.max(
-      ...Array.from(combinedRule.matchAll(/min-width:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+      ...Array.from(combinedRule.matchAll(/min-width:\s*([^;]+);/g)).map((match) => parseFloat(resolve(match[1])))
     );
     const fontSizePx = Math.max(
-      ...Array.from(combinedRule.matchAll(/font-size:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+      ...Array.from(combinedRule.matchAll(/font-size:\s*([^;]+);/g)).map((match) => parseFloat(resolve(match[1])))
     );
 
     expect(minHeight).toBeGreaterThanOrEqual(64);

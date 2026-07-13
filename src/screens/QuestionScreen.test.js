@@ -6,9 +6,10 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('./QuestionScreen');
+const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
+const { findBannedWords } = require('../i18n/contentGuide');
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
@@ -39,6 +40,38 @@ function buildQuestion(overrides = {}) {
   };
 }
 
+describe('content-guide validation of failure feedback copy (TRIOFSND-91)', () => {
+  test('the real es.json question strings contain no negative language', () => {
+    expect(validateFeedbackCopy(strings)).toEqual([]);
+  });
+
+  test('flags a feedback.incorrect string containing banned negative language', () => {
+    const errors = validateFeedbackCopy({
+      ...strings,
+      feedback: { ...strings.feedback, incorrect: '¡Vaya, fallaste! Inténtalo mejor la próxima vez.' },
+    });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/feedback\.incorrect/);
+    expect(errors[0]).toMatch(/negative language/);
+  });
+
+  test('flags an empty or missing field', () => {
+    const errors = validateFeedbackCopy({ ...strings, funFactHeading: '' });
+
+    expect(errors).toContainEqual(expect.stringContaining('funFactHeading'));
+  });
+
+  test('does not flag words that merely contain a banned word as a substring', () => {
+    expect(
+      validateFeedbackCopy({
+        ...strings,
+        feedback: { ...strings.feedback, incorrect: '¡Aprender sobre dinosaurios mola muchísimo!' },
+      })
+    ).toEqual([]);
+  });
+});
+
 describe('QuestionScreen', () => {
   let container;
 
@@ -63,6 +96,16 @@ describe('QuestionScreen', () => {
     });
   });
 
+  test('renders the dinosaur illustration above the prompt with a descriptive alt-text (TRIOFSND-72, AC-4/AC-14)', () => {
+    const question = buildQuestion();
+    const { image, prompt } = renderQuestionScreen(container, question);
+
+    expect(image.tagName).toBe('IMG');
+    expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+    expect(image.alt).toContain('Tyrannosaurus Rex');
+    expect(image.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   test('starts the score at 0 by default', () => {
     renderQuestionScreen(container, buildQuestion());
 
@@ -71,9 +114,27 @@ describe('QuestionScreen', () => {
 
   test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    // Sizes are design tokens (custom properties set in :root, mirrored in
+    // src/theme/designTokens.js) rather than literal values on the rule
+    // itself — resolve `var(--x)` against that :root map before asserting.
+    const rootMatch = css.match(/:root\s*{([^}]*)}/);
+    expect(rootMatch).not.toBeNull();
+    const tokens = {};
+    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+      tokens[tokenMatch[1]] = tokenMatch[2].trim();
+    }
+
+    const resolve = (rawValue) => {
+      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
+      return varMatch ? tokens[varMatch[1]] : rawValue;
+    };
+
     const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
+    // Accessibility tokens (TRIOFSND-133) moved this rule onto a CSS custom
+    // property (`var(--font-size-body)`); resolve it via the shared helper.
     const rule = resolveCssCustomProperties(css, ruleMatch[1]);
     const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
     expect(fontSizeMatch).not.toBeNull();
@@ -115,6 +176,19 @@ describe('QuestionScreen', () => {
       optionButtons[question.correctAnswerIndex].click();
 
       expect(feedback).toHaveTextContent(strings.feedback.correct);
+    });
+
+    test('announces the hit and the correct answer text via an aria-live status region (TRIOFSND-79, AC-14)', () => {
+      const question = buildQuestion();
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcementEl).toHaveAttribute('aria-live', 'polite');
+      expect(announcementEl).toHaveAttribute('role', 'status');
+      expect(announcementEl).toHaveTextContent(
+        strings.answerAnnouncement.correct.replace('{correctAnswer}', question.options[question.correctAnswerIndex])
+      );
     });
 
     test('reveals the fun fact and the "Siguiente" control', () => {
@@ -189,9 +263,72 @@ describe('QuestionScreen', () => {
       optionButtons[wrongIndex].click();
 
       expect(feedback).toHaveTextContent(strings.feedback.incorrect);
-      expect(feedback.textContent.toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error/);
+      expect(findBannedWords(feedback.textContent)).toEqual([]);
     });
 
+    test('the aria-live feedback announcement spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, feedback } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      expect(feedback).toHaveAttribute('aria-live', 'polite');
+      expect(feedback).toHaveTextContent(question.options[question.correctAnswerIndex]);
+    });
+
+    test('gives the correct option a descriptive "Respuesta correcta" aria-label, and the tapped option a neutral one (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      const correctButton = optionButtons[question.correctAnswerIndex];
+      const wrongButton = optionButtons[wrongIndex];
+
+      expect(correctButton.getAttribute('aria-label')).toContain(question.options[question.correctAnswerIndex]);
+      expect(correctButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+      expect(wrongButton.getAttribute('aria-label')).toContain(question.options[wrongIndex]);
+      expect(wrongButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
+    });
+
+    test('does not label the correct option on a hit — only a miss adds the "Respuesta correcta" aria-label (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(optionButtons[question.correctAnswerIndex]).not.toHaveAttribute('aria-label');
+    });
+
+    test('keeps the dinosaur illustration and its descriptive alt-text unchanged after a miss (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, image } = renderQuestionScreen(container, question);
+      const altBeforeAnswering = image.alt;
+
+      optionButtons[wrongIndex].click();
+
+      expect(image.alt).toBe(altBeforeAnswering);
+      expect(image.alt).toContain('Tyrannosaurus Rex');
+      expect(image).toBeVisible();
+    });
+
+    test('announces the miss and the correct answer text via an aria-live status region, without a sighted-only pointer like "esta" (TRIOFSND-79, AC-14)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+
+      expect(announcementEl).toHaveAttribute('aria-live', 'polite');
+      expect(announcementEl).toHaveAttribute('role', 'status');
+      expect(announcementEl).toHaveTextContent(
+        strings.answerAnnouncement.incorrect.replace('{correctAnswer}', question.options[question.correctAnswerIndex])
+      );
+      expect(announcementEl).toHaveTextContent(question.options[question.correctAnswerIndex]);
+    });
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
@@ -227,6 +364,27 @@ describe('QuestionScreen', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('TRIOFSND-91: content-guide audit of the failure copy (AC-7)', () => {
+    test('the real es.json incorrect-answer feedback contains no negative language', () => {
+      expect(validateFailureCopy(strings)).toBeNull();
+    });
+
+    test('flags a strings bundle whose incorrect-answer feedback uses banned negative language', () => {
+      const badStrings = { ...strings, feedback: { ...strings.feedback, incorrect: '¡Qué mal, fallaste!' } };
+
+      const error = validateFailureCopy(badStrings);
+
+      expect(error).toMatch(/negative language/);
+      expect(error).toMatch(/mal/);
+      expect(error).toMatch(/fallaste/);
+    });
+
+    test('returns null when there is no feedback copy to audit', () => {
+      expect(validateFailureCopy({})).toBeNull();
+      expect(validateFailureCopy(null)).toBeNull();
     });
   });
 
@@ -378,6 +536,44 @@ describe('QuestionScreen', () => {
     });
   });
 
+  describe('answer announcement (TRIOFSND-79: accessible result announcement)', () => {
+    test('the announcement region is present from the first render, empty, and visually hidden (screen-reader-only)', () => {
+      const question = buildQuestion();
+      const { announcementEl } = renderQuestionScreen(container, question);
+
+      expect(announcementEl).toBeInTheDocument();
+      expect(announcementEl).toHaveClass('sr-only');
+      expect(announcementEl).toHaveTextContent('');
+    });
+
+    test('is written synchronously in the click handler, not gated on the fun-fact timer or any sound/visual cue', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+        optionButtons[question.correctAnswerIndex].click();
+
+        // No timer advanced yet: the announcement must already be set.
+        expect(announcementEl.textContent.length).toBeGreaterThan(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('a second tap after answering does not change the announcement', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcementEl } = renderQuestionScreen(container, question);
+
+      optionButtons[wrongIndex].click();
+      const firstAnnouncement = announcementEl.textContent;
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcementEl).toHaveTextContent(firstAnnouncement);
+    });
+  });
+
   describe('"Siguiente" advance timer (AC-6: dato curioso visible >=4s before advancing)', () => {
     test('shows "Siguiente" disabled as soon as the answer is revealed', () => {
       const question = buildQuestion();
@@ -426,6 +622,70 @@ describe('QuestionScreen', () => {
     });
   });
 
+  describe('accessible result announcement (TRIOFSND-79, AC-14)', () => {
+    test('exposes a single aria-live status region, separate from the visual feedback/score/fun-fact text', () => {
+      const question = buildQuestion();
+      const { announcement } = renderQuestionScreen(container, question);
+
+      expect(announcement).toHaveAttribute('aria-live', 'polite');
+      expect(getByRole(container, 'status')).toBe(announcement);
+      expect(announcement).toHaveTextContent('');
+    });
+
+    test('on a hit, announces the celebratory feedback, the correct answer and the updated score as one sentence', () => {
+      const question = buildQuestion();
+      const { optionButtons, announcement, getScore } = renderQuestionScreen(container, question, { score: 3 });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(announcement).toHaveTextContent(strings.feedback.correct);
+      expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
+      expect(announcement).toHaveTextContent(question.funFact);
+      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: ${getScore()}`);
+    });
+
+    test('on a miss, announces the neutral feedback plus the actual text of the correct answer (not just a visual highlight)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, announcement } = renderQuestionScreen(container, question, { score: 5 });
+
+      optionButtons[wrongIndex].click();
+
+      expect(announcement).toHaveTextContent(strings.feedback.incorrect);
+      expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
+      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: 5`);
+    });
+
+    test('is visually hidden but present in the accessibility tree (.sr-only)', () => {
+      const question = buildQuestion();
+      const { announcement } = renderQuestionScreen(container, question);
+
+      expect(announcement).toHaveClass('sr-only');
+    });
+
+    test('buildResultAnnouncement composes the outcome, correct answer, fun fact and score into one string', () => {
+      const question = buildQuestion();
+
+      const hitAnnouncement = buildResultAnnouncement(strings, question, true, 4);
+      expect(hitAnnouncement).toContain(strings.feedback.correct);
+      expect(hitAnnouncement).toContain(question.options[question.correctAnswerIndex]);
+      expect(hitAnnouncement).toContain(question.funFact);
+      expect(hitAnnouncement).toContain(`${strings.scoreLabel}: 4`);
+
+      const missAnnouncement = buildResultAnnouncement(strings, question, false, 4);
+      expect(missAnnouncement).toContain(strings.feedback.incorrect);
+      expect(missAnnouncement).toContain(question.options[question.correctAnswerIndex]);
+    });
+
+    test('omits the fun-fact segment instead of announcing "undefined" when the question has no fun fact', () => {
+      const question = buildQuestion({ funFact: undefined });
+
+      const announcementText = buildResultAnnouncement(strings, question, true, 1);
+
+      expect(announcementText).not.toMatch(/undefined/);
+    });
+  });
+
   test('does not hardcode copy — text is sourced from the es locale resource file', () => {
     const question = buildQuestion();
     const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
@@ -437,5 +697,112 @@ describe('QuestionScreen', () => {
 
     expect(container.textContent).toContain(strings.feedback.incorrect);
     expect(nextButton).toHaveTextContent(strings.nextButton);
+  });
+
+  describe('rewarded-ad CTA for an extra dato curioso (TRIOFSND-86)', () => {
+    function fakeAdService(overrides = {}) {
+      return {
+        isAvailable: () => true,
+        request: () => Promise.resolve({ granted: true }),
+        ...overrides,
+      };
+    }
+
+    test('stays hidden when the ads hook reports no rewarded ad is available, and never blocks "Siguiente"', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const rewardedAdService = fakeAdService({ isAvailable: () => false });
+        const onNext = jest.fn();
+        const { optionButtons, rewardedAdCta, nextButton } = renderQuestionScreen(container, question, {
+          rewardedAdService,
+          onNext,
+        });
+
+        optionButtons[question.correctAnswerIndex].click();
+
+        expect(rewardedAdCta.hidden).toBe(true);
+
+        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+        expect(nextButton).not.toBeDisabled();
+        nextButton.click();
+        expect(onNext).toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('is revealed, clearly labeled as an ad, once the answer is fed back and the ads hook reports availability', () => {
+      const question = buildQuestion();
+      const { optionButtons, rewardedAdCta } = renderQuestionScreen(container, question, {
+        rewardedAdService: fakeAdService(),
+      });
+
+      expect(rewardedAdCta.hidden).toBe(true);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(rewardedAdCta.hidden).toBe(false);
+      expect(rewardedAdCta).toHaveAccessibleName(strings.rewardedAd.ctaAriaLabel);
+      expect(rewardedAdCta.textContent.toLowerCase()).toContain('anuncio');
+    });
+
+    test('reveals the extra dato curioso once the rewarded ad is watched to completion, without touching "Siguiente"', async () => {
+      const question = buildQuestion();
+      const rewardedAdService = fakeAdService({ request: () => Promise.resolve({ granted: true }) });
+      const { optionButtons, rewardedAdCta, extraFunFactBox, extraFunFact, nextButton } = renderQuestionScreen(
+        container,
+        question,
+        { rewardedAdService }
+      );
+
+      optionButtons[question.correctAnswerIndex].click();
+      expect(nextButton).toBeDisabled();
+
+      rewardedAdCta.click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(extraFunFactBox.hidden).toBe(false);
+      expect(extraFunFact).toHaveTextContent(strings.rewardedAd.extraFacts.trex);
+      expect(rewardedAdCta.hidden).toBe(true);
+      // Watching the ad never re-enables "Siguiente" early, nor disables it further.
+      expect(nextButton).toBeDisabled();
+    });
+
+    test('shows a neutral status and keeps the game going when the rewarded ad is not completed', async () => {
+      const question = buildQuestion();
+      const rewardedAdService = fakeAdService({ request: () => Promise.resolve({ granted: false }) });
+      const onNext = jest.fn();
+      const { optionButtons, rewardedAdCta, rewardedAdStatus, extraFunFactBox, nextButton } = renderQuestionScreen(
+        container,
+        question,
+        { rewardedAdService, onNext }
+      );
+
+      optionButtons[question.correctAnswerIndex].click();
+      rewardedAdCta.click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(extraFunFactBox.hidden).toBe(true);
+      expect(rewardedAdStatus).toHaveTextContent(strings.rewardedAd.notCompletedMessage);
+      expect(rewardedAdCta).toBeDisabled();
+    });
+
+    test('disables itself immediately on click so a double-tap only requests the ad once', () => {
+      const question = buildQuestion();
+      const request = jest.fn().mockResolvedValue({ granted: true });
+      const { optionButtons, rewardedAdCta } = renderQuestionScreen(container, question, {
+        rewardedAdService: fakeAdService({ request }),
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+      rewardedAdCta.click();
+      rewardedAdCta.click();
+
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(rewardedAdCta).toBeDisabled();
+    });
   });
 });

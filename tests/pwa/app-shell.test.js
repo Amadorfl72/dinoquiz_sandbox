@@ -176,12 +176,16 @@ describe('renderMuteToggleButton', () => {
     const button = container.querySelector('button');
     expect(button.classList.contains('app-shell__mute-toggle')).toBe(true);
 
+    // jsdom doesn't load external stylesheets, so getComputedStyle can't see
+    // main.css here; read the rule directly instead (same approach as the
+    // other 48x48dp touch-target checks, e.g. tests/pwa/home-screen.test.js).
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
     const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
     const minWidth = parseFloat(ruleMatch[1].match(/min-width:\s*([\d.]+)px/)[1]);
     const minHeight = parseFloat(ruleMatch[1].match(/min-height:\s*([\d.]+)px/)[1]);
+
     expect(minWidth).toBeGreaterThanOrEqual(48);
     expect(minHeight).toBeGreaterThanOrEqual(48);
   });
@@ -316,7 +320,7 @@ describe('writeStoredMute', () => {
 });
 
 describe('MUTE_STORAGE_KEY', () => {
-  test('is exported with expected value', () => {
-    expect(MUTE_STORAGE_KEY).toBe('dinoquiz.audio.muted');
+  test('matches the canonical dinoquiz:muted key read by Home/question rendering', () => {
+    expect(MUTE_STORAGE_KEY).toBe('dinoquiz:muted');
   });
 });
