@@ -246,9 +246,51 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
-  /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
+  // Extra wall-clock time (TRIOFSND-84) the flow controller waits, on top of
+  // the question screen's own MIN_ADVANCE_DELAY_MS gate on "Siguiente"
+  // (public/scripts/questionScreen.js, AC-6), before auto-advancing a child
+  // who never taps the button themselves. Giving that grace period after the
+  // button becomes clickable means the automatic advance never races the
+  // moment the button first becomes tappable.
+  var AUTO_ADVANCE_GRACE_MS = 4000;
+
+  /**
+   * Renders the question at `session.state.questionIndex`, then advances to
+   * the next one (or completes the game) either when the child taps
+   * "Siguiente" or, if they don't, automatically once
+   * `MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS` has elapsed since the
+   * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
+   * avance automático) lleva a la siguiente pregunta"). Both paths funnel
+   * through the same `advance()` so a game is only ever walked forward once
+   * per question, whichever trigger fires first.
+   */
   function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
     var question = session.questions[session.state.questionIndex];
+    var advanced = false;
+    var autoAdvanceTimer = null;
+
+    function advance() {
+      if (advanced) return;
+      advanced = true;
+
+      if (autoAdvanceTimer !== null) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+
+      session.state.questionIndex += 1;
+
+      if (session.state.questionIndex >= session.questions.length) {
+        onGameComplete(session.state);
+      } else {
+        renderQuestionAt(container, renderers, session, onGameComplete);
+      }
+    }
+
+    var minAdvanceDelayMs =
+      (typeof renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS === 'number' &&
+        renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
+      0;
 
     return renderers.renderQuestionScreen(container, question, {
       score: session.state.score,
@@ -263,21 +305,19 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
-        session.state.questionIndex += 1;
-
-        if (session.state.questionIndex >= session.questions.length) {
+        if (session.state.questionIndex + 1 >= session.questions.length) {
           // TRIOFSND-95: question 10 was just answered — the final score is
           // already tracked incrementally on session.state.score, but the
           // racha (longest run of consecutive hits) only makes sense once
           // every answer of the game is known, so it's derived here, right
           // before handing the finished game off to Resultados.
           session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
-          onGameComplete(session.state);
-        } else {
-          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
         }
+        advance();
       },
     });
   }
@@ -803,6 +843,7 @@
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       renderMuteToggle: renderMuteToggle,
     };
   }
