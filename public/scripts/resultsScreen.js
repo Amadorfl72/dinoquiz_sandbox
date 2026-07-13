@@ -11,6 +11,18 @@
  * readers announce it as one coherent sentence as soon as the screen
  * renders, in addition to the visible elements being individually readable.
  *
+ * Ads (TRIOFSND-97, AC-20/AC-21): a discreet banner and an optional, clearly
+ * labeled rewarded ad render below the actions row -- but only while
+ * `options.adsRemoved` is not `true`. That flag is read from local storage
+ * by the caller (see `renderResultsFor` in public/scripts/main.js, which
+ * mirrors the `dinoquiz:adsRemoved` key the home screen's remove-ads
+ * purchase button sets); this screen stays a pure, DOM-only component that
+ * doesn't touch storage itself, consistent with how `onPlayAgain`/`onExit`
+ * are handled. Watching the rewarded ad is entirely optional and never
+ * blocks "Volver a jugar" -- if `options.onWatchRewardedAd` is omitted the
+ * button simply renders with no effect, per the PRD's "si no se ve el
+ * rewarded, la partida funciona igual".
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -218,12 +230,65 @@
       actions.appendChild(exitButton);
     }
 
+    // AC-20/AC-21: hidden once the remove-ads purchase has been made.
+    var showAds = options.adsRemoved !== true;
+    var adsSection = null;
+    var adBanner = null;
+    var rewardedAdButton = null;
+    if (showAds) {
+      var adsStrings = strings.ads;
+
+      adsSection = document.createElement('div');
+      adsSection.className = 'results-screen__ads';
+      adsSection.setAttribute('role', 'complementary');
+      adsSection.setAttribute('aria-label', adsStrings.groupLabel);
+
+      adBanner = document.createElement('div');
+      adBanner.className = 'results-screen__ad-banner';
+
+      var adBannerBadge = document.createElement('span');
+      adBannerBadge.className = 'results-screen__ad-badge';
+      adBannerBadge.textContent = adsStrings.bannerBadge;
+
+      var adBannerMessage = document.createElement('p');
+      adBannerMessage.className = 'results-screen__ad-banner-message';
+      adBannerMessage.textContent = adsStrings.bannerMessage;
+
+      adBanner.appendChild(adBannerBadge);
+      adBanner.appendChild(adBannerMessage);
+
+      rewardedAdButton = document.createElement('button');
+      rewardedAdButton.type = 'button';
+      rewardedAdButton.className = 'results-screen__rewarded-ad-button';
+      rewardedAdButton.setAttribute('aria-label', adsStrings.rewardedBadge + ': ' + adsStrings.rewardedButton);
+
+      var rewardedAdBadge = document.createElement('span');
+      rewardedAdBadge.className = 'results-screen__ad-badge';
+      rewardedAdBadge.setAttribute('aria-hidden', 'true');
+      rewardedAdBadge.textContent = adsStrings.rewardedBadge;
+
+      var rewardedAdLabel = document.createElement('span');
+      rewardedAdLabel.textContent = adsStrings.rewardedButton;
+
+      rewardedAdButton.appendChild(rewardedAdBadge);
+      rewardedAdButton.appendChild(rewardedAdLabel);
+      if (typeof options.onWatchRewardedAd === 'function') {
+        rewardedAdButton.addEventListener('click', options.onWatchRewardedAd);
+      }
+
+      adsSection.appendChild(adBanner);
+      adsSection.appendChild(rewardedAdButton);
+    }
+
     root.appendChild(heading);
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
     root.appendChild(announcementEl);
     root.appendChild(actions);
+    if (adsSection) {
+      root.appendChild(adsSection);
+    }
     container.appendChild(root);
 
     return {
@@ -234,6 +299,9 @@
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,
+      adsSection: adsSection,
+      adBanner: adBanner,
+      rewardedAdButton: rewardedAdButton,
     };
   }
 

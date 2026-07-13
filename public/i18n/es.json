@@ -124,7 +124,8 @@
     "closeButton": "Cerrar",
     "description": "Con una única compra puedes eliminar los anuncios de DinoQuiz para siempre y desbloquear todos los packs de preguntas, ahora y en el futuro.",
     "priceLabel": "Pago único de 3,99 €",
-    "purchaseButton": "Comprar ahora"
+    "purchaseButton": "Comprar ahora",
+    "offlineNotice": "No hay conexión a internet ahora mismo. Conéctate a la wifi o a los datos y vuelve a intentarlo para completar la compra."
   },
   "results": {
     "heading": "¡Resultados!",
@@ -141,7 +142,14 @@
       "¡Bien jugado! Tu curiosidad por los dinosaurios es enorme.",
       "¡Genial esfuerzo! Vuelve a jugar para descubrir más datos curiosos.",
       "¡Eres un explorador estupendo! Los dinosaurios están orgullosos de ti."
-    ]
+    ],
+    "ads": {
+      "groupLabel": "Espacio publicitario",
+      "bannerBadge": "Anuncio",
+      "bannerMessage": "Descubre más aventuras con dinosaurios.",
+      "rewardedBadge": "Anuncio",
+      "rewardedButton": "Ver un anuncio y descubrir una pista extra"
+    }
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
@@ -157,6 +165,9 @@
       "correct": "¡Genial, acertaste! La respuesta correcta era: {correctAnswer}",
       "incorrect": "¡Buen intento! La respuesta correcta era: {correctAnswer}"
     },
+    "correctAnswerAnnouncement": "La respuesta correcta es: {answer}.",
+    "correctOptionAriaLabel": "Respuesta correcta: {answer}",
+    "selectedOptionAriaLabel": "Tu respuesta: {answer}",
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",

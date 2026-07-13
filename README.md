@@ -292,6 +292,33 @@ cada `dato_curioso` a su texto de dato curioso) y lo deja en `window.DinoQuiz` p
 `require` bajo Node/Jest, por lo que el flujo corre igual en la PWA real y en los tests sin
 bundler (ver [`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js)).
 
+### Transición Pregunta → Dato Curioso → Siguiente Pregunta (TRIOFSND-84)
+
+`renderQuestionAt` en `main.js` es el controlador de flujo que conecta la pantalla de
+Pregunta/Feedback (dato curioso incluido, TRIOFSND-83) con el avance a la siguiente
+pregunta o a Resultados. Cada respuesta puede avanzar el juego de dos formas, ambas
+resueltas por la misma función interna `advance()` para que una partida nunca avance dos
+veces por la misma pregunta:
+
+- **Manual**: el niño pulsa "Siguiente" una vez que deja de estar deshabilitado (pasado
+  `MIN_ADVANCE_DELAY_MS`, ver [`public/scripts/questionScreen.js`](public/scripts/questionScreen.js)).
+- **Automático**: si no pulsa nada, un `setTimeout` programado justo tras revelar el
+  feedback avanza la partida por su cuenta pasados `MIN_ADVANCE_DELAY_MS +
+  AUTO_ADVANCE_GRACE_MS` (el temporizador propio de la pantalla, más un margen extra para
+  que el botón haya estado pulsable un rato antes de que la app decida por el niño; PRD
+  main_workflow paso 5: "botón 'Siguiente' (o avance automático) lleva a la siguiente
+  pregunta"). Un tap manual cancela el temporizador pendiente.
+
+Al responder la pregunta 10 (última del set), ambos caminos navegan a Resultados en lugar
+de a una pregunta siguiente. Los escenarios de acierto y fallo, tanto por avance manual
+como automático, están cubiertos en
+[`tests/pwa/game-flow.test.js`](tests/pwa/game-flow.test.js).
+
+`public/scripts/questionScreen.js` es la implementación canónica de la pantalla de
+Pregunta/Feedback que el navegador carga como `<script>` (ver
+[`public/index.html`](public/index.html)); `src/screens/QuestionScreen.js` la re-exporta
+para Node/Jest, igual que el resto de pantallas (`resultsScreen.js`, `homeScreen.js`).
+
 ### Blindaje contra enlaces externos navegables (TRIOFSND-121)
 
 Ninguna de las tres pantallas del flujo cerrado (ni la política de privacidad) renderiza hoy

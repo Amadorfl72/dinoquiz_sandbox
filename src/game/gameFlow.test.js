@@ -3,6 +3,7 @@
 const {
   QUESTIONS_PER_GAME,
   createInitialGameState,
+  calculateMaxStreak,
   selectGameQuestions,
   startNewGame,
 } = require('./gameFlow');
@@ -18,6 +19,42 @@ describe('createInitialGameState', () => {
 
   test('returns a fresh object each call so callers cannot share mutable state', () => {
     expect(createInitialGameState()).not.toBe(createInitialGameState());
+  });
+});
+
+function buildAnswers(pattern) {
+  return pattern.split('').map((mark) => ({ isCorrect: mark === 'C' }));
+}
+
+describe('calculateMaxStreak', () => {
+  test('returns 0 for an empty game (no answers yet)', () => {
+    expect(calculateMaxStreak([])).toBe(0);
+  });
+
+  test('returns 0 when every answer is wrong', () => {
+    expect(calculateMaxStreak(buildAnswers('FFFFFFFFFF'))).toBe(0);
+  });
+
+  test('returns 10 when every answer is correct (a perfect game)', () => {
+    expect(calculateMaxStreak(buildAnswers('CCCCCCCCCC'))).toBe(10);
+  });
+
+  test('finds the longest run even when it is not the most recent one (test_scenario 7/10)', () => {
+    // 4 hits, a miss, then 3 more hits: longest run is 4, final score is 7/10.
+    expect(calculateMaxStreak(buildAnswers('CCCCFCCCFF'))).toBe(4);
+  });
+
+  test('finds a short streak surrounded by misses (test_scenario 2/10)', () => {
+    // Exactly 2 hits, back to back: longest run is 2, final score is 2/10.
+    expect(calculateMaxStreak(buildAnswers('FFFCCFFFFF'))).toBe(2);
+  });
+
+  test('a streak broken right before the last question does not count the last answer', () => {
+    expect(calculateMaxStreak(buildAnswers('CCCFC'))).toBe(3);
+  });
+
+  test('is defensive against a non-array input', () => {
+    expect(calculateMaxStreak(undefined)).toBe(0);
   });
 });
 
