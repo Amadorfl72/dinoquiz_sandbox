@@ -114,6 +114,19 @@
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
  *
+ * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
+ * is threaded through `startNewGame` -> `renderQuestionAt` ->
+ * `renderResultsFor` (replay reuses it too) as `analyticsStorage`, so the
+ * `onAnswer` handler in `renderQuestionAt` records the canonical, non-PII
+ * `pregunta_respondida` event (AC-18) via `storage.recordEvent` on every
+ * answered question, and additionally records `pregunta_respondida_fallo`
+ * whenever `result.isCorrect` is false. Since the client-only
+ * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
+ * per-event payloads, the failure count travels as its own counter instead
+ * of a field on `pregunta_respondida` -- comparing the two counters is what
+ * yields the aggregated "% acierto por pregunta" the PRD's
+ * logging_observability calls for.
+ *
  * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
  * question 10 was just answered, derives the game's racha (longest run of
  * consecutive hits) from `session.state.answers` via
@@ -301,7 +314,7 @@
    * through the same `advance()` so a game is only ever walked forward once
    * per question, whichever trigger fires first.
    */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage) {
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
@@ -343,6 +356,14 @@
           },
         ]);
 
+        if (analyticsStorage) {
+          analyticsStorage.recordEvent('pregunta_respondida');
+
+          if (!result.isCorrect) {
+            analyticsStorage.recordEvent('pregunta_respondida_fallo');
+          }
+        }
+
         autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
@@ -360,14 +381,14 @@
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
@@ -378,7 +399,7 @@
   }
 
   /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -391,9 +412,10 @@
       renderers,
       session,
       function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage);
       },
-      storageObj
+      storageObj,
+      analyticsStorage
     );
 
     return session;
@@ -715,7 +737,7 @@
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
               storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage);
             }
           });
         }
