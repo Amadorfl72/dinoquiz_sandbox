@@ -24,7 +24,7 @@
     "tooltip": {
       "message": "¡Toca aquí para jugar!"
     },
-    "privacyPolicyIconLabel": "Política de privacidad",
+    "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
   "privacyPolicy": {
@@ -145,9 +145,17 @@
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
+    "imageAltFormat": "Ilustración de un {dinosaur}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
-      "incorrect": "¡Buen intento! La respuesta correcta es esta:"
+      "incorrect": "¡Buen intento!"
+    },
+    "correctAnswerAnnouncementFormat": "La respuesta correcta es: {answer}.",
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {answer}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {answer}",
+    "answerAnnouncement": {
+      "correct": "¡Genial, acertaste! La respuesta correcta era: {correctAnswer}",
+      "incorrect": "¡Buen intento! La respuesta correcta era: {correctAnswer}"
     },
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
@@ -163,7 +171,32 @@
       "braquiosaurio": "Braquiosaurio",
       "ankylosaurus": "Ankylosaurus",
       "pteranodon": "Pteranodon"
+    },
+    "rewardedAd": {
+      "ctaLabel": "🎬 Ver anuncio: ¡dato extra!",
+      "ctaAriaLabel": "Ver un anuncio para desbloquear un dato curioso extra sobre este dinosaurio",
+      "loadingLabel": "Cargando el anuncio…",
+      "notCompletedMessage": "No se ha podido conseguir el dato extra esta vez. ¡Sigue jugando!",
+      "extraFactHeading": "¡Dato extra desbloqueado!",
+      "extraFacts": {
+        "trex": "El T-Rex podía detectar el olor de la carne en descomposición desde muchos kilómetros de distancia.",
+        "triceratops": "El Triceratops podía llegar a pesar hasta 12 toneladas, ¡tanto como dos elefantes africanos!",
+        "velociraptor": "El Velociraptor tenía un olfato excelente que le ayudaba a rastrear a sus presas.",
+        "estegosaurio": "El Estegosaurio medía hasta 9 metros de largo, ¡casi como un autobús escolar!",
+        "braquiosaurio": "El Braquiosaurio tenía las fosas nasales en lo alto de la cabeza, entre los ojos.",
+        "ankylosaurus": "El Ankylosaurus tenía el cuerpo tan ancho como una furgoneta pequeña.",
+        "pteranodon": "El Pteranodon podía llegar a medir más de 6 metros de una punta de ala a la otra."
+      }
     }
+  },
+  "dinosaurNames": {
+    "trex": "Tyrannosaurus Rex",
+    "triceratops": "Triceratops",
+    "velociraptor": "Velociraptor",
+    "estegosaurio": "Estegosaurio",
+    "braquiosaurio": "Braquiosaurio",
+    "ankylosaurus": "Ankylosaurus",
+    "pteranodon": "Pteranodon"
   },
   "funFacts": {
     "trex-01": "El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.",
