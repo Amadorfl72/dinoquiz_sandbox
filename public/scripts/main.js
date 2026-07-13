@@ -113,6 +113,14 @@
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
+ *
+ * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
+ * question 10 was just answered, derives the game's racha (longest run of
+ * consecutive hits) from `session.state.answers` via
+ * `gameFlow.calculateMaxStreak`, and stashes it on `session.state.maxStreak`
+ * next to the already-tracked final `score`. `renderResultsFor` then forwards
+ * both into `renderResultsScreen`'s options, so the closed Quiz -> Resultados
+ * loop always hands off both pieces of end-of-game data together.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -141,6 +149,43 @@
       storageObj.setItem(MUTE_STORAGE_KEY, JSON.stringify(muted));
     } catch (error) {
       console.error('DinoQuiz: failed to persist the mute preference', error);
+    }
+  }
+
+  // Ads-removal purchase flag (TRIOFSND-97, AC-20/AC-21): same rationale and
+  // namespaced-key convention as MUTE_STORAGE_KEY above -- src/services/storage
+  // models `adsRemoved` too (see StorageClient#hasRemovedAds/#setAdsRemoved),
+  // but this no-bundler browser path reads/writes localStorage directly under
+  // the same `dinoquiz:adsRemoved` key so both paths agree once a bundler
+  // wires the real service in. Results gates its banner/rewarded ad on this
+  // flag; the home purchase confirm button (see homeScreen.js's
+  // `options.onPurchase`) sets it to `true`, once and for good, on this device.
+  var ADS_REMOVED_STORAGE_KEY = 'dinoquiz:adsRemoved';
+
+  function loadAdsRemovedState(storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return false;
+    }
+
+    try {
+      var raw = storageObj.getItem(ADS_REMOVED_STORAGE_KEY);
+      return raw !== null ? JSON.parse(raw) === true : false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function persistAdsRemovedState(adsRemoved, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(ADS_REMOVED_STORAGE_KEY, JSON.stringify(adsRemoved));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist the ads-removed preference', error);
     }
   }
 
@@ -238,9 +283,51 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
-  /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
+  // Extra wall-clock time (TRIOFSND-84) the flow controller waits, on top of
+  // the question screen's own MIN_ADVANCE_DELAY_MS gate on "Siguiente"
+  // (public/scripts/questionScreen.js, AC-6), before auto-advancing a child
+  // who never taps the button themselves. Giving that grace period after the
+  // button becomes clickable means the automatic advance never races the
+  // moment the button first becomes tappable.
+  var AUTO_ADVANCE_GRACE_MS = 4000;
+
+  /**
+   * Renders the question at `session.state.questionIndex`, then advances to
+   * the next one (or completes the game) either when the child taps
+   * "Siguiente" or, if they don't, automatically once
+   * `MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS` has elapsed since the
+   * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
+   * avance automático) lleva a la siguiente pregunta"). Both paths funnel
+   * through the same `advance()` so a game is only ever walked forward once
+   * per question, whichever trigger fires first.
+   */
   function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
     var question = session.questions[session.state.questionIndex];
+    var advanced = false;
+    var autoAdvanceTimer = null;
+
+    function advance() {
+      if (advanced) return;
+      advanced = true;
+
+      if (autoAdvanceTimer !== null) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+
+      session.state.questionIndex += 1;
+
+      if (session.state.questionIndex >= session.questions.length) {
+        onGameComplete(session.state);
+      } else {
+        renderQuestionAt(container, renderers, session, onGameComplete);
+      }
+    }
+
+    var minAdvanceDelayMs =
+      (typeof renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS === 'number' &&
+        renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
+      0;
 
     return renderers.renderQuestionScreen(container, question, {
       score: session.state.score,
@@ -255,15 +342,19 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
-        session.state.questionIndex += 1;
-
-        if (session.state.questionIndex >= session.questions.length) {
-          onGameComplete(session.state);
-        } else {
-          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+        if (session.state.questionIndex + 1 >= session.questions.length) {
+          // TRIOFSND-95: question 10 was just answered — the final score is
+          // already tracked incrementally on session.state.score, but the
+          // racha (longest run of consecutive hits) only makes sense once
+          // every answer of the game is known, so it's derived here, right
+          // before handing the finished game off to Resultados.
+          session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
         }
+        advance();
       },
     });
   }
@@ -272,6 +363,9 @@
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      // AC-20/AC-21: the banner/rewarded ad only render while this is false.
+      adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
@@ -595,13 +689,19 @@
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-
       if (muteStorageObj) {
         renderOptions.muted = loadMutedState(muteStorageObj);
         renderOptions.onToggleMute = function (muted) {
           persistMutedState(muted, muteStorageObj);
         };
       }
+      // TRIOFSND-97: the single remove-ads purchase has no real payment SDK
+      // in this offline-first PWA (see CONVENTIONS.md: "Sin backend"), so
+      // confirming it locally marks the purchase as done -- from here on
+      // Resultados stops rendering the banner/rewarded ad (AC-21).
+      renderOptions.onPurchase = function () {
+        persistAdsRemovedState(true, storageObj);
+      };
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -788,6 +888,10 @@
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
+      loadAdsRemovedState: loadAdsRemovedState,
+      persistAdsRemovedState: persistAdsRemovedState,
+      ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }

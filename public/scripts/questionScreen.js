@@ -55,7 +55,10 @@
  * (4s), guaranteeing the dato curioso stays on screen long enough to read.
  * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
  * audio cue — so the flow works identically with sound muted (no audio
- * dependency).
+ * dependency). It is exposed on the exported `renderQuestionScreen` function
+ * (and in the CommonJS/window API below) so the app-shell flow controller
+ * (public/scripts/main.js, TRIOFSND-84) can derive its own auto-advance
+ * delay from the same single source of truth instead of duplicating 4000.
  *
  * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
  * visible `feedback` paragraph are both `aria-live="polite"`, and the
@@ -552,6 +555,8 @@
       },
     };
   }
+
+  renderQuestionScreen.MIN_ADVANCE_DELAY_MS = MIN_ADVANCE_DELAY_MS;
 
   var api = {
     renderQuestionScreen: renderQuestionScreen,
