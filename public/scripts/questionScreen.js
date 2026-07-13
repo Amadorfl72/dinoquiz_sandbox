@@ -194,29 +194,6 @@
     }
     return contentGuide.validateCopy(strings.feedback.incorrect, 'question.feedback.incorrect');
   }
-
-  function resolveDinosaurNames(options) {
-    options = options || {};
-    if (options.dinosaurNames) {
-      return options.dinosaurNames;
-    }
-    if (typeof require === 'function') {
-      var i18n = require('../../src/i18n');
-      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).dinosaurNames;
-    }
-    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
-    return bundle ? bundle.dinosaurNames : null;
-  }
-
-  /** "Ilustración de un {dinosaur}" -> "Ilustración de un Tyrannosaurus Rex" (AC-14: descriptive alt-text). */
-  function buildImageAlt(strings, dinosaurNames, dinosaur) {
-    var format = strings && strings.imageAltFormat;
-    if (typeof format !== 'string') {
-      return '';
-    }
-    var name = (dinosaurNames && dinosaurNames[dinosaur]) || dinosaur || '';
-    return format.replace('{dinosaur}', name);
-  }
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
     if (typeof format !== 'string') {

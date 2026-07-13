@@ -391,9 +391,9 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
+        renderHome(doc, renderers.renderHomeScreen, fetchFn, function () {
           navigateToPrivacyPolicy();
-        });
+        }, resolveHomeStorage());
       },
     });
   }
@@ -481,12 +481,6 @@
       });
   }
 
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
-    });
-  }
-
   function loadHomeStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.home;
@@ -504,15 +498,10 @@
       return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
-    });
-  }
-
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
 
@@ -672,17 +661,20 @@
   }
 
   /**
-   * `storage`, when given, doubles as two independent optional backends,
-   * told apart by shape: a raw `getItem`/`setItem` object (matching
-   * `localStorage`, TRIOFSND-66) persists the mute preference, while a
-   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` object
-   * (matching `src/services/storage`'s `dinoQuizStorage` or
-   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip.
-   * Passing neither renders Home with plain strings only, so callers that
-   * don't care about mute/tooltip persistence (e.g. a bare unit render) get
-   * back exactly the options they'd expect with no surprise side effects.
+   * `storage` (5th arg), when given, must be a `hasSeenHomeTooltip`/
+   * `markHomeTooltipSeen`/`recordEventOnce` object (matching
+   * `src/services/storage`'s `dinoQuizStorage` or `createBrowserHomeStorage`,
+   * TRIOFSND-65) and drives the first-run tooltip; when omitted it falls
+   * back to `loadDinoQuizStorage()`/`createBrowserHomeStorage()` so the
+   * tooltip still works for real, unbundled-browser callers that don't pass
+   * one explicitly. `muteStorageObj` (6th arg) is a raw `getItem`/`setItem`
+   * object (matching `localStorage`, TRIOFSND-66) that persists the mute
+   * preference; when omitted it falls back to `storage` itself if that also
+   * exposes `getItem`/`setItem` (as `resolveHomeStorage()` does), so a
+   * single combined backend still wires both concerns for production
+   * callers.
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -702,8 +694,17 @@
 
     storage = storage || resolveHomeStorage(doc.defaultView);
 
-    var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
-    var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
+    var tooltipStorage =
+      storage && typeof storage.hasSeenHomeTooltip === 'function'
+        ? storage
+        : loadDinoQuizStorage() || createBrowserHomeStorage();
+
+    var resolvedMuteStorage =
+      muteStorageObj && typeof muteStorageObj.getItem === 'function'
+        ? muteStorageObj
+        : storage && typeof storage.getItem === 'function'
+        ? storage
+        : null;
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
@@ -713,10 +714,11 @@
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      if (muteStorageObj) {
-        renderOptions.muted = loadMutedState(muteStorageObj);
+
+      if (resolvedMuteStorage) {
+        renderOptions.muted = loadMutedState(resolvedMuteStorage);
         renderOptions.onToggleMute = function (muted) {
-          persistMutedState(muted, muteStorageObj);
+          persistMutedState(muted, resolvedMuteStorage);
         };
       }
       // TRIOFSND-97: the single remove-ads purchase has no real payment SDK
@@ -738,10 +740,10 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              if (storage && typeof storage.recordEvent === 'function') {
-                storage.recordEvent('partida_iniciada');
+              if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
+                tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage, resolvedMuteStorage);
             }
           });
         }
@@ -824,9 +826,9 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
+    return renderHome(doc, undefined, fetchFn, function () {
       navigateToPrivacyPolicy(loc);
-    });
+    }, resolveHomeStorage());
   }
 
   /**
@@ -892,7 +894,6 @@
       registerServiceWorker: registerServiceWorker,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
-      resolveHomeStorage: resolveHomeStorage,
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
