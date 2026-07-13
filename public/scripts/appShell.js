@@ -84,10 +84,10 @@
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
     // Belt-and-braces alongside the `.app-shell__mute-toggle` rule in
-    // public/styles/main.css: inline styles guarantee the AC-2/AC-11 48x48dp
-    // touch target even before that stylesheet loads or in contexts that
-    // skip it entirely (e.g. jsdom/unit tests that mount into a bare,
-    // unstyled document).
+    // main.css: inline styles guarantee the AC-2/AC-11 48x48dp touch target
+    // even before that stylesheet loads or in contexts that skip it entirely
+    // (e.g. jsdom's getComputedStyle, which doesn't resolve external
+    // stylesheets).
     button.style.minWidth = '48px';
     button.style.minHeight = '48px';
 

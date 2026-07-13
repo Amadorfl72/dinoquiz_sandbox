@@ -11,6 +11,7 @@ const PERSISTED_KEYS = [
   'muted',
   'homeTooltipSeen',
   'analyticsEventCounts',
+  'adsRemoved',
 ];
 
 function namespacedKey(key) {
@@ -255,6 +256,19 @@ class DinoQuizStorage {
 
   async markHomeTooltipSeen() {
     await this.set('homeTooltipSeen', true);
+  }
+
+  /**
+   * Whether the single ads-removal in-app purchase (PRD: "eliminar anuncios")
+   * has been completed on this device. Screens gate banners/rewarded ads on
+   * this flag (TRIOFSND-97, AC-20/AC-21).
+   */
+  async hasRemovedAds() {
+    return this.get('adsRemoved');
+  }
+
+  async setAdsRemoved(adsRemoved) {
+    await this.set('adsRemoved', adsRemoved);
   }
 
   /**
