@@ -30,6 +30,17 @@
  * so it stays descriptive in the failure state exactly as it was before
  * answering.
  *
+ * Screen-reader accessibility on a miss (TRIOFSND-90, AC-7/AC-14): the green
+ * "correct" border and the tapped option's neutral marker are purely visual
+ * cues, so a TalkBack/VoiceOver user who can't see them still needs to know
+ * which option was right. The `feedback` announcement (already
+ * `aria-live="polite"`) spells out the correct answer's text instead of just
+ * "la respuesta correcta es esta", and the correct button additionally gets
+ * a descriptive `aria-label` ("Respuesta correcta: …") so it reads
+ * unambiguously if the user swipes onto it afterwards. The tapped (wrong)
+ * option gets a neutral "Tu respuesta: …" label — never a "wrong"/
+ * "incorrect" one, matching AC-7's no-penalty tone.
+ *
  * Performance (AC-5, "<300ms"): all feedback classes are toggled
  * synchronously inside the click handler — no timers, no awaited work — so
  * the browser paints the new state on the very next frame. The only
@@ -123,6 +134,14 @@
   var IMAGE_BASE_PATH = '/assets/images/';
   var IMAGE_SRC_BASE = IMAGE_BASE_PATH;
   var MIN_ADVANCE_DELAY_MS = 4000;
+
+  /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
+  function formatAnswerTemplate(format, answerText) {
+    if (typeof format !== 'string') {
+      return answerText;
+    }
+    return format.replace('{answer}', answerText);
+  }
 
   function resolveImageAlt(strings, dinosaur, funFact) {
     var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
@@ -425,6 +444,13 @@
           button.classList.add(CORRECT_CLASS);
           if (correct) {
             button.classList.add(CELEBRATE_CLASS);
+          } else {
+            // Descriptive label (TRIOFSND-90, AC-14), only needed on a miss:
+            // a screen reader announces this as the correct answer even
+            // without seeing the green border. On a hit the tapped/correct
+            // option are the same button, already covered by the "¡Genial,
+            // acertaste!" feedback below, so no extra label is added.
+            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
           // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
           // this as the correct answer even without seeing the green border.

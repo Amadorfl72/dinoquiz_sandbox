@@ -292,6 +292,15 @@ describe('QuestionScreen', () => {
       expect(wrongButton.getAttribute('aria-label').toLowerCase()).not.toMatch(/mal|incorrecto|fallaste|error|wrong/);
     });
 
+    test('does not label the correct option on a hit — only a miss adds the "Respuesta correcta" aria-label (TRIOFSND-90)', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(optionButtons[question.correctAnswerIndex]).not.toHaveAttribute('aria-label');
+    });
+
     test('keeps the dinosaur illustration and its descriptive alt-text unchanged after a miss (TRIOFSND-90)', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
@@ -319,7 +328,6 @@ describe('QuestionScreen', () => {
       );
       expect(announcementEl).toHaveTextContent(question.options[question.correctAnswerIndex]);
     });
-
     test('reports scoreDelta 0 and isCorrect false via onAnswer', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
