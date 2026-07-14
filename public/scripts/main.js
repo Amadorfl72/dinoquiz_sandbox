@@ -391,9 +391,9 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, function () {
+        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
           navigateToPrivacyPolicy();
-        }, resolveHomeStorage());
+        });
       },
     });
   }
@@ -649,6 +649,9 @@
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
       },
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -661,7 +664,7 @@
   }
 
   /**
-   * `storage` (5th arg), when given, must be a `hasSeenHomeTooltip`/
+   * `storage` (4th arg), when given, must be a `hasSeenHomeTooltip`/
    * `markHomeTooltipSeen`/`recordEventOnce` object (matching
    * `src/services/storage`'s `dinoQuizStorage` or `createBrowserHomeStorage`,
    * TRIOFSND-65) and drives the first-run tooltip; when omitted it falls
@@ -674,7 +677,7 @@
    * single combined backend still wires both concerns for production
    * callers.
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, muteStorageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -726,7 +729,7 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storageObj);
+        persistAdsRemovedState(true, resolvedMuteStorage);
       };
 
       function finishRender() {
@@ -743,7 +746,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage, resolvedMuteStorage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedMuteStorage, storage);
             }
           });
         }
@@ -826,9 +829,9 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
+    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
       navigateToPrivacyPolicy(loc);
-    }, resolveHomeStorage());
+    });
   }
 
   /**

@@ -1,5 +1,7 @@
 'use strict';
 
+require('@testing-library/jest-dom');
+const { fireEvent } = require('@testing-library/dom');
 const { renderHomeScreen } = require('../../public/scripts/homeScreen');
 const i18n = require('../../src/i18n');
 
@@ -250,6 +252,7 @@ describe('Home screen rendered by the bootstrap script', () => {
         expect(newExpanded).not.toBe(initialExpanded);
       }
     });
+  });
 
   test('confirming the purchase invokes options.onPurchase (entry point into the IAP flow)', () => {
     const onPurchase = jest.fn();

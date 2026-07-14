@@ -353,6 +353,7 @@
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
+    feedback.setAttribute('aria-live', 'polite');
 
     var announcementEl = document.createElement('p');
     announcementEl.className = 'question-screen__announcement sr-only';
@@ -464,9 +465,6 @@
             // acertaste!" feedback below, so no extra label is added.
             button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
-          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
-          // this as the correct answer even without seeing the green border.
-          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
           // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
