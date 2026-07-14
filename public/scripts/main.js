@@ -29,6 +29,21 @@
  * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
  * and whose 'Salir' calls `renderHome` again.
  *
+ * Aggregated question failures (TRIOFSND-92): the same analytics `storage`
+ * used for the tooltip/`first_tap_jugar` counter is threaded through
+ * `startNewGame` -> `renderQuestionAt` -> `renderResultsFor` (replay reuses
+ * it too) as `analyticsStorage`, so every time `onAnswer` fires in
+ * `renderQuestionAt` it extends the client-local `pregunta_respondida`
+ * event with the acierto/fallo result for that `id_pregunta`, via
+ * `storage.recordQuestionAnswered(question.id, result.isCorrect)`. That
+ * aggregates into `{ attempts, failures }` per question id (see
+ * `DinoQuizStorage#recordQuestionAnswered`/`#getQuestionFailureRate` in
+ * `src/services/storage/StorageClient.js`, mirrored for the no-`require`
+ * browser path by `createBrowserHomeStorage` below) -- never a per-answer
+ * log and never tied to who played, so the only thing derivable later is
+ * the aggregated % de fallo por pregunta, per the PRD's
+ * logging_observability requirement.
+ *
  * No-bundler runtime: DinoQuiz ships without a build step, so `require` does
  * not exist in the browser. Every screen and the game logic are loaded as
  * plain `<script>`s (see public/index.html) that register themselves on
