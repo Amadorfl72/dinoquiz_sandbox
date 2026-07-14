@@ -27,8 +27,9 @@
  * player through the selected questions one at a time via
  * public/scripts/questionScreen.js; once the last question is answered it
  * shows public/scripts/resultsScreen.js, whose 'Volver a jugar' calls back
- * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
- * and whose 'Salir' calls `renderHome` again.
+ * into `startNewGame` (fresh state + a new random subset of questions that
+ * avoids repeating the previous game's questions when possible, TRIOFSND-101
+ * AC-9) and whose 'Salir' calls `renderHome` again.
  *
  * No-bundler runtime: DinoQuiz ships without a build step, so `require` does
  * not exist in the browser. Every screen and the game logic are loaded as
@@ -381,14 +382,14 @@
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage, playedQuestionIds) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage, playedQuestionIds);
       },
       onExit: function () {
         renderHome(doc, renderers.renderHomeScreen, fetchFn, function () {
@@ -398,21 +399,32 @@
     });
   }
 
-  /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage) {
+  /**
+   * Resets game state (score/questionIndex/answers) and navigates to the
+   * first question of a new game. `previousQuestionIds` (TRIOFSND-101, AC-9)
+   * is the id list of the immediately previous game, if any — passed through
+   * to the selection engine (public/scripts/gameFlow.js) so a replay avoids
+   * repeating them when the bank has enough fresh candidates. Passed by
+   * `renderResultsFor` on 'Volver a jugar'; omitted for a first game from
+   * Inicio.
+   */
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage, previousQuestionIds) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
-    var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var session = gameFlow.startNewGame(questions, { randomFn: randomFn, previousQuestionIds: previousQuestionIds });
 
     renderQuestionAt(
       container,
       renderers,
       session,
       function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage);
+        var playedQuestionIds = session.questions.map(function (question) {
+          return question.id;
+        });
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage, playedQuestionIds);
       },
       storageObj,
       analyticsStorage
@@ -726,7 +738,7 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storageObj);
+        persistAdsRemovedState(true, storage);
       };
 
       function finishRender() {
@@ -743,7 +755,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage, resolvedMuteStorage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, storage);
             }
           });
         }

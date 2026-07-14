@@ -103,6 +103,24 @@
     return bundle ? bundle.results : null;
   }
 
+  /**
+   * Lowercases, strips accents and splits `text` into whole words so
+   * `BANNED_WORDS` lookups match e.g. "MAL" or "maléfico" the same way as
+   * plain "mal", without substring false positives. Mirrors
+   * src/i18n/contentGuide.js's normalizer, kept here too since
+   * questionScreen.js's `validateFeedbackCopy` calls it directly off this
+   * module (`resultsScreen.normalizeToWords`).
+   */
+  function normalizeToWords(text) {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
   function calculateStars(score) {
     if (!Number.isInteger(score) || score < MIN_SCORE || score > MAX_SCORE) {
       throw new Error('score must be an integer between ' + MIN_SCORE + ' and ' + MAX_SCORE + ', got ' + score);

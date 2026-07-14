@@ -1,5 +1,7 @@
 'use strict';
 
+require('@testing-library/jest-dom');
+const { fireEvent } = require('@testing-library/dom');
 const { renderHomeScreen } = require('../../public/scripts/homeScreen');
 const i18n = require('../../src/i18n');
 
@@ -419,4 +421,5 @@ describe('HomeScreen first-run tooltip (TRIOFSND-65)', () => {
 
     expect(onPlayButtonClick).toHaveBeenCalledTimes(2);
   });
+});
 });

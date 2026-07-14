@@ -214,6 +214,35 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     }
   });
 
+  test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', async () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(40);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0.1);
+      const firstGamePrompts = [];
+      for (let i = 0; i < 10; i += 1) {
+        firstGamePrompts.push(container.querySelector('.question-screen__prompt').textContent);
+        await answerCurrentQuestion(container, { correct: true });
+      }
+
+      getByRole(container, 'button', { name: strings.playAgainButton }).click();
+
+      const secondGamePrompts = [];
+      for (let i = 0; i < 10; i += 1) {
+        secondGamePrompts.push(container.querySelector('.question-screen__prompt').textContent);
+        await answerCurrentQuestion(container, { correct: true });
+      }
+
+      const overlap = secondGamePrompts.filter((prompt) => firstGamePrompts.includes(prompt));
+      expect(overlap).toEqual([]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('"Salir" navigates back to Inicio', async () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();

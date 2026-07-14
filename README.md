@@ -85,25 +85,38 @@ resto de textos de la UI.
 
 ## Motor de selección aleatoria de preguntas
 
-[`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
-iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
-aleatoria:
+[`public/scripts/gameFlow.js`](public/scripts/gameFlow.js) (re-exportado por el canónico
+[`src/game/gameFlow.js`](src/game/gameFlow.js)) implementa la lógica que, al iniciar una
+partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma aleatoria y sin
+repetición dentro de la misma partida (AC-3), y evita repetir la partida anterior en un
+replay (TRIOFSND-101, AC-9):
 
-- `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el
-  array de entrada), dando a cada pregunta la misma probabilidad de salir en cualquier
-  posición.
-- `selectGameQuestions(questions, options)` devuelve los primeros `count` elementos (10 por
-  defecto) de ese barajado. Al salir de un `shuffle`, nunca hay dos posiciones con la misma
-  pregunta, así que la selección resultante nunca repite ninguna dentro de la misma partida
-  (AC-3). Lanza un error si el banco tiene menos preguntas que las solicitadas.
+- `selectGameQuestions(questions, count, randomFn, previousQuestionIds)` samplea sin
+  reemplazo del banco, así que la selección resultante nunca repite ninguna pregunta dentro
+  de la misma partida. Lanza un error si el banco no es un array.
+- `previousQuestionIds` (opcional; los ids de la partida jugada inmediatamente antes) hace
+  que el banco se divida en un pool "fresco" (preguntas fuera de esa partida anterior) y uno
+  "de repesca" (el resto): se samplea primero del pool fresco y solo se recurre al de
+  repesca para completar los huecos que el fresco no pueda cubrir. Con el banco real de 40
+  preguntas y partidas de 10, esto da siempre un replay totalmente disjunto de la partida
+  anterior (30 candidatas frescas para 10 huecos); bancos más pequeños degradan con
+  gracia reutilizando preguntas antes que lanzar un error.
 - `randomFn` (por defecto `Math.random`) es inyectable, igual que en
   `selectMotivationalMessage` de la pantalla de Resultados, para que los tests sean
   deterministas.
 
-`src/game/questionSelector.test.js` cubre la ausencia de duplicados dentro de una partida,
-que toda pregunta seleccionada pertenezca al banco original, y la distribución: en un número
-alto de partidas simuladas, cada pregunta del banco sale seleccionada y a un ritmo similar
-al resto (sin preguntas "muertas" que nunca salgan).
+[`public/scripts/main.js`](public/scripts/main.js) es quien pasa `previousQuestionIds`: al
+terminar una partida guarda los ids de las preguntas jugadas y, si el niño pulsa "Volver a
+jugar", se los reenvía a `gameFlow.startNewGame` para la partida siguiente.
+
+`src/game/gameFlow.test.js` cubre la ausencia de duplicados dentro de una partida, que toda
+pregunta seleccionada pertenezca al banco original, la distribución (en un número alto de
+partidas simuladas, cada pregunta del banco sale seleccionada y a un ritmo similar al resto,
+sin preguntas "muertas" que nunca salgan), y el comportamiento de `previousQuestionIds`
+(replay disjunto cuando el banco tiene candidatas de sobra, degradación cuando no las
+tiene). `tests/pwa/game-flow.test.js` cubre el mismo contrato a nivel de app-shell, pulsando
+"Volver a jugar" de verdad y comprobando que ninguna de las 10 preguntas de la partida
+siguiente coincide con las de la anterior.
 
 ## Pantalla de Inicio
 

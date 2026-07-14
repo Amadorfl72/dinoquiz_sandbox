@@ -1,14 +1,23 @@
 'use strict';
 
 /**
- * Per-game state and new-game setup (TRIOFSND-100).
+ * Per-game state and new-game setup (TRIOFSND-100, extended by TRIOFSND-101).
  *
  * A "game session" tracks the running score, the index of the question the
  * player is currently on, and every answer given so far. `startNewGame`
  * bundles a fresh, reset session together with a random 10-question subset
- * of the bank (AC-3/AC-9: exactly 10 questions, no repetition within the
- * game, and a different subset than the previous game since selection is
- * random and without replacement).
+ * of the bank (AC-3: exactly 10 questions, no repetition within the game).
+ *
+ * Replay distinctness (TRIOFSND-101, AC-9): callers may pass
+ * `options.previousQuestionIds` (the ids played in the immediately previous
+ * game) to `startNewGame`/`selectGameQuestions`. When given, the bank is
+ * split into a "fresh" pool (questions not in that previous set) and a
+ * "repeat" pool (the rest); the fresh pool is sampled first and the repeat
+ * pool only fills whatever slots the fresh pool can't cover. With the real
+ * 40-question bank and 10-question games this always yields a replay fully
+ * disjoint from the previous game (30 fresh candidates for 10 slots);
+ * smaller banks degrade gracefully to reusing prior questions instead of
+ * throwing.
  *
  * Browser bridge: DinoQuiz has no bundler, so the app shell (main.js) cannot
  * `require` this from `src/` at runtime. This module lives under `public/`
@@ -53,8 +62,27 @@
     return maxStreak;
   }
 
-  /** Samples `count` questions without replacement, so none repeats within a game. */
-  function selectGameQuestions(questions, count, randomFn) {
+  /** Samples up to `count` questions without replacement from `pool` (mutates a local copy only). */
+  function sampleWithoutReplacement(pool, count, random) {
+    var remaining = pool.slice();
+    var selected = [];
+
+    while (selected.length < count && remaining.length > 0) {
+      var index = Math.floor(random() * remaining.length);
+      var safeIndex = Math.min(Math.max(index, 0), remaining.length - 1);
+      selected.push(remaining.splice(safeIndex, 1)[0]);
+    }
+
+    return selected;
+  }
+
+  /**
+   * Samples `count` questions without replacement, so none repeats within a
+   * game (AC-3). `previousQuestionIds`, when given, is used to prefer
+   * questions that were not part of that previous game (AC-9) — see the
+   * module doc comment above for the fresh/repeat pool strategy.
+   */
+  function selectGameQuestions(questions, count, randomFn, previousQuestionIds) {
     if (!Array.isArray(questions)) {
       throw new Error('questions must be an array');
     }
@@ -62,13 +90,28 @@
     var sampleSize = count === undefined ? QUESTIONS_PER_GAME : count;
     var random = randomFn || Math.random;
 
-    var pool = questions.slice();
-    var selected = [];
+    if (!previousQuestionIds || previousQuestionIds.length === 0) {
+      return sampleWithoutReplacement(questions, sampleSize, random);
+    }
 
-    while (selected.length < sampleSize && pool.length > 0) {
-      var index = Math.floor(random() * pool.length);
-      var safeIndex = Math.min(Math.max(index, 0), pool.length - 1);
-      selected.push(pool.splice(safeIndex, 1)[0]);
+    var previousIds = {};
+    previousQuestionIds.forEach(function (id) {
+      previousIds[id] = true;
+    });
+
+    var freshPool = [];
+    var repeatPool = [];
+    questions.forEach(function (question) {
+      if (Object.prototype.hasOwnProperty.call(previousIds, question.id)) {
+        repeatPool.push(question);
+      } else {
+        freshPool.push(question);
+      }
+    });
+
+    var selected = sampleWithoutReplacement(freshPool, sampleSize, random);
+    if (selected.length < sampleSize) {
+      selected = selected.concat(sampleWithoutReplacement(repeatPool, sampleSize - selected.length, random));
     }
 
     return selected;
@@ -78,7 +121,7 @@
     options = options || {};
     return {
       state: createInitialGameState(),
-      questions: selectGameQuestions(questions, options.count, options.randomFn),
+      questions: selectGameQuestions(questions, options.count, options.randomFn, options.previousQuestionIds),
     };
   }
 
