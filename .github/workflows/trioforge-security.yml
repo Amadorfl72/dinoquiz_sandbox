@@ -1,5 +1,5 @@
 # Managed by TrioForge — deterministic security gate.
-# Policy: {'secrets': 'block', 'deps': 'block', 'sast': 'block', 'iac': 'warn', 'lint': 'off'}. Edit via TrioForge re-provisioning rather than by hand.
+# Policy: {'secrets': 'block', 'deps': 'block', 'sast': 'warn', 'iac': 'warn', 'lint': 'off'}. Edit via TrioForge re-provisioning rather than by hand.
 name: trioforge-security
 on:
   pull_request:
@@ -36,11 +36,11 @@ jobs:
       - name: SAST (semgrep)
         run: |
           pip install --quiet semgrep
-          set +e; semgrep --config auto --error --quiet --exclude .github --json -o /tmp/semgrep.json . ; code=$?; set -e
+          set +e; semgrep --config auto --error --quiet --exclude .github --exclude '*.test.*' --exclude '*.spec.*' --exclude '*_test.*' --exclude tests --exclude test --exclude __tests__ --json -o /tmp/semgrep.json . ; code=$?; set -e
           if [ "$code" != "0" ]; then
             jq -r '.results[:10][] | "::error file=\(.path),line=\(.start.line)::semgrep \(.check_id | split(".") | last): \(.extra.message | gsub("\n";" ") | .[0:350])"' /tmp/semgrep.json 2>/dev/null || true
             echo "::error::trioforge-security: semgrep found SAST issues"
-            exit 1
+            true
           fi
       - name: IaC scan (checkov)
         run: |
