@@ -536,7 +536,7 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
   });
 
   /** Plays a full 10-question game following a hit/miss pattern (C = correct, F = wrong) and returns the options Resultados was rendered with. */
-  function playGameWithPattern(pattern) {
+  async function playGameWithPattern(pattern) {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -551,9 +551,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     jest.useFakeTimers();
     try {
       startNewGame(container, renderers, questions, document, undefined, () => 0);
-      pattern.split('').forEach((mark) => {
-        answerCurrentQuestion(container, { correct: mark === 'C' });
-      });
+      for (const mark of pattern.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
     } finally {
       jest.useRealTimers();
     }
@@ -561,9 +561,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     return capturedOptions[0];
   }
 
-  test('test_scenario 7/10: reaches Resultados with the final score and the longest streak of hits', () => {
+  test('test_scenario 7/10: reaches Resultados with the final score and the longest streak of hits', async () => {
     // 4 hits, a miss, 3 more hits, 2 misses: score 7/10, longest streak 4.
-    const options = playGameWithPattern('CCCCFCCCFF');
+    const options = await playGameWithPattern('CCCCFCCCFF');
 
     expect(container.querySelector('.results-screen')).not.toBeNull();
     expect(container.textContent).toContain('7/10');
@@ -571,9 +571,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     expect(options.maxStreak).toBe(4);
   });
 
-  test('test_scenario 2/10: a low score still reports the correct (shorter) streak', () => {
+  test('test_scenario 2/10: a low score still reports the correct (shorter) streak', async () => {
     // 2 hits back to back surrounded by misses: score 2/10, longest streak 2.
-    const options = playGameWithPattern('FFFCCFFFFF');
+    const options = await playGameWithPattern('FFFCCFFFFF');
 
     expect(container.querySelector('.results-screen')).not.toBeNull();
     expect(container.textContent).toContain('2/10');
@@ -581,16 +581,16 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     expect(options.maxStreak).toBe(2);
   });
 
-  test('a perfect game (10/10) reports a streak equal to the score', () => {
-    const options = playGameWithPattern('CCCCCCCCCC');
+  test('a perfect game (10/10) reports a streak equal to the score', async () => {
+    const options = await playGameWithPattern('CCCCCCCCCC');
 
     expect(container.textContent).toContain('10/10');
     expect(options.score).toBe(10);
     expect(options.maxStreak).toBe(10);
   });
 
-  test('a game with no hits reports a streak of 0', () => {
-    const options = playGameWithPattern('FFFFFFFFFF');
+  test('a game with no hits reports a streak of 0', async () => {
+    const options = await playGameWithPattern('FFFFFFFFFF');
 
     expect(container.textContent).toContain('0/10');
     expect(options.score).toBe(0);
