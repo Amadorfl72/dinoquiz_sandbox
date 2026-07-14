@@ -90,6 +90,26 @@
     return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
   }
 
+  // Kept as a thin wrapper (delegating to the shared content guide when
+  // available) because it is exposed on `api.normalizeToWords` and reused by
+  // questionScreen.js's copy audit. The TRIOFSND-91 refactor moved the
+  // canonical implementation into src/i18n/contentGuide.js but left this
+  // reference dangling on `api` — restoring it un-poisons every suite that
+  // requires resultsScreen.js (was: ReferenceError on module load).
+  function normalizeToWords(text) {
+    var contentGuide = resolveContentGuide();
+    if (contentGuide) {
+      return contentGuide.normalizeToWords(text);
+    }
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
   function resolveStrings(options) {
     options = options || {};
     if (options.strings) {
