@@ -34,8 +34,15 @@ function buildValidQuestion(overrides = {}) {
   };
 }
 
+// mkdtempSync generates the random path segment internally (not from interpolated
+// user/process input), which keeps this a safe, non-traversable path.join target.
+function createTempPath(prefix) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  return path.join(dir, 'questions.json');
+}
+
 function writeTempQuestionBank(questions) {
-  const filePath = path.join(os.tmpdir(), `dinoquiz-questions-${process.hrtime.bigint()}.json`);
+  const filePath = createTempPath('dinoquiz-questions-');
   fs.writeFileSync(filePath, JSON.stringify(questions), 'utf-8');
   return filePath;
 }
@@ -336,7 +343,7 @@ describe('loadQuestionBank', () => {
   });
 
   test('throws a descriptive error for malformed JSON', () => {
-    const filePath = path.join(os.tmpdir(), `dinoquiz-questions-broken-${process.hrtime.bigint()}.json`);
+    const filePath = createTempPath('dinoquiz-questions-broken-');
     fs.writeFileSync(filePath, '{ not valid json', 'utf-8');
     try {
       expect(() => loadQuestionBank({ filePath })).toThrow(/Failed to parse question bank JSON/);
