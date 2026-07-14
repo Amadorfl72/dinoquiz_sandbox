@@ -391,9 +391,17 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, function () {
-          navigateToPrivacyPolicy();
-        }, resolveHomeStorage());
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage,
+          homeStorage
+        );
       },
     });
   }
@@ -661,18 +669,20 @@
   }
 
   /**
-   * `storage` (5th arg), when given, must be a `hasSeenHomeTooltip`/
-   * `markHomeTooltipSeen`/`recordEventOnce` object (matching
-   * `src/services/storage`'s `dinoQuizStorage` or `createBrowserHomeStorage`,
-   * TRIOFSND-65) and drives the first-run tooltip; when omitted it falls
-   * back to `loadDinoQuizStorage()`/`createBrowserHomeStorage()` so the
-   * tooltip still works for real, unbundled-browser callers that don't pass
-   * one explicitly. `muteStorageObj` (6th arg) is a raw `getItem`/`setItem`
-   * object (matching `localStorage`, TRIOFSND-66) that persists the mute
+   * `storage` (5th arg) and `muteStorageObj` (6th arg) are two independent
+   * optional backends. `storage` (matching `src/services/storage`'s
+   * `dinoQuizStorage` or `createBrowserHomeStorage`, TRIOFSND-65) drives the
+   * first-run tooltip; when omitted it falls back to
+   * `loadDinoQuizStorage()`/`createBrowserHomeStorage()` so the tooltip
+   * still works for real, unbundled-browser callers that don't pass one
+   * explicitly. `muteStorageObj` is a raw `getItem`/`setItem` object
+   * (matching `localStorage`, TRIOFSND-66) that persists the mute
    * preference; when omitted it falls back to `storage` itself if that also
    * exposes `getItem`/`setItem` (as `resolveHomeStorage()` does), so a
    * single combined backend still wires both concerns for production
-   * callers.
+   * callers. Either can be passed as an explicit falsy-shaped stand-in to
+   * opt out (e.g. a bare unit render with a `renderHomeScreen` mock that
+   * only cares about the fetched strings).
    */
   function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
@@ -751,17 +761,17 @@
         return homeApi;
       }
 
-      if (!tooltipStorage) {
+      if (!tooltipStorageObj) {
         return finishRender();
       }
 
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return tooltipStorageObj.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorage.markHomeTooltipSeen();
+          tooltipStorageObj.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorage.recordEventOnce('first_tap_jugar');
+          tooltipStorageObj.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -826,9 +836,17 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
-      navigateToPrivacyPolicy(loc);
-    }, resolveHomeStorage());
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      homeStorage,
+      homeStorage
+    );
   }
 
   /**
