@@ -356,7 +356,7 @@
           },
         ]);
 
-        if (analyticsStorage) {
+        if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
           analyticsStorage.recordEvent('pregunta_respondida');
 
           if (!result.isCorrect) {
@@ -396,10 +396,10 @@
           doc,
           renderers.renderHomeScreen,
           fetchFn,
+          homeStorage,
           function () {
             navigateToPrivacyPolicy();
           },
-          homeStorage,
           homeStorage
         );
       },
@@ -684,7 +684,7 @@
    * opt out (e.g. a bare unit render with a `renderHomeScreen` mock that
    * only cares about the fetched strings).
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, muteStorageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -736,7 +736,7 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storageObj);
+        persistAdsRemovedState(true, storage);
       };
 
       function finishRender() {
@@ -753,7 +753,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage, resolvedMuteStorage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, storage);
             }
           });
         }
@@ -761,17 +761,17 @@
         return homeApi;
       }
 
-      if (!tooltipStorageObj) {
+      if (!tooltipStorage) {
         return finishRender();
       }
 
-      return tooltipStorageObj.hasSeenHomeTooltip().then(function (seen) {
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorageObj.markHomeTooltipSeen();
+          tooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorageObj.recordEventOnce('first_tap_jugar');
+          tooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -841,10 +841,10 @@
       doc,
       undefined,
       fetchFn,
+      homeStorage,
       function () {
         navigateToPrivacyPolicy(loc);
       },
-      homeStorage,
       homeStorage
     );
   }
