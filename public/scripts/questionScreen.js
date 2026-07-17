@@ -136,6 +136,16 @@
  * adapter is plugged into it. Whatever the ad service resolves with, the
  * CTA never touches `nextButton` or its advance timer — the game always
  * continues.
+ *
+ * Tablet-horizontal layout (TRIOFSND-141): below the tablet-landscape
+ * breakpoint the screen is one vertical stack (image, then prompt, options,
+ * feedback). At >=900px landscape (iPad 10.2"/10" Android tablets, the PRD's
+ * primary target) `.question-screen` in main.css switches to a two-column
+ * grid — large illustration on the left, `.question-screen__content` (prompt,
+ * score, 2x2 options grid and, once answered, the feedback/dato
+ * curioso/"Siguiente") on the right — so nothing needs to scroll
+ * horizontally and the extra width goes to a bigger image and roomier
+ * options instead of empty margins.
  */
 
 (function () {
@@ -528,18 +538,28 @@
       }
     });
 
+    // TRIOFSND-141: everything except the illustration is grouped under one
+    // wrapper so the tablet-landscape media query in main.css can lay the
+    // screen out as a two-column grid (large image | prompt + 2x2 options +
+    // feedback) instead of the single vertical stack used below that
+    // breakpoint — image and content stay siblings so the CSS only needs to
+    // target these two class names, not every child individually.
+    var content = document.createElement('div');
+    content.className = 'question-screen__content';
+    content.appendChild(prompt);
+    content.appendChild(scoreEl);
+    content.appendChild(optionsGroup);
+    content.appendChild(feedback);
+    content.appendChild(announcementEl);
+    content.appendChild(funFactBox);
+    content.appendChild(announcement);
+    content.appendChild(rewardedAdCta);
+    content.appendChild(rewardedAdStatus);
+    content.appendChild(extraFunFactBox);
+    content.appendChild(nextButton);
+
     root.appendChild(image);
-    root.appendChild(prompt);
-    root.appendChild(scoreEl);
-    root.appendChild(optionsGroup);
-    root.appendChild(feedback);
-    root.appendChild(announcementEl);
-    root.appendChild(funFactBox);
-    root.appendChild(announcement);
-    root.appendChild(rewardedAdCta);
-    root.appendChild(rewardedAdStatus);
-    root.appendChild(extraFunFactBox);
-    root.appendChild(nextButton);
+    root.appendChild(content);
     container.appendChild(root);
 
     warmUpFeedbackAnimation();
@@ -547,6 +567,7 @@
     return {
       root: root,
       image: image,
+      content: content,
       prompt: prompt,
       scoreEl: scoreEl,
       optionButtons: optionButtons,

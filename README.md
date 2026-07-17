@@ -200,6 +200,24 @@ Los tokens de color de cada estado (normal/correcto/neutro/dato curioso) viven e
 (≥4.5:1, AC-13) en `src/theme/contrast.test.js`, en sincronía con las reglas de
 `public/styles/main.css`.
 
+### Layout tablet-horizontal (TRIOFSND-141)
+
+`renderQuestionScreen` agrupa todo salvo la ilustración bajo un único
+`question-screen__content` (hermano de `question-screen__image`), para que
+`public/styles/main.css` pueda reordenar el layout completo con una sola regla
+por breakpoint. Por debajo de tablet-horizontal la pantalla se apila en
+columna (imagen, enunciado, opciones, feedback), igual que el resto de
+pantallas. A partir de `900px` en horizontal (mismo breakpoint que la
+pantalla de Inicio — iPad 10.2" reporta 1080x810px CSS y las tablets
+Android de 10" rondan 1280x800/962x601px), `.question-screen` pasa a un grid
+de dos columnas: la ilustración grande a la izquierda y
+`question-screen__content` (enunciado destacado, marcador, la rejilla de
+opciones — ya 2x2 vía `question-screen__options` — y, tras responder, el
+feedback/dato curioso/"Siguiente") a la derecha. Ambas columnas del grid usan
+`minmax(0, …)`/porcentajes en vez de anchos fijos en `px`, igual que
+`question-screen__options`, para que ningún texto largo pueda forzar scroll
+horizontal en esos tamaños de tablet.
+
 ### Feedback y dato curioso (TRIOFSND-83)
 
 Tras responder, además del resaltado de la opción correcta, la pantalla muestra:

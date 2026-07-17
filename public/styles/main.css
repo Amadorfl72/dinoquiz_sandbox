@@ -456,6 +456,21 @@ body {
   margin: 0 auto;
 }
 
+/*
+ * Groups everything except the illustration (TRIOFSND-141) so the
+ * tablet-landscape media query below can turn `.question-screen` into a
+ * two-column grid without touching every child individually. Below that
+ * breakpoint it just keeps the same vertical stack/spacing the flex column
+ * above used to apply directly to these children.
+ */
+.question-screen__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  width: 100%;
+}
+
 .question-screen__image {
   display: block;
   width: clamp(140px, 30vw, 280px);
@@ -795,6 +810,50 @@ body {
   background-color: #a5d6a7;
   cursor: default;
 }
+
+/*
+ * Tablet-landscape layout (TRIOFSND-141): the PRD's primary target is a
+ * horizontal tablet — iPad 10.2" reports a 1080x810 CSS-px landscape
+ * viewport, 10" Android tablets land around 1280x800/962x601 — where the
+ * vertical stack above wastes the extra width and, being taller than it
+ * needs to be, risks fighting the shorter viewport height. From 900px
+ * landscape up (same breakpoint as `.home-screen` above) the question
+ * screen becomes a two-column grid instead: a large dinosaur illustration
+ * on the left, `.question-screen__content` (prompt, score, the options grid
+ * — already a 2x2 grid via `.question-screen__options` — and, once
+ * answered, the feedback/dato curioso/"Siguiente") on the right. Both grid
+ * tracks use `minmax(0, 1fr)`/percentages (mirroring
+ * `.question-screen__options`) instead of fixed pixel widths, so long
+ * option/prompt text can never force the grid past the viewport and cause
+ * horizontal scrolling.
+ */
+@media (min-width: 900px) and (orientation: landscape) {
+  .question-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+    max-width: 1100px;
+  }
+
+  .question-screen__image {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .question-screen__content {
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .question-screen__prompt {
+    text-align: left;
+    font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+  }
+}
+
 /* Visually hides content while keeping it available to screen readers. */
 .sr-only {
   position: absolute;

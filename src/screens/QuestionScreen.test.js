@@ -805,4 +805,77 @@ describe('QuestionScreen', () => {
       expect(rewardedAdCta).toBeDisabled();
     });
   });
+
+  describe('tablet-horizontal layout (TRIOFSND-141)', () => {
+    // Pulls the tablet-landscape media query block out of main.css so its
+    // rules (rather than the base/mobile ones above it) can be asserted on —
+    // mirrors the resolveCssCustomProperties helper's approach of reading
+    // the real stylesheet instead of duplicating values in the test.
+    function extractTabletLandscapeBlock(css) {
+      const mediaStart = css.indexOf('@media (min-width: 900px) and (orientation: landscape) {\n  .question-screen {');
+      expect(mediaStart).toBeGreaterThan(-1);
+
+      let depth = 0;
+      let i = css.indexOf('{', mediaStart);
+      const blockStart = i;
+      for (; i < css.length; i += 1) {
+        if (css[i] === '{') depth += 1;
+        if (css[i] === '}') {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      return css.slice(blockStart, i + 1);
+    }
+
+    // Plain string search (no dynamic RegExp) for a "<selector> { ... }" block.
+    function extractRule(css, selector) {
+      const selectorIndex = css.indexOf(selector);
+      expect(selectorIndex).toBeGreaterThan(-1);
+      const braceStart = css.indexOf('{', selectorIndex);
+      const braceEnd = css.indexOf('}', braceStart);
+      return css.slice(braceStart + 1, braceEnd);
+    }
+
+    test('groups everything but the illustration under .question-screen__content, as a sibling of the image', () => {
+      const question = buildQuestion();
+      const { root, image, content, prompt, optionButtons, nextButton } = renderQuestionScreen(container, question);
+
+      expect(Array.from(root.children)).toEqual([image, content]);
+      expect(content).toHaveClass('question-screen__content');
+      expect(content.contains(prompt)).toBe(true);
+      optionButtons.forEach((button) => expect(content.contains(button)).toBe(true));
+      expect(content.contains(nextButton)).toBe(true);
+    });
+
+    test('main.css switches .question-screen to a two-column grid at the tablet-landscape breakpoint (iPad 10.2"/10" Android)', () => {
+      const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+      const tabletBlock = extractTabletLandscapeBlock(css);
+
+      const screenRule = extractRule(tabletBlock, '.question-screen {');
+      expect(screenRule).toMatch(/display:\s*grid/);
+      // Both tracks stay flexible (minmax(0, ...)/percentages), never fixed
+      // px, so long prompt/option text can't force the grid past the
+      // viewport and cause horizontal scrolling on a 900px-wide tablet.
+      expect(screenRule).toMatch(/grid-template-columns:\s*minmax\(0,[^)]*\)\s+minmax\(0,\s*1fr\)/);
+      expect(screenRule).not.toMatch(/grid-template-columns:[^;]*\d+px/);
+    });
+
+    test('the image gets a bigger, flexible max-width in the tablet-landscape column layout, never a viewport-overflowing fixed width', () => {
+      const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+      const tabletBlock = extractTabletLandscapeBlock(css);
+
+      const imageRule = extractRule(tabletBlock, '.question-screen__image {');
+      expect(imageRule).toMatch(/width:\s*100%/);
+      expect(imageRule).toMatch(/max-width:\s*360px/);
+    });
+
+    test('the options stay a 2x2 grid (2 flexible columns) regardless of viewport, matching the mockup', () => {
+      const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+      const optionsRule = extractRule(css, '.question-screen__options {');
+
+      expect(optionsRule).toMatch(/display:\s*grid/);
+      expect(optionsRule).toMatch(/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    });
+  });
 });
