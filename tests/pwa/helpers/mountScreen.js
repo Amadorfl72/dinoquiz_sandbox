@@ -43,12 +43,19 @@ function isExternalDestination(rawUrl) {
   var url = String(rawUrl).trim();
   if (url === '') return false;
 
+  // Browsers normalize backslashes to forward slashes when resolving URLs, so a
+  // network-path reference can be smuggled in as `//`, `/\`, `\/` or `\\`. Fold
+  // backslashes to slashes BEFORE the leading-`//` test so none of those
+  // protocol-relative variants (which inherit the current scheme and leave the
+  // PWA) slip past a naive "starts with '/' => internal" check.
+  var normalized = url.replace(/\\/g, '/');
+
   // Protocol-relative: //evil.example/path -> inherits scheme, leaves the PWA.
-  if (url.indexOf('//') === 0) return true;
+  if (normalized.indexOf('//') === 0) return true;
 
   // Explicit scheme (http:, https:, mailto:, tel:, intent:, myapp:, ...).
   // `#hash` and `/path` have no scheme and are internal.
-  var schemeMatch = url.match(/^([a-z][a-z0-9+.\-]*):/i);
+  var schemeMatch = normalized.match(/^([a-z][a-z0-9+.\-]*):/i);
   if (schemeMatch) return true;
 
   return false;

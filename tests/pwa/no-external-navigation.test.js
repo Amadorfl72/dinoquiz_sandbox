@@ -115,6 +115,11 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
   describe('navigation guard self-test', () => {
     test('classifies protocol-relative and external-scheme URLs as external', () => {
       expect(isExternalDestination('//evil.example/path')).toBe(true);
+      // Backslash-normalized network-path variants a browser would resolve to
+      // protocol-relative — the exact "starts with '/' => internal" bypass.
+      expect(isExternalDestination('/\\evil.example/path')).toBe(true);
+      expect(isExternalDestination('\\/evil.example/path')).toBe(true);
+      expect(isExternalDestination('\\\\evil.example/path')).toBe(true);
       expect(isExternalDestination('https://evil.example')).toBe(true);
       expect(isExternalDestination('http://evil.example')).toBe(true);
       expect(isExternalDestination('mailto:a@b.c')).toBe(true);
