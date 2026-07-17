@@ -6,14 +6,28 @@
  * `window.open`/`location` escapes reachable from a tap, click or keyboard
  * activation.
  *
- * Guards the three child-flow screens (their real, browser-loaded
- * implementation lives under public/scripts/ -- see the "Browser bridge"
- * comment in each file; src/screens/*.js just re-exports them) two ways:
- *  - statically, scanning each screen's source for known escape patterns;
- *  - at runtime, rendering each screen, exercising every interactive
- *    element (including Home's mute/privacy/purchase controls and the
- *    disclosure panels they open), and asserting the DOM never grows an
- *    anchor/href/blank-target element and `window.open` is never called.
+ * The three flow screens plus the Privacy view (the ONLY other screen a child
+ * can surface by tapping an interactive element inside the flow -- Home's
+ * privacy icon) are mounted through their REAL, browser-loaded public
+ * interface (`render*Screen` from public/scripts/, which src/screens/*.js
+ * re-export) -- never a hand-copied markup fixture, per the acceptance
+ * criterion "montan las implementaciones reales ... no una copia ficticia".
+ *
+ * The screens are imported directly (not via public/scripts/main.js), so the
+ * preexisting shared `loadHomeResources` bootstrap defect (TRIOFSND-65/66) is
+ * isolated out of this suite without being "fixed" here -- consistent with the
+ * story's "aislarse mediante el montaje público soportado" scope note.
+ *
+ * Two complementary audits:
+ *  - STATIC: scan each screen module's source for known escape patterns
+ *    (anchor creation, `href`, `window.open`, `target="_blank"`, `location`
+ *    navigation, and protocol-relative / external-scheme URL literals).
+ *  - RUNTIME: render each screen, install a trustworthy navigation guard that
+ *    turns jsdom's silent no-op navigation into observable records (see
+ *    tests/pwa/helpers/mountScreen.js), enumerate and activate EVERY
+ *    interactive element in every conditional state, and assert the guard
+ *    recorded zero external navigations while the required internal
+ *    transitions still fire.
  */
 
 require('@testing-library/jest-dom');
@@ -25,13 +39,14 @@ const { renderHomeScreen } = require('../../public/scripts/homeScreen');
 const { renderQuestionScreen } = require('../../public/scripts/questionScreen');
 const { renderResultsScreen } = require('../../public/scripts/resultsScreen');
 const { renderPrivacyPolicyScreen } = require('../../public/scripts/privacyPolicyScreen');
+const {
+  installNavigationGuard,
+  activateAllInteractiveElements,
+  assertGuardCatchesRealExternalNavigation,
+  isExternalDestination,
+} = require('./helpers/mountScreen');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
-// The three screens of the child's closed linear flow (Inicio -> Quiz ->
-// Resultados) plus the Privacy Policy view, which is the ONLY other screen a
-// child can reach by tapping an interactive element inside the flow (Home's
-// privacy icon). Auditing it too keeps the "no interactive element opens an
-// external URL" guarantee closed over everything one tap can surface.
 const CHILD_FLOW_SCREEN_FILES = [
   path.resolve(__dirname, '../../public/scripts/homeScreen.js'),
   path.resolve(__dirname, '../../public/scripts/questionScreen.js'),
@@ -79,16 +94,6 @@ const FORBIDDEN_PATTERNS = [
   },
 ];
 
-function assertNoExternalEscapeHatches(container) {
-  expect(container.querySelectorAll('a')).toHaveLength(0);
-  expect(container.querySelectorAll('[href]')).toHaveLength(0);
-  expect(container.querySelectorAll('[target="_blank"]')).toHaveLength(0);
-
-  container.querySelectorAll('button').forEach((button) => {
-    expect(button.getAttribute('type')).toBe('button');
-  });
-}
-
 function buildQuestion(overrides = {}) {
   return {
     id: 'trex-01',
@@ -103,6 +108,42 @@ function buildQuestion(overrides = {}) {
 }
 
 describe('TRIOFSND-121: closed linear child flow — no external navigation', () => {
+  // ---------------------------------------------------------------------------
+  // Guard sanity: the classifier and the runtime guard must actually catch real
+  // external vectors, so a green suite is evidentiary and not a jsdom no-op.
+  // ---------------------------------------------------------------------------
+  describe('navigation guard self-test', () => {
+    test('classifies protocol-relative and external-scheme URLs as external', () => {
+      expect(isExternalDestination('//evil.example/path')).toBe(true);
+      expect(isExternalDestination('https://evil.example')).toBe(true);
+      expect(isExternalDestination('http://evil.example')).toBe(true);
+      expect(isExternalDestination('mailto:a@b.c')).toBe(true);
+      expect(isExternalDestination('tel:+34123')).toBe(true);
+      expect(isExternalDestination('intent://scan/#Intent;end')).toBe(true);
+      expect(isExternalDestination('myapp://open')).toBe(true);
+    });
+
+    test('classifies in-PWA destinations as internal', () => {
+      expect(isExternalDestination('/quiz')).toBe(false);
+      expect(isExternalDestination('#results')).toBe(false);
+      expect(isExternalDestination('results')).toBe(false);
+      expect(isExternalDestination('')).toBe(false);
+      expect(isExternalDestination(null)).toBe(false);
+    });
+
+    test('the runtime guard records real anchor/window.open/location escapes', () => {
+      const guard = installNavigationGuard(window);
+      try {
+        assertGuardCatchesRealExternalNavigation(guard, document);
+      } finally {
+        guard.restore();
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Static source audit of every child-flow screen module.
+  // ---------------------------------------------------------------------------
   describe('static audit of every child-flow screen module', () => {
     CHILD_FLOW_SCREEN_FILES.forEach((filePath) => {
       const relativePath = path.relative(REPO_ROOT, filePath);
@@ -116,215 +157,232 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Runtime audit. Each block installs the observable guard, mounts the real
+  // screen, drives its public API through every conditional state, and asserts
+  // no external navigation while the required internal transitions still fire.
+  // ---------------------------------------------------------------------------
+  let container;
+  let guard;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    guard = installNavigationGuard(window);
+  });
+
+  afterEach(() => {
+    guard.restore();
+    container.remove();
+  });
+
   describe('Home (Inicio)', () => {
-    let container;
-    let openSpy;
-
-    beforeEach(() => {
-      container = document.createElement('div');
-      document.body.appendChild(container);
-      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
-    });
-
-    afterEach(() => {
-      openSpy.mockRestore();
-      container.remove();
-    });
-
-    test('renders with no anchors, hrefs or blank-target elements', () => {
+    test('renders and activating every interactive element stays inside the PWA', () => {
       renderHomeScreen(container);
 
-      assertNoExternalEscapeHatches(container);
+      activateAllInteractiveElements(container);
+
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('tapping "¡Jugar!" never opens an external window/tab', () => {
-      const { playButton } = renderHomeScreen(container);
+    test('"¡Jugar!" navigates internally (callback) and never opens an external window/tab', () => {
+      const onPlayButtonClick = jest.fn();
+      const { playButton } = renderHomeScreen(container, { onPlayButtonClick });
 
       playButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      // Internal transition Inicio -> Quiz is a callback into the app router.
+      expect(onPlayButtonClick).toHaveBeenCalledTimes(1);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('toggling mute never opens an external window/tab', () => {
-      const { muteButton } = renderHomeScreen(container);
+    test('toggling mute only flips audio state — no navigation', () => {
+      const onToggleMute = jest.fn();
+      const { muteButton } = renderHomeScreen(container, { onToggleMute });
 
       muteButton.click();
+      muteButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      expect(onToggleMute).toHaveBeenNthCalledWith(1, true);
+      expect(onToggleMute).toHaveBeenNthCalledWith(2, false);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('opening the privacy policy disclosure panel never opens an external window/tab', () => {
-      const { privacyButton } = renderHomeScreen(container);
+    test('privacy disclosure opens an internal panel in one tap (≤2 taps) with no external URL', () => {
+      const { privacyButton, privacyPanel } = renderHomeScreen(container);
 
+      expect(privacyPanel.hidden).toBe(true);
       privacyButton.click();
+      // Opened in a single tap -> well within the ≤2-tap requirement.
+      expect(privacyPanel.hidden).toBe(false);
+      expect(privacyButton.getAttribute('aria-expanded')).toBe('true');
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      activateAllInteractiveElements(privacyPanel);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('opening the remove-ads purchase disclosure panel and confirming never opens an external window/tab', () => {
-      const { purchaseButton, purchasePanel } = renderHomeScreen(container);
-
-      purchaseButton.click();
-      const confirmButton = purchasePanel.querySelector('.home-screen__purchase-confirm-button');
-      confirmButton.click();
-
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
-    });
-
-    test('the legacy full-screen privacy policy button only ever calls back into the app, never a real navigation', () => {
+    test('the full-screen privacy policy button only calls back into the app', () => {
       const onOpenPrivacyPolicy = jest.fn();
       const { privacyPolicyButton } = renderHomeScreen(container, { onOpenPrivacyPolicy });
 
       privacyPolicyButton.click();
 
       expect(onOpenPrivacyPolicy).toHaveBeenCalledTimes(1);
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('showing and dismissing the first-run tooltip never opens an external window/tab', () => {
-      // The tooltip installs a document-level click listener to dismiss on the
-      // first tap anywhere — exercise that gesture too, since it is an
-      // interactive path the child triggers before pressing "¡Jugar!".
-      const { playButton } = renderHomeScreen(container, { showTooltip: true });
-      assertNoExternalEscapeHatches(container);
+    test('purchase disclosure opens the internal flow only — no store/payment link or external scheme', () => {
+      const onPurchase = jest.fn();
+      const { purchaseButton, purchasePanel } = renderHomeScreen(container, { onPurchase });
 
+      purchaseButton.click();
+      expect(purchasePanel.hidden).toBe(false);
+
+      const confirmButton = purchasePanel.querySelector('.home-screen__purchase-confirm-button');
+      confirmButton.click();
+
+      // Purchase entry hands off to the app's internal purchase flow, never a
+      // direct external store/web-payment navigation.
+      expect(onPurchase).toHaveBeenCalledTimes(1);
+      guard.assertNoExternalNavigation(container);
+    });
+
+    test('first-run tooltip: showing and dismissing on the first tap stays inside the PWA', () => {
+      const onTooltipDismiss = jest.fn();
+      const { playButton, tooltip } = renderHomeScreen(container, { showTooltip: true, onTooltipDismiss });
+
+      expect(tooltip).not.toBeNull();
+      guard.assertNoExternalNavigation(container);
+
+      // The tooltip dismisses on the first tap anywhere — exercise that gesture.
       playButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      expect(onTooltipDismiss).toHaveBeenCalledTimes(1);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('closing an opened disclosure panel never opens an external window/tab', () => {
+    test('closing an opened disclosure panel stays inside the PWA', () => {
       const { privacyButton, privacyPanel } = renderHomeScreen(container);
 
       privacyButton.click();
       const closeButton = privacyPanel.querySelector('.home-screen__panel-close-button');
       closeButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      expect(privacyPanel.hidden).toBe(true);
+      guard.assertNoExternalNavigation(container);
     });
   });
 
   describe('Quiz (Pregunta)', () => {
-    let container;
-    let openSpy;
-
-    beforeEach(() => {
-      container = document.createElement('div');
-      document.body.appendChild(container);
-      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
-    });
-
-    afterEach(() => {
-      openSpy.mockRestore();
-      container.remove();
-    });
-
-    test('renders with no anchors, hrefs or blank-target elements', () => {
+    test('renders and activating every interactive element stays inside the PWA', () => {
       renderQuestionScreen(container, buildQuestion());
 
-      assertNoExternalEscapeHatches(container);
+      activateAllInteractiveElements(container);
+
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('answering correctly and advancing never opens an external window/tab', () => {
-      const onNext = jest.fn();
-      const question = buildQuestion();
-      const { optionButtons, nextButton } = renderQuestionScreen(container, question, { onNext });
-
-      optionButtons[question.correctAnswerIndex].click();
-      assertNoExternalEscapeHatches(container);
-
-      nextButton.click();
-
-      expect(openSpy).not.toHaveBeenCalled();
-      expect(onNext).toHaveBeenCalledTimes(1);
-      assertNoExternalEscapeHatches(container);
-    });
-
-    test('picking a wrong option never opens an external window/tab', () => {
+    test('a wrong pick reveals feedback without any external navigation', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, index) => index !== question.correctAnswerIndex);
       const { optionButtons } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
-      expect(openSpy).not.toHaveBeenCalled();
-      assertNoExternalEscapeHatches(container);
+      guard.assertNoExternalNavigation(container);
+    });
+
+    test('answering all 10 questions transitions Quiz -> Resultados internally only', () => {
+      // Drive the full 10-question run through the real screen: each "Siguiente"
+      // is an internal callback, and only the 10th advances to Resultados.
+      let advances = 0;
+      for (let i = 0; i < 10; i += 1) {
+        container.innerHTML = '';
+        const question = buildQuestion({ id: `q-${i}` });
+        const { optionButtons, nextButton } = renderQuestionScreen(container, question, {
+          onNext: () => {
+            advances += 1;
+          },
+        });
+
+        // Before answering there is no "Siguiente" to leave the screen.
+        expect(nextButton.hidden).toBe(true);
+        optionButtons[question.correctAnswerIndex].click();
+        expect(nextButton.hidden).toBe(false);
+
+        nextButton.click();
+        guard.assertNoExternalNavigation(container);
+      }
+
+      expect(advances).toBe(10);
     });
   });
 
   describe('Resultados', () => {
-    let container;
-    let openSpy;
+    test('no-purchase state: renders, exposes no third-party ad/banner surface, activation stays internal', () => {
+      // For a user without purchase, any banner / rewarded-ad representation
+      // must be inert toward third parties: no anchors, no external hrefs, no
+      // navigable blank targets anywhere in the results DOM.
+      renderResultsScreen(container, { score: 5 });
 
-    beforeEach(() => {
-      container = document.createElement('div');
-      document.body.appendChild(container);
-      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      // Whatever ad-surface the parent story may render, none of it is a
+      // navigable external element.
+      expect(container.querySelectorAll('a')).toHaveLength(0);
+      expect(container.querySelectorAll('[href]')).toHaveLength(0);
+      expect(container.querySelectorAll('[target="_blank"]')).toHaveLength(0);
+
+      activateAllInteractiveElements(container);
+      guard.assertNoExternalNavigation(container);
     });
 
-    afterEach(() => {
-      openSpy.mockRestore();
-      container.remove();
+    test('purchased state: no ad or external surface introduced', () => {
+      renderResultsScreen(container, { score: 9, purchased: true });
+
+      activateAllInteractiveElements(container);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('renders with no anchors, hrefs or blank-target elements', () => {
-      renderResultsScreen(container, { score: 7 });
-
-      assertNoExternalEscapeHatches(container);
-    });
-
-    test('"Volver a jugar" never opens an external window/tab', () => {
+    test('"Volver a jugar" starts a new game internally, no external window/tab', () => {
       const onPlayAgain = jest.fn();
       const { playAgainButton } = renderResultsScreen(container, { score: 7, onPlayAgain });
 
       playAgainButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
       expect(onPlayAgain).toHaveBeenCalledTimes(1);
-      assertNoExternalEscapeHatches(container);
+      guard.assertNoExternalNavigation(container);
     });
 
-    test('"Salir" never opens an external window/tab', () => {
+    test('optional "Salir" returns to internal Inicio only', () => {
       const onExit = jest.fn();
       const { exitButton } = renderResultsScreen(container, { score: 7, onExit });
 
       exitButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
       expect(onExit).toHaveBeenCalledTimes(1);
-      assertNoExternalEscapeHatches(container);
+      guard.assertNoExternalNavigation(container);
+    });
+
+    test('skipping the (optional) rewarded ad never blocks "Volver a jugar"', () => {
+      // No rewarded-ad control is a precondition for replay: the play-again
+      // button is present and functional without any ad interaction.
+      const onPlayAgain = jest.fn();
+      const { playAgainButton } = renderResultsScreen(container, { score: 3, onPlayAgain });
+
+      expect(playAgainButton).toBeTruthy();
+      playAgainButton.click();
+
+      expect(onPlayAgain).toHaveBeenCalledTimes(1);
+      guard.assertNoExternalNavigation(container);
     });
   });
 
-  // Reachable from the flow: Home's privacy icon opens this view in-app. A
-  // child could land here, so its only interactive control ("Volver") must
-  // also stay inside the PWA and never expose a navigable external URL.
   describe('Política de privacidad (reachable from Home)', () => {
-    let container;
-    let openSpy;
-
-    beforeEach(() => {
-      container = document.createElement('div');
-      document.body.appendChild(container);
-      openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
-    });
-
-    afterEach(() => {
-      openSpy.mockRestore();
-      container.remove();
-    });
-
-    test('renders with no anchors, hrefs or blank-target elements', () => {
+    test('renders and activating every interactive element stays inside the PWA', () => {
       renderPrivacyPolicyScreen(container);
 
-      assertNoExternalEscapeHatches(container);
+      activateAllInteractiveElements(container);
+
+      guard.assertNoExternalNavigation(container);
     });
 
     test('"Volver" only calls back into the app, never a real navigation', () => {
@@ -333,9 +391,8 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
 
       backButton.click();
 
-      expect(openSpy).not.toHaveBeenCalled();
       expect(onBack).toHaveBeenCalledTimes(1);
-      assertNoExternalEscapeHatches(container);
+      guard.assertNoExternalNavigation(container);
     });
   });
 });
