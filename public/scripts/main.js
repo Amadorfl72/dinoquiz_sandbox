@@ -532,6 +532,60 @@
     return !!loc && loc.hash === PRIVACY_POLICY_HASH;
   }
 
+  /**
+   * Resolves the device compatibility + crash logging module (TRIOFSND-143):
+   * prefers the browser global public/scripts/deviceCompat.js registers
+   * itself on (`window.DinoQuiz.services.deviceCompat`), falling back to the
+   * CommonJS `src/services/deviceCompat` re-export under Node/Jest (same
+   * require-then-fall-back shape as loadDinoQuizStorage below).
+   */
+  function resolveDeviceCompat(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var fromWindow = win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.deviceCompat;
+    if (fromWindow) {
+      return fromWindow;
+    }
+
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/deviceCompat');
+      } catch (error) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Device compatibility + anonymous crash logging bootstrap (TRIOFSND-143):
+   * takes one aggregated, non-PII device snapshot per load and installs the
+   * window 'error'/'unhandledrejection' listeners so a crash during play is
+   * captured locally (localStorage, capped log, no server) -- see
+   * public/scripts/deviceCompat.js. Called synchronously as soon as this
+   * script evaluates (see the self-bootstrap block below), not deferred to
+   * the 'load' event, so the listeners are attached before the player can
+   * interact with anything.
+   */
+  function installDeviceCompat(win, deviceCompat) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    deviceCompat = deviceCompat || resolveDeviceCompat(win);
+
+    if (!win || !deviceCompat) {
+      return null;
+    }
+
+    var storageObj = win.localStorage;
+    deviceCompat.persistDeviceInfo(deviceCompat.collectDeviceInfo(win.navigator, win.screen, win), storageObj);
+
+    return deviceCompat.installCrashLogger({
+      window: win,
+      onCrash: function (crashEvent) {
+        deviceCompat.persistCrashEvent(crashEvent, storageObj);
+      },
+    });
+  }
+
   function loadDinoQuizStorage(requireFn) {
     requireFn = requireFn || (typeof require === 'function' ? require : undefined);
 
@@ -893,6 +947,7 @@
     typeof window.addEventListener === 'function' &&
     typeof require !== 'function'
   ) {
+    installDeviceCompat(window);
     window.addEventListener('load', function () {
       installLinkGuard();
       registerServiceWorker();
@@ -939,6 +994,8 @@
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
+      resolveDeviceCompat: resolveDeviceCompat,
+      installDeviceCompat: installDeviceCompat,
     };
   }
 })();

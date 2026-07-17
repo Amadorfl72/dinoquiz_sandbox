@@ -1,4 +1,29 @@
 /**
+ * @typedef {Object} DinoQuizDeviceInfo
+ * @property {string} os
+ * @property {string} osVersion
+ * @property {string} deviceClass
+ * @property {string} locale
+ * @property {string} userAgent
+ * @property {number} screenWidth
+ * @property {number} screenHeight
+ * @property {number} pixelRatio
+ */
+
+/**
+ * Anonymous crash event (TRIOFSND-143): no user identifiers, no full stack
+ * trace -- see src/services/deviceCompat.js#createErrorCrashEvent /
+ * #createRejectionCrashEvent.
+ * @typedef {Object} DinoQuizCrashEvent
+ * @property {'error' | 'unhandledrejection'} type
+ * @property {string} message
+ * @property {string} source
+ * @property {number | null} line
+ * @property {number | null} column
+ * @property {number} timestamp
+ */
+
+/**
  * @typedef {Object} DinoQuizPersistedState
  * @property {number} bestScore
  * @property {number} maxStreak
@@ -7,6 +32,8 @@
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
  * @property {boolean} adsRemoved
+ * @property {DinoQuizDeviceInfo | null} deviceInfo
+ * @property {DinoQuizCrashEvent[]} crashLog
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -18,6 +45,8 @@ const DEFAULT_STATE = {
   homeTooltipSeen: false,
   analyticsEventCounts: {},
   adsRemoved: false,
+  deviceInfo: null,
+  crashLog: [],
 };
 
 /**

@@ -266,4 +266,58 @@ describe('DinoQuizStorage', () => {
       replay_pulsado: 1,
     });
   });
+
+  it('getDeviceInfo defaults to null and reflects recordDeviceInfo (TRIOFSND-143)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getDeviceInfo()).toBeNull();
+
+    const deviceInfo = { os: 'Android', osVersion: '13', deviceClass: 'tablet' };
+    await storage.recordDeviceInfo(deviceInfo);
+
+    expect(await storage.getDeviceInfo()).toEqual(deviceInfo);
+  });
+
+  it('recordDeviceInfo overwrites any previous snapshot, keeping only the latest', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordDeviceInfo({ os: 'Android' });
+    await storage.recordDeviceInfo({ os: 'iOS' });
+
+    expect(await storage.getDeviceInfo()).toEqual({ os: 'iOS' });
+  });
+
+  it('getCrashLog defaults to an empty array and recordCrashEvent appends to it (TRIOFSND-143)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getCrashLog()).toEqual([]);
+
+    const event = { type: 'error', message: 'Boom', timestamp: 1 };
+    await storage.recordCrashEvent(event);
+
+    expect(await storage.getCrashLog()).toEqual([event]);
+  });
+
+  it('recordCrashEvent caps the log at the 20 most recent entries', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    for (let i = 0; i < 25; i += 1) {
+      await storage.recordCrashEvent({ type: 'error', message: `event-${i}`, timestamp: i });
+    }
+
+    const log = await storage.getCrashLog();
+    expect(log).toHaveLength(20);
+    expect(log[0].message).toBe('event-5');
+    expect(log[log.length - 1].message).toBe('event-24');
+  });
+
+  it('snapshot() clones the crash log so callers cannot mutate the internal cache', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+    await storage.recordCrashEvent({ type: 'error', message: 'Boom', timestamp: 1 });
+
+    const snapshot = storage.snapshot();
+    snapshot.crashLog.push({ type: 'error', message: 'mutated', timestamp: 2 });
+
+    expect(await storage.getCrashLog()).toHaveLength(1);
+  });
 });

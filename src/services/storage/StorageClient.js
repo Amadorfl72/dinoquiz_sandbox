@@ -12,7 +12,12 @@ const PERSISTED_KEYS = [
   'homeTooltipSeen',
   'analyticsEventCounts',
   'adsRemoved',
+  'deviceInfo',
+  'crashLog',
 ];
+
+/** Caps the anonymous crash log (TRIOFSND-143) so a long play session can't grow it unbounded. */
+const MAX_CRASH_EVENTS = 20;
 
 function namespacedKey(key) {
   return `${NAMESPACE}${key}`;
@@ -37,7 +42,7 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
+  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {}, crashLog: [] };
   #listeners = new Map();
   #initPromise = null;
 
@@ -142,6 +147,7 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+      crashLog: [...this.#cache.crashLog],
     };
   }
 
@@ -300,6 +306,39 @@ class DinoQuizStorage {
     const next = (counts[eventName] || 0) + 1;
     await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
+  }
+
+  /**
+   * Aggregated, non-PII device snapshot (TRIOFSND-143) -- OS/version, coarse
+   * device class, locale, screen size and user agent, see
+   * src/services/deviceCompat.js#collectDeviceInfo for the exact shape.
+   * Overwrites any previous snapshot: only the latest matters for
+   * compatibility triage across the PRD's support matrix.
+   */
+  async recordDeviceInfo(deviceInfo) {
+    await this.set('deviceInfo', deviceInfo);
+  }
+
+  async getDeviceInfo() {
+    return this.get('deviceInfo');
+  }
+
+  /**
+   * Anonymous crash log (TRIOFSND-143, no server-side component): appends
+   * one crash event (see src/services/deviceCompat.js#createErrorCrashEvent
+   * / #createRejectionCrashEvent) and keeps only the MAX_CRASH_EVENTS most
+   * recent entries.
+   */
+  async recordCrashEvent(crashEvent) {
+    const log = await this.get('crashLog');
+    const next = [...log, crashEvent];
+    const capped = next.length > MAX_CRASH_EVENTS ? next.slice(next.length - MAX_CRASH_EVENTS) : next;
+    await this.set('crashLog', capped);
+    return capped;
+  }
+
+  async getCrashLog() {
+    return this.get('crashLog');
   }
 }
 
