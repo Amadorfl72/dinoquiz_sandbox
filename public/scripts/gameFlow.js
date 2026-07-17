@@ -27,6 +27,13 @@
  * canonical `src/game/gameFlow.js` re-exports this file, which is the single
  * reusable selection engine called from both Inicio (first game) and
  * Resultados ("Volver a jugar") via public/scripts/main.js.
+ *
+ * End of game (TRIOFSND-95): once the 10th question is answered, the app
+ * shell (main.js) needs the game's "racha" (the longest run of consecutive
+ * correct answers) alongside the final score before navigating to
+ * Resultados. `calculateMaxStreak` derives that from `state.answers` (each
+ * entry's `isCorrect` flag, appended in order as the child answers) without
+ * the app shell having to track a running streak counter itself.
  */
 
 (function () {
@@ -49,6 +56,27 @@
     }
 
     return shuffled;
+  }
+
+  /** Longest run of consecutive correct answers, in the order they were given. */
+  function calculateMaxStreak(answers) {
+    if (!Array.isArray(answers)) {
+      return 0;
+    }
+
+    var maxStreak = 0;
+    var currentStreak = 0;
+
+    answers.forEach(function (answer) {
+      if (answer && answer.isCorrect) {
+        currentStreak += 1;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    });
+
+    return maxStreak;
   }
 
   /**
@@ -100,6 +128,7 @@
     QUESTIONS_PER_GAME: QUESTIONS_PER_GAME,
     createInitialGameState: createInitialGameState,
     shuffle: shuffle,
+    calculateMaxStreak: calculateMaxStreak,
     selectGameQuestions: selectGameQuestions,
     startNewGame: startNewGame,
   };
