@@ -41,6 +41,13 @@ async function answerCurrentQuestion(container, { correct }) {
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
+/** Reads the current question's prompt, then answers it and advances (see answerCurrentQuestion). */
+function readPromptThenAdvance(container, { correct }) {
+  const prompt = container.querySelector('.question-screen__prompt').textContent;
+  answerCurrentQuestion(container, { correct });
+  return prompt;
+}
+
 // Lets any promise chains already queued (e.g. renderHome's several
 // `.then()` hops across fetch/storage) settle. renderHome does not depend on
 // any timer firing, so this drops back to real timers for one tick rather
@@ -209,6 +216,33 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
         await answerCurrentQuestion(container, { correct: true });
       }
       expect(container.textContent).toContain('10/10');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(40);
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0.1);
+      const firstGamePrompts = [];
+      for (let i = 0; i < 10; i += 1) {
+        firstGamePrompts.push(readPromptThenAdvance(container, { correct: true }));
+      }
+
+      getByRole(container, 'button', { name: strings.playAgainButton }).click();
+
+      const secondGamePrompts = [];
+      for (let i = 0; i < 10; i += 1) {
+        secondGamePrompts.push(readPromptThenAdvance(container, { correct: true }));
+      }
+
+      const overlap = secondGamePrompts.filter((prompt) => firstGamePrompts.includes(prompt));
+      expect(overlap).toEqual([]);
     } finally {
       jest.useRealTimers();
     }

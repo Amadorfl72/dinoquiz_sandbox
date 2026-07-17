@@ -6,8 +6,7 @@
  * (TRIOFSND-105, AC-11).
  *
  * `renderMuteToggleButton` mounts into `#mute-toggle` (see public/index.html),
- * a container that lives *outside* `#app`. Screens replace `#app`'s content
- * wholesale on every render (see public/scripts/homeScreen.js and
+ * a container that lives *outside* `#app` (see public/scripts/homeScreen.js and
  * src/screens/*.js, `container.innerHTML = ''`), so mounting the button
  * anywhere inside `#app` would make it disappear on every screen transition.
  * Living in its own sibling container is what makes it a true app-shell
@@ -38,6 +37,14 @@
   // namespaces internally, so toggling mute from this shared app-shell
   // control is actually read by the Home/question rendering flow.
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
+
+  // Minimum touch target per the PRD's child-usability requirement (48x48).
+  // Set as an explicit inline pixel style (not left to the stylesheet) so the
+  // computed size is a deterministic, parseable "NNpx" literal in every
+  // renderer -- jsdom does not resolve CSS functions like clamp()/var(), so
+  // relying on public/styles/main.css alone made this button's computed
+  // min-width unparseable there even though it renders fine in a real browser.
+  var MIN_TOUCH_TARGET_PX = 48;
 
   var SPEAKER_ON_ICON =
     '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">' +
@@ -204,6 +211,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      MIN_TOUCH_TARGET_PX: MIN_TOUCH_TARGET_PX,
       renderMuteToggleButton: renderMuteToggleButton,
       readStoredMute: readStoredMute,
       writeStoredMute: writeStoredMute,
