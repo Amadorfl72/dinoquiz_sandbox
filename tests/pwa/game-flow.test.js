@@ -693,3 +693,97 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     });
   });
 });
+
+describe('TRIOFSND-130: global mute preference survives an app reload and is applied before any sound plays', () => {
+  let container;
+  let originalAudio;
+
+  // A `getItem`/`setItem` object standing in for the real, durable backend
+  // (localStorage/IndexedDB via src/services/storage) so this survives a
+  // simulated reload below the same way it would across a real page load.
+  function createPersistentStorage() {
+    const store = new Map();
+    return {
+      getItem: jest.fn((key) => (store.has(key) ? store.get(key) : null)),
+      setItem: jest.fn((key, value) => store.set(key, value)),
+    };
+  }
+
+  // Stands in for the browser's real `Audio` (TRIOFSND-89's `playFailSound`
+  // resolves to this via `typeof Audio !== 'undefined' ? Audio : null`) so
+  // the test can assert on whether the audio engine was ever asked to play,
+  // instead of relying on jsdom's own unimplemented Audio stub.
+  function installFakeAudio() {
+    function FakeAudio() {}
+    FakeAudio.prototype.play = jest.fn().mockResolvedValue(undefined);
+    window.Audio = FakeAudio;
+    return FakeAudio;
+  }
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+    originalAudio = window.Audio;
+  });
+
+  afterEach(() => {
+    container.remove();
+    window.Audio = originalAudio;
+  });
+
+  test('muting from Home, then reloading the app, keeps a wrong answer silent (no Audio is created)', async () => {
+    const persistentStorage = createPersistentStorage();
+    const { home: homeStrings } = require('../../public/i18n/es.json');
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: homeStrings }) });
+
+    // --- Session 1: mute the game from Home, before a reload ever happens. ---
+    let main = require(MAIN_JS_PATH);
+    let renderers = main.resolveScreenRenderers();
+    await main.renderHome(document, renderers.renderHomeScreen, fetchFn, persistentStorage);
+
+    getByRole(container, 'button', { name: homeStrings.globalControls.muteButton.muteLabel }).click();
+
+    expect(persistentStorage.setItem).toHaveBeenCalledWith(main.MUTE_STORAGE_KEY, 'true');
+
+    // --- Simulate an app reload: fresh module graph and DOM, same persisted storage. ---
+    container.remove();
+    jest.resetModules();
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+
+    const FakeAudio = installFakeAudio();
+
+    main = require(MAIN_JS_PATH);
+    renderers = main.resolveScreenRenderers();
+    const questions = buildQuestionBank(1);
+
+    // Restoring mute happens as part of rendering the very first question
+    // (renderQuestionAt reads it via loadMutedState before the screen mounts),
+    // i.e. before any sound has a chance to play.
+    main.startNewGame(container, renderers, questions, document, undefined, () => 0, persistentStorage);
+
+    const buttons = container.querySelectorAll('.question-screen__option');
+    buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
+
+    expect(FakeAudio.prototype.play).not.toHaveBeenCalled();
+  });
+
+  test('control: without muting first, a reload leaves sound on and a wrong answer plays the fail effect', async () => {
+    const persistentStorage = createPersistentStorage();
+    const FakeAudio = installFakeAudio();
+
+    const main = require(MAIN_JS_PATH);
+    const renderers = main.resolveScreenRenderers();
+    const questions = buildQuestionBank(1);
+
+    main.startNewGame(container, renderers, questions, document, undefined, () => 0, persistentStorage);
+
+    const buttons = container.querySelectorAll('.question-screen__option');
+    buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
+
+    expect(FakeAudio.prototype.play).toHaveBeenCalledTimes(1);
+  });
+});
