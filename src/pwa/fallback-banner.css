@@ -1,0 +1,29 @@
+.dq-fallback-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #2b2140;
+  color: #ffffff;
+  font-size: 16px;
+  font-family: inherit;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dq-fallback-banner__dismiss {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: #ffb703;
+  color: #2b2140;
+  font-weight: 700;
+  min-height: 44px;
+  min-width: 44px;
+}
