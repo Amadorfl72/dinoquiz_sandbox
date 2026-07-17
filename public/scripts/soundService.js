@@ -41,8 +41,11 @@
     }
 
     try {
-      var raw = storageObj.getItem(MUTE_STORAGE_KEY);
-      return raw !== null ? JSON.parse(raw) === true : false;
+      // Strict string equality per AC: only the exact value "true" means
+      // muted. Any other value ("false", "1", "", or an absent key) allows
+      // playback. Read fresh on every call so a mid-game toggle takes effect
+      // on the next answer without rebuilding the service.
+      return storageObj.getItem(MUTE_STORAGE_KEY) === 'true';
     } catch (error) {
       return false;
     }
