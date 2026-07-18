@@ -176,6 +176,36 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
     expect(storage.recordQuestionAnswered).toHaveBeenCalledWith('q-0', false);
   });
 
+  test('a question without a valid id_pregunta is skipped and does not break the quiz flow', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    questions[0] = { ...questions[0], id: undefined };
+    const storage = createFakeAnalyticsStorage();
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, storage);
+    answerCurrentQuestion(container, { correct: false });
+
+    expect(storage.recordQuestionAnswered).not.toHaveBeenCalled();
+    expect(container.querySelector('.question-screen')).not.toBeNull();
+  });
+
+  test('repeated taps on the same or another option after answering do not record a second time', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = createFakeAnalyticsStorage();
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, storage);
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    buttons[1].click();
+    buttons[1].click();
+    buttons[0].click();
+
+    expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(1);
+    expect(storage.recordQuestionAnswered).toHaveBeenCalledWith('q-0', false);
+  });
+
   test('a full game records one aggregated call per question, in order, with no cross-question mixing', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();

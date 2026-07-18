@@ -254,7 +254,15 @@
         // 'pregunta_respondida' (TRIOFSND-92): an aggregated, non-PII
         // attempts/failures counter per question id, so the % de fallo por
         // pregunta can be computed later -- never a per-child answer log.
-        if (storage && typeof storage.recordQuestionAnswered === 'function') {
+        // question.id must be the stable bank id (never the visible text or
+        // index); an invalid/missing id is skipped rather than aggregated
+        // under an anonymous key.
+        if (
+          storage &&
+          typeof storage.recordQuestionAnswered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
           storage.recordQuestionAnswered(question.id, result.isCorrect);
         }
       },
@@ -458,6 +466,11 @@
       // recordQuestionAnswered, which this mirrors for the no-require browser
       // path).
       recordQuestionAnswered: function (questionId, isCorrect) {
+        if (typeof questionId !== 'string' || questionId.length === 0) {
+          // No valid id_pregunta: skip rather than create an anonymous/empty key.
+          return Promise.resolve(undefined);
+        }
+
         var stats = readJSON(QUESTION_STATS_KEY) || {};
         var current = stats[questionId] || { attempts: 0, failures: 0 };
         var next = {

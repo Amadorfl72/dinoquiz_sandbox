@@ -254,4 +254,45 @@ describe('DinoQuizStorage', () => {
 
     expect(await storage.getQuestionFailureRate('trex-01')).toBe(0.75);
   });
+
+  it('recordQuestionAnswered ignores a missing/empty question id instead of creating an anonymous key', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered(undefined, false);
+    await storage.recordQuestionAnswered('', true);
+    await storage.recordQuestionAnswered(null, false);
+
+    expect(await storage.get('questionStats')).toEqual({});
+  });
+
+  it('persists the questionStats aggregate across instances sharing the same backend', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+    const storage = new DinoQuizStorage([adapter()]);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    const reopened = new DinoQuizStorage([adapter()]);
+    expect(await reopened.getQuestionStats('trex-01')).toEqual({ attempts: 1, failures: 1 });
+  });
+
+  it('recordQuestionAnswered stores only aggregated counts, no per-child or per-answer identifiers', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionAnswered('trex-01', false);
+    const stats = await storage.getQuestionStats('trex-01');
+
+    expect(Object.keys(stats).sort()).toEqual(['attempts', 'failures']);
+    expect(stats).not.toHaveProperty('userId');
+    expect(stats).not.toHaveProperty('deviceId');
+    expect(stats).not.toHaveProperty('timestamp');
+    expect(stats).not.toHaveProperty('selectedOption');
+  });
 });

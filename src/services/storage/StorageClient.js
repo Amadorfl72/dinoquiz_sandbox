@@ -286,6 +286,11 @@ class DinoQuizStorage {
    * not any individual child's performance.
    */
   async recordQuestionAnswered(questionId, isCorrect) {
+    if (typeof questionId !== 'string' || questionId.length === 0) {
+      // No valid id_pregunta: skip rather than create an anonymous/empty key.
+      return undefined;
+    }
+
     const stats = await this.get('questionStats');
     const current = stats[questionId] || { attempts: 0, failures: 0 };
     const next = {
