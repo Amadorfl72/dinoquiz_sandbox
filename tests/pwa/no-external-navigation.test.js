@@ -324,24 +324,55 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
   });
 
   describe('Resultados', () => {
-    test('no-purchase state: renders, exposes no third-party ad/banner surface, activation stays internal', () => {
-      // For a user without purchase, any banner / rewarded-ad representation
-      // must be inert toward third parties: no anchors, no external hrefs, no
-      // navigable blank targets anywhere in the results DOM.
-      renderResultsScreen(container, { score: 5 });
+    test('no-purchase state: shows a discrete banner and an optional rewarded ad, both inert toward third parties', () => {
+      // For a user without purchase, Resultados shows a discrete banner and a
+      // clearly-labelled optional rewarded-ad control. Both must be internal
+      // representations: no anchors, no external hrefs, no navigable blank
+      // targets, no iframe / remote / SDK content anywhere in the results DOM.
+      const { adBanner, rewardedButton } = renderResultsScreen(container, { score: 5, purchased: false });
 
-      // Whatever ad-surface the parent story may render, none of it is a
-      // navigable external element.
+      // The discrete banner exists and is labelled as advertising.
+      expect(adBanner).not.toBeNull();
+      expect(container.contains(adBanner)).toBe(true);
+      expect(adBanner.getAttribute('aria-label')).toBeTruthy();
+
+      // The rewarded control exists, is a real button and is labelled as
+      // optional advertising (accessible name preserved).
+      expect(rewardedButton).not.toBeNull();
+      expect(rewardedButton.tagName).toBe('BUTTON');
+      expect(rewardedButton.getAttribute('type')).toBe('button');
+      expect(rewardedButton.getAttribute('aria-label')).toMatch(/opcional/i);
+      expect(rewardedButton.textContent.trim()).not.toBe('');
+
+      // Neither surface introduces a navigable external element or embedded
+      // third-party frame.
       expect(container.querySelectorAll('a')).toHaveLength(0);
       expect(container.querySelectorAll('[href]')).toHaveLength(0);
       expect(container.querySelectorAll('[target="_blank"]')).toHaveLength(0);
+      expect(container.querySelectorAll('iframe')).toHaveLength(0);
 
       activateAllInteractiveElements(container);
       guard.assertNoExternalNavigation(container);
     });
 
-    test('purchased state: no ad or external surface introduced', () => {
-      renderResultsScreen(container, { score: 9, purchased: true });
+    test('rewarded ad calls back internally only — activating it never leaves the PWA', () => {
+      const onWatchRewarded = jest.fn();
+      const { rewardedButton } = renderResultsScreen(container, { score: 5, purchased: false, onWatchRewarded });
+
+      rewardedButton.click();
+
+      // A rewarded interaction is a plain in-app callback, never a navigation.
+      expect(onWatchRewarded).toHaveBeenCalledTimes(1);
+      guard.assertNoExternalNavigation(container);
+    });
+
+    test('purchased state: neither banner nor rewarded ad is present, no external surface introduced', () => {
+      const { adBanner, rewardedButton } = renderResultsScreen(container, { score: 9, purchased: true });
+
+      expect(adBanner).toBeNull();
+      expect(rewardedButton).toBeNull();
+      expect(container.querySelector('.results-screen__ad-banner')).toBeNull();
+      expect(container.querySelector('.results-screen__rewarded-button')).toBeNull();
 
       activateAllInteractiveElements(container);
       guard.assertNoExternalNavigation(container);
@@ -368,11 +399,18 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
     });
 
     test('skipping the (optional) rewarded ad never blocks "Volver a jugar"', () => {
-      // No rewarded-ad control is a precondition for replay: the play-again
-      // button is present and functional without any ad interaction.
+      // The rewarded-ad control is optional: replay works with the rewarded ad
+      // left completely untouched.
       const onPlayAgain = jest.fn();
-      const { playAgainButton } = renderResultsScreen(container, { score: 3, onPlayAgain });
+      const { playAgainButton, rewardedButton } = renderResultsScreen(container, {
+        score: 3,
+        purchased: false,
+        onPlayAgain,
+      });
 
+      // The rewarded control is present but interacting with it is NOT a
+      // precondition for replay — ignore it entirely.
+      expect(rewardedButton).not.toBeNull();
       expect(playAgainButton).toBeTruthy();
       playAgainButton.click();
 

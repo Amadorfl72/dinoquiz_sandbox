@@ -195,6 +195,44 @@
       message: message,
     });
 
+    // Freemium ad surfaces (TRIOFSND-121). For a user who has NOT purchased
+    // the ad-free upgrade, Resultados shows a discrete banner plus an optional,
+    // clearly-labelled rewarded-ad control. Per this story these are purely
+    // INTERNAL, non-navigable representations: no links, no navigable
+    // attributes, no embedded frame, no SDK and no remote/third-party content —
+    // the real ad-network integration is explicitly out of scope. When
+    // purchased, neither surface is rendered.
+    var adBanner = null;
+    var rewardedButton = null;
+    var purchased = options.purchased === true;
+    if (!purchased) {
+      var ads = (strings && strings.ads) || {};
+
+      adBanner = document.createElement('div');
+      adBanner.className = 'results-screen__ad-banner';
+      adBanner.setAttribute('role', 'complementary');
+      adBanner.setAttribute('aria-label', ads.bannerLabel || 'Publicidad');
+
+      var adBannerText = document.createElement('span');
+      adBannerText.className = 'results-screen__ad-banner-text';
+      adBannerText.textContent = ads.bannerText || '';
+      adBanner.appendChild(adBannerText);
+
+      rewardedButton = document.createElement('button');
+      rewardedButton.type = 'button';
+      rewardedButton.className = 'results-screen__rewarded-button';
+      rewardedButton.textContent = ads.rewardedButton || '';
+      // Marked as optional advertising for assistive tech; ignoring it never
+      // blocks Resultados or "Volver a jugar".
+      rewardedButton.setAttribute('aria-label', [ads.rewardedButton, ads.rewardedLabel].filter(Boolean).join(' — '));
+      if (ads.rewardedHint) {
+        rewardedButton.setAttribute('title', ads.rewardedHint);
+      }
+      if (typeof options.onWatchRewarded === 'function') {
+        rewardedButton.addEventListener('click', options.onWatchRewarded);
+      }
+    }
+
     var actions = document.createElement('div');
     actions.className = 'results-screen__actions';
 
@@ -225,6 +263,12 @@
     root.appendChild(messageEl);
     root.appendChild(announcementEl);
     root.appendChild(actions);
+    if (adBanner) {
+      root.appendChild(adBanner);
+    }
+    if (rewardedButton) {
+      root.appendChild(rewardedButton);
+    }
     container.appendChild(root);
 
     return {
@@ -235,6 +279,8 @@
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,
+      adBanner: adBanner,
+      rewardedButton: rewardedButton,
     };
   }
 

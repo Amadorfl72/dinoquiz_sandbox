@@ -137,7 +137,14 @@
       "¡Bien jugado! Tu curiosidad por los dinosaurios es enorme.",
       "¡Genial esfuerzo! Vuelve a jugar para descubrir más datos curiosos.",
       "¡Eres un explorador estupendo! Los dinosaurios están orgullosos de ti."
-    ]
+    ],
+    "ads": {
+      "bannerLabel": "Publicidad",
+      "bannerText": "Espacio de publicidad",
+      "rewardedButton": "Ver un vídeo de regalo",
+      "rewardedLabel": "Publicidad opcional",
+      "rewardedHint": "Es opcional: puedes seguir jugando sin verlo."
+    }
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",

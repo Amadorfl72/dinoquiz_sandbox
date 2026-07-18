@@ -475,6 +475,37 @@ body {
 }
 
 /*
+ * Freemium ad surfaces (TRIOFSND-121). Discrete, non-intrusive banner shown to
+ * users who have not purchased the ad-free upgrade, plus an optional rewarded
+ * control. These are internal, non-navigable placeholders (no third-party SDK
+ * or remote content); the styling keeps them visually subordinate to the
+ * primary "Volver a jugar" action so they never dominate the results screen.
+ */
+.results-screen__ad-banner {
+  margin-top: 24px;
+  padding: 8px 12px;
+  width: 100%;
+  max-width: 480px;
+  border: 1px dashed #a5b6a6;
+  border-radius: 8px;
+  background-color: #f4f7f4;
+  color: #5c6b5d;
+  font-size: 14px;
+  text-align: center;
+}
+
+.results-screen__rewarded-button {
+  margin-top: 12px;
+  background-color: transparent;
+  color: #1b5e20;
+  border: 2px solid #a5b6a6;
+  font-size: 16px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 8px 20px;
+}
+
+/*
  * Privacy policy screen (TRIOFSND-116) — reuses the home-screen palette
  * (#1b5e20 text / #fff8e1 background, #2e7d32 accents), already checked
  * against WCAG AA in src/theme/contrast.test.js, so the whole app stays on
