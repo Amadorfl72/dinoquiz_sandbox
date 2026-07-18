@@ -12,6 +12,7 @@ const PERSISTED_KEYS = [
   'homeTooltipSeen',
   'analyticsEventCounts',
   'questionStats',
+  'questionAnsweredEvents',
 ];
 
 function namespacedKey(key) {
@@ -37,7 +38,13 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {}, questionStats: {} };
+  #cache = {
+    ...DEFAULT_STATE,
+    discoveredFunFacts: [],
+    analyticsEventCounts: {},
+    questionStats: {},
+    questionAnsweredEvents: [],
+  };
   #listeners = new Map();
   #initPromise = null;
 
@@ -143,6 +150,7 @@ class DinoQuizStorage {
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
       questionStats: { ...this.#cache.questionStats },
+      questionAnsweredEvents: [...this.#cache.questionAnsweredEvents],
     };
   }
 
@@ -291,35 +299,50 @@ class DinoQuizStorage {
   }
 
   /**
-   * Registers a resolved question locally (TRIOFSND-80, AC-18): records the
-   * aggregated, non-PII `pregunta_respondida` event -- no data beyond the
-   * question id and whether it was a hit/miss, never anything personal --
-   * and incrementally updates that question's attempts/correct counters so
-   * its historic accuracy (`getQuestionAccuracy`) can be derived at any time
-   * without replaying individual answers.
+   * Registers a resolved question locally (TRIOFSND-80): this is the single
+   * write point for the whole feature, called once per accepted answer from
+   * the bootstrap's `onAnswer` handler (public/scripts/main.js), never from
+   * the question screen, so an answer is never recorded/aggregated twice.
+   *
+   * Persists the minimal, non-PII event `{ tipo: 'pregunta_respondida',
+   * id_pregunta, acierto }` (no name/age/email/ad-or-install id/free text/
+   * IP/device data) onto the local history, and incrementally updates that
+   * question's `total_respuestas`/`total_aciertos` counters -- raw, never
+   * rounded -- so its historic `porcentaje_acierto` (`getQuestionStats`) can
+   * be derived at any time without replaying individual answers.
    */
-  async recordQuestionAnswered(questionId, isCorrect) {
+  async recordQuestionAnswered(id_pregunta, acierto) {
+    const event = { tipo: 'pregunta_respondida', id_pregunta, acierto: Boolean(acierto) };
+
+    const events = await this.get('questionAnsweredEvents');
+    await this.set('questionAnsweredEvents', [...events, event]);
     await this.recordEvent('pregunta_respondida');
 
     const stats = await this.get('questionStats');
-    const current = stats[questionId] || { attempts: 0, correct: 0 };
+    const current = stats[id_pregunta] || { total_respuestas: 0, total_aciertos: 0 };
     const next = {
-      attempts: current.attempts + 1,
-      correct: current.correct + (isCorrect ? 1 : 0),
+      total_respuestas: current.total_respuestas + 1,
+      total_aciertos: current.total_aciertos + (event.acierto ? 1 : 0),
     };
-    await this.set('questionStats', { ...stats, [questionId]: next });
-    return next;
+    await this.set('questionStats', { ...stats, [id_pregunta]: next });
+
+    return this.getQuestionStats(id_pregunta);
   }
 
-  async getQuestionStats(questionId) {
+  /**
+   * Historic aggregate for a question: raw counters plus `porcentaje_acierto`
+   * computed from them at full precision (never rounded, never averaged from
+   * previously-rounded percentages). Always a finite number between 0 and
+   * 100, `0` -- never `NaN`/`Infinity` -- for a question with no answers yet.
+   */
+  async getQuestionStats(id_pregunta) {
     const stats = await this.get('questionStats');
-    return stats[questionId] || { attempts: 0, correct: 0 };
-  }
-
-  /** Historic % de acierto for a question, as a 0-1 ratio (0 if it has never been answered). */
-  async getQuestionAccuracy(questionId) {
-    const { attempts, correct } = await this.getQuestionStats(questionId);
-    return attempts > 0 ? correct / attempts : 0;
+    const { total_respuestas, total_aciertos } = stats[id_pregunta] || {
+      total_respuestas: 0,
+      total_aciertos: 0,
+    };
+    const porcentaje_acierto = total_respuestas > 0 ? (total_aciertos / total_respuestas) * 100 : 0;
+    return { total_respuestas, total_aciertos, porcentaje_acierto };
   }
 }
 

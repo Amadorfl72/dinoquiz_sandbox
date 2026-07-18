@@ -100,6 +100,17 @@
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
+ *
+ * Answer registration (TRIOFSND-80): `renderQuestionAt`'s `onAnswer` handler
+ * below is the single write point for the whole feature — questionScreen.js
+ * only computes correctness and reports it, it never touches storage, so an
+ * answer is never recorded/aggregated twice. On every accepted answer (hit
+ * or miss, and thanks to questionScreen.js's own `answered` guard exactly
+ * once per question) it calls `storage.recordQuestionAnswered(question.id,
+ * result.isCorrect)`, which persists the minimal, non-PII `pregunta_respondida`
+ * event and incrementally updates that question's historic accuracy — see
+ * `DinoQuizStorage#recordQuestionAnswered` (src/services/storage/StorageClient.js)
+ * and its `createBrowserHomeStorage` mirror below for the exact contract.
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -388,6 +399,7 @@
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
   var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
+  var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -396,6 +408,7 @@
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
     memory[QUESTION_STATS_KEY] = {};
+    memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -446,22 +459,45 @@
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
       },
-      // TRIOFSND-80: registers 'pregunta_respondida' (no PII, just the
-      // question id and hit/miss) and incrementally updates that question's
-      // attempts/correct counters for the historic % de acierto.
+      // TRIOFSND-80: single write point (called from onAnswer in the
+      // bootstrap below, never from questionScreen.js). Persists the
+      // minimal, non-PII event { tipo: 'pregunta_respondida', id_pregunta,
+      // acierto } -- no name/age/email/ad-or-install id/free text/IP/device
+      // data -- and incrementally updates that question's total_respuestas/
+      // total_aciertos counters (raw, never rounded) for the historic %
+      // de acierto.
       recordQuestionAnswered: function (questionId, isCorrect) {
+        var acierto = Boolean(isCorrect);
+
+        var events = readJSON(QUESTION_ANSWERED_EVENTS_KEY) || [];
+        events = events.concat([{ tipo: 'pregunta_respondida', id_pregunta: questionId, acierto: acierto }]);
+        writeJSON(QUESTION_ANSWERED_EVENTS_KEY, events);
+
         var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
         counts.pregunta_respondida = (counts.pregunta_respondida || 0) + 1;
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
 
         var stats = readJSON(QUESTION_STATS_KEY) || {};
-        var current = stats[questionId] || { attempts: 0, correct: 0 };
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
         stats[questionId] = {
-          attempts: current.attempts + 1,
-          correct: current.correct + (isCorrect ? 1 : 0),
+          total_respuestas: current.total_respuestas + 1,
+          total_aciertos: current.total_aciertos + (acierto ? 1 : 0),
         };
         writeJSON(QUESTION_STATS_KEY, stats);
         return Promise.resolve(stats[questionId]);
+      },
+      // Historic per-question aggregate: raw counters plus porcentaje_acierto
+      // computed at full precision (0 -- never NaN/Infinity -- when the
+      // question has no answers yet).
+      getQuestionStats: function (questionId) {
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        var porcentaje = current.total_respuestas > 0 ? (current.total_aciertos / current.total_respuestas) * 100 : 0;
+        return Promise.resolve({
+          total_respuestas: current.total_respuestas,
+          total_aciertos: current.total_aciertos,
+          porcentaje_acierto: porcentaje,
+        });
       },
     };
   }

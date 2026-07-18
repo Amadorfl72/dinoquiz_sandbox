@@ -30,6 +30,7 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('homeTooltipSeen')).toBe(false);
     expect(await storage.get('analyticsEventCounts')).toEqual({});
     expect(await storage.get('questionStats')).toEqual({});
+    expect(await storage.get('questionAnsweredEvents')).toEqual([]);
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -240,44 +241,117 @@ describe('DinoQuizStorage', () => {
     });
   });
 
-  it('recordQuestionAnswered registers pregunta_respondida without any PII payload', async () => {
-    const storage = new DinoQuizStorage([createFakeAdapter()]);
+  describe('TRIOFSND-80: pregunta_respondida event + incremental per-question aggregate', () => {
+    it('records a pregunta_respondida event with tipo/id_pregunta/acierto=true on a hit, no PII payload', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    await storage.recordQuestionAnswered('trex-01', true);
+      await storage.recordQuestionAnswered('trex-01', true);
 
-    expect(await storage.getEventCount('pregunta_respondida')).toBe(1);
-    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 1, correct: 1 });
-  });
-
-  it('recordQuestionAnswered incrementally aggregates attempts and hits per question', async () => {
-    const storage = new DinoQuizStorage([createFakeAdapter()]);
-
-    await storage.recordQuestionAnswered('trex-01', true);
-    await storage.recordQuestionAnswered('trex-01', false);
-    await storage.recordQuestionAnswered('trex-01', true);
-
-    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 3, correct: 2 });
-    expect(await storage.getQuestionAccuracy('trex-01')).toBeCloseTo(2 / 3);
-    expect(await storage.getEventCount('pregunta_respondida')).toBe(3);
-  });
-
-  it('recordQuestionAnswered tracks distinct questions independently', async () => {
-    const storage = new DinoQuizStorage([createFakeAdapter()]);
-
-    await storage.recordQuestionAnswered('trex-01', true);
-    await storage.recordQuestionAnswered('triceratops-01', false);
-    await storage.recordQuestionAnswered('triceratops-01', false);
-
-    expect(await storage.get('questionStats')).toEqual({
-      'trex-01': { attempts: 1, correct: 1 },
-      'triceratops-01': { attempts: 2, correct: 0 },
+      expect(await storage.get('questionAnsweredEvents')).toEqual([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
+      ]);
+      expect(await storage.getEventCount('pregunta_respondida')).toBe(1);
     });
-  });
 
-  it('getQuestionStats/getQuestionAccuracy default to zero for a question that was never answered', async () => {
-    const storage = new DinoQuizStorage([createFakeAdapter()]);
+    it('records a pregunta_respondida event with acierto=false on a miss', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    expect(await storage.getQuestionStats('never-answered')).toEqual({ attempts: 0, correct: 0 });
-    expect(await storage.getQuestionAccuracy('never-answered')).toBe(0);
+      await storage.recordQuestionAnswered('trex-01', false);
+
+      expect(await storage.get('questionAnsweredEvents')).toEqual([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
+      ]);
+    });
+
+    it('empty state: a question with no answers has zeroed counters and a 0 percentage', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getQuestionStats('never-answered')).toEqual({
+        total_respuestas: 0,
+        total_aciertos: 0,
+        porcentaje_acierto: 0,
+      });
+    });
+
+    it('first acierto on a question with no history yields 1/1 and 100%', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      const stats = await storage.recordQuestionAnswered('trex-01', true);
+
+      expect(stats).toEqual({ total_respuestas: 1, total_aciertos: 1, porcentaje_acierto: 100 });
+      expect(await storage.getQuestionStats('trex-01')).toEqual(stats);
+    });
+
+    it('first fallo on a question with no history yields 1/0 and 0%', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      const stats = await storage.recordQuestionAnswered('trex-01', false);
+
+      expect(stats).toEqual({ total_respuestas: 1, total_aciertos: 0, porcentaje_acierto: 0 });
+    });
+
+    it('a correct/incorrect/correct sequence on the same question yields 3/2 and ~66.666...%, unrounded', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionAnswered('trex-01', true);
+      await storage.recordQuestionAnswered('trex-01', false);
+      const stats = await storage.recordQuestionAnswered('trex-01', true);
+
+      expect(stats.total_respuestas).toBe(3);
+      expect(stats.total_aciertos).toBe(2);
+      expect(stats.porcentaje_acierto).toBeCloseTo((2 / 3) * 100, 10);
+      expect(await storage.getEventCount('pregunta_respondida')).toBe(3);
+    });
+
+    it('tracks distinct questions independently', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionAnswered('trex-01', true);
+      await storage.recordQuestionAnswered('triceratops-01', false);
+      await storage.recordQuestionAnswered('triceratops-01', false);
+
+      expect(await storage.get('questionStats')).toEqual({
+        'trex-01': { total_respuestas: 1, total_aciertos: 1 },
+        'triceratops-01': { total_respuestas: 2, total_aciertos: 0 },
+      });
+      expect(await storage.getQuestionStats('trex-01')).toEqual({
+        total_respuestas: 1,
+        total_aciertos: 1,
+        porcentaje_acierto: 100,
+      });
+      expect(await storage.getQuestionStats('triceratops-01')).toEqual({
+        total_respuestas: 2,
+        total_aciertos: 0,
+        porcentaje_acierto: 0,
+      });
+    });
+
+    it('the event history and aggregate survive a reload (a fresh instance sharing the same backend)', async () => {
+      const store = new Map();
+      const adapter = () =>
+        createFakeAdapter({
+          async getItem(key) {
+            return store.has(key) ? store.get(key) : null;
+          },
+          async setItem(key, value) {
+            store.set(key, value);
+          },
+        });
+      const storage = new DinoQuizStorage([adapter()]);
+      await storage.recordQuestionAnswered('trex-01', true);
+      await storage.recordQuestionAnswered('trex-01', false);
+
+      const reopened = new DinoQuizStorage([adapter()]);
+
+      expect(await reopened.getQuestionStats('trex-01')).toEqual({
+        total_respuestas: 2,
+        total_aciertos: 1,
+        porcentaje_acierto: 50,
+      });
+      expect(await reopened.get('questionAnsweredEvents')).toEqual([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
+      ]);
+    });
   });
 });
