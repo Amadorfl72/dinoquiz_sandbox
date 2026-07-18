@@ -96,13 +96,27 @@
         // engines; playing from wherever it left off is fine for a <1s sfx.
       }
 
-      var playResult = audio.play();
-      if (playResult && typeof playResult.catch === 'function') {
-        playResult.catch(function () {
-          // Autoplay restrictions block playback before the first user
-          // gesture; this call is itself the result of a tap, so this only
-          // guards edge cases and never blocks the visual feedback.
-        });
+      // Double protection (AC — tolerance to audio errors): `Audio.play()`
+      // can fail in TWO independent ways and NEITHER may propagate to the
+      // answer handler or block the visual feedback:
+      //   1. It can throw SYNCHRONOUSLY, before returning anything (invalid
+      //      media element, some autoplay-policy engines, a test double whose
+      //      `play` throws) — the surrounding try/catch swallows that.
+      //   2. It can return a promise that REJECTS asynchronously (autoplay
+      //      blocked before the first gesture) — the `.catch()` swallows that.
+      try {
+        var playResult = audio.play();
+        if (playResult && typeof playResult.catch === 'function') {
+          playResult.catch(function () {
+            // Async rejection (e.g. autoplay restrictions); this call is
+            // itself the result of a tap, so this only guards edge cases and
+            // never blocks the visual feedback.
+          });
+        }
+      } catch (error) {
+        // Synchronous throw from audio.play(); swallow it so the visual
+        // feedback, scoring and correct-answer indication keep running.
+        return false;
       }
 
       return true;

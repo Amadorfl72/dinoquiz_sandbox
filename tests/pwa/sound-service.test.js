@@ -151,6 +151,51 @@ describe('soundService feedback playback', function () {
     });
   });
 
+  describe('audio error tolerance (rejection AND synchronous throw)', function () {
+    it('does not propagate when Audio.play() returns a rejected promise', function () {
+      var rejectingFactory = function (src) {
+        return {
+          src: src,
+          preload: 'none',
+          currentTime: 0,
+          play: function () {
+            return Promise.reject(new Error('autoplay blocked'));
+          },
+        };
+      };
+      var service = createSoundService({ audioFactory: rejectingFactory });
+
+      // The public method must swallow the async rejection and return
+      // normally so the answer handler keeps running the visual feedback.
+      expect(function () {
+        service.playCorrect();
+      }).not.toThrow();
+    });
+
+    it('does not propagate when Audio.play() throws synchronously', function () {
+      var throwingFactory = function (src) {
+        return {
+          src: src,
+          preload: 'none',
+          currentTime: 0,
+          play: function () {
+            throw new Error('audio failed');
+          },
+        };
+      };
+      var service = createSoundService({ audioFactory: throwingFactory });
+
+      // A synchronous throw from audio.play() must NOT escape the service —
+      // this was the previous blocker (only the async rejection was guarded).
+      expect(function () {
+        service.playCorrect();
+      }).not.toThrow();
+      expect(function () {
+        service.playIncorrect();
+      }).not.toThrow();
+    });
+  });
+
   describe('preload', function () {
     it('constructs both feedback players up front so the first tap has no setup cost', function () {
       var audioFactory = createRecordingAudioFactory();
