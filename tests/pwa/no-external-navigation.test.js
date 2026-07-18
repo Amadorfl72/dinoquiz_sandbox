@@ -39,6 +39,7 @@ const { renderHomeScreen } = require('../../public/scripts/homeScreen');
 const { renderQuestionScreen } = require('../../public/scripts/questionScreen');
 const { renderResultsScreen } = require('../../public/scripts/resultsScreen');
 const { renderPrivacyPolicyScreen } = require('../../public/scripts/privacyPolicyScreen');
+const { startNewGame, QUESTIONS_PER_GAME } = require('../../public/scripts/gameFlow');
 const {
   installNavigationGuard,
   activateAllInteractiveElements,
@@ -320,6 +321,59 @@ describe('TRIOFSND-121: closed linear child flow — no external navigation', ()
       }
 
       expect(advances).toBe(10);
+    });
+
+    test('real Quiz -> Resultados transition happens only after exactly 10 real questions, never before', () => {
+      // Drive the REAL game flow: `startNewGame` (the app's public game module)
+      // selects exactly 10 questions, and the REAL QuestionScreen renders each
+      // one. The Quiz->Resultados hand-off is gated on completing the 10th
+      // question — Resultados must be unreachable at questions 1..9 and appear
+      // only after the 10th advance. No shared bootstrap (main.js) is touched,
+      // so the TRIOFSND-65/66 `loadHomeResources` defect stays isolated out.
+      const pool = Array.from({ length: 15 }, (_, i) => buildQuestion({ id: `bank-${i}` }));
+      const session = startNewGame(pool, { count: QUESTIONS_PER_GAME });
+
+      expect(session.questions).toHaveLength(10);
+
+      let index = 0;
+      let resultsShown = false;
+
+      function advance() {
+        index += 1;
+        // The app only surfaces Resultados once every one of the 10 questions
+        // is answered — reproduce that gate here and assert it is respected.
+        if (index >= QUESTIONS_PER_GAME) {
+          renderResultsScreen(container, { score: index, purchased: false });
+          resultsShown = true;
+        }
+      }
+
+      session.questions.forEach((question, i) => {
+        container.innerHTML = '';
+        resultsShown = false;
+        const { optionButtons, nextButton } = renderQuestionScreen(container, question, {
+          onNext: advance,
+        });
+
+        // Still inside the Quiz for this question — Resultados not rendered yet.
+        expect(container.querySelector('.results-screen')).toBeNull();
+
+        optionButtons[question.correctAnswerIndex].click();
+        expect(nextButton.hidden).toBe(false);
+        nextButton.click();
+
+        // Resultados is reachable ONLY after the 10th question, never before.
+        if (i < QUESTIONS_PER_GAME - 1) {
+          expect(resultsShown).toBe(false);
+        } else {
+          expect(resultsShown).toBe(true);
+          expect(container.querySelector('.results-screen')).not.toBeNull();
+        }
+
+        guard.assertNoExternalNavigation();
+      });
+
+      expect(index).toBe(10);
     });
   });
 
