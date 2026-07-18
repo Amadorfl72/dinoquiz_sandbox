@@ -11,7 +11,7 @@ const PERSISTED_KEYS = [
   'muted',
   'homeTooltipSeen',
   'analyticsEventCounts',
-  'questionStats',
+  'questionResults',
 ];
 
 function namespacedKey(key) {
@@ -37,7 +37,7 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {}, questionStats: {} };
+  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {}, questionResults: {} };
   #listeners = new Map();
   #initPromise = null;
 
@@ -142,7 +142,7 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
-      questionStats: { ...this.#cache.questionStats },
+      questionResults: { ...this.#cache.questionResults },
     };
   }
 
@@ -280,36 +280,37 @@ class DinoQuizStorage {
 
   /**
    * Aggregated, non-PII local counter for the `pregunta_respondida` event
-   * (see PRD logging_observability). Only tallies attempts/failures per
-   * `questionId` -- it never records which child answered or a per-answer
-   * log, so the only thing derivable later is the % de fallo por pregunta,
-   * not any individual child's performance.
+   * (see PRD logging_observability). Only tallies `acierto`/`fallo` counts
+   * per `id_pregunta` -- it never records which child answered, the option
+   * chosen or a per-answer log, so the only thing derivable later is the %
+   * de fallo por pregunta, not any individual child's performance.
    */
-  async recordQuestionAnswered(questionId, isCorrect) {
-    if (typeof questionId !== 'string' || questionId.length === 0) {
+  async recordQuestionResult(idPregunta, resultado) {
+    if (typeof idPregunta !== 'string' || idPregunta.length === 0) {
       // No valid id_pregunta: skip rather than create an anonymous/empty key.
       return undefined;
     }
+    if (resultado !== 'acierto' && resultado !== 'fallo') {
+      return undefined;
+    }
 
-    const stats = await this.get('questionStats');
-    const current = stats[questionId] || { attempts: 0, failures: 0 };
-    const next = {
-      attempts: current.attempts + 1,
-      failures: isCorrect ? current.failures : current.failures + 1,
-    };
-    await this.set('questionStats', { ...stats, [questionId]: next });
+    const results = await this.get('questionResults');
+    const current = results[idPregunta] || { acierto: 0, fallo: 0 };
+    const next = { ...current, [resultado]: current[resultado] + 1 };
+    await this.set('questionResults', { ...results, [idPregunta]: next });
     return next;
   }
 
-  async getQuestionStats(questionId) {
-    const stats = await this.get('questionStats');
-    return stats[questionId] || { attempts: 0, failures: 0 };
+  async getQuestionResults(idPregunta) {
+    const results = await this.get('questionResults');
+    return results[idPregunta] || { acierto: 0, fallo: 0 };
   }
 
-  /** Resolves to the aggregated failure rate (0-1) for `questionId`, or 0 before any attempt. */
-  async getQuestionFailureRate(questionId) {
-    const { attempts, failures } = await this.getQuestionStats(questionId);
-    return attempts > 0 ? failures / attempts : 0;
+  /** Resolves to the aggregated failure rate (0-100) for `idPregunta`, or 0 before any answer. */
+  async getQuestionFailureRate(idPregunta) {
+    const { acierto, fallo } = await this.getQuestionResults(idPregunta);
+    const total = acierto + fallo;
+    return total > 0 ? (fallo / total) * 100 : 0;
   }
 }
 

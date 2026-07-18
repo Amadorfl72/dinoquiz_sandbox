@@ -29,15 +29,15 @@
  * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
  * and whose 'Salir' calls `renderHome` again.
  *
- * Aggregated question failures (TRIOFSND-92): the same analytics `storage`
+ * Aggregated question results (TRIOFSND-92): the same analytics `storage`
  * used for the tooltip/`first_tap_jugar` counter is threaded through
  * `startNewGame` -> `renderQuestionAt` -> `renderResultsFor` (replay reuses
  * it too) as `analyticsStorage`, so every time `onAnswer` fires in
  * `renderQuestionAt` it extends the client-local `pregunta_respondida`
- * event with the acierto/fallo result for that `id_pregunta`, via
- * `storage.recordQuestionAnswered(question.id, result.isCorrect)`. That
- * aggregates into `{ attempts, failures }` per question id (see
- * `DinoQuizStorage#recordQuestionAnswered`/`#getQuestionFailureRate` in
+ * event with the exact `acierto`/`fallo` result for that `id_pregunta`, via
+ * `storage.recordQuestionResult(question.id, resultado)`. That
+ * aggregates into `{ acierto, fallo }` counts per question id (see
+ * `DinoQuizStorage#recordQuestionResult`/`#getQuestionFailureRate` in
  * `src/services/storage/StorageClient.js`, mirrored for the no-`require`
  * browser path by `createBrowserHomeStorage` below) -- never a per-answer
  * log and never tied to who played, so the only thing derivable later is
@@ -252,18 +252,18 @@
         ]);
 
         // 'pregunta_respondida' (TRIOFSND-92): an aggregated, non-PII
-        // attempts/failures counter per question id, so the % de fallo por
+        // acierto/fallo counter per id_pregunta, so the % de fallo por
         // pregunta can be computed later -- never a per-child answer log.
         // question.id must be the stable bank id (never the visible text or
         // index); an invalid/missing id is skipped rather than aggregated
         // under an anonymous key.
         if (
           storage &&
-          typeof storage.recordQuestionAnswered === 'function' &&
+          typeof storage.recordQuestionResult === 'function' &&
           typeof question.id === 'string' &&
           question.id.length > 0
         ) {
-          storage.recordQuestionAnswered(question.id, result.isCorrect);
+          storage.recordQuestionResult(question.id, result.isCorrect ? 'acierto' : 'fallo');
         }
       },
       onNext: function () {
@@ -408,7 +408,7 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
-  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
+  var QUESTION_RESULTS_KEY = 'dinoquiz:questionResults';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -416,7 +416,7 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
-    memory[QUESTION_STATS_KEY] = {};
+    memory[QUESTION_RESULTS_KEY] = {};
 
     function readJSON(key) {
       if (backend) {
@@ -461,24 +461,25 @@
         }
         return Promise.resolve(counts[eventName]);
       },
-      // Aggregated, non-PII 'pregunta_respondida' counter: attempts/failures
-      // per question id only, never a per-answer log (see StorageClient's
-      // recordQuestionAnswered, which this mirrors for the no-require browser
-      // path).
-      recordQuestionAnswered: function (questionId, isCorrect) {
-        if (typeof questionId !== 'string' || questionId.length === 0) {
+      // Aggregated, non-PII 'pregunta_respondida' counter: exact acierto/fallo
+      // counts per id_pregunta only, never a per-answer log (see
+      // StorageClient's recordQuestionResult, which this mirrors for the
+      // no-require browser path).
+      recordQuestionResult: function (idPregunta, resultado) {
+        if (typeof idPregunta !== 'string' || idPregunta.length === 0) {
           // No valid id_pregunta: skip rather than create an anonymous/empty key.
           return Promise.resolve(undefined);
         }
+        if (resultado !== 'acierto' && resultado !== 'fallo') {
+          return Promise.resolve(undefined);
+        }
 
-        var stats = readJSON(QUESTION_STATS_KEY) || {};
-        var current = stats[questionId] || { attempts: 0, failures: 0 };
-        var next = {
-          attempts: current.attempts + 1,
-          failures: isCorrect ? current.failures : current.failures + 1,
-        };
-        stats[questionId] = next;
-        writeJSON(QUESTION_STATS_KEY, stats);
+        var results = readJSON(QUESTION_RESULTS_KEY) || {};
+        var current = results[idPregunta] || { acierto: 0, fallo: 0 };
+        var next = { acierto: current.acierto, fallo: current.fallo };
+        next[resultado] = current[resultado] + 1;
+        results[idPregunta] = next;
+        writeJSON(QUESTION_RESULTS_KEY, results);
         return Promise.resolve(next);
       },
     };

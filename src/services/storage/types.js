@@ -1,7 +1,7 @@
 /**
- * @typedef {Object} QuestionAnswerStats
- * @property {number} attempts
- * @property {number} failures
+ * @typedef {Object} QuestionResultCounts
+ * @property {number} acierto
+ * @property {number} fallo
  */
 
 /**
@@ -12,8 +12,8 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
- * @property {Object.<string, QuestionAnswerStats>} questionStats Aggregated,
- *   non-PII attempt/failure counts per question id (from the
+ * @property {Object.<string, QuestionResultCounts>} questionResults Aggregated,
+ *   non-PII `acierto`/`fallo` counts per `id_pregunta` (from the
  *   `pregunta_respondida` event) -- no per-child answer log, so the % de
  *   fallo por pregunta can only ever be computed in aggregate.
  */
@@ -26,7 +26,7 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
-  questionStats: {},
+  questionResults: {},
 };
 
 /**

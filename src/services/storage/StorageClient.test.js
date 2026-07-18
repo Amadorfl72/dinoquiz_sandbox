@@ -29,7 +29,7 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('muted')).toBe(false);
     expect(await storage.get('homeTooltipSeen')).toBe(false);
     expect(await storage.get('analyticsEventCounts')).toEqual({});
-    expect(await storage.get('questionStats')).toEqual({});
+    expect(await storage.get('questionResults')).toEqual({});
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -215,31 +215,31 @@ describe('DinoQuizStorage', () => {
     });
   });
 
-  it('recordQuestionAnswered aggregates attempts and failures per question id, without a per-answer log', async () => {
+  it('recordQuestionResult aggregates acierto and fallo counts per id_pregunta, without a per-answer log', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    await storage.recordQuestionAnswered('trex-01', true);
-    await storage.recordQuestionAnswered('trex-01', false);
-    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionResult('trex-01', 'acierto');
+    await storage.recordQuestionResult('trex-01', 'fallo');
+    await storage.recordQuestionResult('trex-01', 'fallo');
 
-    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 3, failures: 2 });
-    expect(await storage.get('questionStats')).toEqual({ 'trex-01': { attempts: 3, failures: 2 } });
+    expect(await storage.getQuestionResults('trex-01')).toEqual({ acierto: 1, fallo: 2 });
+    expect(await storage.get('questionResults')).toEqual({ 'trex-01': { acierto: 1, fallo: 2 } });
   });
 
-  it('recordQuestionAnswered tracks distinct question ids independently', async () => {
+  it('recordQuestionResult tracks distinct question ids independently', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    await storage.recordQuestionAnswered('trex-01', true);
-    await storage.recordQuestionAnswered('triceratops-02', false);
+    await storage.recordQuestionResult('trex-01', 'acierto');
+    await storage.recordQuestionResult('triceratops-02', 'fallo');
 
-    expect(await storage.getQuestionStats('trex-01')).toEqual({ attempts: 1, failures: 0 });
-    expect(await storage.getQuestionStats('triceratops-02')).toEqual({ attempts: 1, failures: 1 });
+    expect(await storage.getQuestionResults('trex-01')).toEqual({ acierto: 1, fallo: 0 });
+    expect(await storage.getQuestionResults('triceratops-02')).toEqual({ acierto: 0, fallo: 1 });
   });
 
-  it('getQuestionStats defaults to zero attempts/failures for an unanswered question', async () => {
+  it('getQuestionResults defaults to zero acierto/fallo for an unanswered question', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    expect(await storage.getQuestionStats('never-answered')).toEqual({ attempts: 0, failures: 0 });
+    expect(await storage.getQuestionResults('never-answered')).toEqual({ acierto: 0, fallo: 0 });
   });
 
   it('getQuestionFailureRate computes the aggregated % de fallo por pregunta', async () => {
@@ -247,25 +247,35 @@ describe('DinoQuizStorage', () => {
 
     expect(await storage.getQuestionFailureRate('trex-01')).toBe(0);
 
-    await storage.recordQuestionAnswered('trex-01', true);
-    await storage.recordQuestionAnswered('trex-01', false);
-    await storage.recordQuestionAnswered('trex-01', false);
-    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionResult('trex-01', 'acierto');
+    await storage.recordQuestionResult('trex-01', 'fallo');
+    await storage.recordQuestionResult('trex-01', 'fallo');
+    await storage.recordQuestionResult('trex-01', 'fallo');
 
-    expect(await storage.getQuestionFailureRate('trex-01')).toBe(0.75);
+    expect(await storage.getQuestionFailureRate('trex-01')).toBe(75);
   });
 
-  it('recordQuestionAnswered ignores a missing/empty question id instead of creating an anonymous key', async () => {
+  it('recordQuestionResult ignores a missing/empty question id instead of creating an anonymous key', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    await storage.recordQuestionAnswered(undefined, false);
-    await storage.recordQuestionAnswered('', true);
-    await storage.recordQuestionAnswered(null, false);
+    await storage.recordQuestionResult(undefined, 'fallo');
+    await storage.recordQuestionResult('', 'acierto');
+    await storage.recordQuestionResult(null, 'fallo');
 
-    expect(await storage.get('questionStats')).toEqual({});
+    expect(await storage.get('questionResults')).toEqual({});
   });
 
-  it('persists the questionStats aggregate across instances sharing the same backend', async () => {
+  it('recordQuestionResult ignores a resultado outside of acierto/fallo', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordQuestionResult('trex-01', 'correct');
+    await storage.recordQuestionResult('trex-01', '');
+    await storage.recordQuestionResult('trex-01', undefined);
+
+    expect(await storage.get('questionResults')).toEqual({});
+  });
+
+  it('persists the questionResults aggregate across instances sharing the same backend', async () => {
     const store = new Map();
     const adapter = () =>
       createFakeAdapter({
@@ -277,22 +287,22 @@ describe('DinoQuizStorage', () => {
         },
       });
     const storage = new DinoQuizStorage([adapter()]);
-    await storage.recordQuestionAnswered('trex-01', false);
+    await storage.recordQuestionResult('trex-01', 'fallo');
 
     const reopened = new DinoQuizStorage([adapter()]);
-    expect(await reopened.getQuestionStats('trex-01')).toEqual({ attempts: 1, failures: 1 });
+    expect(await reopened.getQuestionResults('trex-01')).toEqual({ acierto: 0, fallo: 1 });
   });
 
-  it('recordQuestionAnswered stores only aggregated counts, no per-child or per-answer identifiers', async () => {
+  it('recordQuestionResult stores only aggregated counts, no per-child or per-answer identifiers', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
-    await storage.recordQuestionAnswered('trex-01', false);
-    const stats = await storage.getQuestionStats('trex-01');
+    await storage.recordQuestionResult('trex-01', 'fallo');
+    const results = await storage.getQuestionResults('trex-01');
 
-    expect(Object.keys(stats).sort()).toEqual(['attempts', 'failures']);
-    expect(stats).not.toHaveProperty('userId');
-    expect(stats).not.toHaveProperty('deviceId');
-    expect(stats).not.toHaveProperty('timestamp');
-    expect(stats).not.toHaveProperty('selectedOption');
+    expect(Object.keys(results).sort()).toEqual(['acierto', 'fallo']);
+    expect(results).not.toHaveProperty('userId');
+    expect(results).not.toHaveProperty('deviceId');
+    expect(results).not.toHaveProperty('timestamp');
+    expect(results).not.toHaveProperty('selectedOption');
   });
 });

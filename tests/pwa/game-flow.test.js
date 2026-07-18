@@ -148,7 +148,7 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
   let container;
 
   function createFakeAnalyticsStorage() {
-    return { recordQuestionAnswered: jest.fn().mockResolvedValue(undefined) };
+    return { recordQuestionResult: jest.fn().mockResolvedValue(undefined) };
   }
 
   beforeEach(() => {
@@ -164,16 +164,31 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
     jest.useRealTimers();
   });
 
-  test('answering a question records the aggregated result against that question id', () => {
+  test('a wrong answer to trex-01 increments the fallo aggregate for that id_pregunta', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
+    questions[0] = { ...questions[0], id: 'trex-01' };
     const storage = createFakeAnalyticsStorage();
 
     startNewGame(container, renderers, questions, document, undefined, () => 0, storage);
     answerCurrentQuestion(container, { correct: false });
 
-    expect(storage.recordQuestionAnswered).toHaveBeenCalledWith('q-0', false);
+    expect(storage.recordQuestionResult).toHaveBeenCalledWith('trex-01', 'fallo');
+  });
+
+  test('a correct answer to trex-01 increments the acierto aggregate and never the fallo one', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    questions[0] = { ...questions[0], id: 'trex-01' };
+    const storage = createFakeAnalyticsStorage();
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, storage);
+    answerCurrentQuestion(container, { correct: true });
+
+    expect(storage.recordQuestionResult).toHaveBeenCalledWith('trex-01', 'acierto');
+    expect(storage.recordQuestionResult).not.toHaveBeenCalledWith('trex-01', 'fallo');
   });
 
   test('a question without a valid id_pregunta is skipped and does not break the quiz flow', () => {
@@ -186,7 +201,7 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
     startNewGame(container, renderers, questions, document, undefined, () => 0, storage);
     answerCurrentQuestion(container, { correct: false });
 
-    expect(storage.recordQuestionAnswered).not.toHaveBeenCalled();
+    expect(storage.recordQuestionResult).not.toHaveBeenCalled();
     expect(container.querySelector('.question-screen')).not.toBeNull();
   });
 
@@ -202,8 +217,8 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
     buttons[1].click();
     buttons[0].click();
 
-    expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(1);
-    expect(storage.recordQuestionAnswered).toHaveBeenCalledWith('q-0', false);
+    expect(storage.recordQuestionResult).toHaveBeenCalledTimes(1);
+    expect(storage.recordQuestionResult).toHaveBeenCalledWith('q-0', 'fallo');
   });
 
   test('a full game records one aggregated call per question, in order, with no cross-question mixing', () => {
@@ -217,9 +232,9 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
       answerCurrentQuestion(container, { correct: i % 2 === 0 });
     }
 
-    expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(10);
+    expect(storage.recordQuestionResult).toHaveBeenCalledTimes(10);
     for (let i = 0; i < 10; i += 1) {
-      expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(i + 1, `q-${i}`, i % 2 === 0);
+      expect(storage.recordQuestionResult).toHaveBeenNthCalledWith(i + 1, `q-${i}`, i % 2 === 0 ? 'acierto' : 'fallo');
     }
   });
 
@@ -241,8 +256,8 @@ describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregu
     const replayedQuestionId = getByRole(container, 'heading', { level: 2 }).textContent.replace('Pregunta ', '');
     answerCurrentQuestion(container, { correct: false });
 
-    expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(11);
-    expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(11, replayedQuestionId, false);
+    expect(storage.recordQuestionResult).toHaveBeenCalledTimes(11);
+    expect(storage.recordQuestionResult).toHaveBeenNthCalledWith(11, replayedQuestionId, 'fallo');
   });
 
   test('resolveAnalyticsStorage falls back to the shared DinoQuizStorage instance when no override is given', () => {
