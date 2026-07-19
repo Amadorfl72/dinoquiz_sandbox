@@ -153,7 +153,6 @@
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
-    "imageAltFormat": "Ilustración de un {dinosaur}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento!"
@@ -165,13 +164,10 @@
       "correct": "¡Genial, acertaste! La respuesta correcta era: {correctAnswer}",
       "incorrect": "¡Buen intento! La respuesta correcta era: {correctAnswer}"
     },
-    "correctAnswerAnnouncement": "La respuesta correcta es: {answer}.",
-    "correctOptionAriaLabel": "Respuesta correcta: {answer}",
-    "selectedOptionAriaLabel": "Tu respuesta: {answer}",
+    "correctAnswerAnnouncement": "La respuesta correcta era: {correctAnswer}.",
     "funFactHeading": "Dato curioso",
     "scoreLabel": "Puntos",
     "nextButton": "Siguiente",
-    "correctAnswerAnnouncement": "La respuesta correcta era: {correctAnswer}.",
     "imageAlt": "Ilustración de un {dinosaur}",
     "imageAltFunFact": "Dato curioso: {funFact}",
     "dinosaurNames": {
