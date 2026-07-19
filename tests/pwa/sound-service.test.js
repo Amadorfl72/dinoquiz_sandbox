@@ -94,6 +94,32 @@ describe('soundService feedback playback', function () {
       expect(service.playCorrect()).toBe(true);
       expect(audioFactory.totalPlayCalls()).toBe(1);
     });
+
+    // AC: only the exact string "true" mutes. Every OTHER persisted value —
+    // including "1", "false" as a raw string, an empty string, whitespace, or
+    // a differently-cased "TRUE" — must still attempt playback.
+    ['1', 'false', '', ' ', 'TRUE', 'yes'].forEach(function (rawValue) {
+      it('allows playback when dinoquiz:muted is the non-"true" value ' + JSON.stringify(rawValue), function () {
+        window.localStorage.setItem(MUTE_STORAGE_KEY, rawValue);
+        var audioFactory = createRecordingAudioFactory();
+        var service = createSoundService({ audioFactory: audioFactory });
+
+        expect(service.isMuted()).toBe(false);
+        expect(service.playCorrect()).toBe(true);
+        expect(audioFactory.totalPlayCalls()).toBe(1);
+      });
+    });
+
+    it('allows playback when the mute key is entirely absent', function () {
+      // beforeEach already cleared localStorage, so the key is missing here.
+      var audioFactory = createRecordingAudioFactory();
+      var service = createSoundService({ audioFactory: audioFactory });
+
+      expect(window.localStorage.getItem(MUTE_STORAGE_KEY)).toBeNull();
+      expect(service.isMuted()).toBe(false);
+      expect(service.playIncorrect()).toBe(true);
+      expect(audioFactory.totalPlayCalls()).toBe(1);
+    });
   });
 
   describe('muted mode (dinoquiz:muted persisted as true)', function () {
