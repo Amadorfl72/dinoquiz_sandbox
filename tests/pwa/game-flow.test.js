@@ -666,6 +666,19 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     }
   });
 
+  test('TRIOFSND-124: clicking the rewarded ad button on Resultados calls through to the shared RewardedAdService', () => {
+    const { resolveScreenRenderers, resolveRewardedAdService, renderResultsFor } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+    const requestSpy = jest.spyOn(resolveRewardedAdService(), 'request');
+
+    renderResultsFor(container, renderers, [], { score: 7, maxStreak: 3 }, document, undefined, storageObj);
+    getByRole(container, 'button', { name: `${strings.ads.rewardedBadge}: ${strings.ads.rewardedButton}` }).click();
+
+    expect(requestSpy).toHaveBeenCalledTimes(1);
+    requestSpy.mockRestore();
+  });
+
   test('hides the banner and rewarded ad on Resultados once the purchase has been made', () => {
     jest.useFakeTimers();
     try {

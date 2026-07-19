@@ -254,6 +254,22 @@
   }
 
   /**
+   * Resolves the rewarded-ad seam (TRIOFSND-86) that Resultados' rewarded-ad
+   * button (TRIOFSND-97) calls through, same resolution pattern as
+   * resolveGameFlow: `require` under Node/Jest, `window.DinoQuiz.ads` in the
+   * no-bundler browser path.
+   */
+  function resolveRewardedAdService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/ads/rewardedAdService').rewardedAdService;
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.ads && win.DinoQuiz.ads.rewardedAdService) || null;
+  }
+
+  /**
    * Resolves the funny fact text for a question from the i18n strings. In the
    * bank each question carries a `dato_curioso` i18n key (e.g.
    * "funFacts.trex-01"); the question screen renders the resolved text as
@@ -405,6 +421,17 @@
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
+      // TRIOFSND-124: routes the rewarded-ad button through the shared
+      // RewardedAdService seam instead of a screen-local no-op. request()
+      // never rejects (unavailable/declined/error all resolve), so this
+      // fire-and-forget call can never block "Volver a jugar" either, per
+      // the PRD's "si no se ve el rewarded, la partida funciona igual".
+      onWatchRewardedAd: function () {
+        var rewardedAdService = resolveRewardedAdService();
+        if (rewardedAdService && typeof rewardedAdService.request === 'function') {
+          rewardedAdService.request();
+        }
+      },
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage);
       },
@@ -1024,6 +1051,7 @@
       renderRoute: renderRoute,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
+      resolveRewardedAdService: resolveRewardedAdService,
       loadQuestions: loadQuestions,
       prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
