@@ -315,15 +315,26 @@
       return Promise.resolve(null);
     }
 
-    return nav.serviceWorker
-      .register(swPath)
-      .then(function (registration) {
-        return registration;
-      })
-      .catch(function (error) {
-        console.error('DinoQuiz: service worker registration failed', error);
-        return null;
-      });
+    // TRIOFSND-113: `register` can reject asynchronously (handled by the
+    // `.catch` below) but can also throw synchronously on some embedded/
+    // in-app browsers before it ever returns a promise. Both are treated as
+    // a recoverable, non-blocking fallback -- neither should reach the
+    // `window.addEventListener('load', ...)` bootstrap handler as an
+    // unhandled exception/rejection.
+    try {
+      return nav.serviceWorker
+        .register(swPath)
+        .then(function (registration) {
+          return registration;
+        })
+        .catch(function (error) {
+          console.error('DinoQuiz: service worker registration failed', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('DinoQuiz: service worker registration failed', error);
+      return Promise.resolve(null);
+    }
   }
 
   /**
