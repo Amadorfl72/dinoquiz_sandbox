@@ -135,6 +135,23 @@
  * next to the already-tracked final `score`. `renderResultsFor` then forwards
  * both into `renderResultsScreen`'s options, so the closed Quiz -> Resultados
  * loop always hands off both pieces of end-of-game data together.
+ *
+ * Functional fallback without Service Worker/manifest support (TRIOFSND-113):
+ * DinoQuiz's official support matrix is the last 2 major versions of Chrome,
+ * Edge and Safari, but some older tablets or embedded/in-app browsers outside
+ * that matrix don't support Service Worker or installable manifests.
+ * `resolvePlatformSupport` (mirroring `src/services/platformSupport`'s
+ * `detectPwaSupport`) detects that up front and `logPlatformSupportFallback`
+ * logs a diagnostic — nothing more, since it must never block or degrade the
+ * actual game. That guarantee already falls out of how this file is built:
+ * `registerServiceWorker` is feature-detected and fire-and-forget (see the
+ * `window.addEventListener('load', ...)` handler below), while
+ * `bootstrapBrowserApp` fetches `/i18n/es.json` and `/data/questions.json`
+ * with plain `fetch`, independent of whether a service worker is present.
+ * So a browser lacking PWA support simply never gets installability or
+ * offline caching — it still plays the full Inicio -> Quiz -> Resultados loop
+ * over the network exactly like a supported browser (see
+ * tests/pwa/pwa-fallback.test.js).
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -469,15 +486,82 @@
       return Promise.resolve(null);
     }
 
-    return nav.serviceWorker
-      .register(swPath)
-      .then(function (registration) {
-        return registration;
-      })
-      .catch(function (error) {
-        console.error('DinoQuiz: service worker registration failed', error);
-        return null;
-      });
+    // TRIOFSND-113: `register` can reject asynchronously (handled by the
+    // `.catch` below) but can also throw synchronously on some embedded/
+    // in-app browsers before it ever returns a promise. Both are treated as
+    // a recoverable, non-blocking fallback -- neither should reach the
+    // `window.addEventListener('load', ...)` bootstrap handler as an
+    // unhandled exception/rejection.
+    try {
+      return nav.serviceWorker
+        .register(swPath)
+        .then(function (registration) {
+          return registration;
+        })
+        .catch(function (error) {
+          console.error('DinoQuiz: service worker registration failed', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('DinoQuiz: service worker registration failed', error);
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * TRIOFSND-113: capability snapshot used to log a diagnostic when a tablet
+   * or embedded browser falls outside the official support matrix (last 2
+   * major versions of Chrome/Edge/Safari) and therefore lacks full
+   * service-worker/manifest support. Mirrors `src/services/platformSupport`'s
+   * `detectPwaSupport` -- required directly under Node/Jest, duplicated
+   * inline for the real, bundler-less browser where `require` doesn't exist,
+   * same dual pattern as `loadDinoQuizStorage`/`createBrowserHomeStorage`
+   * above. Never throws and never gates the game itself: `bootstrapBrowserApp`
+   * fetches i18n/question JSON over plain `fetch` regardless of what this
+   * reports, so "modo navegador normal" (no install, no advanced cache) keeps
+   * the game fully playable either way.
+   */
+  function resolvePlatformSupport(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var nav = (win && win.navigator) || (typeof navigator !== 'undefined' ? navigator : undefined);
+    var doc = (win && win.document) || (typeof document !== 'undefined' ? document : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/platformSupport').detectPwaSupport(nav, doc);
+    }
+
+    var serviceWorker = !!nav && 'serviceWorker' in nav;
+    var manifest = false;
+    if (doc && typeof doc.createElement === 'function') {
+      try {
+        var link = doc.createElement('link');
+        manifest = !!(
+          link.relList &&
+          typeof link.relList.supports === 'function' &&
+          link.relList.supports('manifest')
+        );
+      } catch (error) {
+        manifest = false;
+      }
+    }
+
+    return { serviceWorker: serviceWorker, manifest: manifest, isFullySupported: serviceWorker && manifest };
+  }
+
+  /** Logs a non-blocking diagnostic (no analytics event, no PII) when running in the functional fallback mode. */
+  function logPlatformSupportFallback(support) {
+    if (!support || support.isFullySupported) {
+      return;
+    }
+
+    console.info(
+      'DinoQuiz: PWA install/offline-cache features are unavailable in this browser ' +
+        '(serviceWorker=' +
+        support.serviceWorker +
+        ', manifest=' +
+        support.manifest +
+        '). Falling back to normal browser mode: no install, no advanced cache, the game itself still works.'
+    );
   }
 
   function fetchJson(fetchFn, resourcePath) {
@@ -906,6 +990,7 @@
     typeof require !== 'function'
   ) {
     window.addEventListener('load', function () {
+      logPlatformSupportFallback(resolvePlatformSupport());
       installLinkGuard();
       registerServiceWorker();
       bootstrapBrowserApp().then(function () {
@@ -922,6 +1007,8 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      resolvePlatformSupport: resolvePlatformSupport,
+      logPlatformSupportFallback: logPlatformSupportFallback,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,

@@ -333,3 +333,30 @@ navegación interna (la ruta por hash de la política de privacidad, TRIOFSND-11
 `<a>` ni `window.open`, así que no se ve afectada. `public/scripts/main.js` lo instala una vez
 al arrancar (`installLinkGuard`, en el listener `load`), junto al registro del service worker
 (ver [`tests/pwa/external-link-guard.test.js`](tests/pwa/external-link-guard.test.js)).
+
+## Fallback funcional sin Service Worker / manifest (TRIOFSND-113)
+
+La matriz de soporte oficial de DinoQuiz son las últimas 2 versiones mayores de Chrome, Edge
+y Safari, que soportan Service Worker y manifest instalable. Algunas tablets antiguas o
+navegadores embebidos/in-app quedan fuera de esa matriz y no soportan ninguno de los dos, así
+que la app debe seguir siendo jugable en "modo navegador normal" (sin instalación ni caché
+avanzada) también ahí.
+
+[`src/services/platformSupport.js`](src/services/platformSupport.js) centraliza la detección
+de capacidades (`isServiceWorkerSupported`, `isManifestSupported`, `detectPwaSupport`): cada
+comprobación degrada a `false` en vez de lanzar cuando falta el global correspondiente, así
+que nunca bloquea el arranque. [`public/scripts/main.js`](public/scripts/main.js) expone el
+mismo cálculo como `resolvePlatformSupport` (vía `require` bajo Node/Jest, duplicado en línea
+para el navegador real sin bundler, mismo patrón dual que `loadDinoQuizStorage`/
+`createBrowserHomeStorage`) y, si el navegador no tiene soporte completo,
+`logPlatformSupportFallback` deja un `console.info` de diagnóstico -- sin evento de analytics
+nuevo (los eventos enviados son exactamente los de AC-18) y sin ningún dato personal.
+
+La garantía de que el juego sigue funcionando no depende de ese diagnóstico: `registerServiceWorker`
+ya hace feature-detection (`'serviceWorker' in nav`) y es "fire and forget" en el arranque, y
+`bootstrapBrowserApp` carga `/i18n/es.json` y `/data/questions.json` con `fetch` normal,
+independientemente de si hay service worker registrado. Un navegador sin soporte PWA
+simplemente no obtiene instalación ni caché offline avanzada -- pero completa igual el flujo
+Inicio -> Quiz -> Resultados por red, como demuestra
+[`tests/pwa/pwa-fallback.test.js`](tests/pwa/pwa-fallback.test.js) simulando un `navigator`
+sin `serviceWorker`.

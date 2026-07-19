@@ -94,11 +94,11 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
-    // Inline min-width/min-height mirror public/styles/main.css so the
-    // ≥48x48dp touch target (AC-2/AC-11/AC-23) holds even where the
-    // stylesheet isn't loaded (e.g. unit tests rendering into a bare
-    // container) or doesn't resolve external stylesheets (e.g. jsdom's
-    // getComputedStyle).
+    // Inline min-width/min-height fallback for the ≥48x48dp WCAG touch
+    // target (AC-2/AC-11/AC-13/AC-23): keeps the guarantee even when
+    // public/styles/main.css isn't loaded or doesn't resolve (e.g. jsdom
+    // tests rendering into a bare container, where getComputedStyle won't
+    // see external stylesheets).
     button.style.minWidth = '48px';
     button.style.minHeight = '48px';
 
