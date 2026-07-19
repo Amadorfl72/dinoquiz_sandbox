@@ -136,6 +136,21 @@
  * adapter is plugged into it. Whatever the ad service resolves with, the
  * CTA never touches `nextButton` or its advance timer — the game always
  * continues.
+ *
+ * Enunciado + options context for screen readers (TRIOFSND-74): the prompt
+ * was a plain `<h2>` whose only accessible identity was heading level 2 —
+ * TalkBack/VoiceOver users rotor-navigating by heading get the question
+ * text, but a user who jumps straight to the options `group` (e.g. via the
+ * rotor's "form controls" mode) never hears which question those options
+ * answer. `prompt` gets an id and a `strings.questionAriaLabelFormat`
+ * (`"Pregunta: {question}"`) `aria-label` so it explicitly reads as a
+ * question rather than an unlabeled heading, and `optionsGroup` gets an
+ * `aria-describedby` pointing at that same id so entering the group also
+ * announces the question it belongs to. This is additive: it never touches
+ * `optionsGroup`'s existing `aria-label` (`strings.optionsGroupLabel`, its
+ * accessible *name*) or any of the per-option `aria-label`s set in
+ * `handleSelect` above, so it can't change any option's accessible name —
+ * only what accompanies the group's description.
  */
 
 (function () {
@@ -145,6 +160,7 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+  var promptIdSequence = 0;
 
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
@@ -341,6 +357,8 @@
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
+    prompt.id = 'question-screen__prompt-' + (promptIdSequence += 1);
+    prompt.setAttribute('aria-label', formatTemplate(strings.questionAriaLabelFormat, { question: question.question }));
 
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
@@ -350,14 +368,11 @@
     optionsGroup.className = 'question-screen__options';
     optionsGroup.setAttribute('role', 'group');
     optionsGroup.setAttribute('aria-label', strings.optionsGroupLabel);
+    optionsGroup.setAttribute('aria-describedby', prompt.id);
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
-
-    var announcementEl = document.createElement('p');
-    announcementEl.className = 'question-screen__announcement sr-only';
-    announcementEl.setAttribute('role', 'status');
-    announcementEl.setAttribute('aria-live', 'polite');
+    feedback.setAttribute('aria-live', 'polite');
 
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
@@ -372,10 +387,15 @@
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
 
+    // A single status region (TRIOFSND-79/TRIOFSND-90): `announcementEl` is
+    // an alias for this same node, kept so callers that destructure either
+    // name get the one accessible announcement instead of two competing
+    // live regions firing in an unpredictable order.
     var announcement = document.createElement('p');
     announcement.className = 'question-screen__announcement sr-only';
     announcement.setAttribute('role', 'status');
     announcement.setAttribute('aria-live', 'polite');
+    var announcementEl = announcement;
 
     var rewardedAdStrings = strings.rewardedAd || {};
 
@@ -462,11 +482,8 @@
             // without seeing the green border. On a hit the tapped/correct
             // option are the same button, already covered by the "¡Genial,
             // acertaste!" feedback below, so no extra label is added.
-            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
+            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
           }
-          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
-          // this as the correct answer even without seeing the green border.
-          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
           // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
@@ -486,16 +503,13 @@
       }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
-      // Written synchronously, right here, so TalkBack/VoiceOver announce
-      // acierto/fallo and the correct option's text immediately after the
-      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
-      announcementEl.textContent = formatTemplate(
-        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
-        { correctAnswer: correctAnswerText }
-      );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo, the correct option's text and the updated score
+      // immediately after the tap — it never waits on the fun-fact reveal,
+      // a sound cue, or a timer.
       announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
 
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
@@ -533,7 +547,6 @@
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
-    root.appendChild(announcementEl);
     root.appendChild(funFactBox);
     root.appendChild(announcement);
     root.appendChild(rewardedAdCta);

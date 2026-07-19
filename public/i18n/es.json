@@ -153,6 +153,7 @@
   },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
+    "questionAriaLabelFormat": "Pregunta: {question}",
     "imageAltFormat": "Ilustración de un {dinosaur}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
