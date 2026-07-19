@@ -228,9 +228,11 @@ function activateAllInteractiveElements(container) {
 
 /**
  * Self-test: prove the guard actually FAILS on real external-navigation
- * vectors, so a green suite is trustworthy rather than a jsdom no-op. Injects a
- * synthetic external anchor, a protocol-relative anchor, a `window.open` call
- * and an external `location.href` assignment, and asserts each was recorded.
+ * vectors, so a green suite is trustworthy rather than a jsdom no-op. Exercises
+ * every vector criterion F requires the instrumentation to detect — external
+ * anchor, protocol-relative anchor, `target="_blank"` new-window destination,
+ * programmatic `window.open`, external `location.href` assignment and external
+ * form submission — and asserts each was recorded as a prohibited attempt.
  */
 function assertGuardCatchesRealExternalNavigation(guard, doc) {
   var probe = doc.createElement('div');
@@ -246,6 +248,23 @@ function assertGuardCatchesRealExternalNavigation(guard, doc) {
   probe.appendChild(protoRelLink);
   protoRelLink.click();
 
+  // A same-origin href opened in a NEW tab is still an escape hatch.
+  var blankLink = doc.createElement('a');
+  blankLink.setAttribute('href', '/somewhere');
+  blankLink.setAttribute('target', '_blank');
+  probe.appendChild(blankLink);
+  blankLink.click();
+
+  // An external form submission (submit-button click fires the submit event in
+  // jsdom) must be caught too.
+  var form = doc.createElement('form');
+  form.setAttribute('action', 'https://evil.example/collect');
+  var submitButton = doc.createElement('button');
+  submitButton.setAttribute('type', 'submit');
+  form.appendChild(submitButton);
+  probe.appendChild(form);
+  submitButton.click();
+
   window.open('https://evil.example/win');
   window.location.href = 'https://evil.example/loc';
 
@@ -253,6 +272,8 @@ function assertGuardCatchesRealExternalNavigation(guard, doc) {
     return n.via;
   });
   expect(vias).toContain('anchor-click');
+  expect(vias).toContain('anchor-target-blank');
+  expect(vias).toContain('form-submit');
   expect(vias).toContain('window.open');
   // location.href capture only when this jsdom allowed the redefine.
   expect(vias.indexOf('location.href') !== -1 || vias.indexOf('anchor-click') !== -1).toBe(true);
