@@ -49,7 +49,15 @@ function createRecordingAudioFactory() {
 }
 
 describe('soundService feedback playback', function () {
+  // Isolate/restore localStorage AROUND every case (both before and after) so
+  // no persisted `dinoquiz:muted` value leaks between cases here or into any
+  // other suite. Each case builds its own recording audio factory + service
+  // (no shared instance), so audio doubles and mocks are never reused.
   beforeEach(function () {
+    window.localStorage.clear();
+  });
+
+  afterEach(function () {
     window.localStorage.clear();
   });
 
