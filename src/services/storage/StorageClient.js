@@ -11,6 +11,9 @@ const PERSISTED_KEYS = [
   'muted',
   'homeTooltipSeen',
   'analyticsEventCounts',
+  'questionStats',
+  'questionAnsweredEvents',
+  'adsRemoved',
 ];
 
 function namespacedKey(key) {
@@ -36,7 +39,13 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
+  #cache = {
+    ...DEFAULT_STATE,
+    discoveredFunFacts: [],
+    analyticsEventCounts: {},
+    questionStats: {},
+    questionAnsweredEvents: [],
+  };
   #listeners = new Map();
   #initPromise = null;
 
@@ -141,6 +150,8 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+      questionStats: { ...this.#cache.questionStats },
+      questionAnsweredEvents: [...this.#cache.questionAnsweredEvents],
     };
   }
 
@@ -258,6 +269,19 @@ class DinoQuizStorage {
   }
 
   /**
+   * Whether the single ads-removal in-app purchase (PRD: "eliminar anuncios")
+   * has been completed on this device. Screens gate banners/rewarded ads on
+   * this flag (TRIOFSND-97, AC-20/AC-21).
+   */
+  async hasRemovedAds() {
+    return this.get('adsRemoved');
+  }
+
+  async setAdsRemoved(adsRemoved) {
+    await this.set('adsRemoved', adsRemoved);
+  }
+
+  /**
    * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
    * Idempotent per `eventName`: only the first call for a given name increments the
    * count, which is what "first_*"-style events (e.g. first_tap_jugar) need.
@@ -274,6 +298,65 @@ class DinoQuizStorage {
   async getEventCount(eventName) {
     const counts = await this.get('analyticsEventCounts');
     return counts[eventName] || 0;
+  }
+
+  /**
+   * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
+   * Unlike `recordEventOnce`, increments on every call -- this is what repeatable
+   * product events (e.g. partida_iniciada, one per game start) need.
+   */
+  async recordEvent(eventName) {
+    const counts = await this.get('analyticsEventCounts');
+    const next = (counts[eventName] || 0) + 1;
+    await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
+    return next;
+  }
+
+  /**
+   * Registers a resolved question locally (TRIOFSND-80): this is the single
+   * write point for the whole feature, called once per accepted answer from
+   * the bootstrap's `onAnswer` handler (public/scripts/main.js), never from
+   * the question screen, so an answer is never recorded/aggregated twice.
+   *
+   * Persists the minimal, non-PII event `{ tipo: 'pregunta_respondida',
+   * id_pregunta, acierto }` (no name/age/email/ad-or-install id/free text/
+   * IP/device data) onto the local history, and incrementally updates that
+   * question's `total_respuestas`/`total_aciertos` counters -- raw, never
+   * rounded -- so its historic `porcentaje_acierto` (`getQuestionStats`) can
+   * be derived at any time without replaying individual answers.
+   */
+  async recordQuestionAnswered(id_pregunta, acierto) {
+    const event = { tipo: 'pregunta_respondida', id_pregunta, acierto: Boolean(acierto) };
+
+    const events = await this.get('questionAnsweredEvents');
+    await this.set('questionAnsweredEvents', [...events, event]);
+    await this.recordEvent('pregunta_respondida');
+
+    const stats = await this.get('questionStats');
+    const current = stats[id_pregunta] || { total_respuestas: 0, total_aciertos: 0 };
+    const next = {
+      total_respuestas: current.total_respuestas + 1,
+      total_aciertos: current.total_aciertos + (event.acierto ? 1 : 0),
+    };
+    await this.set('questionStats', { ...stats, [id_pregunta]: next });
+
+    return this.getQuestionStats(id_pregunta);
+  }
+
+  /**
+   * Historic aggregate for a question: raw counters plus `porcentaje_acierto`
+   * computed from them at full precision (never rounded, never averaged from
+   * previously-rounded percentages). Always a finite number between 0 and
+   * 100, `0` -- never `NaN`/`Infinity` -- for a question with no answers yet.
+   */
+  async getQuestionStats(id_pregunta) {
+    const stats = await this.get('questionStats');
+    const { total_respuestas, total_aciertos } = stats[id_pregunta] || {
+      total_respuestas: 0,
+      total_aciertos: 0,
+    };
+    const porcentaje_acierto = total_respuestas > 0 ? (total_aciertos / total_respuestas) * 100 : 0;
+    return { total_respuestas, total_aciertos, porcentaje_acierto };
   }
 }
 

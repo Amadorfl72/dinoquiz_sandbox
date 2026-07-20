@@ -134,6 +134,21 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
   });
 
+  test('TRIOFSND-97: renderHome wires onPurchase so confirming persists the ads-removed flag to storage', async () => {
+    const { renderHome, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+
+    const { onPurchase } = renderHomeScreen.mock.calls[0][1];
+    onPurchase();
+
+    expect(storageObj.setItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY, 'true');
+  });
+
   test('renderHome resolves to null without a #app container', async () => {
     const { renderHome } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue(null) };
@@ -182,7 +197,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     expect(loadDinoQuizStorage(requireFn)).toBe(fakeInstance);
   });
 
-  test('renderHome without a storage argument keeps its previous, tooltip-less behaviour', async () => {
+  test('renderHome without a storage argument falls back to a default storage backend and still wires the tooltip', async () => {
     const { renderHome } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
     const renderHomeScreen = jest.fn();
@@ -193,7 +208,19 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
 
     await renderHome(doc, renderHomeScreen, fetchFn);
 
-    expect(renderHomeScreen).toHaveBeenCalledWith({ id: 'app' }, { strings: homeStrings });
+    // Without an explicit storage argument, renderHome falls back to
+    // loadDinoQuizStorage()/createBrowserHomeStorage() (TRIOFSND-65) and the
+    // global controls (TRIOFSND-66) — so the tooltip/mute options are still
+    // wired, just backed by the default storage instead of a test double.
+    expect(renderHomeScreen).toHaveBeenCalledWith(
+      { id: 'app' },
+      expect.objectContaining({
+        strings: homeStrings,
+        showTooltip: expect.any(Boolean),
+        onTooltipDismiss: expect.any(Function),
+        onPlayButtonClick: expect.any(Function),
+      })
+    );
   });
 
   test('renderHome shows the tooltip when the storage flag says it has not been seen yet', async () => {
@@ -308,6 +335,61 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     );
   });
 
+  test('recordEvent is a non-PII local counter that increments on every call', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ partida_iniciada: 2 })
+    );
+  });
+
+  test('TRIOFSND-80: recordQuestionAnswered registers pregunta_respondida and aggregates per-question accuracy, no PII', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:questionAnsweredEvents',
+      JSON.stringify([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
+      ])
+    );
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ pregunta_respondida: 2 })
+    );
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:questionStats',
+      JSON.stringify({ 'trex-01': { total_respuestas: 2, total_aciertos: 1 } })
+    );
+    expect(await storage.getQuestionStats('trex-01')).toEqual({
+      total_respuestas: 2,
+      total_aciertos: 1,
+      porcentaje_acierto: 50,
+    });
+  });
+
+  test('TRIOFSND-80: getQuestionStats defaults to zero counters and a 0% for a question with no history', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.getQuestionStats('never-answered')).toEqual({
+      total_respuestas: 0,
+      total_aciertos: 0,
+      porcentaje_acierto: 0,
+    });
+  });
+
   test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
     const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
     const win = {
@@ -354,13 +436,18 @@ describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the br
 
     await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
-    const { getByRole, fireEvent } = require('@testing-library/dom');
-    const privacyButton = getByRole(container, 'button', { name: home.globalControls.privacyButton });
+    const { getByRole, within, fireEvent } = require('@testing-library/dom');
+    // Home also has a standalone privacy-policy icon button (TRIOFSND-116,
+    // navigates to the full policy screen) sharing the same accessible name
+    // as this one, so this scopes the query to the global controls group
+    // (TRIOFSND-66) that opens the inline disclosure panel this test checks.
+    const globalControls = getByRole(container, 'group', { name: home.globalControls.groupLabel });
+    const privacyButton = within(globalControls).getByRole('button', { name: home.globalControls.privacyButton });
     fireEvent.click(privacyButton);
     expect(container).toHaveTextContent(privacy.heading);
     expect(container).toHaveTextContent(privacy.intro);
 
-    const purchaseButton = getByRole(container, 'button', { name: home.globalControls.purchaseButton });
+    const purchaseButton = within(globalControls).getByRole('button', { name: home.globalControls.purchaseButton });
     fireEvent.click(purchaseButton);
     expect(container).toHaveTextContent(purchase.heading);
     expect(container).toHaveTextContent(purchase.priceLabel);
