@@ -115,18 +115,30 @@
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
  *
- * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
- * is threaded through `startNewGame` -> `renderQuestionAt` ->
- * `renderResultsFor` (replay reuses it too) as `analyticsStorage`, so the
- * `onAnswer` handler in `renderQuestionAt` records the canonical, non-PII
- * `pregunta_respondida` event (AC-18) via `storage.recordEvent` on every
- * answered question, and additionally records `pregunta_respondida_fallo`
- * whenever `result.isCorrect` is false. Since the client-only
+ * Answer registration (TRIOFSND-80): `renderQuestionAt`'s `onAnswer` handler
+ * below is the single write point for the whole feature — questionScreen.js
+ * only computes correctness and reports it, it never touches storage, so an
+ * answer is never recorded/aggregated twice. On every accepted answer (hit
+ * or miss, and thanks to questionScreen.js's own `answered` guard exactly
+ * once per question) it calls `storage.recordQuestionAnswered(question.id,
+ * result.isCorrect)`, which persists the minimal, non-PII `pregunta_respondida`
+ * event and incrementally updates that question's historic accuracy — see
+ * `DinoQuizStorage#recordQuestionAnswered` (src/services/storage/StorageClient.js)
+ * and its `createBrowserHomeStorage` mirror below for the exact contract.
+ *
+ * Aggregated question failures (TRIOFSND-92): a separate `analyticsStorage`
+ * client is threaded through `startNewGame` -> `renderQuestionAt` ->
+ * `renderResultsFor` (replay reuses it too), so the `onAnswer` handler in
+ * `renderQuestionAt` also records the aggregated, non-PII `pregunta_respondida`
+ * event (AC-18) via `analyticsStorage.recordEvent` on every answered
+ * question, and additionally records `pregunta_respondida_fallo` whenever
+ * `result.isCorrect` is false. Since the client-only
  * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
  * per-event payloads, the failure count travels as its own counter instead
  * of a field on `pregunta_respondida` -- comparing the two counters is what
  * yields the aggregated "% acierto por pregunta" the PRD's
- * logging_observability calls for.
+ * logging_observability calls for, independently of TRIOFSND-80's
+ * per-question `recordQuestionAnswered` aggregate above.
  *
  * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
  * question 10 was just answered, derives the game's racha (longest run of
@@ -330,9 +342,13 @@
    * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
    * avance automático) lleva a la siguiente pregunta"). Both paths funnel
    * through the same `advance()` so a game is only ever walked forward once
-   * per question, whichever trigger fires first.
+   * per question, whichever trigger fires first. `analyticsStorage` records
+   * the aggregated `pregunta_respondida`/`pregunta_respondida_fallo` event
+   * counters (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client
+   * whose `recordQuestionAnswered` call updates that question's historic
+   * accuracy aggregate.
    */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage) {
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
@@ -374,6 +390,10 @@
           },
         ]);
 
+        if (storage && typeof storage.recordQuestionAnswered === 'function') {
+          storage.recordQuestionAnswered(question.id, result.isCorrect);
+        }
+
         if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
           analyticsStorage.recordEvent('pregunta_respondida');
 
@@ -393,20 +413,21 @@
           // before handing the finished game off to Resultados.
           session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
         }
+        }
         advance();
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       onExit: function () {
         var homeStorage = resolveHomeStorage();
@@ -431,9 +452,11 @@
    * to the selection engine (public/scripts/gameFlow.js) so a replay avoids
    * repeating them when the bank has enough fresh candidates. Passed by
    * `renderResultsFor` on 'Volver a jugar'; omitted for a first game from
-   * Inicio. `analyticsStorage` is forwarded through to renderQuestionAt/renderResultsFor unchanged.
+   * Inicio. `analyticsStorage` and `storage` (TRIOFSND-80's per-question
+   * accuracy client) are forwarded through to renderQuestionAt/renderResultsFor
+   * unchanged.
    */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds, analyticsStorage) {
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds, analyticsStorage, storage) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -449,10 +472,11 @@
         var playedQuestionIds = session.questions.map(function (question) {
           return question.id;
         });
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage);
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       storageObj,
-      analyticsStorage
+      analyticsStorage,
+      storage
     );
 
     return session;
@@ -644,6 +668,8 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
+  var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -651,6 +677,8 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[QUESTION_STATS_KEY] = {};
+    memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -726,6 +754,46 @@
         counts[eventName] = (counts[eventName] || 0) + 1;
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
+      },
+      // TRIOFSND-80: single write point (called from onAnswer in the
+      // bootstrap below, never from questionScreen.js). Persists the
+      // minimal, non-PII event { tipo: 'pregunta_respondida', id_pregunta,
+      // acierto } -- no name/age/email/ad-or-install id/free text/IP/device
+      // data -- and incrementally updates that question's total_respuestas/
+      // total_aciertos counters (raw, never rounded) for the historic %
+      // de acierto.
+      recordQuestionAnswered: function (questionId, isCorrect) {
+        var acierto = Boolean(isCorrect);
+
+        var events = readJSON(QUESTION_ANSWERED_EVENTS_KEY) || [];
+        events = events.concat([{ tipo: 'pregunta_respondida', id_pregunta: questionId, acierto: acierto }]);
+        writeJSON(QUESTION_ANSWERED_EVENTS_KEY, events);
+
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.pregunta_respondida = (counts.pregunta_respondida || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        stats[questionId] = {
+          total_respuestas: current.total_respuestas + 1,
+          total_aciertos: current.total_aciertos + (acierto ? 1 : 0),
+        };
+        writeJSON(QUESTION_STATS_KEY, stats);
+        return Promise.resolve(stats[questionId]);
+      },
+      // Historic per-question aggregate: raw counters plus porcentaje_acierto
+      // computed at full precision (0 -- never NaN/Infinity -- when the
+      // question has no answers yet).
+      getQuestionStats: function (questionId) {
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        var porcentaje = current.total_respuestas > 0 ? (current.total_aciertos / current.total_respuestas) * 100 : 0;
+        return Promise.resolve({
+          total_respuestas: current.total_respuestas,
+          total_aciertos: current.total_aciertos,
+          porcentaje_acierto: porcentaje,
+        });
       },
     };
   }
@@ -849,7 +917,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, storage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, undefined, storage, storage);
             }
           });
         }

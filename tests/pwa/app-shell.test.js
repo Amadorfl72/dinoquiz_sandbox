@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-
 const { renderMuteToggleButton, MUTE_STORAGE_KEY, readStoredMute, writeStoredMute } = require('../../public/scripts/appShell');
 const { getStrings } = require('../../src/i18n');
 

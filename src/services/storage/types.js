@@ -1,4 +1,20 @@
 /**
+ * @typedef {Object} QuestionStats
+ * @property {number} total_respuestas
+ * @property {number} total_aciertos
+ */
+
+/**
+ * Minimal, non-PII local event (TRIOFSND-80): no name/age/email/ad-or-install
+ * id/free text/IP/device data, ever -- just which question and whether it
+ * was a hit.
+ * @typedef {Object} QuestionAnsweredEvent
+ * @property {'pregunta_respondida'} tipo
+ * @property {string} id_pregunta
+ * @property {boolean} acierto
+ */
+
+/**
  * @typedef {Object} DinoQuizPersistedState
  * @property {number} bestScore
  * @property {number} maxStreak
@@ -6,6 +22,8 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
+ * @property {Object.<string, QuestionStats>} questionStats
+ * @property {QuestionAnsweredEvent[]} questionAnsweredEvents
  * @property {boolean} adsRemoved
  */
 
@@ -17,6 +35,8 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
+  questionStats: {},
+  questionAnsweredEvents: [],
   adsRemoved: false,
 };
 

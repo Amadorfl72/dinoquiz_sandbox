@@ -349,6 +349,47 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     );
   });
 
+  test('TRIOFSND-80: recordQuestionAnswered registers pregunta_respondida and aggregates per-question accuracy, no PII', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:questionAnsweredEvents',
+      JSON.stringify([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
+      ])
+    );
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ pregunta_respondida: 2 })
+    );
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:questionStats',
+      JSON.stringify({ 'trex-01': { total_respuestas: 2, total_aciertos: 1 } })
+    );
+    expect(await storage.getQuestionStats('trex-01')).toEqual({
+      total_respuestas: 2,
+      total_aciertos: 1,
+      porcentaje_acierto: 50,
+    });
+  });
+
+  test('TRIOFSND-80: getQuestionStats defaults to zero counters and a 0% for a question with no history', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.getQuestionStats('never-answered')).toEqual({
+      total_respuestas: 0,
+      total_aciertos: 0,
+      porcentaje_acierto: 0,
+    });
+  });
+
   test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
     const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
     const win = {

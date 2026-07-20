@@ -221,6 +221,77 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     }
   });
 
+  test('TRIOFSND-80: resolving a question records pregunta_respondida (id_pregunta + acierto/fallo, no PII)', () => {
+    jest.useFakeTimers();
+    try {
+      const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const storage = { recordQuestionAnswered: jest.fn().mockResolvedValue({ attempts: 1, correct: 1 }) };
+
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, storage);
+
+      answerCurrentQuestion(container, { correct: true });
+      expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(1, 'q-0', true);
+
+      answerCurrentQuestion(container, { correct: false });
+      expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(2, 'q-1', false);
+
+      expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('TRIOFSND-80: onAnswer persists the pregunta_respondida event and updates the aggregate through the real storage service', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    const recordSpy = jest.spyOn(storage, 'recordQuestionAnswered');
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, storage);
+
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    buttons[0].click(); // correctAnswerIndex is always 0 (buildQuestion)
+    await recordSpy.mock.results[0].value;
+
+    expect(await storage.get('questionAnsweredEvents')).toEqual([
+      { tipo: 'pregunta_respondida', id_pregunta: 'q-0', acierto: true },
+    ]);
+    expect(await storage.getQuestionStats('q-0')).toEqual({
+      total_respuestas: 1,
+      total_aciertos: 1,
+      porcentaje_acierto: 100,
+    });
+  });
+
+  test('TRIOFSND-80: a duplicate tap on an already-answered question does not persist or aggregate a second time', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    const recordSpy = jest.spyOn(storage, 'recordQuestionAnswered');
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, storage);
+
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    buttons[1].click(); // wrong answer first (correctAnswerIndex is 0)
+    await recordSpy.mock.results[0].value;
+    buttons[0].click(); // second tap on the same, already-answered question: ignored
+
+    expect(recordSpy).toHaveBeenCalledTimes(1);
+    expect(await storage.getQuestionStats('q-0')).toEqual({
+      total_respuestas: 1,
+      total_aciertos: 0,
+      porcentaje_acierto: 0,
+    });
+  });
+
   test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', () => {
     jest.useFakeTimers();
     try {
