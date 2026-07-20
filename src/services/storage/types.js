@@ -24,6 +24,7 @@
  * @property {Object.<string, number>} analyticsEventCounts
  * @property {Object.<string, QuestionStats>} questionStats
  * @property {QuestionAnsweredEvent[]} questionAnsweredEvents
+ * @property {boolean} adsRemoved
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -36,6 +37,7 @@ const DEFAULT_STATE = {
   analyticsEventCounts: {},
   questionStats: {},
   questionAnsweredEvents: [],
+  adsRemoved: false,
 };
 
 /**

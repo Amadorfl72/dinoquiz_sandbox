@@ -103,7 +103,7 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     });
     const storageObj = { getItem: jest.fn().mockReturnValue('true'), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
     expect(doc.getElementById).toHaveBeenCalledWith('app');
     expect(storageObj.getItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY);
@@ -126,12 +126,27 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
     const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
     const { onToggleMute } = renderHomeScreen.mock.calls[0][1];
     onToggleMute(true);
 
     expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
+  });
+
+  test('TRIOFSND-97: renderHome wires onPurchase so confirming persists the ads-removed flag to storage', async () => {
+    const { renderHome, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+
+    const { onPurchase } = renderHomeScreen.mock.calls[0][1];
+    onPurchase();
+
+    expect(storageObj.setItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY, 'true');
   });
 
   test('renderHome resolves to null without a #app container', async () => {
@@ -215,7 +230,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
     const storage = createFakeStorage({ hasSeenHomeTooltip: jest.fn().mockResolvedValue(false) });
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, storage);
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
 
     expect(storage.hasSeenHomeTooltip).toHaveBeenCalled();
     const options = renderHomeScreen.mock.calls[0][1];
@@ -231,7 +246,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
     const storage = createFakeStorage({ hasSeenHomeTooltip: jest.fn().mockResolvedValue(true) });
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, storage);
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
 
     const options = renderHomeScreen.mock.calls[0][1];
     expect(options.showTooltip).toBe(false);
@@ -244,7 +259,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
     const storage = createFakeStorage();
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, storage);
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
     const options = renderHomeScreen.mock.calls[0][1];
     options.onTooltipDismiss();
 
@@ -258,7 +273,7 @@ describe('TRIOFSND-65: first-run tooltip wired into the bootstrap script', () =>
     const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
     const storage = createFakeStorage();
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, storage);
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
     const options = renderHomeScreen.mock.calls[0][1];
     options.onPlayButtonClick();
 
@@ -419,7 +434,7 @@ describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the br
     });
     const storageObj = { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() };
 
-    await renderHome(doc, renderHomeScreen, fetchFn, undefined, undefined, storageObj);
+    await renderHome(doc, renderHomeScreen, fetchFn, storageObj);
 
     const { getByRole, within, fireEvent } = require('@testing-library/dom');
     // Home also has a standalone privacy-policy icon button (TRIOFSND-116,

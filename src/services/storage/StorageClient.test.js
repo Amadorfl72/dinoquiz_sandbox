@@ -228,6 +228,34 @@ describe('DinoQuizStorage', () => {
     expect(await storage.getEventCount('partida_iniciada')).toBe(3);
   });
 
+  it('hasRemovedAds defaults to false and reflects setAdsRemoved (TRIOFSND-97)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.hasRemovedAds()).toBe(false);
+
+    await storage.setAdsRemoved(true);
+
+    expect(await storage.hasRemovedAds()).toBe(true);
+  });
+
+  it('persists the ads-removed flag across instances sharing the same backend', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+    const storage = new DinoQuizStorage([adapter()]);
+    await storage.setAdsRemoved(true);
+
+    const reopened = new DinoQuizStorage([adapter()]);
+    expect(await reopened.hasRemovedAds()).toBe(true);
+  });
+
   it('recordEvent tracks distinct event names independently', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
