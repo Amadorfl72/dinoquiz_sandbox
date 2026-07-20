@@ -795,6 +795,63 @@ body {
   background-color: #a5d6a7;
   cursor: default;
 }
+
+/*
+ * Tablet landscape (TRIOFSND-73): the PRD's primary target (iPad 10.2",
+ * Android 10" en horizontal). `.question-screen__options` is already a
+ * fixed 2-column grid with `minmax(0, 1fr)` tracks and `width: 100%`, so it
+ * never needs horizontal scrolling at any width — this block only grows the
+ * illustration and the option tap areas to use the extra landscape space,
+ * mirroring the `.home-screen` breakpoint above.
+ */
+@media (min-width: 900px) and (orientation: landscape) {
+  .question-screen {
+    max-width: 960px;
+    gap: 32px;
+  }
+
+  .question-screen__image {
+    width: clamp(240px, 22vw, 340px);
+  }
+
+  .question-screen__options {
+    gap: 24px;
+  }
+
+  .question-screen__option {
+    min-height: 72px;
+    padding: 20px 24px;
+    font-size: 22px;
+  }
+}
+
+/*
+ * Small phones (TRIOFSND-73): degrade gracefully without dropping below the
+ * >=48x48dp tap-target floor (var(--tap-target-min)) or the >=18-20sp text
+ * floor — only the illustration, gaps and padding shrink, mirroring the
+ * `.home-screen` breakpoint above.
+ */
+@media (max-width: 420px) {
+  .question-screen {
+    gap: 12px;
+  }
+
+  .question-screen__image {
+    width: clamp(100px, 32vw, 160px);
+    margin-bottom: 8px;
+  }
+
+  .question-screen__options {
+    gap: 10px;
+  }
+
+  .question-screen__option {
+    min-width: var(--tap-target-min);
+    min-height: var(--tap-target-min);
+    padding: 10px 12px;
+  }
+}
+
 /* Visually hides content while keeping it available to screen readers. */
 .sr-only {
   position: absolute;

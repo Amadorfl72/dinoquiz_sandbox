@@ -145,6 +145,59 @@ describe('QuestionScreen', () => {
     expect(fontSizePx).toBeGreaterThanOrEqual(20);
   });
 
+  describe('responsive layout (TRIOFSND-73): tablet-landscape grid and small-screen degradation', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+    test('the options grid is a fixed 2-column, full-width grid at every breakpoint (no horizontal scroll)', () => {
+      const baseRuleMatch = css.match(/\.question-screen__options\s*\{([^}]*)\}/);
+      expect(baseRuleMatch).not.toBeNull();
+
+      expect(baseRuleMatch[1]).toMatch(/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+      expect(baseRuleMatch[1]).toMatch(/width:\s*100%/);
+    });
+
+    test('tablet landscape (>=900px, iPad 10.2"/Android 10") grows the image and option tap areas', () => {
+      const tabletBlockMatch = css.match(
+        /Tablet landscape \(TRIOFSND-73\)[\s\S]*?@media \(min-width: 900px\) and \(orientation: landscape\) \{([\s\S]*?)\n\}\n/
+      );
+      expect(tabletBlockMatch).not.toBeNull();
+      const block = tabletBlockMatch[1];
+
+      const optionRuleMatch = block.match(/\.question-screen__option\s*\{([^}]*)\}/);
+      expect(optionRuleMatch).not.toBeNull();
+      const optionRule = resolveCssCustomProperties(css, optionRuleMatch[1]);
+
+      const minHeightMatch = optionRule.match(/min-height:\s*([\d.]+)px/);
+      expect(minHeightMatch).not.toBeNull();
+      expect(parseFloat(minHeightMatch[1])).toBeGreaterThanOrEqual(64);
+
+      const fontSizeMatch = optionRule.match(/font-size:\s*([\d.]+)px/);
+      expect(fontSizeMatch).not.toBeNull();
+      expect(parseFloat(fontSizeMatch[1])).toBeGreaterThanOrEqual(20);
+
+      expect(block).toMatch(/\.question-screen__image\s*\{[^}]*width:/);
+    });
+
+    test('small screens (<=420px) keep the >=48x48dp tap target floor on options', () => {
+      const smallScreenBlockMatch = css.match(
+        /Small phones \(TRIOFSND-73\)[\s\S]*?@media \(max-width: 420px\) \{([\s\S]*?)\n\}\n/
+      );
+      expect(smallScreenBlockMatch).not.toBeNull();
+      const block = smallScreenBlockMatch[1];
+
+      const optionRuleMatch = block.match(/\.question-screen__option\s*\{([^}]*)\}/);
+      expect(optionRuleMatch).not.toBeNull();
+      const optionRule = resolveCssCustomProperties(css, optionRuleMatch[1]);
+
+      const minHeightMatch = optionRule.match(/min-height:\s*([\d.]+)px/);
+      const minWidthMatch = optionRule.match(/min-width:\s*([\d.]+)px/);
+      expect(minHeightMatch).not.toBeNull();
+      expect(minWidthMatch).not.toBeNull();
+      expect(parseFloat(minHeightMatch[1])).toBeGreaterThanOrEqual(48);
+      expect(parseFloat(minWidthMatch[1])).toBeGreaterThanOrEqual(48);
+    });
+  });
+
   describe('on a correct answer', () => {
     test('adds +1 to the score, highlights the option green, and plays the celebration animation', () => {
       const question = buildQuestion();
