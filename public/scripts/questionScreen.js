@@ -94,6 +94,14 @@
  * generic label, and the dato curioso is `aria-live="polite"` so
  * TalkBack/VoiceOver announce it as soon as it's revealed.
  *
+ * Feedback sound effects (TRIOFSND-78, AC-5/AC-11): `resolveSoundService`'s
+ * `preload()` runs right after mount, alongside `warmUpFeedbackAnimation`, so
+ * the first tap doesn't pay any decode/allocation cost. `handleSelect` then
+ * calls `playCorrect`/`playIncorrect` synchronously, in the same tick as the
+ * visual feedback classes — the service itself reads the persisted mute flag
+ * (localStorage, see soundService.js) before every play and simply skips the
+ * audio when muted, so the visual feedback is identical either way.
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -208,6 +216,19 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
   }
 
+  function resolveSoundService(options) {
+    if (options.soundService) {
+      return options.soundService;
+    }
+    if (typeof require === 'function') {
+      return require('./soundService').soundService;
+    }
+    return (
+      (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.soundService) ||
+      null
+    );
+  }
+
   function formatTemplate(template, values) {
     return Object.keys(values).reduce(function (result, key) {
       return result.split('{' + key + '}').join(values[key]);
@@ -314,6 +335,7 @@
     options = options || {};
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
+    var soundService = resolveSoundService(options);
     var audio = resolveAudio();
     var playFailSound =
       typeof options.playFailSound === 'function'
@@ -449,6 +471,14 @@
       score = scoring.applyAnswerToScore(score, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
+      if (soundService) {
+        if (correct) {
+          soundService.playCorrect();
+        } else {
+          soundService.playIncorrect();
+        }
+      }
+
       optionButtons.forEach(function (button, index) {
         button.disabled = true;
 
@@ -543,6 +573,9 @@
     container.appendChild(root);
 
     warmUpFeedbackAnimation();
+    if (soundService) {
+      soundService.preload();
+    }
 
     return {
       root: root,

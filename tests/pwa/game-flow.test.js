@@ -82,6 +82,8 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     addEventListenerSpy.mockRestore();
   });
 
+  let originalAudio;
+
   beforeEach(() => {
     jest.useFakeTimers();
     container = document.createElement('div');
@@ -89,12 +91,21 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     document.body.appendChild(container);
     jest.resetModules();
     jest.useFakeTimers();
+
+    // jsdom has no real media playback; stub it out so answering questions
+    // here (which plays the TRIOFSND-78 feedback sfx) doesn't hit jsdom's
+    // "not implemented" HTMLMediaElement.play() warning.
+    originalAudio = window.Audio;
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
   });
 
   afterEach(() => {
     jest.useRealTimers();
     container.remove();
     jest.useRealTimers();
+    window.Audio = originalAudio;
   });
 
   test('resolveScreenRenderers resolves all three screens under Node/Jest', () => {

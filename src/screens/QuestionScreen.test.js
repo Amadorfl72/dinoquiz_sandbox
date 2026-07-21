@@ -7,9 +7,43 @@ require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
 const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
+const { createSoundService, SOUND_SRC, MUTE_STORAGE_KEY } = require('../services/sound');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
 const { findBannedWords } = require('../i18n/contentGuide');
+
+function createFakeStorage(initial = {}) {
+  const store = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => store.set(key, value),
+  };
+}
+
+function createFakeAudio() {
+  return {
+    src: '',
+    preload: '',
+    currentTime: 0,
+    played: 0,
+    play() {
+      this.played += 1;
+      return Promise.resolve();
+    },
+  };
+}
+
+function createFakeAudioFactory() {
+  const created = {};
+  const factory = (src) => {
+    const audio = createFakeAudio();
+    audio.src = src;
+    created[src] = audio;
+    return audio;
+  };
+  factory.created = created;
+  return factory;
+}
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
@@ -74,14 +108,26 @@ describe('content-guide validation of failure feedback copy (TRIOFSND-91)', () =
 
 describe('QuestionScreen', () => {
   let container;
+  let originalAudio;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
+
+    // jsdom has no real media playback, so swap in a stub before any test
+    // lets the default soundService construct a real `Audio` (see the
+    // "on a correct/incorrect answer" describes below) — this keeps these
+    // tests focused on the visual feedback contract; TRIOFSND-78's own
+    // mute/playback behavior is covered by src/services/sound/index.test.js.
+    originalAudio = window.Audio;
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
   });
 
   afterEach(() => {
     container.remove();
+    window.Audio = originalAudio;
   });
 
   test('renders the question prompt and one accessible button per option', () => {
@@ -697,6 +743,92 @@ describe('QuestionScreen', () => {
 
     expect(container.textContent).toContain(strings.feedback.incorrect);
     expect(nextButton).toHaveTextContent(strings.nextButton);
+  });
+
+  describe('feedback sound effects integration (TRIOFSND-78, AC-5/AC-11)', () => {
+    test('normal mode: a correct answer plays the positive sound, not the neutral one', () => {
+      const audioFactory = createFakeAudioFactory();
+      const soundService = createSoundService({ audioFactory, storageObj: createFakeStorage() });
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question, { soundService });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(audioFactory.created[SOUND_SRC.correct].played).toBe(1);
+      expect(audioFactory.created[SOUND_SRC.incorrect].played).toBe(0);
+    });
+
+    test('normal mode: an incorrect answer plays the neutral sound, not the positive one', () => {
+      const audioFactory = createFakeAudioFactory();
+      const soundService = createSoundService({ audioFactory, storageObj: createFakeStorage() });
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons } = renderQuestionScreen(container, question, { soundService });
+
+      optionButtons[wrongIndex].click();
+
+      expect(audioFactory.created[SOUND_SRC.incorrect].played).toBe(1);
+      expect(audioFactory.created[SOUND_SRC.correct].played).toBe(0);
+    });
+
+    test('muted mode: with `dinoquiz:muted` persisted as true, a correct answer skips the audio but shows the same visual feedback', () => {
+      const audioFactory = createFakeAudioFactory();
+      const soundService = createSoundService({
+        audioFactory,
+        storageObj: createFakeStorage({ [MUTE_STORAGE_KEY]: 'true' }),
+      });
+      const question = buildQuestion();
+      const { optionButtons, feedback, funFactBox, funFact, nextButton } = renderQuestionScreen(container, question, {
+        soundService,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(audioFactory.created[SOUND_SRC.correct].played).toBe(0);
+      expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
+      expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--celebrate');
+      expect(feedback).toHaveTextContent(strings.feedback.correct);
+      expect(funFactBox).toBeVisible();
+      expect(funFact).toHaveTextContent(question.funFact);
+      expect(nextButton).toBeVisible();
+    });
+
+    test('muted mode: an incorrect answer also skips the audio while still revealing the correct answer and fun fact', () => {
+      const audioFactory = createFakeAudioFactory();
+      const soundService = createSoundService({
+        audioFactory,
+        storageObj: createFakeStorage({ [MUTE_STORAGE_KEY]: 'true' }),
+      });
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, feedback, funFactBox, nextButton } = renderQuestionScreen(container, question, {
+        soundService,
+      });
+
+      optionButtons[wrongIndex].click();
+
+      expect(audioFactory.created[SOUND_SRC.incorrect].played).toBe(0);
+      expect(feedback).toHaveTextContent(strings.feedback.incorrect);
+      expect(funFactBox).toBeVisible();
+      expect(nextButton).toBeVisible();
+    });
+
+    test('mid-game unmute: clearing the persisted mute flag between two answers resumes playback on the very next one', () => {
+      const audioFactory = createFakeAudioFactory();
+      const storageObj = createFakeStorage({ [MUTE_STORAGE_KEY]: 'true' });
+      const soundService = createSoundService({ audioFactory, storageObj });
+      const question = buildQuestion();
+
+      const first = renderQuestionScreen(container, question, { soundService });
+      first.optionButtons[question.correctAnswerIndex].click();
+      expect(audioFactory.created[SOUND_SRC.correct].played).toBe(0);
+
+      storageObj.setItem(MUTE_STORAGE_KEY, 'false');
+
+      const second = renderQuestionScreen(container, buildQuestion({ id: 'trex-02' }), { soundService });
+      second.optionButtons[question.correctAnswerIndex].click();
+      expect(audioFactory.created[SOUND_SRC.correct].played).toBe(1);
+    });
   });
 
   describe('rewarded-ad CTA for an extra dato curioso (TRIOFSND-86)', () => {

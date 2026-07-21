@@ -413,7 +413,6 @@
           // before handing the finished game off to Resultados.
           session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
         }
-        }
         advance();
       },
     });
