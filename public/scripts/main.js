@@ -367,7 +367,7 @@
       if (session.state.questionIndex >= session.questions.length) {
         onGameComplete(session.state);
       } else {
-        renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage);
       }
     }
 
@@ -390,7 +390,16 @@
           },
         ]);
 
-        if (storage && typeof storage.recordQuestionAnswered === 'function') {
+        // TRIOFSND-92: the aggregated acierto/fallo tally keys off the
+        // stable bank id (never the visible text or index); an invalid or
+        // missing id is skipped rather than recorded/aggregated under an
+        // anonymous key.
+        if (
+          storage &&
+          typeof storage.recordQuestionAnswered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
           storage.recordQuestionAnswered(question.id, result.isCorrect);
         }
 

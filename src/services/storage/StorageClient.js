@@ -358,6 +358,43 @@ class DinoQuizStorage {
     const porcentaje_acierto = total_respuestas > 0 ? (total_aciertos / total_respuestas) * 100 : 0;
     return { total_respuestas, total_aciertos, porcentaje_acierto };
   }
+
+  /**
+   * Aggregated, non-PII acierto/fallo counter for the `pregunta_respondida`
+   * event (TRIOFSND-92, PRD logging_observability). A thin validation seam
+   * over `recordQuestionAnswered`, so the tally shares the single
+   * `questionStats` source of truth instead of a second persisted key. It
+   * never records which child answered or the option chosen, so the only
+   * thing derivable later is the % de fallo por pregunta in aggregate, not
+   * any individual child's performance. An invalid/missing `id_pregunta` or
+   * a `resultado` outside acierto/fallo is skipped rather than recorded
+   * under an anonymous key.
+   */
+  async recordQuestionResult(idPregunta, resultado) {
+    if (typeof idPregunta !== 'string' || idPregunta.length === 0) {
+      // No valid id_pregunta: skip rather than create an anonymous/empty key.
+      return undefined;
+    }
+    if (resultado !== 'acierto' && resultado !== 'fallo') {
+      return undefined;
+    }
+
+    await this.recordQuestionAnswered(idPregunta, resultado === 'acierto');
+    return this.getQuestionResults(idPregunta);
+  }
+
+  /** Aggregated `{acierto, fallo}` view of a question, derived from `questionStats`. */
+  async getQuestionResults(idPregunta) {
+    const { total_respuestas, total_aciertos } = await this.getQuestionStats(idPregunta);
+    return { acierto: total_aciertos, fallo: total_respuestas - total_aciertos };
+  }
+
+  /** Resolves to the aggregated failure rate (0-100) for `idPregunta`, or 0 before any answer. */
+  async getQuestionFailureRate(idPregunta) {
+    const { acierto, fallo } = await this.getQuestionResults(idPregunta);
+    const total = acierto + fallo;
+    return total > 0 ? (fallo / total) * 100 : 0;
+  }
 }
 
 module.exports = { DinoQuizStorage };

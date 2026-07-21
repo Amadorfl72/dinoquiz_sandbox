@@ -269,6 +269,103 @@ describe('DinoQuizStorage', () => {
     });
   });
 
+  describe('TRIOFSND-92: aggregated acierto/fallo view over questionStats (recordQuestionResult)', () => {
+    it('recordQuestionResult aggregates acierto and fallo counts per id_pregunta over the shared questionStats aggregate', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionResult('trex-01', 'acierto');
+      await storage.recordQuestionResult('trex-01', 'fallo');
+      await storage.recordQuestionResult('trex-01', 'fallo');
+
+      expect(await storage.getQuestionResults('trex-01')).toEqual({ acierto: 1, fallo: 2 });
+      expect(await storage.get('questionStats')).toEqual({
+        'trex-01': { total_respuestas: 3, total_aciertos: 1 },
+      });
+    });
+
+    it('recordQuestionResult tracks distinct question ids independently', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionResult('trex-01', 'acierto');
+      await storage.recordQuestionResult('triceratops-02', 'fallo');
+
+      expect(await storage.getQuestionResults('trex-01')).toEqual({ acierto: 1, fallo: 0 });
+      expect(await storage.getQuestionResults('triceratops-02')).toEqual({ acierto: 0, fallo: 1 });
+    });
+
+    it('getQuestionResults defaults to zero acierto/fallo for an unanswered question', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getQuestionResults('never-answered')).toEqual({ acierto: 0, fallo: 0 });
+    });
+
+    it('getQuestionFailureRate computes the aggregated % de fallo por pregunta', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getQuestionFailureRate('trex-01')).toBe(0);
+
+      await storage.recordQuestionResult('trex-01', 'acierto');
+      await storage.recordQuestionResult('trex-01', 'fallo');
+      await storage.recordQuestionResult('trex-01', 'fallo');
+      await storage.recordQuestionResult('trex-01', 'fallo');
+
+      expect(await storage.getQuestionFailureRate('trex-01')).toBe(75);
+    });
+
+    it('recordQuestionResult ignores a missing/empty question id instead of creating an anonymous key', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionResult(undefined, 'fallo');
+      await storage.recordQuestionResult('', 'acierto');
+      await storage.recordQuestionResult(null, 'fallo');
+
+      expect(await storage.get('questionStats')).toEqual({});
+      expect(await storage.get('questionAnsweredEvents')).toEqual([]);
+    });
+
+    it('recordQuestionResult ignores a resultado outside of acierto/fallo', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionResult('trex-01', 'correct');
+      await storage.recordQuestionResult('trex-01', '');
+      await storage.recordQuestionResult('trex-01', undefined);
+
+      expect(await storage.get('questionStats')).toEqual({});
+      expect(await storage.get('questionAnsweredEvents')).toEqual([]);
+    });
+
+    it('persists the acierto/fallo aggregate across instances sharing the same backend', async () => {
+      const store = new Map();
+      const adapter = () =>
+        createFakeAdapter({
+          async getItem(key) {
+            return store.has(key) ? store.get(key) : null;
+          },
+          async setItem(key, value) {
+            store.set(key, value);
+          },
+        });
+      const storage = new DinoQuizStorage([adapter()]);
+      await storage.recordQuestionResult('trex-01', 'fallo');
+
+      const reopened = new DinoQuizStorage([adapter()]);
+      expect(await reopened.getQuestionResults('trex-01')).toEqual({ acierto: 0, fallo: 1 });
+    });
+
+    it('recordQuestionResult stores only aggregated counts, no per-child or per-answer identifiers', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordQuestionResult('trex-01', 'fallo');
+      const results = await storage.getQuestionResults('trex-01');
+
+      expect(Object.keys(results).sort()).toEqual(['acierto', 'fallo']);
+      expect(results).not.toHaveProperty('userId');
+      expect(results).not.toHaveProperty('deviceId');
+      expect(results).not.toHaveProperty('timestamp');
+      expect(results).not.toHaveProperty('selectedOption');
+    });
+  });
+
   describe('TRIOFSND-80: pregunta_respondida event + incremental per-question aggregate', () => {
     it('records a pregunta_respondida event with tipo/id_pregunta/acierto=true on a hit, no PII payload', async () => {
       const storage = new DinoQuizStorage([createFakeAdapter()]);
