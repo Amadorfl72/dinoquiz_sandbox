@@ -13,8 +13,13 @@
   <link rel="stylesheet" href="/styles/main.css" />
 </head>
 <body>
-  <div id="app" role="main">
-    <!-- App shell: las pantallas (Inicio, Quiz, Resultados) se montan aquí. -->
+  <div id="app-shell">
+    <header class="app-shell__controls">
+      <div id="mute-toggle"></div>
+    </header>
+    <div id="app" role="main">
+      <!-- App shell: las pantallas (Inicio, Quiz, Resultados) se montan aquí. -->
+    </div>
   </div>
 
   <!--
@@ -24,7 +29,12 @@
     fetches the data and drives the Inicio -> Quiz -> Resultados loop.
   -->
   <script src="/scripts/scoring.js" defer></script>
+  <script src="/scripts/soundService.js" defer></script>
+  <script src="/scripts/adsService.js" defer></script>
   <script src="/scripts/gameFlow.js" defer></script>
+  <script src="/scripts/audio.js" defer></script>
+  <script src="/scripts/network.js" defer></script>
+  <script src="/scripts/appShell.js" defer></script>
   <script src="/scripts/homeScreen.js" defer></script>
   <script src="/scripts/privacyPolicyScreen.js" defer></script>
   <script src="/scripts/questionScreen.js" defer></script>

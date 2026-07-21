@@ -1,7 +1,17 @@
 /**
- * @typedef {Object} QuestionResultCounts
- * @property {number} acierto
- * @property {number} fallo
+ * @typedef {Object} QuestionStats
+ * @property {number} total_respuestas
+ * @property {number} total_aciertos
+ */
+
+/**
+ * Minimal, non-PII local event (TRIOFSND-80): no name/age/email/ad-or-install
+ * id/free text/IP/device data, ever -- just which question and whether it
+ * was a hit.
+ * @typedef {Object} QuestionAnsweredEvent
+ * @property {'pregunta_respondida'} tipo
+ * @property {string} id_pregunta
+ * @property {boolean} acierto
  */
 
 /**
@@ -12,10 +22,9 @@
  * @property {boolean} muted
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
- * @property {Object.<string, QuestionResultCounts>} questionResults Aggregated,
- *   non-PII `acierto`/`fallo` counts per `id_pregunta` (from the
- *   `pregunta_respondida` event) -- no per-child answer log, so the % de
- *   fallo por pregunta can only ever be computed in aggregate.
+ * @property {Object.<string, QuestionStats>} questionStats
+ * @property {QuestionAnsweredEvent[]} questionAnsweredEvents
+ * @property {boolean} adsRemoved
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -26,7 +35,9 @@ const DEFAULT_STATE = {
   muted: false,
   homeTooltipSeen: false,
   analyticsEventCounts: {},
-  questionResults: {},
+  questionStats: {},
+  questionAnsweredEvents: [],
+  adsRemoved: false,
 };
 
 /**
