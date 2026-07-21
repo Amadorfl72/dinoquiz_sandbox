@@ -33,7 +33,13 @@
  * `window.open`.
  */
 (function () {
-  var MUTE_STORAGE_KEY = 'dinoquiz.audio.muted';
+  // Single canonical mute key (TRIOFSND-106): must match the exact key
+  // `public/scripts/main.js`'s `MUTE_STORAGE_KEY`/`loadMutedState`/
+  // `persistMutedState` reads and writes, so this app-shell button and the
+  // Home screen's own mute button (public/scripts/homeScreen.js) always
+  // reflect the same single, persisted mute state instead of two diverging
+  // ones under different keys.
+  var MUTE_STORAGE_KEY = 'dinoquiz:muted';
 
   var SPEAKER_ON_ICON =
     '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">' +

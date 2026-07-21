@@ -305,7 +305,7 @@ describe('writeStoredMute', () => {
 });
 
 describe('MUTE_STORAGE_KEY', () => {
-  test('is exported with expected value', () => {
-    expect(MUTE_STORAGE_KEY).toBe('dinoquiz.audio.muted');
+  test('is exported with expected value (TRIOFSND-106: the one canonical mute key shared with main.js)', () => {
+    expect(MUTE_STORAGE_KEY).toBe('dinoquiz:muted');
   });
 });

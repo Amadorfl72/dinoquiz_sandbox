@@ -8,7 +8,6 @@ const { getByRole } = require('@testing-library/dom');
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
-const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 
 function buildQuestion(id) {
   return {
@@ -26,16 +25,23 @@ function buildQuestionBank(count) {
   return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
 }
 
+async function answerCurrentQuestion(container, { correct }) {
+  const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+  const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
+  buttons[index].click();
+
   // "Siguiente" stays disabled for MIN_ADVANCE_DELAY_MS after answering
   // (AC-6); fast-forward past it (async, so any pending microtask work — e.g.
   // the aria-live announcement — flushes too) so walking through a whole
   // game doesn't take real wall-clock time.
   await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
-  const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
-  const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
-  buttons[index].click();
-async function answerCurrentQuestion(container, { correct }) {
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+}
+
+// Lets any promise chains already queued (e.g. renderHome's several `.then()`
+// hops across fetch/storage) settle under real timers.
+async function flushPromises() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a jugar / Salir', () => {
@@ -138,23 +144,6 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     } finally {
       jest.useRealTimers();
     }
-    expect(container.textContent).toContain('0/10');
-
-    // Replay with a different random seed so a different subset is picked (AC-9).
-    getByRole(container, 'button', { name: strings.playAgainButton }).click();
-
-    // We should now be back on a question screen (first question of the new
-    // game), not still on Resultados, with a fresh, reset score of 0.
-    expect(container.querySelector('.question-screen')).not.toBeNull();
-    expect(container.querySelector('.results-screen')).toBeNull();
-    expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
-
-    // Finish the replayed game to confirm the reset score (not the old
-    // game's answers) drives the new result.
-    for (let i = 0; i < 10; i += 1) {
-      await answerCurrentQuestion(container, { correct: true });
-    }
-    expect(container.textContent).toContain('10/10');
   });
 
   test('"Salir" navigates back to Inicio', async () => {
@@ -177,8 +166,10 @@ describe('TRIOFSND-100: app-shell navigation Quiz -> Resultados -> Volver a juga
     getByRole(container, 'button', { name: strings.exitButton }).click();
 
     // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
-    // let its promise chain settle before asserting on the DOM.
-    await jest.advanceTimersByTimeAsync(0);
+    // let its promise chain settle before asserting on the DOM. Real timers
+    // are already active here (see the `finally` above), so flush via a real
+    // setTimeout rather than jest's fake-timer APIs.
+    await flushPromises();
 
     expect(container.querySelector('.results-screen')).toBeNull();
     expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();

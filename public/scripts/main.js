@@ -73,21 +73,27 @@
  * `options.purchaseStrings`, giving the browser path the same pre-resolved
  * strings the Node/Jest path gets via `require`.
  *
- * `renderHome`'s optional `storage` argument is a single object, duck-typed
- * against two independent interfaces so callers can opt into either or both:
- *   - `getItem`/`setItem` (a plain `localStorage`-shaped backend) wires the
- *     mute toggle (TRIOFSND-66): `MUTE_STORAGE_KEY` matches the namespaced
- *     key `src/services/storage` itself writes (`dinoquiz:muted`,
- *     JSON-encoded), so any backend sharing that key round-trips with it.
- *   - `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` wires the
- *     first-run '¡Jugar!' tooltip (TRIOFSND-65): when present, `renderHome`
- *     resolves whether the tooltip was already dismissed on this device and
- *     passes the persistence/analytics callbacks through to
- *     `renderHomeScreen`. Neither interface is required -- omitting
- *     `storage` entirely (as direct callers of `renderHome` may for tests)
- *     skips both; passing neither argument at all renders Home with plain
- *     strings only (no surprise mute/tooltip side effects) -- useful for
- *     bare unit renders.
+ * `renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy,
+ * tooltipStorage, muteStorageObj)` (TRIOFSND-106) takes the tooltip and mute
+ * backends as two independent, optional arguments instead of one duck-typed
+ * object, so the single mute state (`MUTE_STORAGE_KEY`, `dinoquiz:muted`)
+ * and the first-run tooltip state can each be injected (or omitted) on their
+ * own for tests:
+ *   - `muteStorageObj` (`getItem`/`setItem`, a plain `localStorage`-shaped
+ *     backend) wires the mute toggle (TRIOFSND-106): every render reads and
+ *     immediately re-persists the normalized value via `loadMutedState`/
+ *     `persistMutedState`, and the `onToggleMute` handed to
+ *     `renderHomeScreen` persists whatever new value the button computes,
+ *     so the button, storage and the SFX gating `renderQuestionAt` derives
+ *     from the same key never diverge. Omitting it falls back to
+ *     `localStorage` (browser or jsdom).
+ *   - `tooltipStorage` (`hasSeenHomeTooltip`/`markHomeTooltipSeen`/
+ *     `recordEventOnce`/`recordEvent`) wires the first-run '¡Jugar!' tooltip
+ *     (TRIOFSND-65) and the `partida_iniciada`/`first_tap_jugar` counters.
+ *     Omitting it falls back to `loadDinoQuizStorage()` (Node/Jest) or
+ *     `createBrowserHomeStorage()` (real browser) -- the same default
+ *     resolution `resolveHomeStorage` performs for the real app, so the
+ *     tooltip and mute wiring both work with no explicit storage argument.
  *
  * `resolveHomeStorage` builds the real, combined backend used by the actual
  * app-shell entry points (`renderRoute`, "Salir" from Resultados). Two
@@ -276,9 +282,17 @@
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
-          navigateToPrivacyPolicy();
-        });
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage,
+          homeStorage
+        );
       },
     });
   }
@@ -365,12 +379,6 @@
       });
   }
 
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
-    });
-  }
-
   function loadHomeStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.home;
@@ -388,15 +396,10 @@
       return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
-    });
-  }
-
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
 
@@ -544,6 +547,9 @@
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
       },
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -556,17 +562,20 @@
   }
 
   /**
-   * `storage`, when given, doubles as two independent optional backends,
-   * told apart by shape: a raw `getItem`/`setItem` object (matching
-   * `localStorage`, TRIOFSND-66) persists the mute preference, while a
-   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` object
-   * (matching `src/services/storage`'s `dinoQuizStorage` or
-   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip.
-   * Passing neither renders Home with plain strings only, so callers that
-   * don't care about mute/tooltip persistence (e.g. a bare unit render) get
-   * back exactly the options they'd expect with no surprise side effects.
+   * `renderHome` is the single place that wires the global mute control
+   * (TRIOFSND-106) into whichever screen already renders it: `muted` is
+   * always read from `MUTE_STORAGE_KEY` (`dinoquiz:muted`, the one and only
+   * mute state) and `onToggleMute` always persists back to it, so the
+   * button's visual state, the audio helpers' gating and storage never
+   * diverge. `tooltipStorage` (TRIOFSND-65, `hasSeenHomeTooltip`/
+   * `markHomeTooltipSeen`/`recordEventOnce`/`recordEvent`) and
+   * `muteStorageObj` (`getItem`/`setItem`) are independent optional
+   * backends -- passing neither falls back to the app's real default
+   * backends (`resolveHomeStorage`'s halves) so both first-run tooltip and
+   * mute wiring work with no explicit storage argument, exactly as they do
+   * for the real bootstrap.
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, tooltipStorage, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -584,8 +593,9 @@
       return Promise.resolve(null);
     }
 
-    var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
-    var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
+    var resolvedTooltipStorage = tooltipStorage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    var resolvedMuteStorage =
+      muteStorageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
@@ -596,10 +606,16 @@
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
 
-      if (muteStorageObj) {
-        renderOptions.muted = loadMutedState(muteStorageObj);
+      if (resolvedMuteStorage) {
+        // Normalize-and-persist on every init, not just on toggle: an
+        // absent/invalid key or a read error must still resolve to `false`
+        // and be written back immediately, so the button always reflects
+        // (and storage always holds) the same effective state before the
+        // first interaction.
+        renderOptions.muted = loadMutedState(resolvedMuteStorage);
+        persistMutedState(renderOptions.muted, resolvedMuteStorage);
         renderOptions.onToggleMute = function (muted) {
-          persistMutedState(muted, muteStorageObj);
+          persistMutedState(muted, resolvedMuteStorage);
         };
       }
 
@@ -614,8 +630,10 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              if (resolvedTooltipStorage && typeof resolvedTooltipStorage.recordEvent === 'function') {
+                resolvedTooltipStorage.recordEvent('partida_iniciada');
+              }
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedMuteStorage);
             }
           });
         }
@@ -623,17 +641,17 @@
         return homeApi;
       }
 
-      if (!tooltipStorage) {
+      if (!resolvedTooltipStorage || typeof resolvedTooltipStorage.hasSeenHomeTooltip !== 'function') {
         return finishRender();
       }
 
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return resolvedTooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorage.markHomeTooltipSeen();
+          resolvedTooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorage.recordEventOnce('first_tap_jugar');
+          resolvedTooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -698,9 +716,17 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      homeStorage,
+      homeStorage
+    );
   }
 
   /**
