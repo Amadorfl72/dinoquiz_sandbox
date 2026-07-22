@@ -266,4 +266,126 @@ describe('DinoQuizStorage', () => {
       replay_pulsado: 1,
     });
   });
+
+  // TRIOFSND-102: partida_iniciada/replay_pulsado are just two more counters
+  // in the same existing analyticsEventCounts schema/root key -- these tests
+  // cover the sanitization and persistence rules the aggregated-analytics
+  // store must uphold for *any* counter, not a new store or schema.
+  describe('TRIOFSND-102: counter sanitization, persistence and privacy', () => {
+    it('defaults partida_iniciada and replay_pulsado to 0 when absent', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getEventCount('partida_iniciada')).toBe(0);
+      expect(await storage.getEventCount('replay_pulsado')).toBe(0);
+    });
+
+    it('accumulates on top of an existing total greater than 0, never resetting or hard-setting 1', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('analyticsEventCounts', { partida_iniciada: 4 });
+
+      await storage.recordEvent('partida_iniciada');
+
+      expect(await storage.getEventCount('partida_iniciada')).toBe(5);
+    });
+
+    it.each([
+      ['a missing value', undefined],
+      ['a string', '3'],
+      ['a boolean', true],
+      ['an object', { nested: true }],
+      ['NaN', NaN],
+      ['Infinity', Infinity],
+      ['a negative number', -2],
+      ['a fractional number', 2.5],
+    ])('reads %s stored counter value as 0', async (_label, storedValue) => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('analyticsEventCounts', { partida_iniciada: storedValue });
+
+      expect(await storage.getEventCount('partida_iniciada')).toBe(0);
+    });
+
+    it('correcting an invalid counter via recordEvent yields 1 and the game keeps working without throwing', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('analyticsEventCounts', { partida_iniciada: 'not-a-number' });
+
+      await expect(storage.recordEvent('partida_iniciada')).resolves.toBe(1);
+      expect(await storage.getEventCount('partida_iniciada')).toBe(1);
+    });
+
+    it('recovering an invalid counter preserves the sibling counter and other valid fields untouched', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('analyticsEventCounts', {
+        partida_iniciada: -5,
+        replay_pulsado: 3,
+        pregunta_respondida: 12,
+      });
+
+      await storage.recordEvent('partida_iniciada');
+
+      expect(await storage.get('analyticsEventCounts')).toEqual({
+        partida_iniciada: 1,
+        replay_pulsado: 3,
+        pregunta_respondida: 12,
+      });
+    });
+
+    it.each([
+      ['null', null],
+      ['a string', 'corrupted'],
+      ['an array', ['not', 'an', 'object']],
+    ])('does not block reading or recording a counter when the root value is %s', async (_label, corruptRoot) => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('analyticsEventCounts', corruptRoot);
+
+      await expect(storage.getEventCount('partida_iniciada')).resolves.toBe(0);
+      await expect(storage.recordEvent('partida_iniciada')).resolves.toBe(1);
+    });
+
+    it('survives a reload: a fresh instance sharing the same backend reads the same totals', async () => {
+      const store = new Map();
+      const adapter = () =>
+        createFakeAdapter({
+          async getItem(key) {
+            return store.has(key) ? store.get(key) : null;
+          },
+          async setItem(key, value) {
+            store.set(key, value);
+          },
+        });
+
+      const storage = new DinoQuizStorage([adapter()]);
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('replay_pulsado');
+
+      const reopened = new DinoQuizStorage([adapter()]);
+      expect(await reopened.getEventCount('partida_iniciada')).toBe(2);
+      expect(await reopened.getEventCount('replay_pulsado')).toBe(1);
+    });
+
+    it('reading and recording counters never performs any network communication', async () => {
+      const fetchSpy = jest.fn();
+      const originalFetch = global.fetch;
+      global.fetch = fetchSpy;
+      const sendBeaconSpy = jest.fn();
+      const originalSendBeacon = navigator.sendBeacon;
+      navigator.sendBeacon = sendBeaconSpy;
+      const xhrOpenSpy = jest.spyOn(XMLHttpRequest.prototype, 'open');
+
+      try {
+        const storage = new DinoQuizStorage([createFakeAdapter()]);
+        await storage.getEventCount('partida_iniciada');
+        await storage.recordEvent('partida_iniciada');
+        await storage.recordEvent('replay_pulsado');
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(sendBeaconSpy).not.toHaveBeenCalled();
+        expect(xhrOpenSpy).not.toHaveBeenCalled();
+      } finally {
+        global.fetch = originalFetch;
+        navigator.sendBeacon = originalSendBeacon;
+        xhrOpenSpy.mockRestore();
+      }
+    });
+  });
 });

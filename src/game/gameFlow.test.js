@@ -111,4 +111,86 @@ describe('startNewGame', () => {
 
     expect(secondGame.questions.map((q) => q.id)).not.toEqual(firstGame.questions.map((q) => q.id));
   });
+
+  // TRIOFSND-102: gameFlow.startNewGame is the "motor canónico" -- the single
+  // place that validates a partida (exactly 10 unique IDs, and, on a replay,
+  // an ID set that differs from the previous game) before the app shell is
+  // allowed to increment partida_iniciada.
+  describe('TRIOFSND-102: partida validation', () => {
+    test('every accepted partida has exactly QUESTIONS_PER_GAME questions with unique, stable IDs', () => {
+      const questions = buildQuestions(40);
+      const game = startNewGame(questions);
+
+      expect(game.questions).toHaveLength(QUESTIONS_PER_GAME);
+      const ids = game.questions.map((q) => q.id);
+      expect(new Set(ids).size).toBe(QUESTIONS_PER_GAME);
+    });
+
+    test('returns null instead of a partial game when the bank has fewer than QUESTIONS_PER_GAME questions', () => {
+      const questions = buildQuestions(5);
+      expect(startNewGame(questions)).toBeNull();
+    });
+
+    test('a replay whose ID set differs from the previous game (even reordered) is accepted', () => {
+      const questions = buildQuestions(20);
+      const firstGame = startNewGame(questions, { randomFn: () => 0 });
+      const previousIds = firstGame.questions.map((q) => q.id);
+
+      const replay = startNewGame(questions, { randomFn: () => 0.5, previousQuestionIds: previousIds });
+
+      expect(replay).not.toBeNull();
+      expect(replay.questions).toHaveLength(QUESTIONS_PER_GAME);
+      const replayIds = replay.questions.map((q) => q.id);
+      expect(new Set(replayIds).size).toBe(QUESTIONS_PER_GAME);
+      expect(new Set(replayIds)).not.toEqual(new Set(previousIds));
+    });
+
+    test('a same-set replay (same 10 IDs, only reordered) is rejected as a match, not accepted', () => {
+      const questions = buildQuestions(10); // bank size === QUESTIONS_PER_GAME: only one possible set
+      const firstGame = startNewGame(questions, { randomFn: () => 0 });
+      const previousIds = firstGame.questions.map((q) => q.id);
+      // Reordered copy of the very same set, exercising order-independent comparison.
+      const reorderedPreviousIds = previousIds.slice().reverse();
+
+      const replay = startNewGame(questions, { randomFn: () => 0.5, previousQuestionIds: reorderedPreviousIds });
+
+      expect(replay).toBeNull();
+    });
+
+    test('returns null when the bank cannot offer any set different from the previous game', () => {
+      const questions = buildQuestions(10);
+      const firstGame = startNewGame(questions, { randomFn: () => 0 });
+      const previousIds = firstGame.questions.map((q) => q.id);
+
+      expect(startNewGame(questions, { previousQuestionIds: previousIds })).toBeNull();
+    });
+
+    test('a replay may legitimately share some (not all) questions with the previous game', () => {
+      const questions = buildQuestions(11); // exactly one question beyond QUESTIONS_PER_GAME
+      const firstGame = startNewGame(questions, { randomFn: () => 0 });
+      const previousIds = firstGame.questions.map((q) => q.id);
+
+      const replay = startNewGame(questions, { randomFn: () => 0, previousQuestionIds: previousIds });
+
+      expect(replay).not.toBeNull();
+      const replayIds = replay.questions.map((q) => q.id);
+      const overlap = replayIds.filter((id) => previousIds.includes(id));
+      expect(overlap.length).toBeGreaterThan(0);
+      expect(overlap.length).toBeLessThan(QUESTIONS_PER_GAME);
+    });
+
+    test('avoiding a same-set replay is deterministic, not left to chance, when the bank has room', () => {
+      const questions = buildQuestions(11);
+      // A randomFn fixed at 0 would otherwise pick the exact same ordered
+      // subset every time; the engine must still produce a different set.
+      const firstGame = startNewGame(questions, { randomFn: () => 0 });
+      const previousIds = firstGame.questions.map((q) => q.id);
+
+      const replay = startNewGame(questions, { randomFn: () => 0, previousQuestionIds: previousIds });
+
+      expect(replay).not.toBeNull();
+      const replayIds = replay.questions.map((q) => q.id);
+      expect(new Set(replayIds)).not.toEqual(new Set(previousIds));
+    });
+  });
 });

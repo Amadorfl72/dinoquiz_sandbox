@@ -104,15 +104,26 @@
  * the tooltip, its persisted "seen" flag, the analytics counters and the
  * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  *
- * Starting a game (TRIOFSND-67): the '¡Jugar!' click handler wired below
- * records the aggregated, non-PII `partida_iniciada` event (via
- * `storage.recordEvent`, which increments on every call — unlike the
- * once-only `first_tap_jugar` counter above) before calling `startNewGame`,
- * so every game start is counted even on replay-free single sessions. Both
- * this handler and `homeScreen.js`'s own click listener (which dismisses the
- * tooltip and fires `first_tap_jugar`) run synchronously off the same click
- * event, so the tooltip closes and the first question renders in the same
- * tick — no perceptible delay after the tap.
+ * Starting a game (TRIOFSND-67/TRIOFSND-102): the '¡Jugar!' click handler
+ * wired below calls the shared `startNewGame`, which itself records the
+ * aggregated, non-PII `partida_iniciada` event (via `storage.recordEvent`,
+ * which increments on every call — unlike the once-only `first_tap_jugar`
+ * counter above) once the new partida has validated (TRIOFSND-99: exactly
+ * 10 questions, unique IDs) and before its first question renders — never
+ * at the start of the selection attempt. This handler and
+ * `homeScreen.js`'s own click listener (which dismisses the tooltip and
+ * fires `first_tap_jugar`) run synchronously off the same click event, so
+ * the tooltip closes and the first question renders in the same tick — no
+ * perceptible delay after the tap.
+ *
+ * Replaying a game (TRIOFSND-102): `renderResultsFor`'s 'Volver a jugar'
+ * handler records `replay_pulsado` first, then delegates to the same
+ * `startNewGame` with the previous partida's question IDs (so the canonical
+ * creator rejects a same-set reshuffle) — it never increments
+ * `partida_iniciada` itself. A per-render lock ignores further signals from
+ * the same accepted activation and re-opens if the new partida fails
+ * validation, so a later, independent activation still counts as a new
+ * replay.
  *
  * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
  * is threaded through `startNewGame` -> `renderQuestionAt` ->
@@ -382,13 +393,54 @@
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
+    // TRIOFSND-102: guards a single accepted 'Volver a jugar' activation from
+    // being double-counted by multiple callbacks/events firing for it. Stays
+    // locked once a replay is accepted and succeeds (the screen is replaced
+    // anyway); if the new partida fails validation, it unlocks so the same
+    // button admits a later, independent activation as a fresh replay.
+    var replayLocked = false;
+
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
+        if (replayLocked) {
+          return;
+        }
+        replayLocked = true;
+
+        // Order matters (TRIOFSND-102): count the accepted activation first,
+        // then delegate to the canonical creator. partida_iniciada is never
+        // incremented here -- only startNewGame does that, and only after
+        // the new partida validates.
+        if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
+          analyticsStorage.recordEvent('replay_pulsado');
+        }
+
+        var previousQuestionIds = (finalState.answers || []).map(function (answer) {
+          return answer.questionId;
+        });
+
+        var newSession = startNewGame(
+          container,
+          renderers,
+          questions,
+          doc,
+          fetchFn,
+          undefined,
+          storageObj,
+          analyticsStorage,
+          previousQuestionIds
+        );
+
+        if (!newSession) {
+          // Could not produce a valid replay (e.g. the bank can't offer a
+          // different 10-question set) -- stay on Resultados and let the
+          // button accept a later, independent activation.
+          replayLocked = false;
+        }
       },
       onExit: function () {
         var homeStorage = resolveHomeStorage();
@@ -406,14 +458,32 @@
     });
   }
 
-  /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage) {
+  /**
+   * Resets game state (score/questionIndex/answers) and navigates to the
+   * first question of a new game -- shared by both '¡Jugar!' and an accepted
+   * 'Volver a jugar' (`previousQuestionIds`, when given, is the immediately
+   * previous partida's question IDs, used to reject a same-set replay).
+   *
+   * TRIOFSND-102: this is the single point that increments the aggregated
+   * `partida_iniciada` counter, and only once `gameFlow.startNewGame` has
+   * validated the new partida (exactly 10 questions, unique IDs, and -- for
+   * a replay -- a different ID set than before) -- never at the start of the
+   * selection attempt, and never when validation fails.
+   */
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage, previousQuestionIds) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
-    var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var session = gameFlow.startNewGame(questions, { randomFn: randomFn, previousQuestionIds: previousQuestionIds });
+    if (!session) {
+      return null;
+    }
+
+    if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
+      analyticsStorage.recordEvent('partida_iniciada');
+    }
 
     renderQuestionAt(
       container,
@@ -750,9 +820,9 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
-                tooltipStorage.recordEvent('partida_iniciada');
-              }
+              // TRIOFSND-102: partida_iniciada is recorded inside
+              // startNewGame itself, after the new partida validates -- not
+              // here, at the start of the selection attempt.
               startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, storage);
             }
           });

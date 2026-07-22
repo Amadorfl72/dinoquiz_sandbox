@@ -26,6 +26,16 @@ function keyFromNamespaced(namespaced) {
   return PERSISTED_KEYS.includes(key) ? key : null;
 }
 
+/** Only a finite, non-negative integer is a valid counter value; anything else reads as 0. */
+function sanitizeCounterValue(value) {
+  return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+/** Guards against a corrupted or unexpected `analyticsEventCounts` root (e.g. null, a string, an array). */
+function sanitizeCounts(counts) {
+  return counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+}
+
 /**
  * Client-side persistence service for DinoQuiz.
  *
@@ -44,6 +54,12 @@ class DinoQuizStorage {
   // Aggregated, non-PII observability counters only.
   #failureCount = 0;
   #lastErrorAt = null;
+
+  // Serializes recordEvent/recordEventOnce's read-modify-write so two calls
+  // fired back-to-back in the same tick (e.g. replay_pulsado immediately
+  // followed by partida_iniciada on a replay, TRIOFSND-102) don't race on a
+  // stale read and silently drop one another's increment.
+  #analyticsQueue = Promise.resolve();
 
   #handleStorageEvent = (event) => {
     if (!event.key) return;
@@ -277,29 +293,48 @@ class DinoQuizStorage {
    * count, which is what "first_*"-style events (e.g. first_tap_jugar) need.
    */
   async recordEventOnce(eventName) {
-    const counts = await this.get('analyticsEventCounts');
-    if (counts[eventName]) {
-      return counts[eventName];
-    }
-    await this.set('analyticsEventCounts', { ...counts, [eventName]: 1 });
-    return 1;
+    return this.#enqueueAnalyticsWrite(async () => {
+      const counts = sanitizeCounts(await this.get('analyticsEventCounts'));
+      const current = sanitizeCounterValue(counts[eventName]);
+      if (current > 0) {
+        return current;
+      }
+      await this.set('analyticsEventCounts', { ...counts, [eventName]: 1 });
+      return 1;
+    });
   }
 
+  /** Sanitized read: a missing, corrupt or invalid stored value reads as 0 -- see AC in TRIOFSND-102. */
   async getEventCount(eventName) {
-    const counts = await this.get('analyticsEventCounts');
-    return counts[eventName] || 0;
+    const counts = sanitizeCounts(await this.get('analyticsEventCounts'));
+    return sanitizeCounterValue(counts[eventName]);
   }
 
   /**
    * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
    * Unlike `recordEventOnce`, increments on every call -- this is what repeatable
-   * product events (e.g. partida_iniciada, one per game start) need.
+   * product events (e.g. partida_iniciada, replay_pulsado) need. Reads the prior
+   * value through the same sanitization as `getEventCount` -- an invalid stored
+   * value (string, negative, NaN, ...) is treated as 0 and corrected to 1, and
+   * every other counter/field in the shared object is preserved untouched.
    */
   async recordEvent(eventName) {
-    const counts = await this.get('analyticsEventCounts');
-    const next = (counts[eventName] || 0) + 1;
-    await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
-    return next;
+    return this.#enqueueAnalyticsWrite(async () => {
+      const counts = sanitizeCounts(await this.get('analyticsEventCounts'));
+      const next = sanitizeCounterValue(counts[eventName]) + 1;
+      await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
+      return next;
+    });
+  }
+
+  /** Chains `task` onto the analytics write queue so overlapping recordEvent/recordEventOnce calls apply in order, never on a stale read. */
+  #enqueueAnalyticsWrite(task) {
+    const result = this.#analyticsQueue.then(task);
+    this.#analyticsQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
   }
 }
 

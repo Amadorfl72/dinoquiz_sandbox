@@ -23,6 +23,18 @@
  * Resultados. `calculateMaxStreak` derives that from `state.answers` (each
  * entry's `isCorrect` flag, appended in order as the child answers) without
  * the app shell having to track a running streak counter itself.
+ *
+ * Partida validation (TRIOFSND-99/TRIOFSND-102): `startNewGame` only ever
+ * returns a session backed by exactly `QUESTIONS_PER_GAME` questions with
+ * stable, unique IDs -- if the bank can't provide that (e.g. fewer than 10
+ * questions), it returns `null` instead of a partial game. When the caller
+ * passes `options.previousQuestionIds` (a replay), the returned session's
+ * question-ID *set* is guaranteed to differ from that previous set, even
+ * when reordered -- if the bank genuinely cannot offer a different set (e.g.
+ * it has exactly `QUESTIONS_PER_GAME` questions total), `startNewGame`
+ * returns `null` rather than presenting the same partida again. The app
+ * shell (main.js) is the single place that increments the `partida_iniciada`
+ * analytics counter, and only after this validation succeeds.
  */
 
 (function () {
@@ -74,11 +86,76 @@
     return selected;
   }
 
+  /** Order-independent equality: same size and every ID present in both. */
+  function idSetsMatch(idsA, idsB) {
+    if (idsA.length !== idsB.length) {
+      return false;
+    }
+    var setB = new Set(idsB);
+    return idsA.every(function (id) {
+      return setB.has(id);
+    });
+  }
+
+  function hasUniqueIds(selected) {
+    return new Set(selected.map(function (question) { return question.id; })).size === selected.length;
+  }
+
+  /**
+   * Selects a valid `count`-question subset: exactly `count` questions with
+   * unique IDs and, when `previousIds` is given, an ID set that differs from
+   * it (ignoring order). Returns `null` if the bank cannot satisfy that --
+   * never a partial or repeated selection.
+   */
+  function selectValidGameQuestions(questions, count, randomFn, previousIds) {
+    var selected = selectGameQuestions(questions, count, randomFn);
+
+    if (selected.length !== count || !hasUniqueIds(selected)) {
+      return null;
+    }
+
+    if (Array.isArray(previousIds) && previousIds.length > 0) {
+      var selectedIds = selected.map(function (question) { return question.id; });
+
+      if (idSetsMatch(selectedIds, previousIds)) {
+        // Deterministic tie-break instead of hoping another random draw
+        // differs: swap in a bank question the current selection excludes.
+        var previousIdSet = new Set(previousIds);
+        var replacement = questions.find(function (question) {
+          return !previousIdSet.has(question.id);
+        });
+
+        if (!replacement) {
+          return null;
+        }
+
+        selected = selected.slice(0, count - 1).concat([replacement]);
+
+        if (!hasUniqueIds(selected)) {
+          return null;
+        }
+      }
+    }
+
+    return selected;
+  }
+
+  /**
+   * Bundles a fresh game state with a validated `count`-question subset, or
+   * `null` if the bank can't produce one (see the module docblock above).
+   */
   function startNewGame(questions, options) {
     options = options || {};
+    var count = options.count === undefined ? QUESTIONS_PER_GAME : options.count;
+    var selected = selectValidGameQuestions(questions, count, options.randomFn, options.previousQuestionIds);
+
+    if (!selected) {
+      return null;
+    }
+
     return {
       state: createInitialGameState(),
-      questions: selectGameQuestions(questions, options.count, options.randomFn),
+      questions: selected,
     };
   }
 
