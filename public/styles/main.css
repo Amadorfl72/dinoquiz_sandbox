@@ -299,6 +299,22 @@ body {
   gap: 12px;
 }
 
+/*
+ * Shared historic-progress indicators (TRIOFSND-129), rendered identically
+ * on Inicio and Resultados via public/scripts/progressSummary.js.
+ * `--color-text` on `--color-bg` is already verified >=4.5:1 (WCAG AA) in
+ * src/theme/contrast.test.js, so no new color tokens are introduced here.
+ */
+.progress-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
+}
+
 .home-screen__icon-button {
   display: inline-flex;
   align-items: center;

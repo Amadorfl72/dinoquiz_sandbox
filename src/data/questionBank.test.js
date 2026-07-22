@@ -18,6 +18,7 @@ const {
   getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
+  getFunFactCatalog,
 } = require('./questionBank');
 const { getStrings } = require('../i18n');
 
@@ -396,5 +397,49 @@ describe('getQuestionsByDinosaur', () => {
 
     expect(trexQuestions).toHaveLength(2);
     expect(trexQuestions.every((question) => question.dinosaur === DINOSAURS.TREX)).toBe(true);
+  });
+});
+
+describe('getFunFactCatalog (TRIOFSND-129)', () => {
+  test('returns the unique, non-empty dato_curioso ids from the bank', () => {
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', dato_curioso: 'funFacts.trex-01' }),
+      buildValidQuestion({ id: 'trex-02', dato_curioso: 'funFacts.trex-02' }),
+    ];
+
+    expect(getFunFactCatalog(questions)).toEqual(['funFacts.trex-01', 'funFacts.trex-02']);
+  });
+
+  test('deduplicates two questions that share the same dato_curioso id', () => {
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', dato_curioso: 'funFacts.trex-shared' }),
+      buildValidQuestion({ id: 'trex-02', dato_curioso: 'funFacts.trex-shared' }),
+    ];
+
+    expect(getFunFactCatalog(questions)).toEqual(['funFacts.trex-shared']);
+  });
+
+  test('ignores null, non-string or blank dato_curioso values', () => {
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', dato_curioso: 'funFacts.trex-01' }),
+      { ...buildValidQuestion({ id: 'trex-02' }), dato_curioso: null },
+      { ...buildValidQuestion({ id: 'trex-03' }), dato_curioso: '   ' },
+    ];
+
+    expect(getFunFactCatalog(questions)).toEqual(['funFacts.trex-01']);
+  });
+
+  test('returns an empty array for a non-array input', () => {
+    expect(getFunFactCatalog(null)).toEqual([]);
+    expect(getFunFactCatalog(undefined)).toEqual([]);
+  });
+
+  test("the real question bank's catalog has no empty/duplicate ids and its size is the UI denominator", () => {
+    const questions = loadQuestionBank();
+    const catalog = getFunFactCatalog(questions);
+
+    expect(catalog.length).toBe(questions.length);
+    expect(catalog.every((id) => typeof id === 'string' && id.trim() !== '')).toBe(true);
+    expect(new Set(catalog).size).toBe(catalog.length);
   });
 });

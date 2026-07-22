@@ -344,6 +344,7 @@
         ? audio.playFailSound
         : null;
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
+    var onFactRevealed = typeof options.onFactRevealed === 'function' ? options.onFactRevealed : null;
     var rewardedAdService = resolveRewardedAdService(options);
 
     var score = options.score || 0;
@@ -525,6 +526,18 @@
       );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
+
+      // TRIOFSND-129: a dato curioso counts as "discovered" the instant its
+      // content is actually shown here -- on a hit or a miss alike, never
+      // gated on correctness -- so the caller (public/scripts/main.js) can
+      // persist it immediately, without waiting for "Siguiente". Gated on
+      // the fun fact box actually having content, and keyed by the stable
+      // editorial `dato_curioso` id (never the translated text, an index or
+      // position), which stays the single, catalog-wide factId regardless
+      // of locale or the random order questions were served in this game.
+      if (onFactRevealed && typeof question.funFact === 'string' && question.funFact.trim() !== '') {
+        onFactRevealed(question.dato_curioso);
+      }
 
       announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
 

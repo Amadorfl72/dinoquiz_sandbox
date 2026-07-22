@@ -303,6 +303,59 @@
     });
   }
 
+  /**
+   * The stable, unique set of "dato curioso" ids (`question.dato_curioso`)
+   * actually present in the bank -- the single source of the `Y` denominator
+   * for "Descubiertos X/Y" (TRIOFSND-129). Hand-duplicated from
+   * `src/data/questionBank.js#getFunFactCatalog` (same rationale as
+   * `resolveFunFact` above vs. that module's `resolveDatoCurioso`): that
+   * module does `fs.readFileSync` and can't be `require`d in a real,
+   * bundler-less browser, so this browser-side path recomputes the same
+   * pure, non-`fs` logic directly over the already-fetched/prepared bank.
+   */
+  function computeFunFactCatalog(questions) {
+    if (!Array.isArray(questions)) {
+      return [];
+    }
+    var seen = {};
+    var catalog = [];
+    questions.forEach(function (question) {
+      var id = question && question.dato_curioso;
+      if (typeof id === 'string' && id.trim() !== '' && !seen[id]) {
+        seen[id] = true;
+        catalog.push(id);
+      }
+    });
+    return catalog;
+  }
+
+  /**
+   * Resolves the historic progress summary (mejor puntuación/racha máxima/
+   * datos curiosos descubiertos, TRIOFSND-129) for Inicio/Resultados.
+   * `total` (the catalog size) is always known synchronously from the local
+   * question bank; `ready` only flips to true once `storage.getProgressSummary`
+   * (async -- IndexedDB in the `dinoQuizStorage` backend) actually resolves,
+   * so callers can render a neutral placeholder instead of a fabricated
+   * `0`/`0/total` for however briefly that read takes.
+   */
+  function resolveProgressSummary(storage, questions) {
+    var total = computeFunFactCatalog(questions).length;
+
+    if (!storage || typeof storage.getProgressSummary !== 'function') {
+      return Promise.resolve({ ready: true, bestScore: 0, maxStreak: 0, discovered: 0, total: total });
+    }
+
+    return storage.getProgressSummary(computeFunFactCatalog(questions)).then(function (summary) {
+      return {
+        ready: true,
+        bestScore: summary.bestScore,
+        maxStreak: summary.maxStreak,
+        discovered: summary.discoveredFunFacts.length,
+        total: total,
+      };
+    });
+  }
+
   function loadQuestions(loaderFn) {
     if (typeof loaderFn === 'function') {
       try {
@@ -411,7 +464,24 @@
           }
         }
 
+        // TRIOFSND-129: the racha máxima histórica must persist the instant
+        // it's beaten, not only at game end (an abandoned game must not
+        // lose a new record) -- so it's recomputed from every answer so far
+        // on every tap, same source (`gameFlow.calculateMaxStreak`) TRIOFSND-95
+        // already uses once the game finishes.
+        if (storage && typeof storage.recordStreak === 'function') {
+          storage.recordStreak(resolveGameFlow().calculateMaxStreak(session.state.answers));
+        }
+
         autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
+      },
+      // TRIOFSND-129: fired by questionScreen.js the instant the dato
+      // curioso is actually shown (hit or miss alike), persisted immediately
+      // -- it never waits for "Siguiente" or the end of the game.
+      onFactRevealed: function (factId) {
+        if (storage && typeof storage.markFunFactDiscovered === 'function') {
+          storage.markFunFactDiscovered(factId);
+        }
       },
       onNext: function () {
         if (session.state.questionIndex + 1 >= session.questions.length) {
@@ -427,13 +497,41 @@
     });
   }
 
-  /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
-    return renderers.renderResultsScreen(container, {
+  /**
+   * Renders Resultados for a finished game; 'Volver a jugar' starts a fresh
+   * game, 'Salir' goes to Inicio.
+   *
+   * TRIOFSND-129: the score/stars/message render synchronously exactly as
+   * before -- `storage.getProgressSummary` is async (IndexedDB, in the
+   * `dinoQuizStorage` backend), so gating the whole screen on it would
+   * delay content that's already known. Instead, the progress indicators
+   * start in their neutral "…" state (see progressSummary.js) and are
+   * updated in place via the returned `progressSummary.update` handle the
+   * instant the real values resolve -- never showing a fabricated
+   * `0`/`0/total` in between. `scoreRecorded` (the promise from this game's
+   * own `storage.recordScore` call, see startNewGame) is awaited first, if
+   * given, so the progress read never races that write and reads the score
+   * this very game is about to replace.
+   */
+  function renderResultsFor(
+    container,
+    renderers,
+    questions,
+    finalState,
+    doc,
+    fetchFn,
+    storageObj,
+    playedQuestionIds,
+    analyticsStorage,
+    storage,
+    scoreRecorded
+  ) {
+    var resultsApi = renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
+      progress: { ready: false, total: computeFunFactCatalog(questions).length },
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
@@ -451,6 +549,18 @@
         );
       },
     });
+
+    if (resultsApi && resultsApi.progressSummary && typeof resultsApi.progressSummary.update === 'function') {
+      Promise.resolve(scoreRecorded)
+        .then(function () {
+          return resolveProgressSummary(storage, questions);
+        })
+        .then(function (progress) {
+          resultsApi.progressSummary.update(progress);
+        });
+    }
+
+    return resultsApi;
   }
 
   /**
@@ -480,7 +590,28 @@
         var playedQuestionIds = session.questions.map(function (question) {
           return question.id;
         });
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
+        // TRIOFSND-129: replaces the historic best only when this game's
+        // final score is strictly higher (see storage.recordScore). The
+        // score/stars/message render synchronously either way (unchanged) --
+        // `scoreRecorded` is only threaded through so renderResultsFor's
+        // *progress* read (async storage) starts after this write actually
+        // lands in the cache, instead of racing it and reading the value
+        // this game's own score is about to replace.
+        var scoreRecorded =
+          storage && typeof storage.recordScore === 'function' ? storage.recordScore(finalState.score) : null;
+        renderResultsFor(
+          container,
+          renderers,
+          questions,
+          finalState,
+          doc,
+          fetchFn,
+          storageObj,
+          playedQuestionIds,
+          analyticsStorage,
+          storage,
+          scoreRecorded
+        );
       },
       storageObj,
       analyticsStorage,
@@ -624,14 +755,14 @@
   }
 
   /**
-   * Fetches the whole i18n resource once and hands back the three sections
-   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
-   * browser can render the global controls without a `require()` for
-   * `src/i18n`.
+   * Fetches the whole i18n resource once and hands back the sections the
+   * Home screen needs (home/privacy/purchase, TRIOFSND-66; progress,
+   * TRIOFSND-129) so the browser can render the global controls without a
+   * `require()` for `src/i18n`.
    */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase, progress: data.progress } : null;
     });
   }
 
@@ -678,6 +809,13 @@
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
   var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
   var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
+  // TRIOFSND-129: same `dinoquiz:` namespace and key names as
+  // src/services/storage/StorageClient.js's PERSISTED_KEYS, so a future
+  // bundler-backed swap to the real service reads back these values with no
+  // migration (same rationale as MUTE_STORAGE_KEY/ADS_REMOVED_STORAGE_KEY).
+  var BEST_SCORE_KEY = 'dinoquiz:bestScore';
+  var MAX_STREAK_KEY = 'dinoquiz:maxStreak';
+  var DISCOVERED_FUN_FACTS_KEY = 'dinoquiz:discoveredFunFacts';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -687,6 +825,9 @@
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
     memory[QUESTION_STATS_KEY] = {};
     memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
+    memory[BEST_SCORE_KEY] = 0;
+    memory[MAX_STREAK_KEY] = 0;
+    memory[DISCOVERED_FUN_FACTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -803,6 +944,84 @@
           porcentaje_acierto: porcentaje,
         });
       },
+      // TRIOFSND-129: mirrors DinoQuizStorage#recordScore -- only replaces
+      // the stored best when the new score is strictly higher, so an equal
+      // or lower score never regresses the historic record.
+      recordScore: function (score) {
+        var best = readJSON(BEST_SCORE_KEY);
+        if (!Number.isInteger(best)) {
+          best = 0;
+        }
+        if (Number.isInteger(score) && score > best) {
+          writeJSON(BEST_SCORE_KEY, score);
+        }
+        return Promise.resolve();
+      },
+      // TRIOFSND-129: mirrors DinoQuizStorage#recordStreak -- called on every
+      // answer (not just at game end) so a new record is persisted the
+      // instant it's reached, surviving an abandoned game.
+      recordStreak: function (streak) {
+        var max = readJSON(MAX_STREAK_KEY);
+        if (!Number.isInteger(max)) {
+          max = 0;
+        }
+        if (Number.isInteger(streak) && streak > max) {
+          writeJSON(MAX_STREAK_KEY, streak);
+        }
+        return Promise.resolve();
+      },
+      // TRIOFSND-129: mirrors DinoQuizStorage#markFunFactDiscovered --
+      // de-duplicates so showing the same dato curioso again never
+      // increments the discovered count.
+      markFunFactDiscovered: function (funFactId) {
+        if (typeof funFactId !== 'string' || funFactId.trim() === '') {
+          return Promise.resolve();
+        }
+        var discovered = readJSON(DISCOVERED_FUN_FACTS_KEY);
+        if (!Array.isArray(discovered)) {
+          discovered = [];
+        }
+        if (discovered.indexOf(funFactId) === -1) {
+          writeJSON(DISCOVERED_FUN_FACTS_KEY, discovered.concat([funFactId]));
+        }
+        return Promise.resolve();
+      },
+      // TRIOFSND-129: mirrors DinoQuizStorage#getProgressSummary -- each
+      // field is validated independently so one malformed value (a stale
+      // localStorage entry from a previous catalog, a value written outside
+      // its contract) never discards another valid one, and
+      // discoveredFunFacts is filtered to `validFactIds` (the current
+      // catalog) and deduplicated.
+      getProgressSummary: function (validFactIds) {
+        var validIds = {};
+        (Array.isArray(validFactIds) ? validFactIds : []).forEach(function (id) {
+          validIds[id] = true;
+        });
+
+        var bestScore = readJSON(BEST_SCORE_KEY);
+        var sanitizedBestScore = Number.isInteger(bestScore) && bestScore >= 0 && bestScore <= 10 ? bestScore : 0;
+
+        var maxStreak = readJSON(MAX_STREAK_KEY);
+        var sanitizedMaxStreak = Number.isInteger(maxStreak) && maxStreak >= 0 ? maxStreak : 0;
+
+        var discoveredFunFacts = readJSON(DISCOVERED_FUN_FACTS_KEY);
+        var sanitizedDiscoveredFunFacts = [];
+        if (Array.isArray(discoveredFunFacts)) {
+          var seen = {};
+          discoveredFunFacts.forEach(function (id) {
+            if (typeof id === 'string' && validIds[id] && !seen[id]) {
+              seen[id] = true;
+              sanitizedDiscoveredFunFacts.push(id);
+            }
+          });
+        }
+
+        return Promise.resolve({
+          bestScore: sanitizedBestScore,
+          maxStreak: sanitizedMaxStreak,
+          discoveredFunFacts: sanitizedDiscoveredFunFacts,
+        });
+      },
     };
   }
 
@@ -828,6 +1047,23 @@
       },
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
+      },
+      // TRIOFSND-129: forwarded so the real, production "¡Jugar!" flow (see
+      // renderHome below, which passes this same object through as
+      // startNewGame's `storage`/`analyticsStorage` args) actually persists
+      // discoveries/records instead of the calls silently no-op'ing against
+      // an object that only exposed the tooltip subset.
+      recordScore: function (score) {
+        return tooltipBackend.recordScore(score);
+      },
+      recordStreak: function (streak) {
+        return tooltipBackend.recordStreak(streak);
+      },
+      markFunFactDiscovered: function (funFactId) {
+        return tooltipBackend.markFunFactDiscovered(funFactId);
+      },
+      getProgressSummary: function (validFactIds) {
+        return tooltipBackend.getProgressSummary(validFactIds);
       },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
@@ -888,10 +1124,23 @@
         ? storage
         : null;
 
-    return loadHomeResources(fetchFn).then(function (resources) {
+    // TRIOFSND-129: resolved together with the i18n fetch below so Inicio's
+    // progress indicators never paint before the real, storage-resolved
+    // values are known (no fabricated 0/0/0-total transiently on screen).
+    var progressPromise = resolveProgressSummary(tooltipStorage, loadQuestions());
+
+    return Promise.all([loadHomeResources(fetchFn), progressPromise]).then(function (results) {
+      var resources = results[0];
+      var progress = results[1];
       var renderOptions = resources
-        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        ? {
+            strings: resources.home,
+            privacyStrings: resources.privacy,
+            purchaseStrings: resources.purchase,
+            progressStrings: resources.progress,
+          }
         : {};
+      renderOptions.progress = progress;
 
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
@@ -1114,6 +1363,11 @@
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
+      computeFunFactCatalog: computeFunFactCatalog,
+      resolveProgressSummary: resolveProgressSummary,
+      BEST_SCORE_KEY: BEST_SCORE_KEY,
+      MAX_STREAK_KEY: MAX_STREAK_KEY,
+      DISCOVERED_FUN_FACTS_KEY: DISCOVERED_FUN_FACTS_KEY,
     };
   }
 })();

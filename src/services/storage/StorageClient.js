@@ -248,6 +248,40 @@ class DinoQuizStorage {
     }
   }
 
+  /**
+   * Sanitizing read for Inicio/Resultados' historic progress display
+   * (TRIOFSND-129): `bestScore`/`maxStreak`/`discoveredFunFacts` come back
+   * from `#loadAll` already isolated per-key against unreadable JSON (a bad
+   * key falls back to its default, see `#loadAll` above), but a value that
+   * parses fine and still violates its own contract -- a float, a negative
+   * number, a score above 10, a stale/unknown fact id -- would not be caught
+   * there. Each field is validated independently here so one malformed field
+   * never discards another valid one, and `discoveredFunFacts` is filtered
+   * to `validFactIds` (the current catalog, see
+   * `src/data/questionBank.js#getFunFactCatalog`) and deduplicated so a
+   * stale/unknown/duplicate id never inflates the discovered count.
+   */
+  async getProgressSummary(validFactIds) {
+    const validIds = new Set(Array.isArray(validFactIds) ? validFactIds : []);
+    const [bestScore, maxStreak, discoveredFunFacts] = await Promise.all([
+      this.get('bestScore'),
+      this.get('maxStreak'),
+      this.get('discoveredFunFacts'),
+    ]);
+
+    const sanitizedBestScore = Number.isInteger(bestScore) && bestScore >= 0 && bestScore <= 10 ? bestScore : 0;
+    const sanitizedMaxStreak = Number.isInteger(maxStreak) && maxStreak >= 0 ? maxStreak : 0;
+    const sanitizedDiscoveredFunFacts = Array.isArray(discoveredFunFacts)
+      ? Array.from(new Set(discoveredFunFacts.filter((id) => validIds.has(id))))
+      : [];
+
+    return {
+      bestScore: sanitizedBestScore,
+      maxStreak: sanitizedMaxStreak,
+      discoveredFunFacts: sanitizedDiscoveredFunFacts,
+    };
+  }
+
   async setMuted(muted) {
     await this.set('muted', muted);
   }

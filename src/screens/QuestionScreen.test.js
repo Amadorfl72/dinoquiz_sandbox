@@ -68,6 +68,7 @@ function buildQuestion(overrides = {}) {
     question: '¿De qué se alimentaba el Tyrannosaurus Rex?',
     options: ['Solo de plantas', 'De carne, ¡era un gran cazador!', 'Solo de insectos', 'De algas del mar'],
     correctAnswerIndex: 1,
+    dato_curioso: 'funFacts.trex-01',
     funFact: 'El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.',
     image: 'dinosaurs/trex.png',
     ...overrides,
@@ -249,6 +250,17 @@ describe('QuestionScreen', () => {
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
     });
+
+    test('registers the fun fact as discovered by its stable dato_curioso id, without requiring a "Siguiente" tap (TRIOFSND-129)', () => {
+      const question = buildQuestion();
+      const onFactRevealed = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { onFactRevealed });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(onFactRevealed).toHaveBeenCalledTimes(1);
+      expect(onFactRevealed).toHaveBeenCalledWith(question.dato_curioso);
+    });
   });
 
   describe('on an incorrect answer (TRIOFSND-88: no penalty)', () => {
@@ -299,6 +311,18 @@ describe('QuestionScreen', () => {
       expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
+    });
+
+    test('registers the fun fact as discovered on a miss too (TRIOFSND-129: discovery is outcome-independent)', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const onFactRevealed = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { onFactRevealed });
+
+      optionButtons[wrongIndex].click();
+
+      expect(onFactRevealed).toHaveBeenCalledTimes(1);
+      expect(onFactRevealed).toHaveBeenCalledWith(question.dato_curioso);
     });
 
     test('shows a neutral/positive-toned message, never a negative one', () => {
@@ -410,6 +434,25 @@ describe('QuestionScreen', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('TRIOFSND-129: fun fact discovery is gated on the fact actually being shown', () => {
+    test('does not call onFactRevealed when the question has no fun fact content', () => {
+      const question = buildQuestion({ funFact: '' });
+      const onFactRevealed = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { onFactRevealed });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(onFactRevealed).not.toHaveBeenCalled();
+    });
+
+    test('does nothing when no onFactRevealed callback is provided (no crash)', () => {
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
+
+      expect(() => optionButtons[question.correctAnswerIndex].click()).not.toThrow();
     });
   });
 

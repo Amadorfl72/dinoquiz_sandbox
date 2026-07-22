@@ -409,6 +409,140 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     expect(await storage.hasSeenHomeTooltip()).toBe(true);
   });
 
+  describe('TRIOFSND-129: bestScore/maxStreak/discoveredFunFacts persistence', () => {
+    test('recordScore only raises the stored best when the new score is strictly higher', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+
+      await storage.recordScore(5);
+      await storage.recordScore(3);
+      expect(win.localStorage.setItem).toHaveBeenLastCalledWith('dinoquiz:bestScore', '5');
+
+      await storage.recordScore(5);
+      expect(win.localStorage.setItem).toHaveBeenLastCalledWith('dinoquiz:bestScore', '5');
+
+      await storage.recordScore(8);
+      expect(win.localStorage.setItem).toHaveBeenLastCalledWith('dinoquiz:bestScore', '8');
+    });
+
+    test('recordStreak only raises the stored max when the new streak is strictly higher', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+
+      await storage.recordStreak(4);
+      await storage.recordStreak(2);
+
+      expect(win.localStorage.setItem).toHaveBeenLastCalledWith('dinoquiz:maxStreak', '4');
+    });
+
+    test('markFunFactDiscovered de-duplicates so showing the same fact again does not grow the list', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+
+      await storage.markFunFactDiscovered('funFacts.trex-01');
+      await storage.markFunFactDiscovered('funFacts.trex-01');
+      await storage.markFunFactDiscovered('funFacts.triceratops-01');
+
+      expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+        'dinoquiz:discoveredFunFacts',
+        JSON.stringify(['funFacts.trex-01', 'funFacts.triceratops-01'])
+      );
+    });
+
+    test('ignores a null/blank/non-string factId instead of recording it', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+
+      await storage.markFunFactDiscovered(null);
+      await storage.markFunFactDiscovered('   ');
+      await storage.markFunFactDiscovered(undefined);
+
+      expect(await storage.getProgressSummary([])).toEqual({ bestScore: 0, maxStreak: 0, discoveredFunFacts: [] });
+    });
+
+    test('getProgressSummary returns the safe initial values on an empty install', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const storage = createBrowserHomeStorage(createFakeWindow());
+
+      expect(await storage.getProgressSummary(['funFacts.trex-01'])).toEqual({
+        bestScore: 0,
+        maxStreak: 0,
+        discoveredFunFacts: [],
+      });
+    });
+
+    test('getProgressSummary filters discovered ids to the current catalog and deduplicates them', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+      await storage.recordScore(6);
+      await storage.recordStreak(3);
+      await storage.markFunFactDiscovered('funFacts.trex-01');
+
+      // A stale/unknown id preloaded directly into localStorage (e.g. from a
+      // previous catalog) must not inflate the discovered count.
+      win.localStorage.setItem(
+        'dinoquiz:discoveredFunFacts',
+        JSON.stringify(['funFacts.trex-01', 'funFacts.trex-01', 'funFacts.unknown', null, 42])
+      );
+
+      expect(await storage.getProgressSummary(['funFacts.trex-01'])).toEqual({
+        bestScore: 6,
+        maxStreak: 3,
+        discoveredFunFacts: ['funFacts.trex-01'],
+      });
+    });
+
+    test('getProgressSummary sanitizes an out-of-range bestScore/maxStreak without discarding a valid discoveredFunFacts', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      const storage = createBrowserHomeStorage(win);
+      await storage.markFunFactDiscovered('funFacts.trex-01');
+      win.localStorage.setItem('dinoquiz:bestScore', JSON.stringify(11));
+      win.localStorage.setItem('dinoquiz:maxStreak', JSON.stringify(-2));
+
+      const summary = await storage.getProgressSummary(['funFacts.trex-01']);
+
+      expect(summary.bestScore).toBe(0);
+      expect(summary.maxStreak).toBe(0);
+      expect(summary.discoveredFunFacts).toEqual(['funFacts.trex-01']);
+    });
+
+    test('unreadable (non-JSON) localStorage values fall back to the safe initial values instead of throwing', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+      win.localStorage.getItem.mockImplementation((key) => (key === 'dinoquiz:bestScore' ? 'not-json' : null));
+      const storage = createBrowserHomeStorage(win);
+
+      await expect(storage.getProgressSummary([])).resolves.toEqual({
+        bestScore: 0,
+        maxStreak: 0,
+        discoveredFunFacts: [],
+      });
+    });
+
+    test('persists bestScore/maxStreak/discoveredFunFacts across separate storage instances (same device, later launch)', async () => {
+      const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+      const win = createFakeWindow();
+
+      const first = createBrowserHomeStorage(win);
+      await first.recordScore(7);
+      await first.recordStreak(5);
+      await first.markFunFactDiscovered('funFacts.trex-01');
+
+      const reopened = createBrowserHomeStorage(win);
+      expect(await reopened.getProgressSummary(['funFacts.trex-01'])).toEqual({
+        bestScore: 7,
+        maxStreak: 5,
+        discoveredFunFacts: ['funFacts.trex-01'],
+      });
+    });
+  });
+
   test('the bootstrap falls back to createBrowserHomeStorage in a real browser, where require is unavailable', () => {
     const { loadDinoQuizStorage, createBrowserHomeStorage } = require(MAIN_JS_PATH);
 

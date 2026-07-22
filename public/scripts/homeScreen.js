@@ -93,6 +93,19 @@
     return null;
   }
 
+  function resolveProgressSummaryBuilder() {
+    if (typeof require === 'function') {
+      return require('./progressSummary').buildProgressSummary;
+    }
+    return (
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.components &&
+        window.DinoQuiz.components.buildProgressSummary) ||
+      null
+    );
+  }
+
   function resolveIsOnline(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
     if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.network) {
@@ -245,6 +258,7 @@
     var strings = options.strings || resolveDefaultStrings(options.locale);
     var privacyStrings = options.privacyStrings || resolveDefaultLocaleStrings(options.locale, 'privacy');
     var purchaseStrings = options.purchaseStrings || resolveDefaultLocaleStrings(options.locale, 'purchase');
+    var progressStrings = options.progressStrings || resolveDefaultLocaleStrings(options.locale, 'progress');
     var controlsStrings = strings.globalControls;
 
     container.innerHTML = '';
@@ -381,6 +395,18 @@
     globalControls.appendChild(muteButton);
     globalControls.appendChild(privacyButton);
     globalControls.appendChild(purchaseButton);
+
+    // TRIOFSND-129: mejor puntuación/racha máxima/datos curiosos
+    // descubiertos, persisted locally and shared verbatim with Resultados
+    // via public/scripts/progressSummary.js. Only built when the strings
+    // resolved (bare test renders that omit them keep working with no
+    // progress block, same as an omitted privacy/purchase section).
+    var progressSummaryBuilt = null;
+    var buildProgressSummary = progressStrings && resolveProgressSummaryBuilder();
+    if (buildProgressSummary) {
+      progressSummaryBuilt = buildProgressSummary(progressStrings, options.progress);
+    }
+
     root.appendChild(title);
     root.appendChild(mascot);
     root.appendChild(playButton);
@@ -389,6 +415,9 @@
     }
     root.appendChild(privacyPolicyButton);
     root.appendChild(globalControls);
+    if (progressSummaryBuilt) {
+      root.appendChild(progressSummaryBuilt.root);
+    }
     root.appendChild(parentalNotice);
     root.appendChild(privacyPanelBuilt.panel);
     root.appendChild(purchasePanelBuilt.panel);
@@ -410,6 +439,7 @@
       purchasePanel: purchasePanelBuilt.panel,
       purchaseConfirmButton: purchasePanelBuilt.purchaseButton,
       purchaseOfflineNotice: purchasePanelBuilt.offlineNotice,
+      progressSummary: progressSummaryBuilt,
       isMuted: function () {
         return muted;
       },

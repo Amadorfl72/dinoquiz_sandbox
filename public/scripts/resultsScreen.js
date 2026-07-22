@@ -123,6 +123,35 @@
     return bundle ? bundle.results : null;
   }
 
+  // TRIOFSND-129: the shared progress strings live at the i18n document's
+  // top level (public/i18n/es.json's "progress" key), not nested under
+  // "results", since Inicio renders the exact same three indicators.
+  function resolveProgressStrings(options) {
+    options = options || {};
+    if (options.progressStrings) {
+      return options.progressStrings;
+    }
+    if (typeof require === 'function') {
+      var i18n = require('../../src/i18n');
+      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).progress;
+    }
+    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
+    return bundle ? bundle.progress : null;
+  }
+
+  function resolveProgressSummaryBuilder() {
+    if (typeof require === 'function') {
+      return require('./progressSummary').buildProgressSummary;
+    }
+    return (
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.components &&
+        window.DinoQuiz.components.buildProgressSummary) ||
+      null
+    );
+  }
+
   function calculateStars(score) {
     if (!Number.isInteger(score) || score < MIN_SCORE || score > MAX_SCORE) {
       throw new Error('score must be an integer between ' + MIN_SCORE + ' and ' + MAX_SCORE + ', got ' + score);
@@ -300,11 +329,28 @@
       adsSection.appendChild(rewardedAdButton);
     }
 
+    // TRIOFSND-129: mejor puntuación/racha máxima/datos curiosos
+    // descubiertos for the game that just finished, shared verbatim with
+    // Inicio via public/scripts/progressSummary.js. `options.progress` may
+    // arrive slightly after this synchronous render (storage reads are
+    // async) -- `update()` on the returned handle lets the caller
+    // (public/scripts/main.js) refresh it in place once resolved, without
+    // ever having shown a fabricated 0/0/0-total in between.
+    var progressSummaryBuilt = null;
+    var progressStrings = resolveProgressStrings(options);
+    var buildProgressSummary = progressStrings && resolveProgressSummaryBuilder();
+    if (buildProgressSummary) {
+      progressSummaryBuilt = buildProgressSummary(progressStrings, options.progress);
+    }
+
     root.appendChild(heading);
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
     root.appendChild(announcementEl);
+    if (progressSummaryBuilt) {
+      root.appendChild(progressSummaryBuilt.root);
+    }
     root.appendChild(actions);
     if (adsSection) {
       root.appendChild(adsSection);
@@ -322,6 +368,7 @@
       adsSection: adsSection,
       adBanner: adBanner,
       rewardedAdButton: rewardedAdButton,
+      progressSummary: progressSummaryBuilt,
     };
   }
 

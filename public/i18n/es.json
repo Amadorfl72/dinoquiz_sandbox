@@ -127,6 +127,17 @@
     "purchaseButton": "Comprar ahora",
     "offlineNotice": "No hay conexión a internet ahora mismo. Conéctate a la wifi o a los datos y vuelve a intentarlo para completar la compra."
   },
+  "progress": {
+    "groupLabel": "Tu progreso guardado en este dispositivo",
+    "bestScoreLabel": "Mejor puntuación",
+    "bestScoreFormat": "Mejor puntuación: {score}/10",
+    "maxStreakLabel": "Racha máxima",
+    "maxStreakFormat": "Racha máxima: {streak}",
+    "discoveredLabel": "Datos curiosos descubiertos",
+    "discoveredFormat": "Descubiertos {discovered}/{total}",
+    "discoveredPendingFormat": "Descubiertos …/{total}",
+    "pendingValue": "…"
+  },
   "results": {
     "heading": "¡Resultados!",
     "scoreLabel": "Puntuación",

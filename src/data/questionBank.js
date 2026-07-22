@@ -203,6 +203,27 @@ function getQuestionsByDinosaur(questions, dinosaur) {
   return questions.filter((question) => question.dinosaur === dinosaur);
 }
 
+/**
+ * The stable, unique set of "dato curioso" ids (`question.dato_curioso`,
+ * e.g. "funFacts.trex-01") actually present in the question bank -- this is
+ * the single source of truth for both the discovered/total denominator
+ * shown in Inicio/Resultados (TRIOFSND-129) and the membership filter used
+ * to sanitize persisted progress on recovery. Never derived from question
+ * text, translation, index or position (those aren't stable/unique), and
+ * never a hardcoded count -- it reflects whatever the real bank contains.
+ */
+function getFunFactCatalog(questions) {
+  if (!Array.isArray(questions)) {
+    return [];
+  }
+
+  const ids = questions
+    .map((question) => question && question.dato_curioso)
+    .filter((id) => typeof id === 'string' && id.trim() !== '');
+
+  return Array.from(new Set(ids));
+}
+
 module.exports = {
   DINOSAURS,
   VALID_DINOSAURS,
@@ -218,4 +239,5 @@ module.exports = {
   getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
+  getFunFactCatalog,
 };

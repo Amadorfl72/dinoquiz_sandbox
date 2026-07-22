@@ -154,6 +154,69 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('maxStreak')).toBe(4);
   });
 
+  describe('TRIOFSND-129: getProgressSummary (sanitized read for Inicio/Resultados)', () => {
+    it('returns the safe initial values on empty storage', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getProgressSummary(['funFacts.a', 'funFacts.b'])).toEqual({
+        bestScore: 0,
+        maxStreak: 0,
+        discoveredFunFacts: [],
+      });
+    });
+
+    it('returns the recorded score, streak and discovered facts filtered to the current catalog', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.recordScore(7);
+      await storage.recordStreak(4);
+      await storage.markFunFactDiscovered('funFacts.a');
+      await storage.markFunFactDiscovered('funFacts.b');
+
+      expect(await storage.getProgressSummary(['funFacts.a', 'funFacts.b', 'funFacts.c'])).toEqual({
+        bestScore: 7,
+        maxStreak: 4,
+        discoveredFunFacts: ['funFacts.a', 'funFacts.b'],
+      });
+    });
+
+    it('rejects a bestScore outside the 0-10 integer range without discarding other valid fields', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('bestScore', 11);
+      await storage.recordStreak(3);
+      await storage.markFunFactDiscovered('funFacts.a');
+
+      const summary = await storage.getProgressSummary(['funFacts.a']);
+
+      expect(summary.bestScore).toBe(0);
+      expect(summary.maxStreak).toBe(3);
+      expect(summary.discoveredFunFacts).toEqual(['funFacts.a']);
+    });
+
+    it('rejects a non-integer or negative maxStreak', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('maxStreak', -1);
+
+      expect((await storage.getProgressSummary([])).maxStreak).toBe(0);
+
+      await storage.set('maxStreak', 2.5);
+      expect((await storage.getProgressSummary([])).maxStreak).toBe(0);
+    });
+
+    it('filters out unknown, null and duplicate discovered fact ids', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('discoveredFunFacts', ['funFacts.a', 'funFacts.a', 'funFacts.unknown', null, 42]);
+
+      expect((await storage.getProgressSummary(['funFacts.a'])).discoveredFunFacts).toEqual(['funFacts.a']);
+    });
+
+    it('treats a malformed (non-array) discoveredFunFacts value as empty instead of throwing', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.set('discoveredFunFacts', 'not-an-array');
+
+      expect((await storage.getProgressSummary(['funFacts.a'])).discoveredFunFacts).toEqual([]);
+    });
+  });
+
   it('toggleMute flips and returns the new state', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 
