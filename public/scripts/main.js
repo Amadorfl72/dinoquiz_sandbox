@@ -596,6 +596,26 @@
     );
   }
 
+  /**
+   * Resolves the logging service, following the same dual CommonJS/global
+   * pattern as resolveScreenRenderers. The browser-based app loads logging.js
+   * as a plain <script> and exposes it on window.DinoQuiz.services.logging;
+   * Node/Jest tests require it directly. Returns a LogService instance ready
+   * for logging access and PWA installation events.
+   */
+  function resolveLogger(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var LogService =
+      (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.logging && win.DinoQuiz.services.logging.LogService) ||
+      (typeof require === 'function' ? require('../../src/services/logging').LogService : undefined);
+
+    if (typeof LogService !== 'function') {
+      return null;
+    }
+
+    return new LogService();
+  }
+
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -1068,8 +1088,22 @@
     window.addEventListener('load', function () {
       logPlatformSupportFallback(resolvePlatformSupport());
       installLinkGuard();
-      registerServiceWorker();
+
+      var logger = resolveLogger();
+      if (logger) {
+        logger.logAppAccess({ locale: 'es' });
+      }
+
+      registerServiceWorker().then(function (registration) {
+        if (logger && registration) {
+          logger.logServiceWorkerInstall({ scope: registration.scope });
+        }
+      });
+
       bootstrapBrowserApp().then(function () {
+        if (logger) {
+          logger.logManifestLoad({ success: true });
+        }
         renderRoute();
         renderMuteToggle();
       });
@@ -1085,6 +1119,7 @@
       registerServiceWorker: registerServiceWorker,
       resolvePlatformSupport: resolvePlatformSupport,
       logPlatformSupportFallback: logPlatformSupportFallback,
+      resolveLogger: resolveLogger,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
