@@ -16,6 +16,12 @@
  * - 'pwa_install_attempt': user initiated PWA installation
  * - 'pwa_install_success': PWA installation completed
  * - 'pwa_install_failure': PWA installation failed
+ *
+ * Endpoint transmission:
+ * - `sendLogs(endpointUrl, options)` sends accumulated logs to a backend
+ * - Logs are transmitted as POST JSON to the endpoint URL
+ * - Default behavior clears logs after successful transmission
+ * - Handles network errors gracefully and rejects on failure
  */
 
 const LOGS_STORAGE_KEY = 'dinoquiz:logs';
@@ -229,6 +235,55 @@ LogService.prototype.getLogsPayload = function () {
     logCount: this.logs.length,
     logs: this.logs,
   };
+};
+
+/**
+ * Sends accumulated logs to a backend endpoint
+ * @param {string} endpointUrl - The endpoint URL to POST logs to
+ * @param {object} options - Optional configuration (clearOnSuccess, timeout, etc.)
+ * @returns {Promise} Resolves with the endpoint response on success, rejects on failure
+ */
+LogService.prototype.sendLogs = function (endpointUrl, options) {
+  var self = this;
+  options = options || {};
+  var clearOnSuccess = options.clearOnSuccess !== false; // default true
+  var timeout = options.timeout || 5000;
+
+  if (!endpointUrl || typeof endpointUrl !== 'string') {
+    return Promise.reject(new Error('sendLogs requires a valid endpointUrl'));
+  }
+
+  if (typeof fetch === 'undefined') {
+    return Promise.reject(new Error('fetch API not available'));
+  }
+
+  var payload = this.getLogsPayload();
+
+  return fetch(endpointUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+      }
+      return response.json().catch(function () {
+        return { success: true };
+      });
+    })
+    .then(function (data) {
+      if (clearOnSuccess) {
+        self.clearLogs();
+      }
+      return data;
+    })
+    .catch(function (error) {
+      console.error('DinoQuiz: failed to send logs to ' + endpointUrl, error);
+      throw error;
+    });
 };
 
 /**

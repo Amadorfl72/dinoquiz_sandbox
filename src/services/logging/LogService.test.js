@@ -324,4 +324,175 @@ describe('LogService', () => {
       expect(pwaInstallLogs.length).toBe(1);
     });
   });
+
+  describe('sendLogs', () => {
+    beforeEach(() => {
+      global.fetch = jest.fn();
+    });
+
+    afterEach(() => {
+      delete global.fetch;
+    });
+
+    test('rejects when endpointUrl is missing', async () => {
+      await expect(service.sendLogs()).rejects.toThrow('sendLogs requires a valid endpointUrl');
+    });
+
+    test('rejects when endpointUrl is not a string', async () => {
+      await expect(service.sendLogs(123)).rejects.toThrow('sendLogs requires a valid endpointUrl');
+    });
+
+    test('rejects when fetch is not available', async () => {
+      const fetchBackup = global.fetch;
+      delete global.fetch;
+
+      await expect(service.sendLogs('http://example.com/logs')).rejects.toThrow('fetch API not available');
+
+      global.fetch = fetchBackup;
+    });
+
+    test('sends logs as JSON POST request', async () => {
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue({ success: true }) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+
+      await service.sendLogs('http://example.com/logs');
+
+      expect(global.fetch).toHaveBeenCalledWith('http://example.com/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: expect.any(String),
+      });
+
+      const callArgs = global.fetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.version).toBe(LOG_VERSION);
+      expect(body.logCount).toBe(1);
+      expect(body.logs.length).toBe(1);
+    });
+
+    test('clears logs on successful transmission by default', async () => {
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue({ success: true }) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+      expect(service.getLogs().length).toBe(1);
+
+      await service.sendLogs('http://example.com/logs');
+
+      expect(service.getLogs().length).toBe(0);
+    });
+
+    test('does not clear logs when clearOnSuccess is false', async () => {
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue({ success: true }) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+      expect(service.getLogs().length).toBe(1);
+
+      await service.sendLogs('http://example.com/logs', { clearOnSuccess: false });
+
+      expect(service.getLogs().length).toBe(1);
+    });
+
+    test('resolves with response data on success', async () => {
+      const responseData = { success: true, id: '123' };
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue(responseData) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+
+      const result = await service.sendLogs('http://example.com/logs');
+
+      expect(result).toEqual(responseData);
+    });
+
+    test('handles response without JSON body', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockRejectedValue(new Error('no json')),
+      };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+
+      const result = await service.sendLogs('http://example.com/logs');
+
+      expect(result).toEqual({ success: true });
+    });
+
+    test('rejects on HTTP error response', async () => {
+      const mockResponse = { ok: false, status: 500, statusText: 'Internal Server Error' };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+
+      await expect(service.sendLogs('http://example.com/logs')).rejects.toThrow('HTTP 500');
+    });
+
+    test('rejects on network error', async () => {
+      const networkError = new Error('Network failed');
+      global.fetch.mockRejectedValue(networkError);
+
+      service.logAppAccess({ locale: 'es' });
+
+      await expect(service.sendLogs('http://example.com/logs')).rejects.toThrow('Network failed');
+    });
+
+    test('logs errors to console', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      global.fetch.mockRejectedValue(new Error('Network error'));
+
+      service.logAppAccess({ locale: 'es' });
+
+      try {
+        await service.sendLogs('http://example.com/logs');
+      } catch (e) {
+        // Expected to throw
+      }
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'DinoQuiz: failed to send logs to http://example.com/logs',
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    test('sends correct payload structure', async () => {
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue({ success: true }) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      service.logAppAccess({ locale: 'es' });
+      service.logPwaInstallSuccess({ displayMode: 'standalone' });
+
+      await service.sendLogs('http://example.com/logs');
+
+      const callArgs = global.fetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+
+      expect(body).toHaveProperty('version');
+      expect(body).toHaveProperty('timestamp');
+      expect(body).toHaveProperty('logCount');
+      expect(body).toHaveProperty('logs');
+      expect(body.logCount).toBe(2);
+      expect(body.logs.length).toBe(2);
+    });
+
+    test('sends logs even when list is empty', async () => {
+      const mockResponse = { ok: true, json: jest.fn().mockResolvedValue({ success: true }) };
+      global.fetch.mockResolvedValue(mockResponse);
+
+      await service.sendLogs('http://example.com/logs');
+
+      expect(global.fetch).toHaveBeenCalled();
+      const callArgs = global.fetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.logCount).toBe(0);
+      expect(body.logs).toEqual([]);
+    });
+  });
 });

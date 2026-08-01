@@ -8,6 +8,10 @@
  * registers itself on window.DinoQuiz, while also exporting via CommonJS
  * for Node/Jest testing.
  *
+ * Supports transmission to a backend via `sendLogs(endpointUrl, options)`
+ * which POSTs accumulated logs as JSON. Logs are cleared after successful
+ * transmission unless `clearOnSuccess: false` is passed in options.
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -190,6 +194,49 @@
       logCount: this.logs.length,
       logs: this.logs,
     };
+  };
+
+  LogService.prototype.sendLogs = function (endpointUrl, options) {
+    var self = this;
+    options = options || {};
+    var clearOnSuccess = options.clearOnSuccess !== false; // default true
+    var timeout = options.timeout || 5000;
+
+    if (!endpointUrl || typeof endpointUrl !== 'string') {
+      return Promise.reject(new Error('sendLogs requires a valid endpointUrl'));
+    }
+
+    if (typeof fetch === 'undefined') {
+      return Promise.reject(new Error('fetch API not available'));
+    }
+
+    var payload = this.getLogsPayload();
+
+    return fetch(endpointUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }
+        return response.json().catch(function () {
+          return { success: true };
+        });
+      })
+      .then(function (data) {
+        if (clearOnSuccess) {
+          self.clearLogs();
+        }
+        return data;
+      })
+      .catch(function (error) {
+        console.error('DinoQuiz: failed to send logs to ' + endpointUrl, error);
+        throw error;
+      });
   };
 
   if (typeof module !== 'undefined' && module.exports) {
