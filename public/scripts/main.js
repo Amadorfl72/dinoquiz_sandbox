@@ -465,6 +465,21 @@
    * unchanged.
    */
   function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds, analyticsStorage, storage) {
+    // The 8th slot has had two owners: TRIOFSND-80/92 callers passed their
+    // per-question / analytics storage here, then TRIOFSND-101 inserted
+    // `previousQuestionIds` in that position and silently shifted them one to
+    // the right. An object with storage methods cannot be a list of ids, so
+    // honour the older callers instead of dropping their analytics on the
+    // floor (the audit's signature-drift finding, fixed at the seam).
+    if (previousQuestionIds && !Array.isArray(previousQuestionIds)) {
+      if (!storage && typeof previousQuestionIds.recordQuestionAnswered === 'function') {
+        storage = previousQuestionIds;
+      }
+      if (!analyticsStorage && typeof previousQuestionIds.recordEvent === 'function') {
+        analyticsStorage = previousQuestionIds;
+      }
+      previousQuestionIds = undefined;
+    }
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
@@ -874,12 +889,43 @@
       return Promise.resolve(null);
     }
 
+    // Positional-drift seam (audit finding): TRIOFSND-92 callers pass their
+    // tooltip/analytics storage where onOpenPrivacyPolicy now lives — the
+    // privacy-policy PR inserted its callback at position 5 and shifted them.
+    // A storage-shaped object cannot be a callback; honour the older contract.
+    if (onOpenPrivacyPolicy && typeof onOpenPrivacyPolicy !== 'function') {
+      if (
+        !storage &&
+        (typeof onOpenPrivacyPolicy.recordEvent === 'function' ||
+          typeof onOpenPrivacyPolicy.hasSeenHomeTooltip === 'function')
+      ) {
+        storage = onOpenPrivacyPolicy;
+      }
+      onOpenPrivacyPolicy = undefined;
+    }
+
+    // Remember what the CALLER handed us before the ambient fallback kicks
+    // in: an explicitly-passed backend must win over window.localStorage for
+    // every write this function wires (mute already honours this; the
+    // purchase flag must too, or a test/native caller's purchase silently
+    // lands in a storage nobody reads).
+    var explicitStorage = storage;
     storage = storage || resolveHomeStorage(doc.defaultView);
 
     var tooltipStorage =
       storage && typeof storage.hasSeenHomeTooltip === 'function'
         ? storage
         : loadDinoQuizStorage() || createBrowserHomeStorage();
+
+    // The ads-removed flag's backend, shared by the purchase write below and
+    // the game the play button starts: an explicitly-passed raw backend wins
+    // over the ambient localStorage wrapper (see explicitStorage above).
+    var adsStorage =
+      explicitStorage && typeof explicitStorage.setItem === 'function'
+        ? explicitStorage
+        : muteStorageObj && typeof muteStorageObj.setItem === 'function'
+          ? muteStorageObj
+          : storage;
 
     var resolvedMuteStorage =
       muteStorageObj && typeof muteStorageObj.getItem === 'function'
@@ -908,7 +954,13 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storage);
+        // Resolve the write target the same way the mute preference does:
+        // prefer `storage` when it is a raw getItem/setItem backend, else the
+        // resolved mute storage. A caller that only passes `muteStorageObj`
+        // (the TRIOFSND-97 contract test does) must still see the purchase
+        // persist — losing a purchase to argument plumbing is the one failure
+        // mode this flag cannot afford.
+        persistAdsRemovedState(true, adsStorage);
       };
 
       function finishRender() {
@@ -925,7 +977,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, undefined, storage, storage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, adsStorage, undefined, storage, storage);
             }
           });
         }

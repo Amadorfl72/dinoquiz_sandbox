@@ -48,8 +48,15 @@
     var random = randomFn || Math.random;
     var shuffled = items.slice();
 
-    for (var i = shuffled.length - 1; i > 0; i -= 1) {
-      var j = Math.floor(random() * (i + 1));
+    // Forward Fisher-Yates: j = i + floor(random() * (remaining)). Same
+    // uniform distribution as the backward variant, with one property the
+    // tests (and any deterministic caller) rely on: a randomFn that returns
+    // 0 picks j === i every step, so the order is the IDENTITY. The backward
+    // variant maps 0 to "swap with the first slot", silently reversing a
+    // 2-element bank — which is how eleven app-shell tests started asserting
+    // against the wrong question.
+    for (var i = 0; i < shuffled.length - 1; i += 1) {
+      var j = i + Math.floor(random() * (shuffled.length - i));
       var temp = shuffled[i];
       shuffled[i] = shuffled[j];
       shuffled[j] = temp;
