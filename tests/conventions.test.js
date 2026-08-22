@@ -59,6 +59,14 @@ describe('CONVENTIONS.md is enforced, not just written', () => {
     }
   });
 
+  test('the stylesheet keeps [hidden] effective against author display rules', () => {
+    // Any `display:` on a class silently defeats the UA's [hidden] rule; JS
+    // then toggles .hidden believing it works while the browser keeps
+    // painting (seen live: the rewarded-ad CTA visible before answering).
+    const css = read('public/styles/main.css');
+    expect(css).toMatch(/\[hidden\]\s*\{\s*display:\s*none\s*!important/);
+  });
+
   test('public/scripts stays flat: no nested layout reinvention', () => {
     const dir = path.join(ROOT, 'public', 'scripts');
     const entries = fs.readdirSync(dir, { withFileTypes: true });
