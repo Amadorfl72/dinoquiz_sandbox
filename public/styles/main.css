@@ -1,3 +1,14 @@
+/* The [hidden] attribute must always win. Any rule that sets `display`
+   on an element (e.g. .question-screen__rewarded-ad-cta's inline-flex)
+   silently overrides the UA's [hidden] { display: none }, so JS that sets
+   `el.hidden = true` believes the element is gone while the browser keeps
+   painting it — exactly how the rewarded-ad CTA showed before answering
+   and with no ad network available. Tests assert the property, not the
+   computed style, so only this guard closes the seam. */
+[hidden] {
+  display: none !important;
+}
+
 /*
  * Design tokens (TRIOFSND-133 accessibility audit) — sizes/colors reused
  * across every screen so text stays >=18-20sp, tap targets stay >=48x48dp
