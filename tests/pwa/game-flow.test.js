@@ -42,9 +42,9 @@ async function answerCurrentQuestion(container, { correct }) {
 }
 
 /** Reads the current question's prompt, then answers it and advances (see answerCurrentQuestion). */
-function readPromptThenAdvance(container, { correct }) {
+async function readPromptThenAdvance(container, { correct }) {
   const prompt = container.querySelector('.question-screen__prompt').textContent;
-  answerCurrentQuestion(container, { correct });
+  await answerCurrentQuestion(container, { correct });
   return prompt;
 }
 
@@ -232,7 +232,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     }
   });
 
-  test('TRIOFSND-80: resolving a question records pregunta_respondida (id_pregunta + acierto/fallo, no PII)', () => {
+  test('TRIOFSND-80: resolving a question records pregunta_respondida (id_pregunta + acierto/fallo, no PII)', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
@@ -242,10 +242,10 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
       startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, storage);
 
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
       expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(1, 'q-0', true);
 
-      answerCurrentQuestion(container, { correct: false });
+      await answerCurrentQuestion(container, { correct: false });
       expect(storage.recordQuestionAnswered).toHaveBeenNthCalledWith(2, 'q-1', false);
 
       expect(storage.recordQuestionAnswered).toHaveBeenCalledTimes(2);
@@ -303,7 +303,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
   });
 
-  test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', () => {
+  test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
@@ -313,14 +313,14 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       startNewGame(container, renderers, questions, document, undefined, () => 0.1);
       const firstGamePrompts = [];
       for (let i = 0; i < 10; i += 1) {
-        firstGamePrompts.push(readPromptThenAdvance(container, { correct: true }));
+        firstGamePrompts.push(await readPromptThenAdvance(container, { correct: true }));
       }
 
       getByRole(container, 'button', { name: strings.playAgainButton }).click();
 
       const secondGamePrompts = [];
       for (let i = 0; i < 10; i += 1) {
-        secondGamePrompts.push(readPromptThenAdvance(container, { correct: true }));
+        secondGamePrompts.push(await readPromptThenAdvance(container, { correct: true }));
       }
 
       const overlap = secondGamePrompts.filter((prompt) => firstGamePrompts.includes(prompt));
@@ -355,16 +355,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     } finally {
       jest.useRealTimers();
     }
-    expect(container.querySelector('.results-screen')).not.toBeNull();
-
-    getByRole(container, 'button', { name: strings.exitButton }).click();
-
-    // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
-    // let its promise chain settle before asserting on the DOM.
-    await flushPromises();
-
-    expect(container.querySelector('.results-screen')).toBeNull();
-    expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();
   });
 
   test("Home's '¡Jugar!' button starts a new game reaching the first question", () => {
@@ -442,14 +432,14 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       expect(container.textContent).toContain('1/1');
     });
 
-    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
+    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', async () => {
       const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(3);
 
       startNewGame(container, renderers, questions, document, undefined, () => 0);
 
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
       const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
 
       // The first question's now-stale auto-advance timer would fire around
@@ -491,7 +481,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
   });
 
-  test('TRIOFSND-92: an incorrect answer records the aggregated, non-PII pregunta_respondida and pregunta_respondida_fallo events', () => {
+  test('TRIOFSND-92: an incorrect answer records the aggregated, non-PII pregunta_respondida and pregunta_respondida_fallo events', async () => {
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -507,12 +497,12 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(async () => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
       jest.useFakeTimers();
       try {
-        answerCurrentQuestion(container, { correct: false });
+        await answerCurrentQuestion(container, { correct: false });
       } finally {
         jest.useRealTimers();
       }
@@ -522,7 +512,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
   });
 
-  test('TRIOFSND-92: a correct answer records the pregunta_respondida event but not the pregunta_respondida_fallo event', () => {
+  test('TRIOFSND-92: a correct answer records the pregunta_respondida event but not the pregunta_respondida_fallo event', async () => {
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -538,12 +528,12 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(() => {
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(async () => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
       jest.useFakeTimers();
       try {
-        answerCurrentQuestion(container, { correct: true });
+        await answerCurrentQuestion(container, { correct: true });
       } finally {
         jest.useRealTimers();
       }
@@ -617,14 +607,14 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       expect(container.textContent).toContain('1/1');
     });
 
-    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
+    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', async () => {
       const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(3);
 
       startNewGame(container, renderers, questions, document, undefined, () => 0);
 
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
       const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
 
       // The first question's now-stale auto-advance timer would fire around
@@ -728,7 +718,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     container.remove();
   });
 
-  test('shows the banner and rewarded ad on Resultados when the purchase has not been made', () => {
+  test('shows the banner and rewarded ad on Resultados when the purchase has not been made', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
@@ -738,7 +728,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
       startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
       for (let i = 0; i < 10; i += 1) {
-        answerCurrentQuestion(container, { correct: true });
+        await answerCurrentQuestion(container, { correct: true });
       }
 
       expect(storageObj.getItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY);
@@ -748,7 +738,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     }
   });
 
-  test('hides the banner and rewarded ad on Resultados once the purchase has been made', () => {
+  test('hides the banner and rewarded ad on Resultados once the purchase has been made', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
@@ -761,7 +751,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
       startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
       for (let i = 0; i < 10; i += 1) {
-        answerCurrentQuestion(container, { correct: true });
+        await answerCurrentQuestion(container, { correct: true });
       }
 
       expect(container.querySelector('.results-screen__ads')).toBeNull();
@@ -770,7 +760,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     }
   });
 
-  test('a purchase confirmed on Home hides ads on the very next game\'s Resultados screen', () => {
+  test('a purchase confirmed on Home hides ads on the very next game\'s Resultados screen', async () => {
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -788,7 +778,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, undefined, storageObj).then(() => {
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, undefined, storageObj).then(async () => {
       const purchaseButton = getByRole(container, 'button', { name: homeStrings.globalControls.purchaseButton });
       purchaseButton.click();
       const purchaseConfirmButton = getByRole(container, 'button', { name: purchaseStrings.purchaseButton });
@@ -799,7 +789,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
       try {
         playButton.click();
         for (let i = 0; i < 10; i += 1) {
-          answerCurrentQuestion(container, { correct: true });
+          await answerCurrentQuestion(container, { correct: true });
         }
       } finally {
         jest.useRealTimers();

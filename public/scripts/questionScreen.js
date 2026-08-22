@@ -375,6 +375,7 @@
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
+    feedback.setAttribute('aria-live', 'polite');
 
     var announcementEl = document.createElement('p');
     announcementEl.className = 'question-screen__announcement sr-only';
@@ -394,10 +395,10 @@
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
 
-    var announcement = document.createElement('p');
-    announcement.className = 'question-screen__announcement sr-only';
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
+    // TRIOFSND-79 + TRIOFSND-90 each added "the single announcement region"
+    // and the merge kept both, so screen readers announced every answer twice
+    // and getByRole('status') found two nodes. One element, both names.
+    var announcement = announcementEl;
 
     var rewardedAdStrings = strings.rewardedAd || {};
 
@@ -494,9 +495,6 @@
             // acertaste!" feedback below, so no extra label is added.
             button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
-          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
-          // this as the correct answer even without seeing the green border.
-          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
           // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
@@ -504,13 +502,13 @@
         }
       });
 
+      var correctAnswerText = question.options[question.correctAnswerIndex];
       if (correct) {
         feedback.textContent = strings.feedback.correct;
       } else {
         // Spell out the correct answer's text in the aria-live announcement
         // (TRIOFSND-90, AC-7): a TalkBack/VoiceOver user hears this instead of
         // relying on the visual border to know which option was right.
-        var correctAnswerText = question.options[question.correctAnswerIndex];
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
@@ -519,14 +517,19 @@
       // Written synchronously, right here, so TalkBack/VoiceOver announce
       // acierto/fallo and the correct option's text immediately after the
       // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
-      announcementEl.textContent = formatTemplate(
-        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
-        { correctAnswer: correctAnswerText }
-      );
+      var announcementParts = [
+        formatTemplate(
+          correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
+          { correctAnswer: correctAnswerText }
+        ),
+      ];
+      if (typeof question.funFact === 'string' && question.funFact.trim() !== '') {
+        announcementParts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
+      }
+      announcementParts.push(strings.scoreLabel + ': ' + score);
+      announcementEl.textContent = announcementParts.join(' ');
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
-
-      announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
 
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
@@ -565,7 +568,6 @@
     root.appendChild(feedback);
     root.appendChild(announcementEl);
     root.appendChild(funFactBox);
-    root.appendChild(announcement);
     root.appendChild(rewardedAdCta);
     root.appendChild(rewardedAdStatus);
     root.appendChild(extraFunFactBox);
