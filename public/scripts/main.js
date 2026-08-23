@@ -104,11 +104,22 @@
  * the tooltip, its persisted "seen" flag, the analytics counters and the
  * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  *
- * Starting a game (TRIOFSND-67): the '¡Jugar!' click handler wired below
- * records the aggregated, non-PII `partida_iniciada` event (via
+ * Starting a game (TRIOFSND-67) and replaying it (TRIOFSND-102): the
+ * '¡Jugar!' click handler wired below and 'Volver a jugar' (`onPlayAgain` in
+ * `renderResultsFor`) both funnel into `startNewGame`, which is the single
+ * place that records the aggregated, non-PII `partida_iniciada` event (via
  * `storage.recordEvent`, which increments on every call — unlike the
- * once-only `first_tap_jugar` counter above) before calling `startNewGame`,
- * so every game start is counted even on replay-free single sessions. Both
+ * once-only `first_tap_jugar` counter above). It only does so once the new
+ * session actually has exactly 10 uniquely-identified questions, the first
+ * one has been presented without error, and — for a replay — its question
+ * IDs differ from the previous game's (an unchanged set means the random
+ * selector re-picked the same 10 questions, which TRIOFSND-99 owns fixing;
+ * this task only avoids miscounting that as a new game). 'Volver a jugar'
+ * additionally records `replay_pulsado` immediately on the first accepted
+ * click — before the new game is even generated, and never reverted if that
+ * later fails — and is latched against repeat/reentrant activations (mouse,
+ * touch, Enter and Space all converge on the same 'click' event a plain
+ * `<button>` already dispatches, so one gesture accepts at most once). Both
  * this handler and `homeScreen.js`'s own click listener (which dismisses the
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
@@ -142,6 +153,28 @@
     } catch (error) {
       console.error('DinoQuiz: failed to persist the mute preference', error);
     }
+  }
+
+  /**
+   * Normalizes a stored `analyticsEventCounts` value before incrementing it
+   * (TRIOFSND-102): integers and non-negative decimal strings resolve to
+   * their integer value (decimals floored); anything absent, empty,
+   * non-numeric, negative, `NaN` or infinite resolves to `0`. Mirrors
+   * `src/services/storage/normalizeCounter.js` exactly so the browser-native
+   * `createBrowserHomeStorage` fallback below and the CommonJS
+   * `src/services/storage` client never drift apart — duplicated rather
+   * than shared because this file has no bundler and must also run as a
+   * plain `<script>` with no `require` (see the file-level docstring).
+   */
+  function normalizeCounterValue(value) {
+    if (typeof value !== 'number' && typeof value !== 'string') {
+      return 0;
+    }
+    var num = Number(value);
+    if (!Number.isFinite(num) || num < 0) {
+      return 0;
+    }
+    return Math.floor(num);
   }
 
   var PRIVACY_POLICY_HASH = '#/privacidad';
@@ -238,6 +271,67 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
+  var GAME_QUESTION_COUNT = 10;
+
+  /** Each question's `id`, in order — used only for the uniqueness/equality checks below (TRIOFSND-102). */
+  function collectQuestionIds(questions) {
+    return (questions || []).map(function (question) {
+      return question && question.id;
+    });
+  }
+
+  /** A valid game session has exactly `GAME_QUESTION_COUNT` questions, each with a defined, unique id. */
+  function isValidGameSession(questions) {
+    if (!Array.isArray(questions) || questions.length !== GAME_QUESTION_COUNT) {
+      return false;
+    }
+    var ids = collectQuestionIds(questions);
+    for (var i = 0; i < ids.length; i += 1) {
+      if (ids[i] === undefined || ids[i] === null) {
+        return false;
+      }
+    }
+    return new Set(ids).size === GAME_QUESTION_COUNT;
+  }
+
+  /** Order-independent set equality, so reshuffled-but-identical question IDs still count as "the same game". */
+  function questionIdSetsAreEqual(idsA, idsB) {
+    if (!Array.isArray(idsA) || !Array.isArray(idsB) || idsA.length !== idsB.length) {
+      return false;
+    }
+    var setB = new Set(idsB);
+    for (var i = 0; i < idsA.length; i += 1) {
+      if (!setB.has(idsA[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * The single, shared registration point for `partida_iniciada` (TRIOFSND-102):
+   * both '¡Jugar!' and 'Volver a jugar' funnel through `startNewGame`, and this
+   * is the only place either of them ever calls `storageObj.recordEvent`. Only
+   * records once `firstQuestionPresented` is true (the question actually
+   * rendered without throwing) and the session is a valid 10-unique-id game;
+   * for a replay, a new set identical to `previousQuestionIds` does not count
+   * (that is TRIOFSND-99's random selector picking the same subset again —
+   * out of scope here, this only avoids miscounting it).
+   */
+  function recordGameStartedIfValid(storageObj, questions, firstQuestionPresented, previousQuestionIds) {
+    if (!storageObj || typeof storageObj.recordEvent !== 'function') {
+      return;
+    }
+    if (!firstQuestionPresented || !isValidGameSession(questions)) {
+      return;
+    }
+    var ids = collectQuestionIds(questions);
+    if (previousQuestionIds && questionIdSetsAreEqual(ids, previousQuestionIds)) {
+      return;
+    }
+    storageObj.recordEvent('partida_iniciada');
+  }
+
   /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
   function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
     var question = session.questions[session.state.questionIndex];
@@ -268,39 +362,97 @@
     });
   }
 
-  /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
+  /**
+   * Renders Resultados for a finished game; 'Volver a jugar' starts a fresh
+   * game, 'Salir' goes to Inicio. `previousGameQuestionIds` is this game's
+   * own 10 question IDs, carried forward so the *next* replay (if any) can
+   * tell whether the selector picked a genuinely different set (TRIOFSND-102).
+   */
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, previousGameQuestionIds) {
+    // Reentrancy guard (TRIOFSND-102): scoped to this one rendered Resultados
+    // screen (not to any render-cycle state), so it survives incidental
+    // re-renders but a brand new game's own Resultados gets a fresh latch.
+    // Once tripped it never resets, so mouse/touch/Enter/Space — which all
+    // converge on the same native 'click' event a <button> already dispatches
+    // — can accept at most one activation for this button.
+    var replayAccepted = false;
+
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+        if (replayAccepted) {
+          return;
+        }
+        replayAccepted = true;
+
+        if (storageObj && typeof storageObj.recordEvent === 'function') {
+          // Recorded immediately on acceptance, before the new game is even
+          // generated/validated/presented, and never reverted if that fails.
+          storageObj.recordEvent('replay_pulsado');
+        }
+
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, previousGameQuestionIds);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn, resolveHomeStorage(), function () {
-          navigateToPrivacyPolicy();
-        });
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          resolveHomeStorage(),
+          resolveHomeStorage()
+        );
       },
     });
   }
 
-  /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
+  /**
+   * Resets game state (score/questionIndex/answers) and navigates to the
+   * first question of a new game. Shared by '¡Jugar!' and 'Volver a jugar'
+   * (the only two callers), so this is also the single place `partida_iniciada`
+   * gets recorded (see `recordGameStartedIfValid`) — never at either call site.
+   */
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds) {
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
     var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var firstQuestionPresented = false;
 
-    renderQuestionAt(
-      container,
-      renderers,
-      session,
-      function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
-      },
-      storageObj
-    );
+    try {
+      renderQuestionAt(
+        container,
+        renderers,
+        session,
+        function (finalState) {
+          renderResultsFor(
+            container,
+            renderers,
+            questions,
+            finalState,
+            doc,
+            fetchFn,
+            storageObj,
+            collectQuestionIds(session.questions)
+          );
+        },
+        storageObj
+      );
+      firstQuestionPresented = true;
+    } catch (error) {
+      // A failed replay/game-start must not crash the click handler that
+      // triggered it (TRIOFSND-102): log and fall through to the recording
+      // decision below, which will correctly skip `partida_iniciada` since
+      // `firstQuestionPresented` stayed false. Any already-recorded
+      // `replay_pulsado` for this attempt is intentionally left untouched.
+      console.error('DinoQuiz: failed to present the new game', error);
+    } finally {
+      recordGameStartedIfValid(storageObj, session.questions, firstQuestionPresented, previousQuestionIds);
+    }
 
     return session;
   }
@@ -377,26 +529,9 @@
     });
   }
 
-  /**
-   * Fetches the whole i18n resource once and hands back the three sections
-   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
-   * browser can render the global controls without a `require()` for
-   * `src/i18n`.
-   */
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
-    });
-  }
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
-    });
-  }
-
-  function loadHomeResources(fetchFn, resourcePath) {
-    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
     });
   }
 
@@ -512,9 +647,14 @@
           }
         }
       },
+      // Same normalize-then-increment contract as
+      // src/services/storage/StorageClient.js#recordEvent (TRIOFSND-102): the
+      // existing value is normalized before the `+ 1` so a stale/corrupted
+      // count (a numeric string, a negative number, `NaN`...) can never get
+      // string-concatenated into the next count instead of added to it.
       recordEvent: function (eventName) {
         var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
-        counts[eventName] = (counts[eventName] || 0) + 1;
+        counts[eventName] = normalizeCounterValue(counts[eventName]) + 1;
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
       },
@@ -544,6 +684,9 @@
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
       },
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -556,17 +699,21 @@
   }
 
   /**
-   * `storage`, when given, doubles as two independent optional backends,
-   * told apart by shape: a raw `getItem`/`setItem` object (matching
-   * `localStorage`, TRIOFSND-66) persists the mute preference, while a
-   * `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` object
-   * (matching `src/services/storage`'s `dinoQuizStorage` or
-   * `createBrowserHomeStorage`, TRIOFSND-65) drives the first-run tooltip.
-   * Passing neither renders Home with plain strings only, so callers that
-   * don't care about mute/tooltip persistence (e.g. a bare unit render) get
-   * back exactly the options they'd expect with no surprise side effects.
+   * `tooltipStorage` (a `hasSeenHomeTooltip`/`markHomeTooltipSeen`/
+   * `recordEventOnce`/`recordEvent` object matching `src/services/storage`'s
+   * `dinoQuizStorage` or `createBrowserHomeStorage`, TRIOFSND-65) drives the
+   * first-run tooltip, the `first_tap_jugar` counter and -- once '¡Jugar!'
+   * actually starts a valid game (TRIOFSND-67/TRIOFSND-102) -- `partida_iniciada`.
+   * When omitted it falls back to `loadDinoQuizStorage()`/`createBrowserHomeStorage()`
+   * so those still work for real, unbundled-browser callers that don't pass
+   * one explicitly (e.g. `renderRoute` below, via `resolveHomeStorage`).
+   * `muteStorage` is a separate, raw `getItem`/`setItem` object (matching
+   * `localStorage`, TRIOFSND-66) that persists the mute preference; omitting
+   * it renders Home with plain strings only for that concern (e.g. a bare
+   * unit render whose `renderHomeScreen` mock only cares about the fetched
+   * strings).
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, tooltipStorage, muteStorage) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -584,8 +731,11 @@
       return Promise.resolve(null);
     }
 
-    var muteStorageObj = storage && typeof storage.getItem === 'function' ? storage : null;
-    var tooltipStorage = storage && typeof storage.hasSeenHomeTooltip === 'function' ? storage : null;
+    var muteStorageObj = muteStorage && typeof muteStorage.getItem === 'function' ? muteStorage : null;
+    var resolvedTooltipStorage =
+      tooltipStorage && typeof tooltipStorage.hasSeenHomeTooltip === 'function'
+        ? tooltipStorage
+        : loadDinoQuizStorage() || createBrowserHomeStorage();
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
@@ -609,13 +759,14 @@
         // Wire '¡Jugar!' to start a game without changing renderHomeScreen's
         // contract/props beyond the strings/tooltip/privacy-policy options
         // above; we attach to the button element it hands back instead.
+        // `startNewGame` is the single shared place that records
+        // `partida_iniciada` (TRIOFSND-102) once the new game is valid.
         if (homeApi && homeApi.playButton) {
           homeApi.playButton.addEventListener('click', function () {
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedTooltipStorage);
             }
           });
         }
@@ -623,17 +774,13 @@
         return homeApi;
       }
 
-      if (!tooltipStorage) {
-        return finishRender();
-      }
-
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return resolvedTooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorage.markHomeTooltipSeen();
+          resolvedTooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorage.recordEventOnce('first_tap_jugar');
+          resolvedTooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -698,9 +845,17 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, resolveHomeStorage(), function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      homeStorage,
+      homeStorage
+    );
   }
 
   /**
@@ -770,7 +925,6 @@
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
-      resolveHomeStorage: resolveHomeStorage,
       loadPrivacyPolicyStrings: loadPrivacyPolicyStrings,
       navigateToPrivacyPolicy: navigateToPrivacyPolicy,
       navigateHome: navigateHome,

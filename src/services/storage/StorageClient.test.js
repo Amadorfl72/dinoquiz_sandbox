@@ -238,4 +238,134 @@ describe('DinoQuizStorage', () => {
       replay_pulsado: 1,
     });
   });
+
+  describe('recordEvent normalizes the existing counter before incrementing (TRIOFSND-102)', () => {
+    async function seedAnalyticsCounts(adapter, counts) {
+      await adapter.setItem('dinoquiz:analyticsEventCounts', JSON.stringify(counts));
+    }
+
+    it('never string-concatenates a numeric-string counter (e.g. "5" + 1 must become 6, not "51")', async () => {
+      const adapter = createFakeAdapter();
+      await seedAnalyticsCounts(adapter, { replay_pulsado: '5' });
+      const storage = new DinoQuizStorage([adapter]);
+
+      const next = await storage.recordEvent('replay_pulsado');
+
+      expect(next).toBe(6);
+      expect(next).not.toBe('51');
+      expect(typeof next).toBe('number');
+    });
+
+    it('treats an absent counter as 0 before incrementing', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.recordEvent('partida_iniciada')).toBe(1);
+    });
+
+    it('treats a negative counter as 0 before incrementing', async () => {
+      const adapter = createFakeAdapter();
+      await seedAnalyticsCounts(adapter, { partida_iniciada: -7 });
+      const storage = new DinoQuizStorage([adapter]);
+
+      expect(await storage.recordEvent('partida_iniciada')).toBe(1);
+    });
+
+    it('floors a non-negative decimal counter before incrementing', async () => {
+      const adapter = createFakeAdapter();
+      await seedAnalyticsCounts(adapter, { partida_iniciada: 4.9 });
+      const storage = new DinoQuizStorage([adapter]);
+
+      expect(await storage.recordEvent('partida_iniciada')).toBe(5);
+    });
+
+    it('incrementing one counter modifies only that key and preserves every other key already in the store', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEventOnce('first_tap_jugar');
+
+      await storage.recordEvent('replay_pulsado');
+
+      expect(await storage.get('analyticsEventCounts')).toEqual({
+        partida_iniciada: 1,
+        first_tap_jugar: 1,
+        replay_pulsado: 1,
+      });
+    });
+  });
+
+  describe('getReplayRate (TRIOFSND-102): replay_pulsado / partida_iniciada, never NaN/Infinity', () => {
+    it('is exactly 0 when partida_iniciada was never recorded', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      expect(await storage.getReplayRate()).toBe(0);
+    });
+
+    it('is exactly 0 when the stored partida_iniciada is invalid (non-numeric)', async () => {
+      const adapter = createFakeAdapter();
+      await adapter.setItem(
+        'dinoquiz:analyticsEventCounts',
+        JSON.stringify({ partida_iniciada: 'not-a-number', replay_pulsado: 3 })
+      );
+      const storage = new DinoQuizStorage([adapter]);
+
+      expect(await storage.getReplayRate()).toBe(0);
+    });
+
+    it('is exactly 0 when partida_iniciada is 0', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      await storage.recordEvent('replay_pulsado');
+
+      expect(await storage.getReplayRate()).toBe(0);
+    });
+
+    it('divides replay_pulsado by partida_iniciada once both are recorded', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('partida_iniciada');
+      await storage.recordEvent('replay_pulsado');
+
+      expect(await storage.getReplayRate()).toBe(0.25);
+    });
+
+    it('never returns NaN or Infinity', async () => {
+      const adapter = createFakeAdapter();
+      await adapter.setItem(
+        'dinoquiz:analyticsEventCounts',
+        JSON.stringify({ partida_iniciada: null, replay_pulsado: 'garbage' })
+      );
+      const storage = new DinoQuizStorage([adapter]);
+
+      const rate = await storage.getReplayRate();
+
+      expect(Number.isNaN(rate)).toBe(false);
+      expect(Number.isFinite(rate)).toBe(true);
+      expect(rate).toBe(0);
+    });
+  });
+
+  it('persists replay_pulsado and partida_iniciada across instances sharing the same backend (TRIOFSND-102)', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+
+    const storage = new DinoQuizStorage([adapter()]);
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('partida_iniciada');
+    await storage.recordEvent('replay_pulsado');
+
+    const reopened = new DinoQuizStorage([adapter()]);
+
+    expect(await reopened.getEventCount('partida_iniciada')).toBe(2);
+    expect(await reopened.getEventCount('replay_pulsado')).toBe(1);
+  });
 });

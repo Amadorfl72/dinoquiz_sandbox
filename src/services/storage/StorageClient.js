@@ -2,6 +2,10 @@ const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { DEFAULT_STATE } = require('./types');
+const { normalizeCounter } = require('./normalizeCounter');
+
+const REPLAY_PULSADO_EVENT = 'replay_pulsado';
+const PARTIDA_INICIADA_EVENT = 'partida_iniciada';
 
 const NAMESPACE = 'dinoquiz:';
 const PERSISTED_KEYS = [
@@ -273,20 +277,42 @@ class DinoQuizStorage {
 
   async getEventCount(eventName) {
     const counts = await this.get('analyticsEventCounts');
-    return counts[eventName] || 0;
+    return normalizeCounter(counts[eventName]);
   }
 
   /**
    * Aggregated, non-PII local event counter (no backend, see PRD logging_observability).
    * Unlike `recordEventOnce`, increments on every call -- this is what repeatable
    * product events (e.g. partida_iniciada, one per game start) need.
+   *
+   * The existing count is normalized (TRIOFSND-102) before incrementing so a
+   * stale/corrupted value (a numeric string, a negative number, `NaN`...)
+   * can never get string-concatenated into the next count instead of added
+   * to it, and only this one key of `analyticsEventCounts` is ever touched --
+   * every other counter already in the store is carried over unchanged.
    */
   async recordEvent(eventName) {
     const counts = await this.get('analyticsEventCounts');
-    const next = (counts[eventName] || 0) + 1;
+    const next = normalizeCounter(counts[eventName]) + 1;
     await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
   }
+
+  /**
+   * Local, offline replay rate derived from the two aggregated counters:
+   * `replay_pulsado / partida_iniciada`. Never NaN/Infinity -- when the
+   * normalized `partida_iniciada` total is 0 (or was never recorded), the
+   * rate is exactly 0 rather than a division by zero.
+   */
+  async getReplayRate() {
+    const counts = await this.get('analyticsEventCounts');
+    const gamesStarted = normalizeCounter(counts[PARTIDA_INICIADA_EVENT]);
+    if (gamesStarted <= 0) {
+      return 0;
+    }
+    const replays = normalizeCounter(counts[REPLAY_PULSADO_EVENT]);
+    return replays / gamesStarted;
+  }
 }
 
-module.exports = { DinoQuizStorage };
+module.exports = { DinoQuizStorage, REPLAY_PULSADO_EVENT, PARTIDA_INICIADA_EVENT };
