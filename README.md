@@ -13,6 +13,50 @@ npm install
 npm test
 ```
 
+## Docker
+
+DinoQuiz también puede ejecutarse contenerizado con [Docker](https://docs.docker.com/get-docker/)
+(versión con soporte de `docker compose`), sirviendo el contenido de `public/` con nginx
+(ver [`Dockerfile`](Dockerfile) y [`docker/nginx.conf`](docker/nginx.conf)). No hace falta tener
+Node ni ninguna otra dependencia instalada en la máquina: basta con Docker.
+
+**Requisitos previos:** tener Docker instalado y en ejecución.
+
+**Construir la imagen:**
+
+```bash
+docker compose build
+```
+
+**Levantar el contenedor:**
+
+```bash
+docker compose up -d
+```
+
+La app queda disponible en [http://localhost:8080](http://localhost:8080) (ver el mapeo de
+puertos `8080:80` en [`docker-compose.yml`](docker-compose.yml)).
+
+**Parar el contenedor:**
+
+```bash
+docker compose down
+```
+
+**Reconstruir tras cambios:** `docker compose build` usa la caché de capas de Docker, así que
+solo reconstruye las capas afectadas por los ficheros que hayan cambiado (por ejemplo, si solo
+cambia algo bajo `public/`, la capa de la imagen base de nginx no se vuelve a descargar ni
+reconstruir). Para forzar una reconstrucción completa e ignorar la caché:
+
+```bash
+docker compose build --no-cache
+```
+
+**Sin credenciales:** la imagen no requiere ni embebe ningún secreto, credencial, API key o
+variable de entorno — coherente con que DinoQuiz es una PWA sin backend ni cuentas de usuario
+(ver `out_of_scope` del PRD). `docker-compose.yml` no define ninguna variable `environment` ni
+fichero `.env`.
+
 ## PWA: instalación y despliegue (TRIOFSND-139)
 
 DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
