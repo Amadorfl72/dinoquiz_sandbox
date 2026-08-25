@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="estegosaurioFallbackTitle">
+  <title id="estegosaurioFallbackTitle">Silueta de Estegosaurio</title>
+  <path d="M20 150 q-8 -4 -6 -16 q14 2 18 -12 l14 10 l4 -20 l14 12 l6 -22 l14 12 l6 -20 l14 12 q22 4 26 24 q10 2 10 14 l-12 2 q0 10 -10 10 l-2 -10 q-70 8 -88 -2 q-4 8 -8 6 z"
+        fill="#7E8A68" stroke="#333B29" stroke-width="6" stroke-linejoin="round"/>
+</svg>
