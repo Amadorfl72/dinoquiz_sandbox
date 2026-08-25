@@ -13,6 +13,8 @@ const {
   EXPECTED_QUESTION_COUNT,
   validateQuestion,
   validateQuestionBank,
+  hasImageVariants,
+  filterQuestionsWithImageVariants,
   getDinosaurCoverageErrors,
   resolveDatoCurioso,
   getDatoCuriosoTranslationErrors,
@@ -30,6 +32,9 @@ function buildValidQuestion(overrides = {}) {
     correctAnswerIndex: 1,
     dato_curioso: 'funFacts.trex-01',
     image: 'dinosaurs/trex.png',
+    imageRealistic: 'realistic/trex.svg',
+    imageFallback: 'fallback/trex.svg',
+    imageAlt: 'Ilustración educativa de un Tyrannosaurus Rex.',
     ...overrides,
   };
 }
@@ -100,20 +105,36 @@ describe('real question bank (public/data/questions.json)', () => {
     });
   });
 
-  test('every question image reference resolves to a real file under public/assets/images', () => {
+  function expectResolvesToRealImageFile(imageRef) {
     const imagesDir = path.join(__dirname, '..', '..', 'public', 'assets', 'images');
+    // Reject anything but a relative, traversal-free path before it ever reaches path.join.
+    expect(imageRef).toMatch(/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/);
+    expect(imageRef).not.toMatch(/\.\./);
+
+    const imagePath = path.join(imagesDir, sanitizeImageReference(imageRef));
+    const relativeToImagesDir = path.relative(imagesDir, imagePath);
+    expect(relativeToImagesDir.startsWith('..')).toBe(false);
+    expect(path.isAbsolute(relativeToImagesDir)).toBe(false);
+    expect(imagePath.startsWith(imagesDir + path.sep)).toBe(true);
+
+    expect(fs.existsSync(imagePath)).toBe(true);
+  }
+
+  test('every question image reference resolves to a real file under public/assets/images', () => {
+    questions.forEach((question) => expectResolvesToRealImageFile(question.image));
+  });
+
+  test('AW5: every question has a realistic variant, a fallback asset and a neutral alt text', () => {
     questions.forEach((question) => {
-      // Reject anything but a relative, traversal-free path before it ever reaches path.join.
-      expect(question.image).toMatch(/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/);
-      expect(question.image).not.toMatch(/\.\./);
+      expect(hasImageVariants(question)).toBe(true);
+      expect(question.imageAlt.trim().length).toBeGreaterThan(0);
+    });
+  });
 
-      const imagePath = path.join(imagesDir, sanitizeImageReference(question.image));
-      const relativeToImagesDir = path.relative(imagesDir, imagePath);
-      expect(relativeToImagesDir.startsWith('..')).toBe(false);
-      expect(path.isAbsolute(relativeToImagesDir)).toBe(false);
-      expect(imagePath.startsWith(imagesDir + path.sep)).toBe(true);
-
-      expect(fs.existsSync(imagePath)).toBe(true);
+  test('every question imageRealistic and imageFallback resolve to real files under public/assets/images', () => {
+    questions.forEach((question) => {
+      expectResolvesToRealImageFile(question.imageRealistic);
+      expectResolvesToRealImageFile(question.imageFallback);
     });
   });
 
@@ -237,6 +258,47 @@ describe('validateQuestionBank', () => {
   });
 });
 
+describe('hasImageVariants (AW5)', () => {
+  test('accepts a question with a realistic variant, a fallback asset and an alt text', () => {
+    expect(hasImageVariants(buildValidQuestion())).toBe(true);
+  });
+
+  test.each(['imageRealistic', 'imageFallback', 'imageAlt'])('rejects a question missing "%s"', (field) => {
+    expect(hasImageVariants(buildValidQuestion({ [field]: undefined }))).toBe(false);
+  });
+
+  test.each(['imageRealistic', 'imageFallback', 'imageAlt'])('rejects a question with a blank "%s"', (field) => {
+    expect(hasImageVariants(buildValidQuestion({ [field]: '   ' }))).toBe(false);
+  });
+
+  test('rejects a nullish question', () => {
+    expect(hasImageVariants(null)).toBe(false);
+    expect(hasImageVariants(undefined)).toBe(false);
+  });
+});
+
+describe('filterQuestionsWithImageVariants (AW5)', () => {
+  test('keeps only questions that have both image variants and a fallback', () => {
+    const complete = buildValidQuestion({ id: 'trex-01' });
+    const missingRealistic = buildValidQuestion({ id: 'trex-02', imageRealistic: '' });
+    const missingFallback = buildValidQuestion({ id: 'trex-03', imageFallback: undefined });
+    const missingAlt = buildValidQuestion({ id: 'trex-04', imageAlt: '   ' });
+
+    const filtered = filterQuestionsWithImageVariants([complete, missingRealistic, missingFallback, missingAlt]);
+
+    expect(filtered).toEqual([complete]);
+  });
+
+  test('returns an empty array when no question has both variants', () => {
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', imageRealistic: '' }),
+      buildValidQuestion({ id: 'trex-02', imageFallback: '' }),
+    ];
+
+    expect(filterQuestionsWithImageVariants(questions)).toEqual([]);
+  });
+});
+
 describe('getDinosaurCoverageErrors', () => {
   test('flags a dinosaur with fewer than the minimum required questions', () => {
     const questions = [
@@ -314,6 +376,29 @@ describe('loadQuestionBank', () => {
     const filePath = writeTempQuestionBank([buildValidQuestion({ options: ['Solo una opción'] })]);
     try {
       expect(() => loadQuestionBank({ filePath })).toThrow(/Invalid question bank/);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('AW5: excludes questions missing a realistic variant or fallback instead of failing the whole load', () => {
+    const complete = buildValidQuestion({ id: 'trex-01' });
+    const missingRealistic = buildValidQuestion({ id: 'trex-02', imageRealistic: '' });
+    const filePath = writeTempQuestionBank([complete, missingRealistic]);
+    try {
+      const questions = loadQuestionBank({ filePath });
+      expect(questions.map((question) => question.id)).toEqual(['trex-01']);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('AW5: still enforces the total question count against the filtered bank', () => {
+    const complete = buildValidQuestion({ id: 'trex-01' });
+    const missingFallback = buildValidQuestion({ id: 'trex-02', imageFallback: undefined });
+    const filePath = writeTempQuestionBank([complete, missingFallback]);
+    try {
+      expect(() => loadQuestionBank({ filePath, checkCount: true })).toThrow(/must contain exactly/);
     } finally {
       fs.unlinkSync(filePath);
     }

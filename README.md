@@ -105,7 +105,11 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg",          // ilustración cartoon del dinosaurio
+  "imageRealistic": "realistic/trex.svg", // variante de estilo realista del mismo dinosaurio
+  "imageFallback": "fallback/trex.svg",   // asset local de respaldo por dinosaurio, para cuando
+                                 // la imagen principal no llega a cargar
+  "imageAlt": "..."             // alt educativo y neutral, compartido por las tres variantes
 }
 ```
 
@@ -114,14 +118,26 @@ respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no 
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
 
+**AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
+pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver
+`hasImageVariants`/`filterQuestionsWithImageVariants` en
+[`src/data/questionBank.js`](src/data/questionBank.js)), en vez de invalidar todo el banco por
+una única entrada incompleta; `src/data/questionBank.test.js` cubre tanto ese filtrado como el
+resto de validaciones sobre el banco real.
+
 Las ilustraciones referenciadas por `image` viven en
 [`public/assets/images/dinosaurs/`](public/assets/images/dinosaurs) — un SVG cartoon por
 especie (trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
-pteranodon), en el mismo estilo que la mascota. Son ligeros y no requieren red, por lo que el
-service worker los precachea junto al resto del app shell (ver
-[`public/service-worker.js`](public/service-worker.js)) y quedan disponibles offline desde el
-primer arranque; `src/data/questionBank.test.js` verifica que cada `image` del banco resuelva
-a un fichero real bajo esa carpeta.
+pteranodon), en el mismo estilo que la mascota. Las variantes `imageRealistic` viven en
+[`public/assets/images/realistic/`](public/assets/images/realistic) (misma silueta, paleta y
+texturas más naturalistas, sin texto incrustado) y las `imageFallback` en
+[`public/assets/images/fallback/`](public/assets/images/fallback) (siluetas de un solo color,
+un fichero por dinosaurio). Cada una de esas dos carpetas documenta la licencia de sus SVG en
+su propio `CREDITS.md`. Todas son ligeras y no requieren red, por lo que quedan cubiertas por
+el runtime-cache del service worker bajo `/assets/images/` (ver
+[`public/service-worker.js`](public/service-worker.js)) y disponibles offline tras el primer
+uso; `src/data/questionBank.test.js` verifica que `image`, `imageRealistic` e `imageFallback`
+de cada pregunta del banco resuelvan a un fichero real bajo `public/assets/images/`.
 
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
