@@ -13,6 +13,16 @@
  * public/data/questions.json) -- this service only picks which field to use,
  * it never derives a path itself.
  *
+ * The 'realista' URL comes straight from the question bank's own
+ * `imageRealistic` field (e.g. "realistic/trex.svg", see
+ * src/data/questionBank.js and public/data/questions.json), which is where
+ * the actual realistic assets ship (public/assets/images/realistic/*.svg) --
+ * NOT derived by inserting a "realista" segment into the base `image` path,
+ * which has no corresponding asset directory. Only a question missing
+ * `imageRealistic` (e.g. hand-built test fixtures) falls back to that
+ * derived path, purely so callers without the field still get *a* URL
+ * instead of `undefined`.
+ *
  * Local fallback (AC: "sin bloquear la partida"): `question.imageFallback`
  * (public/assets/images/fallback/) is always returned as `fallbackUrl`
  * alongside the resolved `url`. The caller (questionScreen.js) wires that
@@ -61,7 +71,11 @@
     var realisticUrl = stringOrEmpty(question && question.imageRealistic);
     var fallbackUrl = stringOrEmpty(question && question.imageFallback) || cartoonUrl;
     var style = resolveImageStyle(ageBand);
-    var url = style === IMAGE_STYLES.REALISTA && realisticUrl ? realisticUrl : cartoonUrl;
+    var url = cartoonUrl;
+
+    if (style === IMAGE_STYLES.REALISTA) {
+      url = realisticUrl || styledImagePath(cartoonUrl, style);
+    }
 
     return {
       style: style,
