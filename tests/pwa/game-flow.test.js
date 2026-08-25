@@ -7,7 +7,14 @@ const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
-const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
+const { results: strings, question: questionStrings, ageGate: ageGateStrings } = require('../../public/i18n/es.json');
+
+// TRIOFSND-193: '¡Jugar!' now opens the age gate before the first question.
+// Every test below that clicks the real Home play button (as opposed to
+// calling startNewGame directly) must pick an option here to reach the game.
+function selectAgeGateOption(container) {
+  getByRole(container, 'button', { name: ageGateStrings.sevenOrMoreOption }).click();
+}
 
 function buildQuestion(id) {
   return {
@@ -370,10 +377,75 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
+      expect(container.querySelector('.age-gate-screen')).not.toBeNull();
+      selectAgeGateOption(container);
+
       expect(container.querySelector('.question-screen')).not.toBeNull();
     });
     jest.advanceTimersByTime(0);
     return rendered;
+  });
+
+  describe('TRIOFSND-193: age gate shown between "¡Jugar!" and the prepared game', () => {
+    test('picking "menos de 7" also proceeds into the game', () => {
+      const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const fetchFn = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+      });
+
+      jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+      const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
+        getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+
+        getByRole(container, 'button', { name: ageGateStrings.underSevenOption }).click();
+
+        expect(container.querySelector('.age-gate-screen')).toBeNull();
+        expect(container.querySelector('.question-screen')).not.toBeNull();
+      });
+      jest.advanceTimersByTime(0);
+      return rendered;
+    });
+
+    test('renderAgeGate falls straight through to onSelected when no age-gate renderer is available (never blocks the game)', () => {
+      const { renderAgeGate } = require(MAIN_JS_PATH);
+      const onSelected = jest.fn();
+
+      renderAgeGate(container, {}, undefined, onSelected);
+
+      expect(onSelected).toHaveBeenCalledTimes(1);
+      expect(container.querySelector('.age-gate-screen')).toBeNull();
+    });
+
+    test('the age-band selection is never written to any storage backend passed to renderHome', () => {
+      const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(10);
+      const fetchFn = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+      });
+      const storage = {
+        hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+        markHomeTooltipSeen: jest.fn().mockResolvedValue(undefined),
+        recordEventOnce: jest.fn().mockResolvedValue(1),
+        recordEvent: jest.fn().mockResolvedValue(1),
+        getItem: jest.fn().mockReturnValue(null),
+        setItem: jest.fn(),
+      };
+
+      jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
+
+      const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn, storage).then(() => {
+        getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+        selectAgeGateOption(container);
+
+        expect(storage.setItem).not.toHaveBeenCalled();
+      });
+      jest.advanceTimersByTime(0);
+      return rendered;
+    });
   });
 
   describe('avance automático tras el temporizador (TRIOFSND-84)', () => {
@@ -473,11 +545,14 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
       // Immediate, synchronous transition off the same click: the tooltip is
-      // gone and the first question is already on screen, no awaited step
-      // in between.
+      // gone and the age gate (TRIOFSND-193) is already on screen, no
+      // awaited step in between.
       expect(container.querySelector('.home-screen__tooltip')).toBeNull();
-      expect(container.querySelector('.question-screen')).not.toBeNull();
+      expect(container.querySelector('.age-gate-screen')).not.toBeNull();
       expect(storage.recordEvent).toHaveBeenCalledWith('partida_iniciada');
+
+      selectAgeGateOption(container);
+      expect(container.querySelector('.question-screen')).not.toBeNull();
     });
   });
 
@@ -499,6 +574,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
     return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(async () => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+      selectAgeGateOption(container);
 
       jest.useFakeTimers();
       try {
@@ -530,6 +606,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
 
     return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, storage).then(async () => {
       getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
+      selectAgeGateOption(container);
 
       jest.useFakeTimers();
       try {
@@ -788,6 +865,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
       jest.useFakeTimers();
       try {
         playButton.click();
+        selectAgeGateOption(container);
         for (let i = 0; i < 10; i += 1) {
           await answerCurrentQuestion(container, { correct: true });
         }

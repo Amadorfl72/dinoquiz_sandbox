@@ -27,6 +27,12 @@
     "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
+  "ageGate": {
+    "screenTitle": "¿Cuántos años tienes?",
+    "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
+    "underSevenOption": "Menos de 7 años",
+    "sevenOrMoreOption": "7 años o más"
+  },
   "privacyPolicy": {
     "screenTitle": "Política de privacidad",
     "backButtonLabel": "Volver a la pantalla de inicio",
