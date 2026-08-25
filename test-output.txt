@@ -1,0 +1,5 @@
+
+> dinoquiz@0.1.0 test
+> jest
+
+sh: jest: command not found
