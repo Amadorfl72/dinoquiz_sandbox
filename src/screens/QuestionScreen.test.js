@@ -70,6 +70,8 @@ function buildQuestion(overrides = {}) {
     correctAnswerIndex: 1,
     funFact: 'El T-Rex tenía la mordida más fuerte de todos los dinosaurios carnívoros conocidos.',
     image: 'dinosaurs/trex.png',
+    imageRealistic: 'realistic/trex.png',
+    imageFallback: 'fallback/trex.png',
     ...overrides,
   };
 }
@@ -174,18 +176,27 @@ describe('QuestionScreen', () => {
       const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
 
       expect(imageStyle).toBe('realista');
-      expect(image).toHaveAttribute('src', '/assets/images/dinosaurs/realista/trex.png');
+      expect(image).toHaveAttribute('src', `/assets/images/${question.imageRealistic}`);
     });
 
-    test('falls back to the guaranteed "dibujo" asset when the styled image fails to load, without blocking the game or changing the alt text', () => {
+    test('falls back to the dedicated fallback asset when the "realista" image fails to load, without blocking the game or changing the alt text', () => {
       const question = buildQuestion();
       const { image } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
       const altBeforeError = image.alt;
 
       image.dispatchEvent(new Event('error'));
 
-      expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+      expect(image).toHaveAttribute('src', `/assets/images/${question.imageFallback}`);
       expect(image.alt).toBe(altBeforeError);
+    });
+
+    test('falls back to the dedicated fallback asset when the "dibujo" image fails to load', () => {
+      const question = buildQuestion();
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+
+      image.dispatchEvent(new Event('error'));
+
+      expect(image).toHaveAttribute('src', `/assets/images/${question.imageFallback}`);
     });
 
     test('does not retry the fallback again if it also errors, avoiding a load loop', () => {
@@ -199,8 +210,8 @@ describe('QuestionScreen', () => {
       expect(image.src).toBe(srcAfterFirstError);
     });
 
-    test('wires no onerror fallback for "dibujo", which has no further fallback to fall back to', () => {
-      const question = buildQuestion();
+    test('wires no onerror fallback when the resolved image already is its own fallback', () => {
+      const question = buildQuestion({ imageFallback: undefined });
       const { image } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
 
       expect(image.onerror).toBeNull();

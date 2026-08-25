@@ -152,8 +152,8 @@
  * `options.ageBand` lets callers/tests inject the band directly; otherwise
  * it falls back to `ageGateScreen`'s in-memory, session-only selection. If
  * the resolved style's image fails to load, the `<img>`'s `onerror` swaps
- * it to the service's `fallbackUrl` (the guaranteed-to-exist 'dibujo' asset)
- * exactly once, so a missing/broken style variant never blocks the game.
+ * it to the service's `fallbackUrl` (`question.imageFallback`) exactly once,
+ * so a missing/broken style variant never blocks the game.
  * The `alt` text (`resolveImageAlt`) stays built from the dinosaur/fun-fact
  * data regardless of which style image is showing, since it describes the
  * dinosaur, not the illustration style.
