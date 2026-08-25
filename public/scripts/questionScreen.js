@@ -485,6 +485,7 @@
     var rewardedAdStatus = document.createElement('p');
     rewardedAdStatus.className = 'question-screen__rewarded-ad-status';
     rewardedAdStatus.setAttribute('aria-live', 'polite');
+    rewardedAdStatus.hidden = true;
 
     var extraFunFactBox = document.createElement('div');
     extraFunFactBox.className = 'question-screen__fun-fact-box question-screen__extra-fun-fact-box';
@@ -505,6 +506,7 @@
       if (rewardedAdCta.disabled) return;
       rewardedAdCta.disabled = true;
       rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
+      rewardedAdStatus.hidden = false;
 
       rewardedAdService.request().then(function (result) {
         if (result && result.granted) {
@@ -512,6 +514,7 @@
           extraFunFact.textContent = extraFact;
           extraFunFactBox.hidden = false;
           rewardedAdStatus.textContent = '';
+          rewardedAdStatus.hidden = true;
           rewardedAdCta.hidden = true;
         } else {
           rewardedAdStatus.textContent = rewardedAdStrings.notCompletedMessage;
