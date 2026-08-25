@@ -317,7 +317,6 @@
     if (!Array.isArray(rawQuestions)) {
       return [];
     }
-    var funFacts = strings ? strings.funFacts : null;
     return rawQuestions.map(function (question) {
       var prepared = {};
       for (var key in question) {
@@ -325,7 +324,10 @@
           prepared[key] = question[key];
         }
       }
-      prepared.funFact = resolveFunFact(funFacts, question.dato_curioso);
+      // `dato_curioso` is a dotted key like "funFacts.trex-01", so it must be
+      // resolved against the full strings bundle, not `strings.funFacts`
+      // (which would look up the "funFacts" segment twice and always miss).
+      prepared.funFact = resolveFunFact(strings, question.dato_curioso);
       return prepared;
     });
   }
