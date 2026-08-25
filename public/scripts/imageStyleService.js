@@ -5,20 +5,22 @@
  *
  * Given the age band selected in the age gate (public/scripts/ageGateScreen.js,
  * TRIOFSND-193: 'under-7' | '7-plus'), resolves which visual variant of a
- * question's dinosaur illustration to show -- 'dibujo' (cartoon, matches the
- * PRD's overall visual_direction and today's only shipped asset set under
- * public/assets/images/dinosaurs/) for the youngest players, or 'realista'
- * for the 7-plus band, who can handle a more lifelike depiction.
+ * question's dinosaur illustration to show -- 'dibujo' (`question.image`,
+ * cartoon, matching the PRD's overall visual_direction) for the youngest
+ * players, or 'realista' (`question.imageRealistic`) for the 7-plus band,
+ * who can handle a more lifelike depiction. Both fields are asset paths that
+ * already come straight from the question bank (src/data/questionBank.js,
+ * public/data/questions.json) -- this service only picks which field to use,
+ * it never derives a path itself.
  *
- * Local fallback (AC: "sin bloquear la partida"): only the flat
- * `dinosaurs/<name>.svg` path is guaranteed to exist today, so it is always
- * returned as `fallbackUrl` alongside the resolved `url`. The caller
- * (questionScreen.js) wires that fallback to the `<img>`'s `onerror`, so a
- * missing/broken 'realista' asset (no such variant ships yet) degrades to
- * the existing 'dibujo' illustration instead of a broken image -- the game
- * never stalls waiting on an image. An unrecognized/missing age band (e.g.
- * the age gate was skipped) also resolves to 'dibujo', keeping the game
- * showing exactly the illustrations it always has.
+ * Local fallback (AC: "sin bloquear la partida"): `question.imageFallback`
+ * (public/assets/images/fallback/) is always returned as `fallbackUrl`
+ * alongside the resolved `url`. The caller (questionScreen.js) wires that
+ * fallback to the `<img>`'s `onerror`, so a missing/broken style asset
+ * degrades to the guaranteed fallback illustration instead of a broken image
+ * -- the game never stalls waiting on an image. An unrecognized/missing age
+ * band (e.g. the age gate was skipped) resolves to 'dibujo', keeping the
+ * game showing exactly the illustrations it always has.
  *
  * Pure logic, no DOM access, so it is trivial to unit test directly. Browser
  * bridge: DinoQuiz has no bundler, so this file follows the same dual
@@ -46,15 +48,8 @@
     return AGE_BAND_IMAGE_STYLES[ageBand] || DEFAULT_IMAGE_STYLE;
   }
 
-  /** Inserts a style segment before the filename, e.g. "dinosaurs/trex.svg" + "realista" -> "dinosaurs/realista/trex.svg". */
-  function styledImagePath(imagePath, style) {
-    if (typeof imagePath !== 'string' || imagePath === '') {
-      return imagePath;
-    }
-    var lastSlash = imagePath.lastIndexOf('/');
-    var dir = lastSlash === -1 ? '' : imagePath.slice(0, lastSlash + 1);
-    var file = lastSlash === -1 ? imagePath : imagePath.slice(lastSlash + 1);
-    return dir + style + '/' + file;
+  function stringOrEmpty(value) {
+    return typeof value === 'string' ? value : '';
   }
 
   /**
@@ -62,10 +57,11 @@
    * fallback URL to use if that style's image fails to load.
    */
   function resolveQuestionImage(question, ageBand) {
-    var basePath = question && typeof question.image === 'string' ? question.image : '';
+    var cartoonUrl = stringOrEmpty(question && question.image);
+    var realisticUrl = stringOrEmpty(question && question.imageRealistic);
+    var fallbackUrl = stringOrEmpty(question && question.imageFallback) || cartoonUrl;
     var style = resolveImageStyle(ageBand);
-    var fallbackUrl = basePath;
-    var url = style === DEFAULT_IMAGE_STYLE ? basePath : styledImagePath(basePath, style);
+    var url = style === IMAGE_STYLES.REALISTA && realisticUrl ? realisticUrl : cartoonUrl;
 
     return {
       style: style,

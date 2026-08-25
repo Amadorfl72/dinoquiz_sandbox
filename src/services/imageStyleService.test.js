@@ -12,6 +12,8 @@ function buildQuestion(overrides = {}) {
     id: 'trex-01',
     dinosaur: 'trex',
     image: 'dinosaurs/trex.svg',
+    imageRealistic: 'realistic/trex.svg',
+    imageFallback: 'fallback/trex.svg',
     ...overrides,
   };
 }
@@ -33,25 +35,25 @@ describe('resolveImageStyle', () => {
 });
 
 describe('resolveQuestionImage', () => {
-  test('"dibujo" resolves straight to the question\'s existing image path, which also acts as its own fallback', () => {
+  test('"dibujo" resolves straight to the question\'s cartoon image path, falling back to its dedicated fallback asset', () => {
     const question = buildQuestion();
     const resolved = resolveQuestionImage(question, 'under-7');
 
     expect(resolved).toEqual({
       style: 'dibujo',
       url: 'dinosaurs/trex.svg',
-      fallbackUrl: 'dinosaurs/trex.svg',
+      fallbackUrl: 'fallback/trex.svg',
     });
   });
 
-  test('"realista" resolves to a sibling styled path, falling back to the guaranteed "dibujo" asset', () => {
+  test('"realista" resolves to the question\'s realistic image path, falling back to its dedicated fallback asset', () => {
     const question = buildQuestion();
     const resolved = resolveQuestionImage(question, '7-plus');
 
     expect(resolved).toEqual({
       style: 'realista',
-      url: 'dinosaurs/realista/trex.svg',
-      fallbackUrl: 'dinosaurs/trex.svg',
+      url: 'realistic/trex.svg',
+      fallbackUrl: 'fallback/trex.svg',
     });
   });
 
@@ -61,6 +63,20 @@ describe('resolveQuestionImage', () => {
 
     expect(resolved.style).toBe(DEFAULT_IMAGE_STYLE);
     expect(resolved.url).toBe(question.image);
+    expect(resolved.fallbackUrl).toBe(question.imageFallback);
+  });
+
+  test('"realista" falls back to the cartoon image when imageRealistic is missing', () => {
+    const question = buildQuestion({ imageRealistic: undefined });
+    const resolved = resolveQuestionImage(question, '7-plus');
+
+    expect(resolved.url).toBe(question.image);
+  });
+
+  test('falls back to the cartoon image as fallbackUrl when imageFallback is missing', () => {
+    const question = buildQuestion({ imageFallback: undefined });
+    const resolved = resolveQuestionImage(question, 'under-7');
+
     expect(resolved.fallbackUrl).toBe(question.image);
   });
 
