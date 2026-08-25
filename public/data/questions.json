@@ -6,7 +6,10 @@
     "options": ["Solo de plantas", "De carne, ¡era un gran cazador!", "Solo de insectos", "De algas del mar"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-01",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "trex-02",
@@ -15,7 +18,10 @@
     "options": ["Muy largos", "Muy cortos y pequeños", "No tenía brazos", "Como alas"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-02",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "trex-03",
@@ -24,7 +30,10 @@
     "options": ["Jurásico", "Cretácico", "Triásico", "Época de hielo"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-03",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "trex-04",
@@ -33,7 +42,10 @@
     "options": ["Sobre dos patas", "Sobre cuatro patas", "Nadando", "Volando"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.trex-04",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "trex-05",
@@ -42,7 +54,10 @@
     "options": ["10 dientes", "Unos 60 dientes", "500 dientes", "No tenía dientes"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-05",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "trex-06",
@@ -51,7 +66,10 @@
     "options": ["Lagarto veloz", "Rey lagarto tirano", "Dinosaurio volador", "Lagarto con cuernos"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-06",
-    "image": "dinosaurs/trex.svg"
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.svg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
   {
     "id": "triceratops-01",
@@ -60,7 +78,10 @@
     "options": ["Uno", "Dos", "Tres", "Cuatro"],
     "correctAnswerIndex": 2,
     "dato_curioso": "funFacts.triceratops-01",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "triceratops-02",
@@ -69,7 +90,10 @@
     "options": ["De carne", "De plantas", "De peces", "De insectos"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-02",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "triceratops-03",
@@ -78,7 +102,10 @@
     "options": ["Para volar", "Para proteger su cuello", "Para nadar", "Para hacer ruido"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-03",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "triceratops-04",
@@ -87,7 +114,10 @@
     "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-04",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "triceratops-05",
@@ -96,7 +126,10 @@
     "options": ["Cara con tres cuernos", "Lagarto veloz", "Rey de los mares", "Cola con púas"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-05",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "triceratops-06",
@@ -105,7 +138,10 @@
     "options": ["Con el Tyrannosaurus Rex", "Con el Pteranodon", "Con el Velociraptor", "Con el Ankylosaurus"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-06",
-    "image": "dinosaurs/triceratops.svg"
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.svg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
   {
     "id": "velociraptor-01",
@@ -114,7 +150,10 @@
     "options": ["Como un pavo grande", "Como un elefante", "Como un ratón", "Como una ballena"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-01",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "velociraptor-02",
@@ -123,7 +162,10 @@
     "options": ["Una garra curva y grande", "Una ventosa", "Una aleta", "Un casco óseo"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-02",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "velociraptor-03",
@@ -132,7 +174,10 @@
     "options": ["De plantas", "De carne", "De rocas", "De algas"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-03",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "velociraptor-04",
@@ -141,7 +186,10 @@
     "options": ["Completamente solo", "En grupo, como una manada", "Bajo el agua", "Volando"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-04",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "velociraptor-05",
@@ -150,7 +198,10 @@
     "options": ["Escamas duras", "Plumas", "Una concha", "Piel de rana"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-05",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "velociraptor-06",
@@ -159,7 +210,10 @@
     "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-06",
-    "image": "dinosaurs/velociraptor.svg"
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.svg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
   {
     "id": "estegosaurio-01",
@@ -168,7 +222,10 @@
     "options": ["Placas óseas", "Plumas de colores", "Escamas de pez", "Alas pequeñas"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-01",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "estegosaurio-02",
@@ -177,7 +234,10 @@
     "options": ["Púas afiladas", "Ventosas", "Un aguijón venenoso", "Fuego"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-02",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "estegosaurio-03",
@@ -186,7 +246,10 @@
     "options": ["De carne", "De plantas", "De peces", "De otros dinosaurios"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-03",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "estegosaurio-04",
@@ -195,7 +258,10 @@
     "options": ["Muy grande", "Muy pequeño", "No tenía cerebro", "Gigante"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-04",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "estegosaurio-05",
@@ -204,7 +270,10 @@
     "options": ["Dos", "Cuatro", "Seis", "Ocho"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-05",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "estegosaurio-06",
@@ -213,7 +282,10 @@
     "options": ["Para regular su temperatura", "Para volar", "Para nadar rápido", "Para masticar mejor"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-06",
-    "image": "dinosaurs/estegosaurio.svg"
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
   {
     "id": "braquiosaurio-01",
@@ -222,7 +294,10 @@
     "options": ["Que era muy largo", "Que era muy corto", "Que no tenía cuello", "Que tenía púas"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-01",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "braquiosaurio-02",
@@ -231,7 +306,10 @@
     "options": ["De carne", "De hojas de árboles altos", "De peces", "De insectos"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-02",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "braquiosaurio-03",
@@ -240,7 +318,10 @@
     "options": ["Uno de los más grandes", "Uno de los más pequeños", "Del tamaño de un perro", "Del tamaño de un gato"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-03",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "braquiosaurio-04",
@@ -249,7 +330,10 @@
     "options": ["Más largas", "Más cortas", "Iguales", "No tenía patas delanteras"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-04",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "braquiosaurio-05",
@@ -258,7 +342,10 @@
     "options": ["Dos", "Cuatro", "Seis", "Ocho"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-05",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "braquiosaurio-06",
@@ -267,7 +354,10 @@
     "options": ["Jurásico", "Época de hielo", "Triásico tardío", "Cretácico final"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-06",
-    "image": "dinosaurs/braquiosaurio.svg"
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
   {
     "id": "ankylosaurus-01",
@@ -276,7 +366,10 @@
     "options": ["Una maza ósea", "Un aguijón", "Una aleta", "Plumas"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-01",
-    "image": "dinosaurs/ankylosaurus.svg"
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
   {
     "id": "ankylosaurus-02",
@@ -285,7 +378,10 @@
     "options": ["Con una armadura de placas óseas", "Con escamas de pez", "Con plumas suaves", "Sin ninguna protección"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-02",
-    "image": "dinosaurs/ankylosaurus.svg"
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
   {
     "id": "ankylosaurus-03",
@@ -294,7 +390,10 @@
     "options": ["De carne", "De plantas bajas", "De peces", "De insectos voladores"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-03",
-    "image": "dinosaurs/ankylosaurus.svg"
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
   {
     "id": "ankylosaurus-04",
@@ -303,7 +402,10 @@
     "options": ["Para defenderse de depredadores", "Para volar", "Para nadar", "Para cavar túneles"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-04",
-    "image": "dinosaurs/ankylosaurus.svg"
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
   {
     "id": "ankylosaurus-05",
@@ -312,7 +414,10 @@
     "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-05",
-    "image": "dinosaurs/ankylosaurus.svg"
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
   {
     "id": "pteranodon-01",
@@ -321,7 +426,10 @@
     "options": ["No, era un reptil volador llamado pterosaurio", "Sí, era un dinosaurio terrestre", "Era un pez gigante", "Era un mamífero"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-01",
-    "image": "dinosaurs/pteranodon.svg"
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.svg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
   {
     "id": "pteranodon-02",
@@ -330,7 +438,10 @@
     "options": ["Alas de piel entre los dedos", "Alas de plumas como un ave", "Aletas", "Globos de aire"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-02",
-    "image": "dinosaurs/pteranodon.svg"
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.svg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
   {
     "id": "pteranodon-03",
@@ -339,7 +450,10 @@
     "options": ["De peces", "De plantas", "De otros dinosaurios grandes", "De rocas"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-03",
-    "image": "dinosaurs/pteranodon.svg"
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.svg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
   {
     "id": "pteranodon-04",
@@ -348,7 +462,10 @@
     "options": ["Una cresta larga", "Cuernos", "Placas óseas", "Una maza"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-04",
-    "image": "dinosaurs/pteranodon.svg"
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.svg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
   {
     "id": "pteranodon-05",
@@ -357,6 +474,9 @@
     "options": ["No, no tenía ni un solo diente", "Sí, tenía cientos de dientes", "Solo dos dientes gigantes", "Tenía dientes venenosos"],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-05",
-    "image": "dinosaurs/pteranodon.svg"
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.svg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   }
 ]

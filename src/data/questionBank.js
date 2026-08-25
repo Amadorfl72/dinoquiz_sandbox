@@ -10,8 +10,17 @@
  *   correctAnswerIndex: number, // index into "options" of the correct answer
  *   dato_curioso: string,       // i18n key (in src/i18n/*.json under "funFacts")
  *                                // resolving to the dato curioso shown after answering
- *   image: string,              // reference to the dinosaur's illustration
+ *   image: string,              // reference to the dinosaur's cartoon illustration
+ *   imageRealistic: string,     // reference to the dinosaur's realistic-style illustration
+ *   imageFallback: string,      // reference to the dinosaur's local fallback asset, used if
+ *                                // the cartoon/realistic image fails to load
+ *   imageAlt: string,           // neutral, educational alt text shared by the dinosaur's
+ *                                // image variants (style-consistent, no dato curioso spoilers)
  * }
+ *
+ * AW5: `loadQuestionBank()` excludes any entry missing `imageRealistic`,
+ * `imageFallback` or `imageAlt` from the usable bank instead of failing the
+ * whole load — see `hasImageVariants`/`filterQuestionsWithImageVariants`.
  */
 
 const fs = require('fs');
@@ -129,6 +138,29 @@ function validateQuestionBank(questions, options = {}) {
   return errors;
 }
 
+// AW5: a question only counts as "complete" once it carries both image
+// variants (cartoon `image` is validated separately in validateQuestion) and
+// a local fallback asset, plus the shared neutral/educational alt text.
+function hasImageVariants(question) {
+  return Boolean(
+    question &&
+      typeof question === 'object' &&
+      typeof question.imageRealistic === 'string' &&
+      question.imageRealistic.trim() !== '' &&
+      typeof question.imageFallback === 'string' &&
+      question.imageFallback.trim() !== '' &&
+      typeof question.imageAlt === 'string' &&
+      question.imageAlt.trim() !== ''
+  );
+}
+
+// AW5: excludes questions missing a realistic variant, a fallback asset or
+// an alt text from the bank instead of failing the whole load — a single
+// incomplete entry never blocks the rest of the game.
+function filterQuestionsWithImageVariants(questions) {
+  return questions.filter((question) => hasImageVariants(question));
+}
+
 function getDinosaurCoverageErrors(questions) {
   const countsByDinosaur = VALID_DINOSAURS.reduce((counts, dinosaur) => {
     counts[dinosaur] = 0;
@@ -178,12 +210,19 @@ function loadQuestionBank(options = {}) {
   const checkTranslations = options.checkTranslations !== undefined ? options.checkTranslations : !options.filePath;
   const raw = fs.readFileSync(filePath, 'utf-8');
 
-  let questions;
+  let parsedQuestions;
   try {
-    questions = JSON.parse(raw);
+    parsedQuestions = JSON.parse(raw);
   } catch (error) {
     throw new Error(`Failed to parse question bank JSON at ${filePath}: ${error.message}`);
   }
+
+  // AW5: filter out incomplete entries before validating, so a question
+  // missing its realistic/fallback art doesn't fail the whole bank — it is
+  // just excluded from what's returned.
+  const questions = Array.isArray(parsedQuestions)
+    ? filterQuestionsWithImageVariants(parsedQuestions)
+    : parsedQuestions;
 
   const errors = validateQuestionBank(questions, { checkCount });
   if (checkCoverage) {
@@ -213,6 +252,8 @@ module.exports = {
   QUESTIONS_JSON_PATH,
   validateQuestion,
   validateQuestionBank,
+  hasImageVariants,
+  filterQuestionsWithImageVariants,
   getDinosaurCoverageErrors,
   resolveDatoCurioso,
   getDatoCuriosoTranslationErrors,

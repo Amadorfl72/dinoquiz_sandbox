@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="estegosaurioRealisticTitle">
+  <title id="estegosaurioRealisticTitle">Estegosaurio (ilustración de estilo realista)</title>
+  <defs>
+    <linearGradient id="stegoBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7E8A68"/>
+      <stop offset="1" stop-color="#5D6A4A"/>
+    </linearGradient>
+  </defs>
+  <!-- Tail with spikes -->
+  <path d="M90 290 q-40 -5 -50 -40" fill="none" stroke="#6E7F5C" stroke-width="26" stroke-linecap="round"/>
+  <g fill="#E7DEC2" stroke="#333B29" stroke-width="4">
+    <path d="M42 245 l-22 -12 26 -8 z"/>
+    <path d="M35 220 l-24 -6 22 -14 z"/>
+  </g>
+  <!-- Legs -->
+  <ellipse cx="150" cy="345" rx="24" ry="18" fill="#4A5539" stroke="#252B1B" stroke-width="6"/>
+  <ellipse cx="280" cy="340" rx="26" ry="20" fill="#4A5539" stroke="#252B1B" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="215" cy="255" rx="130" ry="75" fill="url(#stegoBody)" stroke="#333B29" stroke-width="8"/>
+  <!-- Skin texture -->
+  <g stroke="#5D6A4A" stroke-width="3" opacity="0.6">
+    <path d="M170 240 q20 -8 40 0"/>
+    <path d="M220 250 q20 -6 40 2"/>
+  </g>
+  <!-- Belly -->
+  <ellipse cx="215" cy="275" rx="80" ry="42" fill="#E7DEC2"/>
+  <!-- Back plates -->
+  <g fill="#8A7B62" stroke="#333B29" stroke-width="5" stroke-linejoin="round">
+    <path d="M130 190 l20 -40 20 40 z"/>
+    <path d="M175 178 l22 -46 22 46 z"/>
+    <path d="M222 178 l22 -46 22 46 z"/>
+    <path d="M269 190 l20 -40 20 40 z"/>
+  </g>
+  <!-- Head -->
+  <ellipse cx="320" cy="235" rx="48" ry="32" fill="url(#stegoBody)" stroke="#333B29" stroke-width="7"/>
+  <!-- Eye -->
+  <circle cx="335" cy="222" r="8" fill="#333B29"/>
+  <circle cx="338" cy="219" r="2.5" fill="#F1E9D2"/>
+</svg>

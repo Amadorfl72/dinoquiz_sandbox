@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="trexRealisticTitle">
+  <title id="trexRealisticTitle">Tyrannosaurus Rex (ilustración de estilo realista)</title>
+  <defs>
+    <linearGradient id="trexBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8A7A4E"/>
+      <stop offset="1" stop-color="#6B5C36"/>
+    </linearGradient>
+  </defs>
+  <!-- Tail -->
+  <path d="M70 300 q-40 -10 -46 -46" fill="none" stroke="#7B6B43" stroke-width="34" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="170" cy="345" rx="28" ry="20" fill="#5B4A2A" stroke="#3E2F1C" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="28" ry="20" fill="#5B4A2A" stroke="#3E2F1C" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="210" cy="250" rx="120" ry="95" fill="url(#trexBody)" stroke="#3E2F1C" stroke-width="8"/>
+  <!-- Skin texture -->
+  <g stroke="#5B4A2A" stroke-width="3" opacity="0.6">
+    <path d="M150 210 q20 -10 40 0"/>
+    <path d="M160 240 q20 -8 40 2"/>
+    <path d="M170 270 q20 -8 40 2"/>
+  </g>
+  <!-- Belly -->
+  <ellipse cx="210" cy="270" rx="70" ry="55" fill="#D9C9A3"/>
+  <!-- Tiny arms -->
+  <path d="M150 240 q-20 10 -18 30" fill="none" stroke="#7B6B43" stroke-width="14" stroke-linecap="round"/>
+  <path d="M270 240 q20 10 18 30" fill="none" stroke="#7B6B43" stroke-width="14" stroke-linecap="round"/>
+  <!-- Head -->
+  <ellipse cx="300" cy="140" rx="78" ry="62" fill="url(#trexBody)" stroke="#3E2F1C" stroke-width="8"/>
+  <!-- Jaw -->
+  <path d="M240 175 q80 40 140 -5 q-10 30 -70 32 q-50 0 -70 -27 z" fill="#D9C9A3" stroke="#3E2F1C" stroke-width="6"/>
+  <!-- Teeth -->
+  <g fill="#F1E9D2" stroke="#3E2F1C" stroke-width="2">
+    <path d="M255 178 l6 12 6 -12 z"/>
+    <path d="M280 190 l6 12 6 -12 z"/>
+    <path d="M305 195 l6 12 6 -12 z"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="315" cy="115" r="12" fill="#3E2F1C"/>
+  <circle cx="319" cy="111" r="4" fill="#F1E9D2"/>
+</svg>

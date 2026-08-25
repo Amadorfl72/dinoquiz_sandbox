@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="pteranodonFallbackTitle">
+  <title id="pteranodonFallbackTitle">Silueta de Pteranodon</title>
+  <path d="M100 110 q-50 -30 -85 -15 q30 5 45 30 q15 10 40 -5 q10 -30 45 -50 q-10 28 -30 40 q25 -10 65 5 q-30 0 -45 15 q-15 15 -40 5 q-4 20 -20 22 l-2 -12 q-10 4 -14 -4 l6 -10 q6 4 20 -6 q-8 -8 5 -15 z"
+        fill="#9C8A75" stroke="#3C2F24" stroke-width="6" stroke-linejoin="round"/>
+</svg>
