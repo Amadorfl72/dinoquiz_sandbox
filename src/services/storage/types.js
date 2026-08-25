@@ -25,6 +25,7 @@
  * @property {Object.<string, QuestionStats>} questionStats
  * @property {QuestionAnsweredEvent[]} questionAnsweredEvents
  * @property {boolean} adsRemoved
+ * @property {number} maxUnlockedLevel
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -38,6 +39,9 @@ const DEFAULT_STATE = {
   questionStats: {},
   questionAnsweredEvents: [],
   adsRemoved: false,
+  // Level 1 is always accessible (TRIOFSND-203), so it's the unlocked floor
+  // even before any level has been completed.
+  maxUnlockedLevel: 1,
 };
 
 /**

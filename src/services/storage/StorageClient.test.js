@@ -31,6 +31,7 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('analyticsEventCounts')).toEqual({});
     expect(await storage.get('questionStats')).toEqual({});
     expect(await storage.get('questionAnsweredEvents')).toEqual([]);
+    expect(await storage.get('maxUnlockedLevel')).toBe(1);
   });
 
   it('persists and reads back values through the active adapter', async () => {
@@ -477,6 +478,55 @@ describe('DinoQuizStorage', () => {
         { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
         { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
       ]);
+    });
+  });
+
+  describe('TRIOFSND-205: local persistence of the max unlocked level', () => {
+    it('defaults to level 1 and only advances on a higher level', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+      expect(await storage.getMaxUnlockedLevel()).toBe(1);
+
+      await storage.setMaxUnlockedLevel(3);
+      expect(await storage.getMaxUnlockedLevel()).toBe(3);
+
+      await storage.setMaxUnlockedLevel(2);
+      expect(await storage.getMaxUnlockedLevel()).toBe(3);
+    });
+
+    it('ignores non-integer levels', async () => {
+      const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+      await storage.setMaxUnlockedLevel(2.5);
+      await storage.setMaxUnlockedLevel(NaN);
+      await storage.setMaxUnlockedLevel('3');
+
+      expect(await storage.getMaxUnlockedLevel()).toBe(1);
+    });
+
+    it('keeps the game playable in memory and logs a stable, data-free code when every backend fails', async () => {
+      const broken = createFakeAdapter({
+        async isAvailable() {
+          throw new Error('boom');
+        },
+      });
+      const logService = { logEvent: jest.fn() };
+      const storage = new DinoQuizStorage([broken], logService);
+
+      const level = await storage.setMaxUnlockedLevel(4);
+
+      expect(level).toBe(4);
+      expect(await storage.getMaxUnlockedLevel()).toBe(4);
+      expect(logService.logEvent).toHaveBeenCalledWith('storage_max_unlocked_level_persist_error');
+      expect(logService.logEvent).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not log anything when persistence succeeds', async () => {
+      const logService = { logEvent: jest.fn() };
+      const storage = new DinoQuizStorage([createFakeAdapter()], logService);
+
+      await storage.setMaxUnlockedLevel(2);
+
+      expect(logService.logEvent).not.toHaveBeenCalled();
     });
   });
 });

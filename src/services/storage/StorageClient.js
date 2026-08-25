@@ -2,6 +2,7 @@ const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { DEFAULT_STATE } = require('./types');
+const { LogService } = require('../logging');
 
 const NAMESPACE = 'dinoquiz:';
 const PERSISTED_KEYS = [
@@ -14,7 +15,14 @@ const PERSISTED_KEYS = [
   'questionStats',
   'questionAnsweredEvents',
   'adsRemoved',
+  'maxUnlockedLevel',
 ];
+
+// Stable technical code for setMaxUnlockedLevel's persistence-failure log
+// (TRIOFSND-205): deliberately carries no metadata, so it never leaks age,
+// answers or which level was reached -- only that a write degraded to
+// in-memory.
+const MAX_UNLOCKED_LEVEL_PERSIST_ERROR_CODE = 'storage_max_unlocked_level_persist_error';
 
 function namespacedKey(key) {
   return `${NAMESPACE}${key}`;
@@ -67,8 +75,14 @@ class DinoQuizStorage {
     }
   };
 
-  constructor(adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()]) {
+  #logService;
+
+  constructor(
+    adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
+    logService = new LogService()
+  ) {
     this.#adapters = adapters;
+    this.#logService = logService;
   }
 
   init() {
@@ -239,6 +253,36 @@ class DinoQuizStorage {
     if (streak > max) {
       await this.set('maxStreak', streak);
     }
+  }
+
+  /** Highest level (1-based) the child has unlocked on this device (TRIOFSND-205). */
+  async getMaxUnlockedLevel() {
+    return this.get('maxUnlockedLevel');
+  }
+
+  /**
+   * Advances the persisted max unlocked level (TRIOFSND-205), mirroring
+   * `recordScore`/`recordStreak`: monotonically increasing, ignores any
+   * `level` that isn't a bigger integer than what's already unlocked. Only
+   * this single number is persisted -- never per-level aciertos, answers or
+   * age.
+   *
+   * If every storage backend is unavailable, `set` already degrades to an
+   * in-memory adapter so the game keeps working without blocking the child;
+   * this only adds a stable, data-free technical log code for that
+   * degraded-persistence case.
+   */
+  async setMaxUnlockedLevel(level) {
+    const current = await this.get('maxUnlockedLevel');
+    if (!Number.isInteger(level) || level <= current) {
+      return current;
+    }
+
+    const persisted = await this.set('maxUnlockedLevel', level);
+    if (!persisted) {
+      this.#logService.logEvent(MAX_UNLOCKED_LEVEL_PERSIST_ERROR_CODE);
+    }
+    return level;
   }
 
   async markFunFactDiscovered(funFactId) {
