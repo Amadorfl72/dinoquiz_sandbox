@@ -152,6 +152,61 @@ describe('QuestionScreen', () => {
     expect(image.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  describe('image style by age (TRIOFSND-194)', () => {
+    test('defaults to "dibujo" (today\'s only asset set) when no age band is available', () => {
+      const question = buildQuestion();
+      const { image, imageStyle } = renderQuestionScreen(container, question);
+
+      expect(imageStyle).toBe('dibujo');
+      expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+    });
+
+    test('resolves "dibujo" explicitly for the under-7 age band', () => {
+      const question = buildQuestion();
+      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+
+      expect(imageStyle).toBe('dibujo');
+      expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+    });
+
+    test('resolves "realista" for the 7-plus age band', () => {
+      const question = buildQuestion();
+      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+
+      expect(imageStyle).toBe('realista');
+      expect(image).toHaveAttribute('src', '/assets/images/dinosaurs/realista/trex.png');
+    });
+
+    test('falls back to the guaranteed "dibujo" asset when the styled image fails to load, without blocking the game or changing the alt text', () => {
+      const question = buildQuestion();
+      const { image } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+      const altBeforeError = image.alt;
+
+      image.dispatchEvent(new Event('error'));
+
+      expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
+      expect(image.alt).toBe(altBeforeError);
+    });
+
+    test('does not retry the fallback again if it also errors, avoiding a load loop', () => {
+      const question = buildQuestion();
+      const { image } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+
+      image.dispatchEvent(new Event('error'));
+      const srcAfterFirstError = image.src;
+      image.dispatchEvent(new Event('error'));
+
+      expect(image.src).toBe(srcAfterFirstError);
+    });
+
+    test('wires no onerror fallback for "dibujo", which has no further fallback to fall back to', () => {
+      const question = buildQuestion();
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+
+      expect(image.onerror).toBeNull();
+    });
+  });
+
   test('starts the score at 0 by default', () => {
     renderQuestionScreen(container, buildQuestion());
 

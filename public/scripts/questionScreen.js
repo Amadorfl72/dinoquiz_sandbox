@@ -144,6 +144,19 @@
  * adapter is plugged into it. Whatever the ad service resolves with, the
  * CTA never touches `nextButton` or its advance timer — the game always
  * continues.
+ *
+ * Image style by age (TRIOFSND-194): the dinosaur illustration's variant
+ * ('dibujo' | 'realista') is resolved from the age band selected in the age
+ * gate (TRIOFSND-193) via `src/services/imageStyleService`, resolved the
+ * same `require`-else-`window.DinoQuiz` way as the other services above.
+ * `options.ageBand` lets callers/tests inject the band directly; otherwise
+ * it falls back to `ageGateScreen`'s in-memory, session-only selection. If
+ * the resolved style's image fails to load, the `<img>`'s `onerror` swaps
+ * it to the service's `fallbackUrl` (the guaranteed-to-exist 'dibujo' asset)
+ * exactly once, so a missing/broken style variant never blocks the game.
+ * The `alt` text (`resolveImageAlt`) stays built from the dinosaur/fun-fact
+ * data regardless of which style image is showing, since it describes the
+ * dinosaur, not the illustration style.
  */
 
 (function () {
@@ -282,6 +295,52 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
   }
 
+  function resolveImageStyleService(options) {
+    if (options && options.imageStyleService) {
+      return options.imageStyleService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/imageStyleService');
+      } catch (error) {
+        return null;
+      }
+    }
+    return (
+      (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.imageStyleService) ||
+      null
+    );
+  }
+
+  function resolveAgeGateScreen() {
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/screens/AgeGateScreen');
+      } catch (error) {
+        return null;
+      }
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.screens && window.DinoQuiz.screens.ageGate) || null;
+  }
+
+  /** `options.ageBand` lets callers/tests inject it directly; otherwise falls back to ageGateScreen's in-memory session selection. */
+  function resolveAgeBand(options) {
+    if (options && typeof options.ageBand === 'string') {
+      return options.ageBand;
+    }
+    var ageGateScreen = resolveAgeGateScreen();
+    return ageGateScreen && typeof ageGateScreen.getSelectedAgeBand === 'function' ? ageGateScreen.getSelectedAgeBand() : null;
+  }
+
+  /** Resolves the style/URL/fallback for a question's illustration; degrades to the raw image path if the service is unavailable. */
+  function resolveQuestionImage(question, options) {
+    var imageStyleService = resolveImageStyleService(options);
+    if (!imageStyleService || typeof imageStyleService.resolveQuestionImage !== 'function') {
+      return { style: null, url: question.image, fallbackUrl: question.image };
+    }
+    return imageStyleService.resolveQuestionImage(question, resolveAgeBand(options));
+  }
+
   function resolveRewardedAdService(options) {
     if (options && options.rewardedAdService) {
       return options.rewardedAdService;
@@ -354,11 +413,25 @@
     var root = document.createElement('div');
     root.className = 'question-screen';
 
+    var resolvedImage = resolveQuestionImage(question, options);
+
     var image = document.createElement('img');
     image.className = 'question-screen__image';
-    image.src = IMAGE_BASE_PATH + question.image;
+    image.src = IMAGE_BASE_PATH + resolvedImage.url;
+    // Alt text describes the dinosaur, not the illustration style, so it
+    // stays the same whichever style image ends up loading (TRIOFSND-194).
     image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
     image.decoding = 'async';
+
+    if (resolvedImage.url !== resolvedImage.fallbackUrl) {
+      // Sin bloquear la partida (TRIOFSND-194): a broken/missing style
+      // variant swaps to the guaranteed-to-exist fallback exactly once,
+      // instead of leaving a broken image or retrying forever.
+      image.onerror = function () {
+        image.onerror = null;
+        image.src = IMAGE_BASE_PATH + resolvedImage.fallbackUrl;
+      };
+    }
 
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
@@ -582,6 +655,7 @@
     return {
       root: root,
       image: image,
+      imageStyle: resolvedImage.style,
       prompt: prompt,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
