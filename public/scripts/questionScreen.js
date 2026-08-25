@@ -157,6 +157,15 @@
  * The `alt` text (`resolveImageAlt`) stays built from the dinosaur/fun-fact
  * data regardless of which style image is showing, since it describes the
  * dinosaur, not the illustration style.
+ *
+ * Level progress UI (TRIOFSND-206): when the caller passes `options.level`
+ * and `options.questionNumber`, a progress row shows the active level next
+ * to the "N de 10" progress within this level -- never the child's age band
+ * (never read here) nor an aggregated score from other levels (`score`
+ * already reflects only the level being played, since `gameFlow.js`'s
+ * `startLevel` resets it per level). Omitting `options.questionNumber`
+ * renders no progress row at all, so existing callers that don't pass level
+ * data see no change.
  */
 
 (function () {
@@ -166,6 +175,7 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+  var DEFAULT_TOTAL_QUESTIONS = 10;
 
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
@@ -437,6 +447,33 @@
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
 
+    // Level/progress row (TRIOFSND-206): shows the active level next to the
+    // "N de 10" progress, never the child's age band or a cross-level
+    // running tally -- `score`/`scoreEl` below already only ever reflects
+    // the level currently being played (see gameFlow.js's per-level state).
+    var progressRow = null;
+    var levelEl = null;
+    var progressEl = null;
+    if (typeof options.questionNumber === 'number') {
+      progressRow = document.createElement('div');
+      progressRow.className = 'question-screen__progress-row';
+
+      if (typeof options.level === 'number') {
+        levelEl = document.createElement('p');
+        levelEl.className = 'question-screen__level';
+        levelEl.textContent = formatTemplate(strings.levelFormat, { level: options.level });
+        progressRow.appendChild(levelEl);
+      }
+
+      progressEl = document.createElement('p');
+      progressEl.className = 'question-screen__progress';
+      progressEl.textContent = formatTemplate(strings.progressFormat, {
+        current: options.questionNumber,
+        total: options.totalQuestions || DEFAULT_TOTAL_QUESTIONS,
+      });
+      progressRow.appendChild(progressEl);
+    }
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
     scoreEl.textContent = strings.scoreLabel + ': ' + score;
@@ -639,6 +676,9 @@
 
     root.appendChild(image);
     root.appendChild(prompt);
+    if (progressRow) {
+      root.appendChild(progressRow);
+    }
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
@@ -660,6 +700,9 @@
       image: image,
       imageStyle: resolvedImage.style,
       prompt: prompt,
+      progressRow: progressRow,
+      levelEl: levelEl,
+      progressEl: progressEl,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,

@@ -13,9 +13,11 @@ const {
   calculateStars,
   validateMotivationalMessages,
   selectMotivationalMessage,
+  resolveLevelOutcomeMessage,
   renderResultsScreen,
 } = require('./ResultsScreen');
 const { results: strings } = require('../../public/i18n/es.json');
+const { findBannedWords } = require('../i18n/contentGuide');
 
 // Design tokens (TRIOFSND-133) moved these values into `:root` custom
 // properties, so a rule's literal px values must be resolved through
@@ -200,6 +202,106 @@ describe('ResultsScreen rendering', () => {
 
     expect(playAgainButton).toHaveClass('results-screen__play-again-button');
     expect(exitButton).toHaveClass('results-screen__exit-button');
+  });
+});
+
+describe('level progress UI (TRIOFSND-206)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders no level/outcome/max-level elements when none of that data is provided (unchanged for existing callers)', () => {
+    const { levelEl, levelOutcomeEl, maxLevelUnlockedEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(levelEl).toBeNull();
+    expect(levelOutcomeEl).toBeNull();
+    expect(maxLevelUnlockedEl).toBeNull();
+  });
+
+  test('renders the level just played', () => {
+    const { levelEl } = renderResultsScreen(container, { score: 6, level: 3 });
+
+    expect(levelEl).toHaveTextContent('Nivel 3');
+  });
+
+  test('renders an unlock message when the next level was unlocked', () => {
+    const { levelOutcomeEl } = renderResultsScreen(container, {
+      score: 8,
+      level: 2,
+      levelOutcome: { gameOver: false, nextLevel: 3, level: 2, correctCount: 8, reason: 'level_up' },
+    });
+
+    expect(levelOutcomeEl).toHaveTextContent(strings.levelOutcome.levelUp.replace('{nextLevel}', '3'));
+  });
+
+  test('renders a completion message when the game ended at the max level', () => {
+    const { levelOutcomeEl } = renderResultsScreen(container, {
+      score: 9,
+      level: 5,
+      levelOutcome: { gameOver: true, nextLevel: null, level: 5, correctCount: 9, reason: 'completed_all_levels' },
+    });
+
+    expect(levelOutcomeEl).toHaveTextContent(strings.levelOutcome.completedAllLevels);
+  });
+
+  test('renders an end-of-game message when the score was not enough to unlock the next level', () => {
+    const { levelOutcomeEl } = renderResultsScreen(container, {
+      score: 4,
+      level: 2,
+      levelOutcome: { gameOver: true, nextLevel: null, level: 2, correctCount: 4, reason: 'insufficient_score' },
+    });
+
+    expect(levelOutcomeEl).toHaveTextContent(strings.levelOutcome.insufficientScore);
+  });
+
+  test('renders an end-of-game message for the age-restricted single level, without mentioning age', () => {
+    const { levelOutcomeEl } = renderResultsScreen(container, {
+      score: 7,
+      level: 1,
+      levelOutcome: { gameOver: true, nextLevel: null, level: 1, correctCount: 7, reason: 'age_restricted' },
+    });
+
+    expect(levelOutcomeEl).toHaveTextContent(strings.levelOutcome.ageRestricted);
+    expect(levelOutcomeEl.textContent).not.toMatch(/años|age/i);
+  });
+
+  test('renders the max level unlocked locally', () => {
+    const { maxLevelUnlockedEl } = renderResultsScreen(container, { score: 6, maxLevelUnlocked: 3 });
+
+    expect(maxLevelUnlockedEl).toHaveTextContent('3');
+  });
+
+  test('the aria-live summary announcement includes the level, outcome and max-level-unlocked info', () => {
+    const { announcementEl } = renderResultsScreen(container, {
+      score: 8,
+      level: 2,
+      levelOutcome: { gameOver: false, nextLevel: 3, level: 2, correctCount: 8, reason: 'level_up' },
+      maxLevelUnlocked: 3,
+    });
+
+    expect(announcementEl).toHaveTextContent('Nivel 2');
+    expect(announcementEl).toHaveTextContent(strings.levelOutcome.levelUp.replace('{nextLevel}', '3'));
+    expect(announcementEl).toHaveTextContent('Nivel máximo desbloqueado: 3');
+  });
+
+  test('resolveLevelOutcomeMessage returns null for missing/unknown outcome data', () => {
+    expect(resolveLevelOutcomeMessage(strings, undefined)).toBeNull();
+    expect(resolveLevelOutcomeMessage(strings, { reason: 'not_a_real_reason' })).toBeNull();
+  });
+
+  test('none of the level-progress copy strings contain negative/discouraging language', () => {
+    expect(findBannedWords(strings.levelFormat)).toEqual([]);
+    expect(findBannedWords(strings.maxLevelUnlockedFormat)).toEqual([]);
+    Object.values(strings.levelOutcome).forEach((message) => {
+      expect(findBannedWords(message)).toEqual([]);
+    });
   });
 });
 
