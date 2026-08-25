@@ -10,15 +10,25 @@
  * public/assets/images/dinosaurs/) for the youngest players, or 'realista'
  * for the 7-plus band, who can handle a more lifelike depiction.
  *
+ * The 'realista' URL comes straight from the question bank's own
+ * `imageRealistic` field (e.g. "realistic/trex.svg", see
+ * src/data/questionBank.js and public/data/questions.json), which is where
+ * the actual realistic assets ship (public/assets/images/realistic/*.svg) --
+ * NOT derived by inserting a "realista" segment into the base `image` path,
+ * which has no corresponding asset directory. Only a question missing
+ * `imageRealistic` (e.g. hand-built test fixtures) falls back to that
+ * derived path, purely so callers without the field still get *a* URL
+ * instead of `undefined`.
+ *
  * Local fallback (AC: "sin bloquear la partida"): only the flat
  * `dinosaurs/<name>.svg` path is guaranteed to exist today, so it is always
  * returned as `fallbackUrl` alongside the resolved `url`. The caller
  * (questionScreen.js) wires that fallback to the `<img>`'s `onerror`, so a
- * missing/broken 'realista' asset (no such variant ships yet) degrades to
- * the existing 'dibujo' illustration instead of a broken image -- the game
- * never stalls waiting on an image. An unrecognized/missing age band (e.g.
- * the age gate was skipped) also resolves to 'dibujo', keeping the game
- * showing exactly the illustrations it always has.
+ * missing/broken 'realista' asset degrades to the existing 'dibujo'
+ * illustration instead of a broken image -- the game never stalls waiting on
+ * an image. An unrecognized/missing age band (e.g. the age gate was skipped)
+ * also resolves to 'dibujo', keeping the game showing exactly the
+ * illustrations it always has.
  *
  * Pure logic, no DOM access, so it is trivial to unit test directly. Browser
  * bridge: DinoQuiz has no bundler, so this file follows the same dual
@@ -65,7 +75,12 @@
     var basePath = question && typeof question.image === 'string' ? question.image : '';
     var style = resolveImageStyle(ageBand);
     var fallbackUrl = basePath;
-    var url = style === DEFAULT_IMAGE_STYLE ? basePath : styledImagePath(basePath, style);
+    var url = basePath;
+
+    if (style === IMAGE_STYLES.REALISTA) {
+      var realisticPath = question && typeof question.imageRealistic === 'string' && question.imageRealistic !== '';
+      url = realisticPath ? question.imageRealistic : styledImagePath(basePath, style);
+    }
 
     return {
       style: style,
