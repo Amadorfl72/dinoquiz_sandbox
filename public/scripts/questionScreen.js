@@ -116,7 +116,7 @@
  * `dinosaurNames` map) plus the resolved `question.funFact` (the same
  * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
  * `imageAltFunFact`, so screen readers announce a descriptive name + fact
- * for every question in the 40-question bank instead of a generic label.
+ * for every question in the bank instead of a generic label.
  *
  * Accessible result announcement (TRIOFSND-79, AC-14): answering used to
  * mark `feedback`, `scoreEl` and `funFact` as independent `aria-live`

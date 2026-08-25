@@ -9,7 +9,7 @@ const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
 const { createSoundService, SOUND_SRC, MUTE_STORAGE_KEY } = require('../services/sound');
 const { question: strings } = require('../../public/i18n/es.json');
-const { loadQuestionBank, resolveDatoCurioso } = require('../data/questionBank');
+const { loadQuestionBank, resolveDatoCurioso, EXPECTED_QUESTION_COUNT } = require('../data/questionBank');
 const { findBannedWords } = require('../i18n/contentGuide');
 
 function createFakeStorage(initial = {}) {
@@ -629,11 +629,11 @@ describe('QuestionScreen', () => {
       expect(image.alt).toBe(strings.imageAlt.replace('{dinosaur}', strings.dinosaurNames.trex));
     });
 
-    test('TRIOFSND-135: every question in the 40-question bank gets a non-empty alt with its dinosaur name and dato curioso', () => {
+    test('TRIOFSND-135: every question in the question bank gets a non-empty alt with its dinosaur name and dato curioso', () => {
       const questions = loadQuestionBank();
       const allStrings = require('../i18n').getStrings('es');
 
-      expect(questions).toHaveLength(40);
+      expect(questions).toHaveLength(EXPECTED_QUESTION_COUNT);
 
       questions.forEach((question) => {
         const funFact = resolveDatoCurioso(allStrings, question.dato_curioso);

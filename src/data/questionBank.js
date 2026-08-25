@@ -16,17 +16,25 @@
  *                                // the cartoon/realistic image fails to load
  *   imageAlt: string,           // neutral, educational alt text shared by the dinosaur's
  *                                // image variants (style-consistent, no dato curioso spoilers)
+ *   level: number,              // difficulty level, an integer from MIN_LEVEL to MAX_LEVEL
  * }
  *
  * AW5: `loadQuestionBank()` excludes any entry missing `imageRealistic`,
  * `imageFallback` or `imageAlt` from the usable bank instead of failing the
  * whole load — see `hasImageVariants`/`filterQuestionsWithImageVariants`.
+ *
+ * TRIOFSND-202: `getQuestionsByLevel()` validates every mandatory field of
+ * each raw entry (schema fields plus the AW5 image variants) and emits a
+ * `content_validation_failed` log event — via the logging service — for any
+ * entry that breaks a rule, excluding that entry from the returned pool
+ * instead of failing the whole load.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const { getStrings } = require('../i18n');
+const { LogService } = require('../services/logging');
 
 // The question bank JSON lives under public/data so the browser can fetch it
 // at runtime (/data/questions.json, precached/runtime-cached by the service
@@ -49,31 +57,44 @@ const VALID_DINOSAURS = Object.values(DINOSAURS);
 const MIN_OPTIONS = 3;
 const MAX_OPTIONS = 4;
 const MIN_QUESTIONS_PER_DINOSAUR = 3;
-const EXPECTED_QUESTION_COUNT = 40;
+const MIN_LEVEL = 1;
+const MAX_LEVEL = 5;
+const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
+const QUESTIONS_PER_LEVEL = 30;
+const EXPECTED_QUESTION_COUNT = VALID_LEVELS.length * QUESTIONS_PER_LEVEL;
 
 function describeQuestion(question, index) {
   const id = question && typeof question === 'object' ? question.id : undefined;
   return `question at index ${index}${id ? ` (id: ${id})` : ''}`;
 }
 
-function validateQuestion(question, index) {
-  const errors = [];
+// Structured violations (a machine-readable "rule" plus a human-readable
+// "message") back both `validateQuestion()` (existing string-based API,
+// kept for backwards compatibility) and `getQuestionsByLevel()`'s
+// `content_validation_failed` logging (TRIOFSND-202), which needs the rule
+// name rather than a free-text message.
+function collectQuestionViolations(question, index) {
   const where = describeQuestion(question, index);
 
   if (!question || typeof question !== 'object' || Array.isArray(question)) {
-    return [`${where}: must be an object`];
+    return [{ rule: 'shape', message: `${where}: must be an object` }];
   }
 
+  const violations = [];
+
   if (typeof question.id !== 'string' || question.id.trim() === '') {
-    errors.push(`${where}: "id" must be a non-empty string`);
+    violations.push({ rule: 'id', message: `${where}: "id" must be a non-empty string` });
   }
 
   if (!VALID_DINOSAURS.includes(question.dinosaur)) {
-    errors.push(`${where}: "dinosaur" must be one of ${VALID_DINOSAURS.join(', ')}`);
+    violations.push({
+      rule: 'dinosaur',
+      message: `${where}: "dinosaur" must be one of ${VALID_DINOSAURS.join(', ')}`,
+    });
   }
 
   if (typeof question.question !== 'string' || question.question.trim() === '') {
-    errors.push(`${where}: "question" must be a non-empty string`);
+    violations.push({ rule: 'question', message: `${where}: "question" must be a non-empty string` });
   }
 
   const hasValidOptionsArray =
@@ -82,17 +103,23 @@ function validateQuestion(question, index) {
     question.options.length <= MAX_OPTIONS;
 
   if (!hasValidOptionsArray) {
-    errors.push(`${where}: "options" must be an array of ${MIN_OPTIONS}-${MAX_OPTIONS} strings`);
+    violations.push({
+      rule: 'options',
+      message: `${where}: "options" must be an array of ${MIN_OPTIONS}-${MAX_OPTIONS} strings`,
+    });
   } else {
     question.options.forEach((option, optionIndex) => {
       if (typeof option !== 'string' || option.trim() === '') {
-        errors.push(`${where}: option at index ${optionIndex} must be a non-empty string`);
+        violations.push({
+          rule: 'options',
+          message: `${where}: option at index ${optionIndex} must be a non-empty string`,
+        });
       }
     });
 
     const uniqueOptions = new Set(question.options);
     if (uniqueOptions.size !== question.options.length) {
-      errors.push(`${where}: "options" must not contain duplicate values`);
+      violations.push({ rule: 'options', message: `${where}: "options" must not contain duplicate values` });
     }
   }
 
@@ -103,18 +130,35 @@ function validateQuestion(question, index) {
     question.correctAnswerIndex < question.options.length;
 
   if (!Number.isInteger(question.correctAnswerIndex) || (hasValidOptionsArray && !correctIndexInRange)) {
-    errors.push(`${where}: "correctAnswerIndex" must be a valid index into "options"`);
+    violations.push({
+      rule: 'correctAnswerIndex',
+      message: `${where}: "correctAnswerIndex" must be a valid index into "options"`,
+    });
   }
 
   if (typeof question.dato_curioso !== 'string' || question.dato_curioso.trim() === '') {
-    errors.push(`${where}: "dato_curioso" must be a non-empty i18n key string`);
+    violations.push({
+      rule: 'dato_curioso',
+      message: `${where}: "dato_curioso" must be a non-empty i18n key string`,
+    });
   }
 
   if (typeof question.image !== 'string' || question.image.trim() === '') {
-    errors.push(`${where}: "image" must be a non-empty string`);
+    violations.push({ rule: 'image', message: `${where}: "image" must be a non-empty string` });
   }
 
-  return errors;
+  if (!Number.isInteger(question.level) || question.level < MIN_LEVEL || question.level > MAX_LEVEL) {
+    violations.push({
+      rule: 'level',
+      message: `${where}: "level" must be an integer between ${MIN_LEVEL} and ${MAX_LEVEL}`,
+    });
+  }
+
+  return violations;
+}
+
+function validateQuestion(question, index) {
+  return collectQuestionViolations(question, index).map((violation) => violation.message);
 }
 
 function validateQuestionBank(questions, options = {}) {
@@ -178,6 +222,25 @@ function getDinosaurCoverageErrors(questions) {
   );
 }
 
+// TRIOFSND-202: the bank must contain exactly QUESTIONS_PER_LEVEL (30)
+// questions for each of the 5 levels (150 total) once invalid entries have
+// been excluded.
+function getLevelCoverageErrors(questions) {
+  const countsByLevel = VALID_LEVELS.reduce((counts, level) => {
+    counts[level] = 0;
+    return counts;
+  }, {});
+  questions.forEach((question) => {
+    if (question && Object.prototype.hasOwnProperty.call(countsByLevel, question.level)) {
+      countsByLevel[question.level] += 1;
+    }
+  });
+
+  return VALID_LEVELS.filter((level) => countsByLevel[level] !== QUESTIONS_PER_LEVEL).map(
+    (level) => `Level ${level} must have exactly ${QUESTIONS_PER_LEVEL} questions, found ${countsByLevel[level]}`
+  );
+}
+
 function resolveDatoCurioso(strings, key) {
   if (typeof key !== 'string' || key.trim() === '') {
     return undefined;
@@ -227,6 +290,7 @@ function loadQuestionBank(options = {}) {
   const errors = validateQuestionBank(questions, { checkCount });
   if (checkCoverage) {
     errors.push(...getDinosaurCoverageErrors(questions));
+    errors.push(...getLevelCoverageErrors(questions));
   }
   if (checkTranslations) {
     errors.push(...getDatoCuriosoTranslationErrors(questions, getStrings('es')));
@@ -242,12 +306,101 @@ function getQuestionsByDinosaur(questions, dinosaur) {
   return questions.filter((question) => question.dinosaur === dinosaur);
 }
 
+// TRIOFSND-202: `imageRealistic`/`imageFallback`/`imageAlt` (AW5) are
+// mandatory fields too, but reported as their own rules here (instead of the
+// combined `hasImageVariants()` boolean) so `content_validation_failed`
+// carries a precise "regla incumplida" per missing field.
+function collectImageVariantViolations(question, index) {
+  const where = describeQuestion(question, index);
+  const violations = [];
+
+  ['imageRealistic', 'imageFallback', 'imageAlt'].forEach((field) => {
+    const value = question && typeof question === 'object' ? question[field] : undefined;
+    if (typeof value !== 'string' || value.trim() === '') {
+      violations.push({ rule: field, message: `${where}: "${field}" must be a non-empty string` });
+    }
+  });
+
+  return violations;
+}
+
+let defaultLogService;
+function getDefaultLogService() {
+  if (!defaultLogService) {
+    defaultLogService = new LogService();
+  }
+  return defaultLogService;
+}
+
+function logContentValidationFailure(logService, question, rule) {
+  const id = question && typeof question === 'object' && typeof question.id === 'string' && question.id.trim() !== ''
+    ? question.id
+    : 'unknown';
+  const level = question && typeof question === 'object' ? question.level : undefined;
+
+  logService.logEvent('content_validation_failed', { id, level, rule });
+}
+
+// TRIOFSND-202: validates every mandatory field of each raw entry (the
+// `validateQuestion` schema plus the AW5 image variants), emits
+// `content_validation_failed` for any entry that breaks a rule and excludes
+// that entry from the returned pool — a single invalid question never blocks
+// the rest of the bank, mirroring the AW5 image-variant filtering above.
+function getValidQuestions(rawQuestions, logService) {
+  return rawQuestions.filter((question, index) => {
+    const violations = [...collectQuestionViolations(question, index), ...collectImageVariantViolations(question, index)];
+
+    if (violations.length === 0) {
+      return true;
+    }
+
+    violations.forEach((violation) => logContentValidationFailure(logService, question, violation.rule));
+    return false;
+  });
+}
+
+/**
+ * Returns every valid question for the given difficulty level.
+ *
+ * Loads the raw question bank (from `options.filePath`/`QUESTIONS_JSON_PATH`,
+ * or `options.questions` if provided), validates each entry's mandatory
+ * fields and excludes any invalid entry from the pool — logging a
+ * `content_validation_failed` event (id, level, violated rule) via
+ * `options.logService` (a `LogService`-shaped `{ logEvent(eventType, metadata) }`,
+ * defaulting to a shared `LogService` instance) for each one.
+ */
+function getQuestionsByLevel(level, options = {}) {
+  const filePath = options.filePath || QUESTIONS_JSON_PATH;
+  const logService = options.logService || getDefaultLogService();
+
+  let rawQuestions = options.questions;
+  if (!rawQuestions) {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    try {
+      rawQuestions = JSON.parse(raw);
+    } catch (error) {
+      throw new Error(`Failed to parse question bank JSON at ${filePath}: ${error.message}`);
+    }
+  }
+
+  if (!Array.isArray(rawQuestions)) {
+    throw new Error('The question bank must be an array of questions');
+  }
+
+  const validQuestions = getValidQuestions(rawQuestions, logService);
+  return validQuestions.filter((question) => question.level === level);
+}
+
 module.exports = {
   DINOSAURS,
   VALID_DINOSAURS,
   MIN_OPTIONS,
   MAX_OPTIONS,
   MIN_QUESTIONS_PER_DINOSAUR,
+  MIN_LEVEL,
+  MAX_LEVEL,
+  VALID_LEVELS,
+  QUESTIONS_PER_LEVEL,
   EXPECTED_QUESTION_COUNT,
   QUESTIONS_JSON_PATH,
   validateQuestion,
@@ -255,8 +408,10 @@ module.exports = {
   hasImageVariants,
   filterQuestionsWithImageVariants,
   getDinosaurCoverageErrors,
+  getLevelCoverageErrors,
   resolveDatoCurioso,
   getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
+  getQuestionsByLevel,
 };

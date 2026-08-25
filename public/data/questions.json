@@ -3,480 +3,2700 @@
     "id": "trex-01",
     "dinosaur": "trex",
     "question": "¿De qué se alimentaba el Tyrannosaurus Rex?",
-    "options": ["Solo de plantas", "De carne, ¡era un gran cazador!", "Solo de insectos", "De algas del mar"],
+    "options": [
+      "Solo de plantas",
+      "De carne, ¡era un gran cazador!",
+      "Solo de insectos",
+      "De algas del mar"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-01",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 1
   },
   {
     "id": "trex-02",
     "dinosaur": "trex",
     "question": "¿Cómo eran los brazos del Tyrannosaurus Rex?",
-    "options": ["Muy largos", "Muy cortos y pequeños", "No tenía brazos", "Como alas"],
+    "options": [
+      "Muy largos",
+      "Muy cortos y pequeños",
+      "No tenía brazos",
+      "Como alas"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-02",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 1
   },
   {
     "id": "trex-03",
     "dinosaur": "trex",
     "question": "¿En qué periodo vivió el Tyrannosaurus Rex?",
-    "options": ["Jurásico", "Cretácico", "Triásico", "Época de hielo"],
+    "options": [
+      "Jurásico",
+      "Cretácico",
+      "Triásico",
+      "Época de hielo"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-03",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 1
   },
   {
     "id": "trex-04",
     "dinosaur": "trex",
     "question": "¿Cómo se movía el Tyrannosaurus Rex?",
-    "options": ["Sobre dos patas", "Sobre cuatro patas", "Nadando", "Volando"],
+    "options": [
+      "Sobre dos patas",
+      "Sobre cuatro patas",
+      "Nadando",
+      "Volando"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.trex-04",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 1
   },
   {
     "id": "trex-05",
     "dinosaur": "trex",
     "question": "¿Aproximadamente cuántos dientes afilados tenía el T-Rex?",
-    "options": ["10 dientes", "Unos 60 dientes", "500 dientes", "No tenía dientes"],
+    "options": [
+      "10 dientes",
+      "Unos 60 dientes",
+      "500 dientes",
+      "No tenía dientes"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-05",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 1
   },
   {
     "id": "trex-06",
     "dinosaur": "trex",
     "question": "¿Qué significa el nombre \"Tyrannosaurus Rex\"?",
-    "options": ["Lagarto veloz", "Rey lagarto tirano", "Dinosaurio volador", "Lagarto con cuernos"],
+    "options": [
+      "Lagarto veloz",
+      "Rey lagarto tirano",
+      "Dinosaurio volador",
+      "Lagarto con cuernos"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-06",
     "image": "dinosaurs/trex.svg",
     "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
-    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "trex-07",
+    "dinosaur": "trex",
+    "question": "¿Dónde se han encontrado la mayoría de los fósiles de Tyrannosaurus Rex?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "En el fondo del océano"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.trex-07",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "trex-08",
+    "dinosaur": "trex",
+    "question": "¿Qué tamaño podía alcanzar el Tyrannosaurus Rex de largo?",
+    "options": [
+      "Medio metro, como un perro",
+      "Unos 12 metros, como un autobús grande",
+      "2 metros, como una persona alta",
+      "100 metros, como un rascacielos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.trex-08",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "trex-09",
+    "dinosaur": "trex",
+    "question": "¿Hacia dónde miraban los ojos del Tyrannosaurus Rex?",
+    "options": [
+      "Solo hacia los lados",
+      "Estaban en la cola",
+      "Hacia delante, como los nuestros",
+      "No tenía ojos"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.trex-09",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "trex-10",
+    "dinosaur": "trex",
+    "question": "¿Qué sentido tenía muy desarrollado el T-Rex para encontrar a sus presas?",
+    "options": [
+      "El sentido del frío",
+      "La ecolocalización",
+      "El gusto de las piedras",
+      "El olfato"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.trex-10",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "trex-11",
+    "dinosaur": "trex",
+    "question": "¿Cuánto podía llegar a pesar un Tyrannosaurus Rex adulto?",
+    "options": [
+      "Tanto como un elefante grande",
+      "Tanto como un ratón",
+      "Tanto como una pluma",
+      "Tanto como un balón"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.trex-11",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "trex-12",
+    "dinosaur": "trex",
+    "question": "¿Qué animales de hoy en día están emparentados con dinosaurios como el T-Rex?",
+    "options": [
+      "Los peces",
+      "Las aves",
+      "Las serpientes",
+      "Las tortugas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.trex-12",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "trex-13",
+    "dinosaur": "trex",
+    "question": "¿Cómo se llama a un T-Rex joven, antes de llegar a adulto?",
+    "options": [
+      "Cachorro",
+      "Renacuajo",
+      "Juvenil",
+      "Pollito"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.trex-13",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "trex-14",
+    "dinosaur": "trex",
+    "question": "¿Qué ocurrió con el Tyrannosaurus Rex y los demás dinosaurios no aves hace 66 millones de años?",
+    "options": [
+      "Emigraron a otro planeta",
+      "Se convirtieron en peces",
+      "Se hicieron invisibles",
+      "Se extinguieron"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.trex-14",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "trex-15",
+    "dinosaur": "trex",
+    "question": "¿Cómo eran las patas traseras del T-Rex comparadas con sus diminutos brazos?",
+    "options": [
+      "Mucho más grandes y fuertes",
+      "Igual de pequeñas",
+      "No tenía patas traseras",
+      "Más pequeñas que los brazos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.trex-15",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "trex-16",
+    "dinosaur": "trex",
+    "question": "¿Qué tipo de dinosaurio era el Tyrannosaurus Rex según lo que comía?",
+    "options": [
+      "Herbívoro",
+      "Carnívoro",
+      "Solo comía insectos",
+      "Solo comía algas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.trex-16",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "trex-17",
+    "dinosaur": "trex",
+    "question": "¿Cómo se llama el famoso fósil de T-Rex, uno de los más completos jamás encontrados?",
+    "options": [
+      "Toby",
+      "Rex",
+      "Sue",
+      "Nessie"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.trex-17",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "trex-18",
+    "dinosaur": "trex",
+    "question": "¿Cómo era la mordida del Tyrannosaurus Rex comparada con la de otros animales?",
+    "options": [
+      "Muy débil",
+      "Igual que la de un conejo",
+      "No podía morder con fuerza",
+      "Una de las más fuertes que se conocen"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.trex-18",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "trex-19",
+    "dinosaur": "trex",
+    "question": "¿De qué grosor eran aproximadamente los dientes del T-Rex?",
+    "options": [
+      "Como un plátano",
+      "Como un fideo fino",
+      "Como una hoja de papel",
+      "Como un grano de arroz"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.trex-19",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "trex-20",
+    "dinosaur": "trex",
+    "question": "Además de cazar, ¿qué más se cree que hacía el Tyrannosaurus Rex para comer?",
+    "options": [
+      "Solo comía plantas",
+      "Aprovechaba animales que ya habían muerto",
+      "Pescaba bajo el agua",
+      "Comía piedras"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.trex-20",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "trex-21",
+    "dinosaur": "trex",
+    "question": "¿Qué zona de Norteamérica ha dado muchos fósiles de Tyrannosaurus Rex?",
+    "options": [
+      "La selva amazónica",
+      "El desierto del Sahara",
+      "Las llanuras y badlands de Montana y Dakota",
+      "El fondo del océano Pacífico"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.trex-21",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "trex-22",
+    "dinosaur": "trex",
+    "question": "Los científicos creen que el cerebro del T-Rex, comparado con su tamaño, era...",
+    "options": [
+      "Enorme, el más grande de todos los animales",
+      "Inexistente",
+      "Igual de grande que el de una hormiga",
+      "Relativamente grande para ser un dinosaurio, con buen olfato"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.trex-22",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico.",
+    "level": 5
   },
   {
     "id": "triceratops-01",
     "dinosaur": "triceratops",
     "question": "¿Cuántos cuernos tenía el Triceratops en la cara?",
-    "options": ["Uno", "Dos", "Tres", "Cuatro"],
+    "options": [
+      "Uno",
+      "Dos",
+      "Tres",
+      "Cuatro"
+    ],
     "correctAnswerIndex": 2,
     "dato_curioso": "funFacts.triceratops-01",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 1
   },
   {
     "id": "triceratops-02",
     "dinosaur": "triceratops",
     "question": "¿De qué se alimentaba el Triceratops?",
-    "options": ["De carne", "De plantas", "De peces", "De insectos"],
+    "options": [
+      "De carne",
+      "De plantas",
+      "De peces",
+      "De insectos"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-02",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 1
   },
   {
     "id": "triceratops-03",
     "dinosaur": "triceratops",
     "question": "¿Para qué le servía al Triceratops el gran escudo óseo detrás de su cabeza?",
-    "options": ["Para volar", "Para proteger su cuello", "Para nadar", "Para hacer ruido"],
+    "options": [
+      "Para volar",
+      "Para proteger su cuello",
+      "Para nadar",
+      "Para hacer ruido"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-03",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 1
   },
   {
     "id": "triceratops-04",
     "dinosaur": "triceratops",
     "question": "¿Cuántas patas tenía el Triceratops?",
-    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ninguna"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-04",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 1
   },
   {
     "id": "triceratops-05",
     "dinosaur": "triceratops",
     "question": "¿Qué significa el nombre \"Triceratops\"?",
-    "options": ["Cara con tres cuernos", "Lagarto veloz", "Rey de los mares", "Cola con púas"],
+    "options": [
+      "Cara con tres cuernos",
+      "Lagarto veloz",
+      "Rey de los mares",
+      "Cola con púas"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-05",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 2
   },
   {
     "id": "triceratops-06",
     "dinosaur": "triceratops",
     "question": "¿Con qué otro dinosaurio se cree que el Triceratops tenía enfrentamientos?",
-    "options": ["Con el Tyrannosaurus Rex", "Con el Pteranodon", "Con el Velociraptor", "Con el Ankylosaurus"],
+    "options": [
+      "Con el Tyrannosaurus Rex",
+      "Con el Pteranodon",
+      "Con el Velociraptor",
+      "Con el Ankylosaurus"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-06",
     "image": "dinosaurs/triceratops.svg",
     "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
-    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "triceratops-07",
+    "dinosaur": "triceratops",
+    "question": "¿Qué comía un Triceratops con su afilado pico?",
+    "options": [
+      "Plantas duras y ramas bajas",
+      "Peces",
+      "Otros dinosaurios",
+      "Insectos voladores"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.triceratops-07",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "triceratops-08",
+    "dinosaur": "triceratops",
+    "question": "¿Cómo eran los dientes del Triceratops dentro de la boca?",
+    "options": [
+      "Solo dos dientes gigantes",
+      "Muchísimos dientes pequeños agrupados en baterías",
+      "No tenía dientes",
+      "Dientes venenosos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.triceratops-08",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "triceratops-09",
+    "dinosaur": "triceratops",
+    "question": "¿Qué tamaño podía alcanzar un Triceratops adulto?",
+    "options": [
+      "Como un ratón",
+      "Como un perro pequeño",
+      "Unos 9 metros de largo, como dos coches",
+      "Más grande que una ballena azul"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.triceratops-09",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "triceratops-10",
+    "dinosaur": "triceratops",
+    "question": "¿Con qué animal actual se compara a veces, aunque no está emparentado, al Triceratops por sus cuernos?",
+    "options": [
+      "Con un delfín",
+      "Con un águila",
+      "Con una serpiente",
+      "Con un rinoceronte"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.triceratops-10",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "triceratops-11",
+    "dinosaur": "triceratops",
+    "question": "¿En qué periodo vivió el Triceratops?",
+    "options": [
+      "Cretácico, justo antes de la extinción de los dinosaurios",
+      "Jurásico temprano",
+      "Triásico",
+      "Época de los mamuts"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.triceratops-11",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "triceratops-12",
+    "dinosaur": "triceratops",
+    "question": "¿Para qué podía usar el Triceratops sus tres cuernos, además de defenderse?",
+    "options": [
+      "Para volar",
+      "Para competir y mostrar su fuerza ante otros Triceratops",
+      "Para cavar túneles muy profundos",
+      "Para nadar"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.triceratops-12",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "triceratops-13",
+    "dinosaur": "triceratops",
+    "question": "¿Dónde se han encontrado la mayoría de fósiles de Triceratops?",
+    "options": [
+      "En la Antártida",
+      "En Europa",
+      "En América del Norte",
+      "En el fondo del mar"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.triceratops-13",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "triceratops-14",
+    "dinosaur": "triceratops",
+    "question": "¿Cómo se desplazaba el Triceratops?",
+    "options": [
+      "Volando",
+      "Nadando",
+      "Saltando sobre dos patas",
+      "Caminando a cuatro patas, de forma lenta y pesada"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.triceratops-14",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "triceratops-15",
+    "dinosaur": "triceratops",
+    "question": "¿Qué forma tenía el pico del Triceratops, parecido a un ave actual?",
+    "options": [
+      "Forma de pico de loro",
+      "Forma de pico de pato",
+      "No tenía pico",
+      "Forma de pico de águila"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.triceratops-15",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "triceratops-16",
+    "dinosaur": "triceratops",
+    "question": "¿Crecían los cuernos del Triceratops igual desde que nacía?",
+    "options": [
+      "Sí, siempre del mismo tamaño",
+      "No, iban cambiando de forma y creciendo con la edad",
+      "Le salían cuernos nuevos cada año",
+      "Los cuernos se le caían de adulto"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.triceratops-16",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "triceratops-17",
+    "dinosaur": "triceratops",
+    "question": "¿Qué parte del cuerpo del Triceratops es una de las más grandes conocidas entre los animales terrestres?",
+    "options": [
+      "Sus dientes",
+      "Sus ojos",
+      "Su cráneo completo, incluyendo el escudo óseo",
+      "Su mandíbula inferior"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.triceratops-17",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "triceratops-18",
+    "dinosaur": "triceratops",
+    "question": "¿Vivía el Triceratops solo o en grupo?",
+    "options": [
+      "Siempre completamente solo",
+      "Solo en pareja",
+      "En el agua",
+      "Es probable que a veces viviera en grupos o manadas"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.triceratops-18",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "triceratops-19",
+    "dinosaur": "triceratops",
+    "question": "¿Qué significa \"tri\" en el nombre Triceratops?",
+    "options": [
+      "Tres",
+      "Uno",
+      "Muchos",
+      "Ninguno"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.triceratops-19",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "triceratops-20",
+    "dinosaur": "triceratops",
+    "question": "¿A qué grupo de dinosaurios pertenecía el Triceratops según su parentesco?",
+    "options": [
+      "A los terópodos carnívoros",
+      "A los ceratópsidos, dinosaurios con cuernos y pico",
+      "A los pterosaurios voladores",
+      "A los dinosaurios marinos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.triceratops-20",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "triceratops-21",
+    "dinosaur": "triceratops",
+    "question": "Si un Triceratops se sentía amenazado, ¿qué hacía probablemente?",
+    "options": [
+      "Se escondía bajo el agua",
+      "Salía corriendo a esconderse siempre",
+      "Bajaba la cabeza y usaba sus cuernos para defenderse",
+      "Se hacía muy pequeño"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.triceratops-21",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "triceratops-22",
+    "dinosaur": "triceratops",
+    "question": "¿Qué comía el Triceratops para conseguir energía cada día?",
+    "options": [
+      "Muy poca comida, casi nada",
+      "Solo un puñado de hojas",
+      "Carne de otros dinosaurios",
+      "Una gran cantidad de plantas, ya que era muy grande"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.triceratops-22",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico.",
+    "level": 5
   },
   {
     "id": "velociraptor-01",
     "dinosaur": "velociraptor",
     "question": "¿De qué tamaño era aproximadamente un Velociraptor?",
-    "options": ["Como un pavo grande", "Como un elefante", "Como un ratón", "Como una ballena"],
+    "options": [
+      "Como un pavo grande",
+      "Como un elefante",
+      "Como un ratón",
+      "Como una ballena"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-01",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "velociraptor-02",
     "dinosaur": "velociraptor",
     "question": "¿Qué tenía el Velociraptor en cada pie que usaba para cazar?",
-    "options": ["Una garra curva y grande", "Una ventosa", "Una aleta", "Un casco óseo"],
+    "options": [
+      "Una garra curva y grande",
+      "Una ventosa",
+      "Una aleta",
+      "Un casco óseo"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-02",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "velociraptor-03",
     "dinosaur": "velociraptor",
     "question": "¿De qué se alimentaba el Velociraptor?",
-    "options": ["De plantas", "De carne", "De rocas", "De algas"],
+    "options": [
+      "De plantas",
+      "De carne",
+      "De rocas",
+      "De algas"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-03",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "velociraptor-04",
     "dinosaur": "velociraptor",
     "question": "¿Cómo se cree que cazaba el Velociraptor?",
-    "options": ["Completamente solo", "En grupo, como una manada", "Bajo el agua", "Volando"],
+    "options": [
+      "Completamente solo",
+      "En grupo, como una manada",
+      "Bajo el agua",
+      "Volando"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-04",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "velociraptor-05",
     "dinosaur": "velociraptor",
     "question": "¿Qué cubría el cuerpo del Velociraptor, según los descubrimientos más recientes?",
-    "options": ["Escamas duras", "Plumas", "Una concha", "Piel de rana"],
+    "options": [
+      "Escamas duras",
+      "Plumas",
+      "Una concha",
+      "Piel de rana"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-05",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "velociraptor-06",
     "dinosaur": "velociraptor",
     "question": "¿Cuántas patas usaba el Velociraptor para correr?",
-    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ninguna"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-06",
     "image": "dinosaurs/velociraptor.svg",
     "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
-    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "velociraptor-07",
+    "dinosaur": "velociraptor",
+    "question": "¿Dónde vivió principalmente el Velociraptor?",
+    "options": [
+      "En Asia, en zonas desérticas como Mongolia",
+      "En la selva amazónica",
+      "En la Antártida",
+      "En el fondo del océano"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.velociraptor-07",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "velociraptor-08",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tan inteligente se cree que era el Velociraptor comparado con otros dinosaurios?",
+    "options": [
+      "El menos inteligente de todos",
+      "Uno de los dinosaurios más listos que se conocen",
+      "Igual de listo que una piedra",
+      "No podía pensar"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.velociraptor-08",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "velociraptor-09",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué famoso fósil muestra a un Velociraptor peleando con un Protoceratops?",
+    "options": [
+      "El fósil llamado Sue",
+      "El fósil llamado Rex",
+      "El fósil llamado \"los dinosaurios luchando\"",
+      "El fósil llamado Toby"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.velociraptor-09",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "velociraptor-10",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué usaba el Velociraptor para mantener el equilibrio mientras corría y giraba rápido?",
+    "options": [
+      "Sus brazos cortos",
+      "Sus dientes",
+      "Su pico",
+      "Su cola larga y rígida"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.velociraptor-10",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "velociraptor-11",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tamaño real tenía el Velociraptor, a diferencia de como lo pintan las películas?",
+    "options": [
+      "Era mucho más pequeño, del tamaño de un pavo",
+      "Era enorme, del tamaño de un autobús",
+      "Era del tamaño de una hormiga",
+      "Era del tamaño de una ballena"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.velociraptor-11",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "velociraptor-12",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tenían los brazos del Velociraptor, descubierto gracias a marcas en sus huesos?",
+    "options": [
+      "Aletas",
+      "Puntos de anclaje para plumas, como en un ave",
+      "Ventosas",
+      "Escamas de pez"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.velociraptor-12",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "velociraptor-13",
+    "dinosaur": "velociraptor",
+    "question": "¿Para qué usaba el Velociraptor su garra curva en forma de hoz?",
+    "options": [
+      "Para cavar madrigueras",
+      "Para trepar árboles",
+      "Para sujetar y herir a sus presas",
+      "Para nadar más rápido"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.velociraptor-13",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "velociraptor-14",
+    "dinosaur": "velociraptor",
+    "question": "¿De qué tamaño eran las presas que probablemente cazaba el Velociraptor?",
+    "options": [
+      "Solo insectos diminutos",
+      "Ballenas y otros animales marinos",
+      "Solo plantas",
+      "Animales pequeños y medianos, como lagartos o mamíferos pequeños"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.velociraptor-14",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "velociraptor-15",
+    "dinosaur": "velociraptor",
+    "question": "¿En qué periodo vivió el Velociraptor?",
+    "options": [
+      "Cretácico Superior",
+      "Jurásico temprano",
+      "Triásico",
+      "Época de hielo"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.velociraptor-15",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "velociraptor-16",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tipo de clima y paisaje habitaba el Velociraptor?",
+    "options": [
+      "Un paisaje helado y polar",
+      "Un desierto árido con dunas de arena",
+      "Una selva tropical húmeda",
+      "El fondo de un lago"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.velociraptor-16",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "velociraptor-17",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué tamaño tenía el cerebro del Velociraptor en comparación con su cuerpo?",
+    "options": [
+      "Muy pequeño, casi inexistente",
+      "Del tamaño de una sandía",
+      "Relativamente grande, lo que indica que era listo",
+      "No tenía cerebro"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.velociraptor-17",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "velociraptor-18",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué animal actual desciende del mismo grupo de dinosaurios que el Velociraptor?",
+    "options": [
+      "Los cocodrilos",
+      "Las tortugas",
+      "Las serpientes",
+      "Las aves"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.velociraptor-18",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "velociraptor-19",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué significa el nombre \"Velociraptor\"?",
+    "options": [
+      "Ladrón veloz",
+      "Lagarto con cuernos",
+      "Rey de los mares",
+      "Cola con púas"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.velociraptor-19",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "velociraptor-20",
+    "dinosaur": "velociraptor",
+    "question": "¿Cómo era el hocico del Velociraptor?",
+    "options": [
+      "Muy corto y redondeado",
+      "Alargado y estrecho, con muchos dientes pequeños",
+      "Con un pico sin dientes",
+      "Con forma de cuchara"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.velociraptor-20",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "velociraptor-21",
+    "dinosaur": "velociraptor",
+    "question": "¿Qué dinosaurio \"primo\" del Velociraptor era bastante más grande que él?",
+    "options": [
+      "El Triceratops",
+      "El Pteranodon",
+      "El Deinonychus",
+      "El Ankylosaurus"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.velociraptor-21",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "velociraptor-22",
+    "dinosaur": "velociraptor",
+    "question": "¿Cómo traía sus crías al mundo el Velociraptor?",
+    "options": [
+      "Daba a luz crías vivas",
+      "No tenía crías",
+      "Las creaba a partir de plantas",
+      "Poniendo huevos, como las aves y otros dinosaurios"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.velociraptor-22",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico.",
+    "level": 5
   },
   {
     "id": "estegosaurio-01",
     "dinosaur": "estegosaurio",
     "question": "¿Qué tenía el Estegosaurio a lo largo del lomo?",
-    "options": ["Placas óseas", "Plumas de colores", "Escamas de pez", "Alas pequeñas"],
+    "options": [
+      "Placas óseas",
+      "Plumas de colores",
+      "Escamas de pez",
+      "Alas pequeñas"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-01",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 1
   },
   {
     "id": "estegosaurio-02",
     "dinosaur": "estegosaurio",
     "question": "¿Qué tenía el Estegosaurio en la punta de la cola para defenderse?",
-    "options": ["Púas afiladas", "Ventosas", "Un aguijón venenoso", "Fuego"],
+    "options": [
+      "Púas afiladas",
+      "Ventosas",
+      "Un aguijón venenoso",
+      "Fuego"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-02",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 1
   },
   {
     "id": "estegosaurio-03",
     "dinosaur": "estegosaurio",
     "question": "¿De qué se alimentaba el Estegosaurio?",
-    "options": ["De carne", "De plantas", "De peces", "De otros dinosaurios"],
+    "options": [
+      "De carne",
+      "De plantas",
+      "De peces",
+      "De otros dinosaurios"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-03",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 1
   },
   {
     "id": "estegosaurio-04",
     "dinosaur": "estegosaurio",
     "question": "¿Cómo era el cerebro del Estegosaurio comparado con su tamaño?",
-    "options": ["Muy grande", "Muy pequeño", "No tenía cerebro", "Gigante"],
+    "options": [
+      "Muy grande",
+      "Muy pequeño",
+      "No tenía cerebro",
+      "Gigante"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-04",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 1
   },
   {
     "id": "estegosaurio-05",
     "dinosaur": "estegosaurio",
     "question": "¿Cuántas patas tenía el Estegosaurio?",
-    "options": ["Dos", "Cuatro", "Seis", "Ocho"],
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ocho"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-05",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 2
   },
   {
     "id": "estegosaurio-06",
     "dinosaur": "estegosaurio",
     "question": "Además de protegerlo, ¿para qué más podían servir las placas del Estegosaurio?",
-    "options": ["Para regular su temperatura", "Para volar", "Para nadar rápido", "Para masticar mejor"],
+    "options": [
+      "Para regular su temperatura",
+      "Para volar",
+      "Para nadar rápido",
+      "Para masticar mejor"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-06",
     "image": "dinosaurs/estegosaurio.svg",
     "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "estegosaurio-07",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cuántas placas óseas se cree que tenía el Estegosaurio a lo largo del lomo, aproximadamente?",
+    "options": [
+      "Unas 17 placas, en dos hileras",
+      "Solo 2 placas",
+      "Más de 500 placas",
+      "Ninguna placa"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.estegosaurio-07",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "estegosaurio-08",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué tamaño podía alcanzar el Estegosaurio?",
+    "options": [
+      "Del tamaño de un gato",
+      "Unos 9 metros de largo",
+      "Más grande que una ballena azul",
+      "Del tamaño de una hormiga"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.estegosaurio-08",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "estegosaurio-09",
+    "dinosaur": "estegosaurio",
+    "question": "¿Dónde se han encontrado la mayoría de fósiles de Estegosaurio?",
+    "options": [
+      "En la Antártida",
+      "En Australia",
+      "En América del Norte",
+      "En el fondo del océano"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.estegosaurio-09",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "estegosaurio-10",
+    "dinosaur": "estegosaurio",
+    "question": "¿En qué periodo vivió el Estegosaurio?",
+    "options": [
+      "Cretácico final",
+      "Triásico",
+      "Época de hielo",
+      "Jurásico tardío"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.estegosaurio-10",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "estegosaurio-11",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cómo era el hocico y la boca del Estegosaurio para comer plantas bajas?",
+    "options": [
+      "Tenía un pico estrecho, ideal para arrancar hojas bajas",
+      "Tenía colmillos gigantes",
+      "No tenía boca",
+      "Tenía un pico como el de un águila"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.estegosaurio-11",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "estegosaurio-12",
+    "dinosaur": "estegosaurio",
+    "question": "¿Con qué dinosaurio depredador convivía el Estegosaurio?",
+    "options": [
+      "Con el Velociraptor",
+      "Con el Allosaurus",
+      "Con el Tyrannosaurus Rex",
+      "Con el Ankylosaurus"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.estegosaurio-12",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "estegosaurio-13",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué se ha descubierto en algunos fósiles de Estegosaurio que demuestra que se defendía de sus depredadores?",
+    "options": [
+      "Nada, nunca fue atacado",
+      "Restos de comida en el estómago",
+      "Marcas de heridas causadas por mordiscos",
+      "Huellas de otros Estegosaurios"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.estegosaurio-13",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "estegosaurio-14",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cómo se movía el Estegosaurio, rápido o lento?",
+    "options": [
+      "Muy rápido, como un guepardo",
+      "A saltos, como un canguro",
+      "Volando",
+      "Bastante lento, caminando a cuatro patas"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.estegosaurio-14",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "estegosaurio-15",
+    "dinosaur": "estegosaurio",
+    "question": "Si el Estegosaurio se sentía en peligro, ¿qué hacía con su cola?",
+    "options": [
+      "La agitaba con fuerza para golpear con sus púas",
+      "La escondía bajo tierra",
+      "La usaba para volar",
+      "La usaba para nadar lejos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.estegosaurio-15",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "estegosaurio-16",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué nombre recibe el conjunto de púas afiladas en la cola del Estegosaurio?",
+    "options": [
+      "El escudo",
+      "El thagomizer",
+      "La corona",
+      "El casco"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.estegosaurio-16",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "estegosaurio-17",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué función creen los científicos que podían tener, además de defensa, las placas del lomo del Estegosaurio?",
+    "options": [
+      "Ayudarlo a respirar bajo el agua",
+      "Ayudarlo a volar",
+      "Mostrarse ante otros Estegosaurios y reconocerse entre ellos",
+      "Servir de almacén de comida"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.estegosaurio-17",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "estegosaurio-18",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué significa el nombre \"Estegosaurio\"?",
+    "options": [
+      "Lagarto veloz",
+      "Lagarto con cuernos",
+      "Rey lagarto",
+      "Lagarto con tejado o placas"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.estegosaurio-18",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "estegosaurio-19",
+    "dinosaur": "estegosaurio",
+    "question": "¿Estaban las placas del Estegosaurio pegadas directamente a los huesos de su espalda?",
+    "options": [
+      "No, estaban ancladas en la piel, no en el esqueleto",
+      "Sí, formaban parte de la columna",
+      "Estaban sueltas y se caían",
+      "Eran de metal"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.estegosaurio-19",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "estegosaurio-20",
+    "dinosaur": "estegosaurio",
+    "question": "¿Cómo eran de largas las púas de la cola del Estegosaurio?",
+    "options": [
+      "Diminutas, como agujas",
+      "Podían medir cerca de un metro de largo",
+      "Más largas que todo su cuerpo",
+      "No tenía púas, solo placas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.estegosaurio-20",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "estegosaurio-21",
+    "dinosaur": "estegosaurio",
+    "question": "¿Qué tipo de dinosaurio era el Estegosaurio según su dieta?",
+    "options": [
+      "Carnívoro",
+      "Omnívoro",
+      "Herbívoro",
+      "Solo comía insectos"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.estegosaurio-21",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico.",
+    "level": 5
   },
   {
     "id": "braquiosaurio-01",
     "dinosaur": "braquiosaurio",
     "question": "¿Qué destaca del cuello del Braquiosaurio?",
-    "options": ["Que era muy largo", "Que era muy corto", "Que no tenía cuello", "Que tenía púas"],
+    "options": [
+      "Que era muy largo",
+      "Que era muy corto",
+      "Que no tenía cuello",
+      "Que tenía púas"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-01",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 1
   },
   {
     "id": "braquiosaurio-02",
     "dinosaur": "braquiosaurio",
     "question": "¿De qué se alimentaba el Braquiosaurio?",
-    "options": ["De carne", "De hojas de árboles altos", "De peces", "De insectos"],
+    "options": [
+      "De carne",
+      "De hojas de árboles altos",
+      "De peces",
+      "De insectos"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-02",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 1
   },
   {
     "id": "braquiosaurio-03",
     "dinosaur": "braquiosaurio",
     "question": "¿Cómo era el tamaño del Braquiosaurio comparado con otros dinosaurios?",
-    "options": ["Uno de los más grandes", "Uno de los más pequeños", "Del tamaño de un perro", "Del tamaño de un gato"],
+    "options": [
+      "Uno de los más grandes",
+      "Uno de los más pequeños",
+      "Del tamaño de un perro",
+      "Del tamaño de un gato"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-03",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 1
   },
   {
     "id": "braquiosaurio-04",
     "dinosaur": "braquiosaurio",
     "question": "¿Cómo eran las patas delanteras del Braquiosaurio comparadas con las traseras?",
-    "options": ["Más largas", "Más cortas", "Iguales", "No tenía patas delanteras"],
+    "options": [
+      "Más largas",
+      "Más cortas",
+      "Iguales",
+      "No tenía patas delanteras"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-04",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 1
   },
   {
     "id": "braquiosaurio-05",
     "dinosaur": "braquiosaurio",
     "question": "¿Cuántas patas usaba el Braquiosaurio para caminar?",
-    "options": ["Dos", "Cuatro", "Seis", "Ocho"],
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ocho"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-05",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 2
   },
   {
     "id": "braquiosaurio-06",
     "dinosaur": "braquiosaurio",
     "question": "¿En qué periodo vivió el Braquiosaurio?",
-    "options": ["Jurásico", "Época de hielo", "Triásico tardío", "Cretácico final"],
+    "options": [
+      "Jurásico",
+      "Época de hielo",
+      "Triásico tardío",
+      "Cretácico final"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-06",
     "image": "dinosaurs/braquiosaurio.svg",
     "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
-    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "braquiosaurio-07",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cuánto podía llegar a medir de altura el Braquiosaurio, levantando el cuello?",
+    "options": [
+      "Más de 12 metros, como un edificio de 4 pisos",
+      "Medio metro",
+      "2 metros, como una persona alta",
+      "100 metros"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.braquiosaurio-07",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "braquiosaurio-08",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué forma tenían los dientes del Braquiosaurio, ideales para arrancar hojas?",
+    "options": [
+      "Afilados como cuchillos",
+      "En forma de cuchara o clavija",
+      "No tenía dientes",
+      "Como colmillos de tigre"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.braquiosaurio-08",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 2
+  },
+  {
+    "id": "braquiosaurio-09",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cuánto podía llegar a pesar un Braquiosaurio adulto?",
+    "options": [
+      "Tanto como un gato",
+      "Tanto como un perro grande",
+      "Tanto como varios elefantes juntos",
+      "Casi nada, era muy ligero"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.braquiosaurio-09",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "braquiosaurio-10",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Dónde se han encontrado fósiles de Braquiosaurio?",
+    "options": [
+      "Solo en la Antártida",
+      "Solo en el fondo del mar",
+      "Solo en Europa",
+      "En América del Norte y también en África"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.braquiosaurio-10",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "braquiosaurio-11",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Por qué se cree que el Braquiosaurio necesitaba comer tantísimas plantas cada día?",
+    "options": [
+      "Porque su enorme cuerpo necesitaba mucha energía",
+      "Porque le gustaba mucho el sabor",
+      "Porque no podía beber agua",
+      "Porque dormía todo el día"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.braquiosaurio-11",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "braquiosaurio-12",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo era la cabeza del Braquiosaurio comparada con el resto de su cuerpo?",
+    "options": [
+      "Enorme, la parte más grande de su cuerpo",
+      "Pequeña en comparación con su gran cuerpo",
+      "No tenía cabeza",
+      "Del mismo tamaño que su cola"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.braquiosaurio-12",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "braquiosaurio-13",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué le costaba trabajo al corazón del Braquiosaurio, debido a su largo cuello?",
+    "options": [
+      "Latir demasiado despacio",
+      "Descansar",
+      "Bombear la sangre hasta lo alto de su cabeza",
+      "Enfriarse"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.braquiosaurio-13",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 3
+  },
+  {
+    "id": "braquiosaurio-14",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué tipo de dinosaurio era el Braquiosaurio, del grupo de los saurópodos?",
+    "options": [
+      "Un terópodo carnívoro",
+      "Un dinosaurio con armadura",
+      "Un dinosaurio volador",
+      "Un gigantesco herbívoro de cuello largo"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.braquiosaurio-14",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "braquiosaurio-15",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué significa el nombre \"Braquiosaurio\"?",
+    "options": [
+      "Lagarto con brazos, por sus patas delanteras largas",
+      "Lagarto veloz",
+      "Lagarto con cuernos",
+      "Rey lagarto"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.braquiosaurio-15",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "braquiosaurio-16",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo se defendía principalmente el Braquiosaurio de los depredadores?",
+    "options": [
+      "Con veneno",
+      "Su enorme tamaño ya lo protegía de la mayoría",
+      "Con una maza en la cola",
+      "Volando lejos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.braquiosaurio-16",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "braquiosaurio-17",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo era la cola del Braquiosaurio comparada con la de otros saurópodos gigantes?",
+    "options": [
+      "Mucho más larga",
+      "Con púas afiladas",
+      "Más corta de lo habitual",
+      "No tenía cola"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.braquiosaurio-17",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 4
+  },
+  {
+    "id": "braquiosaurio-18",
+    "dinosaur": "braquiosaurio",
+    "question": "¿En qué tipo de zona es más probable que viviera el Braquiosaurio, buscando árboles altos?",
+    "options": [
+      "En el desierto sin plantas",
+      "En el fondo del mar",
+      "En zonas heladas",
+      "En bosques y llanuras con árboles altos"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.braquiosaurio-18",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "braquiosaurio-19",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Se movía el Braquiosaurio en manadas o siempre solo?",
+    "options": [
+      "Es probable que a veces se moviera en grupos",
+      "Siempre completamente solo",
+      "Solo en parejas de dos",
+      "Vivía bajo el agua"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.braquiosaurio-19",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "braquiosaurio-20",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Cómo caminaba el Braquiosaurio, rápido o despacio?",
+    "options": [
+      "Corriendo muy rápido, como un guepardo",
+      "Despacio, con pasos grandes y pesados",
+      "A saltos",
+      "Solo se arrastraba"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.braquiosaurio-20",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 5
+  },
+  {
+    "id": "braquiosaurio-21",
+    "dinosaur": "braquiosaurio",
+    "question": "¿Qué parte del cuerpo usaba el Braquiosaurio para alcanzar las hojas más altas de los árboles?",
+    "options": [
+      "Sus patas traseras",
+      "Su cola",
+      "Su larguísimo cuello",
+      "Sus dientes gigantes"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.braquiosaurio-21",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico.",
+    "level": 5
   },
   {
     "id": "ankylosaurus-01",
     "dinosaur": "ankylosaurus",
     "question": "¿Qué tenía el Ankylosaurus en la punta de la cola?",
-    "options": ["Una maza ósea", "Un aguijón", "Una aleta", "Plumas"],
+    "options": [
+      "Una maza ósea",
+      "Un aguijón",
+      "Una aleta",
+      "Plumas"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-01",
     "image": "dinosaurs/ankylosaurus.svg",
     "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
-    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "ankylosaurus-02",
     "dinosaur": "ankylosaurus",
     "question": "¿Cómo estaba protegido el cuerpo del Ankylosaurus?",
-    "options": ["Con una armadura de placas óseas", "Con escamas de pez", "Con plumas suaves", "Sin ninguna protección"],
+    "options": [
+      "Con una armadura de placas óseas",
+      "Con escamas de pez",
+      "Con plumas suaves",
+      "Sin ninguna protección"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-02",
     "image": "dinosaurs/ankylosaurus.svg",
     "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
-    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "ankylosaurus-03",
     "dinosaur": "ankylosaurus",
     "question": "¿De qué se alimentaba el Ankylosaurus?",
-    "options": ["De carne", "De plantas bajas", "De peces", "De insectos voladores"],
+    "options": [
+      "De carne",
+      "De plantas bajas",
+      "De peces",
+      "De insectos voladores"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-03",
     "image": "dinosaurs/ankylosaurus.svg",
     "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
-    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "ankylosaurus-04",
     "dinosaur": "ankylosaurus",
     "question": "¿Para qué usaba el Ankylosaurus la maza de su cola?",
-    "options": ["Para defenderse de depredadores", "Para volar", "Para nadar", "Para cavar túneles"],
+    "options": [
+      "Para defenderse de depredadores",
+      "Para volar",
+      "Para nadar",
+      "Para cavar túneles"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-04",
     "image": "dinosaurs/ankylosaurus.svg",
     "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
-    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 1
   },
   {
     "id": "ankylosaurus-05",
     "dinosaur": "ankylosaurus",
     "question": "¿Cuántas patas tenía el Ankylosaurus?",
-    "options": ["Dos", "Cuatro", "Seis", "Ninguna"],
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ninguna"
+    ],
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-05",
     "image": "dinosaurs/ankylosaurus.svg",
     "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
-    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "ankylosaurus-06",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué tamaño tenía aproximadamente el Ankylosaurus?",
+    "options": [
+      "Unos 6-8 metros, como un autobús pequeño",
+      "Medio metro, como un perro",
+      "100 metros",
+      "Del tamaño de un ratón"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.ankylosaurus-06",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "ankylosaurus-07",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Cómo era el cuerpo del Ankylosaurus, ancho o estrecho?",
+    "options": [
+      "Muy estrecho y alargado",
+      "Muy ancho y bajo, pegado al suelo",
+      "Alto como una jirafa",
+      "Con forma de bola"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.ankylosaurus-07",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "ankylosaurus-08",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué protegía los ojos del Ankylosaurus de los ataques?",
+    "options": [
+      "Nada, tenía los ojos al descubierto",
+      "Gafas naturales de piedra",
+      "Placas óseas también alrededor de los párpados",
+      "Una capa de pelo"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.ankylosaurus-08",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "ankylosaurus-09",
+    "dinosaur": "ankylosaurus",
+    "question": "¿En qué periodo vivió el Ankylosaurus?",
+    "options": [
+      "Jurásico temprano",
+      "Triásico",
+      "Época de hielo",
+      "Cretácico Superior, cerca del final de los dinosaurios"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.ankylosaurus-09",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "ankylosaurus-10",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Dónde se han encontrado los fósiles de Ankylosaurus?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "En el fondo del océano"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.ankylosaurus-10",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "ankylosaurus-11",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Cómo era el pico del Ankylosaurus, apto para comer plantas bajas?",
+    "options": [
+      "Afilado como el de un águila",
+      "Ancho y sin dientes en la parte delantera",
+      "No tenía pico",
+      "Con forma de cuchara gigante"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.ankylosaurus-11",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "ankylosaurus-12",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué tan grande era el cerebro del Ankylosaurus comparado con su cuerpo?",
+    "options": [
+      "Enorme, el más grande de todos",
+      "Del tamaño de una sandía",
+      "Bastante pequeño en comparación con su cuerpo",
+      "No tenía cerebro"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.ankylosaurus-12",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "ankylosaurus-13",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué tenía el Ankylosaurus en el oído que le daba muy buen oído?",
+    "options": [
+      "No tenía oídos",
+      "Un hueso hueco que no servía para nada",
+      "Un caracol de mar",
+      "Huesos especiales que mejoraban su audición"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.ankylosaurus-13",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "ankylosaurus-14",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Podía el golpe de la cola del Ankylosaurus llegar a romper huesos?",
+    "options": [
+      "Sí, con fuerza suficiente para lastimar a un depredador",
+      "No, era muy débil",
+      "Solo servía para hacer ruido",
+      "Solo se usaba para nadar"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.ankylosaurus-14",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "ankylosaurus-15",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué tipo de dinosaurio era el Ankylosaurus según su dieta?",
+    "options": [
+      "Carnívoro",
+      "Herbívoro",
+      "Omnívoro",
+      "Solo comía insectos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.ankylosaurus-15",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "ankylosaurus-16",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Cómo se movía el Ankylosaurus, rápido o lento?",
+    "options": [
+      "Muy rápido, como un guepardo",
+      "A grandes saltos",
+      "Lento, con sus cuatro patas cortas y robustas",
+      "Volando"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.ankylosaurus-16",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "ankylosaurus-17",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué significa el nombre \"Ankylosaurus\"?",
+    "options": [
+      "Lagarto con cuernos",
+      "Lagarto veloz",
+      "Rey lagarto",
+      "Lagarto fusionado o rígido, por su armadura"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.ankylosaurus-17",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "ankylosaurus-18",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Con qué gran depredador pudo haber convivido el Ankylosaurus?",
+    "options": [
+      "Con el Tyrannosaurus Rex",
+      "Con el Allosaurus",
+      "Con el Velociraptor",
+      "Con el Estegosaurio"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.ankylosaurus-18",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "ankylosaurus-19",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Qué había justo debajo de la piel del Ankylosaurus, formando su armadura?",
+    "options": [
+      "Solo pelo grueso",
+      "Placas óseas llamadas osteodermos",
+      "Escamas de pez",
+      "Plumas duras"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.ankylosaurus-19",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "ankylosaurus-20",
+    "dinosaur": "ankylosaurus",
+    "question": "Además de la maza de la cola, ¿qué otras defensas tenía el Ankylosaurus por todo el cuerpo?",
+    "options": [
+      "Ninguna otra defensa",
+      "Veneno en la piel",
+      "Hileras de púas y placas por el lomo y los costados",
+      "Garras enormes en las patas"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.ankylosaurus-20",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "ankylosaurus-21",
+    "dinosaur": "ankylosaurus",
+    "question": "¿Por qué era difícil para los depredadores atacar al Ankylosaurus?",
+    "options": [
+      "Porque era invisible",
+      "Porque vivía siempre bajo el agua",
+      "Porque corría muchísimo",
+      "Porque su cuerpo entero estaba cubierto de armadura"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.ankylosaurus-21",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico.",
+    "level": 5
   },
   {
     "id": "pteranodon-01",
     "dinosaur": "pteranodon",
     "question": "¿El Pteranodon era realmente un dinosaurio?",
-    "options": ["No, era un reptil volador llamado pterosaurio", "Sí, era un dinosaurio terrestre", "Era un pez gigante", "Era un mamífero"],
+    "options": [
+      "No, era un reptil volador llamado pterosaurio",
+      "Sí, era un dinosaurio terrestre",
+      "Era un pez gigante",
+      "Era un mamífero"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-01",
     "image": "dinosaurs/pteranodon.svg",
     "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
-    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 1
   },
   {
     "id": "pteranodon-02",
     "dinosaur": "pteranodon",
     "question": "¿Qué tenía el Pteranodon que le permitía volar?",
-    "options": ["Alas de piel entre los dedos", "Alas de plumas como un ave", "Aletas", "Globos de aire"],
+    "options": [
+      "Alas de piel entre los dedos",
+      "Alas de plumas como un ave",
+      "Aletas",
+      "Globos de aire"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-02",
     "image": "dinosaurs/pteranodon.svg",
     "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
-    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 1
   },
   {
     "id": "pteranodon-03",
     "dinosaur": "pteranodon",
     "question": "¿De qué se alimentaba principalmente el Pteranodon?",
-    "options": ["De peces", "De plantas", "De otros dinosaurios grandes", "De rocas"],
+    "options": [
+      "De peces",
+      "De plantas",
+      "De otros dinosaurios grandes",
+      "De rocas"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-03",
     "image": "dinosaurs/pteranodon.svg",
     "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
-    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 1
   },
   {
     "id": "pteranodon-04",
     "dinosaur": "pteranodon",
     "question": "¿Qué tenía el Pteranodon en la cabeza?",
-    "options": ["Una cresta larga", "Cuernos", "Placas óseas", "Una maza"],
+    "options": [
+      "Una cresta larga",
+      "Cuernos",
+      "Placas óseas",
+      "Una maza"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-04",
     "image": "dinosaurs/pteranodon.svg",
     "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
-    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 1
   },
   {
     "id": "pteranodon-05",
     "dinosaur": "pteranodon",
     "question": "¿Tenía dientes el Pteranodon?",
-    "options": ["No, no tenía ni un solo diente", "Sí, tenía cientos de dientes", "Solo dos dientes gigantes", "Tenía dientes venenosos"],
+    "options": [
+      "No, no tenía ni un solo diente",
+      "Sí, tenía cientos de dientes",
+      "Solo dos dientes gigantes",
+      "Tenía dientes venenosos"
+    ],
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-05",
     "image": "dinosaurs/pteranodon.svg",
     "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
-    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "pteranodon-06",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué tamaño de envergadura, con las alas extendidas, podía alcanzar el Pteranodon?",
+    "options": [
+      "Hasta unos 6 metros de punta a punta",
+      "Medio metro, como una paloma",
+      "100 metros",
+      "No tenía alas"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pteranodon-06",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "pteranodon-07",
+    "dinosaur": "pteranodon",
+    "question": "¿Cerca de qué tipo de lugar solía vivir el Pteranodon?",
+    "options": [
+      "En lo alto de montañas nevadas",
+      "Cerca de mares y costas",
+      "En el desierto sin agua",
+      "Bajo tierra"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pteranodon-07",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "pteranodon-08",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué diferencia había entre la cresta de los machos y las hembras de Pteranodon?",
+    "options": [
+      "Las hembras tenían cresta más grande",
+      "No había diferencia",
+      "Los machos solían tener una cresta más grande",
+      "Solo las crías tenían cresta"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.pteranodon-08",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 2
+  },
+  {
+    "id": "pteranodon-09",
+    "dinosaur": "pteranodon",
+    "question": "¿Cómo eran los huesos del Pteranodon, para poder volar mejor?",
+    "options": [
+      "Muy pesados y sólidos",
+      "De piedra",
+      "Muy cortos y gruesos",
+      "Huecos y ligeros, como los de las aves"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.pteranodon-09",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "pteranodon-10",
+    "dinosaur": "pteranodon",
+    "question": "¿En qué periodo vivió el Pteranodon?",
+    "options": [
+      "Cretácico Superior",
+      "Jurásico temprano",
+      "Triásico",
+      "Época de hielo"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pteranodon-10",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "pteranodon-11",
+    "dinosaur": "pteranodon",
+    "question": "¿Cómo cazaba el Pteranodon los peces?",
+    "options": [
+      "Esperando en tierra a que llegaran",
+      "Volando bajo sobre el agua y atrapándolos con el pico",
+      "Cavando en la arena",
+      "Nadando bajo el agua como un pez"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pteranodon-11",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "pteranodon-12",
+    "dinosaur": "pteranodon",
+    "question": "¿Con qué animal de hoy en día se parece más el Pteranodon por volar?",
+    "options": [
+      "Con un pez",
+      "Con un elefante",
+      "Con un ave, aunque no era una",
+      "Con una serpiente"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.pteranodon-12",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 3
+  },
+  {
+    "id": "pteranodon-13",
+    "dinosaur": "pteranodon",
+    "question": "¿Podía el Pteranodon caminar en tierra firme?",
+    "options": [
+      "No, nunca tocaba el suelo",
+      "Solo con dos patas, como un ave",
+      "Rodando como una pelota",
+      "Sí, apoyándose en sus cuatro extremidades"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.pteranodon-13",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "pteranodon-14",
+    "dinosaur": "pteranodon",
+    "question": "¿De qué estaban hechas las alas del Pteranodon?",
+    "options": [
+      "De piel estirada entre el cuerpo y un dedo muy largo",
+      "De plumas, como un ave",
+      "De escamas de pez",
+      "De hueso sólido"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pteranodon-14",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "pteranodon-15",
+    "dinosaur": "pteranodon",
+    "question": "¿Dónde ponía sus huevos el Pteranodon?",
+    "options": [
+      "En el fondo del mar",
+      "En nidos, probablemente en colonias sobre acantilados",
+      "Bajo tierra, como una serpiente",
+      "No ponía huevos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pteranodon-15",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "pteranodon-16",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué le pasó al Pteranodon al final del periodo Cretácico?",
+    "options": [
+      "Se convirtió en un ave moderna",
+      "Sigue vivo hoy en día",
+      "Se extinguió junto a los dinosaurios",
+      "Emigró a otro planeta"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.pteranodon-16",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 4
+  },
+  {
+    "id": "pteranodon-17",
+    "dinosaur": "pteranodon",
+    "question": "¿Qué significa el nombre \"Pteranodon\"?",
+    "options": [
+      "Ala con dientes",
+      "Lagarto veloz",
+      "Rey del cielo",
+      "Ala sin dientes"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.pteranodon-17",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "pteranodon-18",
+    "dinosaur": "pteranodon",
+    "question": "¿En qué estado de Estados Unidos se han encontrado muchos fósiles importantes de Pteranodon?",
+    "options": [
+      "Kansas",
+      "Alaska",
+      "Hawái",
+      "Florida"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pteranodon-18",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "pteranodon-19",
+    "dinosaur": "pteranodon",
+    "question": "¿Cómo era la vista del Pteranodon, importante para localizar peces desde el aire?",
+    "options": [
+      "Muy mala, casi ciego",
+      "Muy aguda y desarrollada",
+      "No tenía ojos",
+      "Solo veía de noche"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pteranodon-19",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "pteranodon-20",
+    "dinosaur": "pteranodon",
+    "question": "¿El Pteranodon batía mucho las alas para volar o prefería otra técnica?",
+    "options": [
+      "Batía las alas sin parar todo el tiempo",
+      "Nunca movía las alas",
+      "Aprovechaba las corrientes de aire para planear",
+      "Saltaba de árbol en árbol"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.pteranodon-20",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 5
+  },
+  {
+    "id": "pteranodon-21",
+    "dinosaur": "pteranodon",
+    "question": "¿A qué grupo de reptiles voladores pertenecía el Pteranodon?",
+    "options": [
+      "A los dinosaurios terópodos",
+      "A los cocodrilos",
+      "A las tortugas marinas",
+      "A los pterosaurios"
+    ],
+    "correctAnswerIndex": 3,
+    "dato_curioso": "funFacts.pteranodon-21",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
+    "level": 5
   }
 ]

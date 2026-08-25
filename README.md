@@ -86,7 +86,8 @@ DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
 
 ## Banco de preguntas
 
-El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
+El banco de 150 preguntas (30 por cada uno de los 5 niveles) vive en
+[`public/data/questions.json`](public/data/questions.json)
 y se carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js). El JSON
 vive bajo `public/` (igual que [`public/i18n/es.json`](public/i18n/es.json)) para que el
 navegador pueda hacerle `fetch('/data/questions.json')` en tiempo de ejecución sin duplicarlo
@@ -109,7 +110,8 @@ Cada pregunta sigue este esquema:
   "imageRealistic": "realistic/trex.jpg", // variante de estilo realista del mismo dinosaurio
   "imageFallback": "fallback/trex.svg",   // asset local de respaldo por dinosaurio, para cuando
                                  // la imagen principal no llega a cargar
-  "imageAlt": "..."             // alt educativo y neutral, compartido por las tres variantes
+  "imageAlt": "...",            // alt educativo y neutral, compartido por las tres variantes
+  "level": 1                    // nivel de dificultad, entero de 1 a 5
 }
 ```
 
@@ -117,6 +119,16 @@ Cada pregunta sigue este esquema:
 respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
+
+**TRIOFSND-202 — niveles y `getQuestionsByLevel()`:** el banco contiene exactamente 150
+preguntas, 30 por cada uno de los 5 niveles (`level`, entero 1-5); `getLevelCoverageErrors()`
+comprueba ese reparto y `loadQuestionBank()` lo exige junto a la cobertura por dinosaurio.
+`getQuestionsByLevel(level, options)` en
+[`src/data/questionBank.js`](src/data/questionBank.js) valida los campos obligatorios de cada
+entrada (esquema más las variantes de imagen AW5) y, por cada entrada inválida, emite un evento
+`content_validation_failed` (con el id técnico, el nivel y la regla incumplida) a través del
+servicio de logging ([`src/services/logging`](src/services/logging)) en lugar de incluirla en
+el resultado — una entrada incompleta nunca bloquea el resto del nivel.
 
 **AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
 pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver
@@ -146,7 +158,7 @@ resto de textos de la UI.
 ## Motor de selección aleatoria de preguntas
 
 [`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
-iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
+iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de forma
 aleatoria:
 
 - `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el

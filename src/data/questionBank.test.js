@@ -10,16 +10,22 @@ const {
   MIN_OPTIONS,
   MAX_OPTIONS,
   MIN_QUESTIONS_PER_DINOSAUR,
+  MIN_LEVEL,
+  MAX_LEVEL,
+  VALID_LEVELS,
+  QUESTIONS_PER_LEVEL,
   EXPECTED_QUESTION_COUNT,
   validateQuestion,
   validateQuestionBank,
   hasImageVariants,
   filterQuestionsWithImageVariants,
   getDinosaurCoverageErrors,
+  getLevelCoverageErrors,
   resolveDatoCurioso,
   getDatoCuriosoTranslationErrors,
   loadQuestionBank,
   getQuestionsByDinosaur,
+  getQuestionsByLevel,
 } = require('./questionBank');
 const { getStrings } = require('../i18n');
 
@@ -35,7 +41,18 @@ function buildValidQuestion(overrides = {}) {
     imageRealistic: 'realistic/trex.svg',
     imageFallback: 'fallback/trex.svg',
     imageAlt: 'Ilustración educativa de un Tyrannosaurus Rex.',
+    level: 1,
     ...overrides,
+  };
+}
+
+function buildMemoryLogService() {
+  const events = [];
+  return {
+    events,
+    logEvent(eventType, metadata) {
+      events.push({ eventType, metadata });
+    },
   };
 }
 
@@ -71,6 +88,18 @@ describe('real question bank (public/data/questions.json)', () => {
 
   test('loads exactly the expected number of questions', () => {
     expect(questions).toHaveLength(EXPECTED_QUESTION_COUNT);
+  });
+
+  // TRIOFSND-202: build-time content check — the bank must contain exactly
+  // 150 valid questions, 30 per level (1-5).
+  test('TRIOFSND-202: contains exactly 150 valid questions, 30 per level', () => {
+    expect(questions).toHaveLength(150);
+    expect(getLevelCoverageErrors(questions)).toEqual([]);
+
+    VALID_LEVELS.forEach((level) => {
+      const levelQuestions = questions.filter((question) => question.level === level);
+      expect(levelQuestions).toHaveLength(QUESTIONS_PER_LEVEL);
+    });
   });
 
   test('has no validation errors', () => {
@@ -155,6 +184,19 @@ describe('real question bank (public/data/questions.json)', () => {
       });
     });
   });
+
+  // TRIOFSND-202: getQuestionsByLevel() against the real bank on disk.
+  test('TRIOFSND-202: getQuestionsByLevel returns exactly 30 valid questions for every level, none logged as invalid', () => {
+    const logService = buildMemoryLogService();
+
+    VALID_LEVELS.forEach((level) => {
+      const levelQuestions = getQuestionsByLevel(level, { logService });
+      expect(levelQuestions).toHaveLength(QUESTIONS_PER_LEVEL);
+      expect(levelQuestions.every((question) => question.level === level)).toBe(true);
+    });
+
+    expect(logService.events).toEqual([]);
+  });
 });
 
 describe('validateQuestion', () => {
@@ -214,6 +256,15 @@ describe('validateQuestion', () => {
   test('rejects a missing image reference', () => {
     const errors = validateQuestion(buildValidQuestion({ image: '' }), 0);
     expect(errors.some((error) => error.includes('image'))).toBe(true);
+  });
+
+  test.each([undefined, null, 0, 6, 1.5, '1'])('rejects an invalid "level" (%p)', (level) => {
+    const errors = validateQuestion(buildValidQuestion({ level }), 0);
+    expect(errors.some((error) => error.includes('"level"'))).toBe(true);
+  });
+
+  test.each(VALID_LEVELS)('accepts level %i', (level) => {
+    expect(validateQuestion(buildValidQuestion({ level }), 0)).toEqual([]);
   });
 });
 
@@ -322,6 +373,37 @@ describe('getDinosaurCoverageErrors', () => {
     );
 
     expect(getDinosaurCoverageErrors(questions)).toEqual([]);
+  });
+});
+
+describe('getLevelCoverageErrors', () => {
+  test('flags a level with fewer than the required 30 questions', () => {
+    const questions = [buildValidQuestion({ id: 'trex-01', level: 1 })];
+
+    const errors = getLevelCoverageErrors(questions);
+
+    expect(errors.some((error) => error.includes('Level 1'))).toBe(true);
+    expect(errors.some((error) => error.includes('Level 2'))).toBe(true);
+  });
+
+  test('flags a level with more than the required 30 questions', () => {
+    const questions = Array.from({ length: QUESTIONS_PER_LEVEL + 1 }, (_, index) =>
+      buildValidQuestion({ id: `trex-${index}`, level: 1 })
+    );
+
+    const errors = getLevelCoverageErrors(questions);
+
+    expect(errors.some((error) => error.includes('Level 1'))).toBe(true);
+  });
+
+  test('returns no errors when every level has exactly 30 questions', () => {
+    const questions = VALID_LEVELS.flatMap((level) =>
+      Array.from({ length: QUESTIONS_PER_LEVEL }, (_, questionIndex) =>
+        buildValidQuestion({ id: `trex-${level}-${questionIndex}`, level })
+      )
+    );
+
+    expect(getLevelCoverageErrors(questions)).toEqual([]);
   });
 });
 
@@ -481,5 +563,115 @@ describe('getQuestionsByDinosaur', () => {
 
     expect(trexQuestions).toHaveLength(2);
     expect(trexQuestions.every((question) => question.dinosaur === DINOSAURS.TREX)).toBe(true);
+  });
+});
+
+describe('getQuestionsByLevel (TRIOFSND-202)', () => {
+  test('returns only valid questions matching the requested level', () => {
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', level: 1 }),
+      buildValidQuestion({ id: 'trex-02', level: 2 }),
+      buildValidQuestion({ id: 'trex-03', level: 1 }),
+    ];
+    const logService = buildMemoryLogService();
+
+    const levelOneQuestions = getQuestionsByLevel(1, { questions, logService });
+
+    expect(levelOneQuestions.map((question) => question.id)).toEqual(['trex-01', 'trex-03']);
+    expect(logService.events).toEqual([]);
+  });
+
+  test('excludes an entry missing a mandatory field and logs content_validation_failed with id, level and rule', () => {
+    const valid = buildValidQuestion({ id: 'trex-01', level: 1 });
+    const invalid = buildValidQuestion({ id: 'trex-02', level: 1, dato_curioso: '' });
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions: [valid, invalid], logService });
+
+    expect(result.map((question) => question.id)).toEqual(['trex-01']);
+    expect(logService.events).toEqual([
+      {
+        eventType: 'content_validation_failed',
+        metadata: { id: 'trex-02', level: 1, rule: 'dato_curioso' },
+      },
+    ]);
+  });
+
+  test('excludes an entry missing an AW5 image variant and logs the violated rule', () => {
+    const valid = buildValidQuestion({ id: 'trex-01', level: 1 });
+    const invalid = buildValidQuestion({ id: 'trex-02', level: 1, imageRealistic: '' });
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions: [valid, invalid], logService });
+
+    expect(result.map((question) => question.id)).toEqual(['trex-01']);
+    expect(logService.events).toEqual([
+      {
+        eventType: 'content_validation_failed',
+        metadata: { id: 'trex-02', level: 1, rule: 'imageRealistic' },
+      },
+    ]);
+  });
+
+  test('logs one content_validation_failed event per broken rule for the same entry', () => {
+    const invalid = buildValidQuestion({ id: 'trex-01', level: 1, dato_curioso: '', image: '' });
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions: [invalid], logService });
+
+    expect(result).toEqual([]);
+    expect(logService.events).toHaveLength(2);
+    expect(logService.events.map((event) => event.metadata.rule).sort()).toEqual(['dato_curioso', 'image']);
+    expect(logService.events.every((event) => event.metadata.id === 'trex-01')).toBe(true);
+  });
+
+  test('reports "unknown" as the id when the entry has no valid id of its own', () => {
+    const invalid = buildValidQuestion({ id: '', level: 1 });
+    const logService = buildMemoryLogService();
+
+    getQuestionsByLevel(1, { questions: [invalid], logService });
+
+    expect(logService.events.some((event) => event.metadata.id === 'unknown')).toBe(true);
+  });
+
+  test('does not exclude a valid entry belonging to a different level', () => {
+    const otherLevel = buildValidQuestion({ id: 'trex-01', level: 2 });
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions: [otherLevel], logService });
+
+    expect(result).toEqual([]);
+    expect(logService.events).toEqual([]);
+  });
+
+  test('throws a descriptive error for a non-array payload', () => {
+    expect(() => getQuestionsByLevel(1, { questions: { not: 'an array' } })).toThrow(
+      'The question bank must be an array of questions'
+    );
+  });
+
+  test('loads from filePath when no "questions" override is given', () => {
+    const filePath = writeTempQuestionBank([
+      buildValidQuestion({ id: 'trex-01', level: 3 }),
+      buildValidQuestion({ id: 'trex-02', level: 1 }),
+    ]);
+    const logService = buildMemoryLogService();
+
+    try {
+      const result = getQuestionsByLevel(3, { filePath, logService });
+      expect(result.map((question) => question.id)).toEqual(['trex-01']);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('throws a descriptive error for malformed JSON at filePath', () => {
+    const filePath = createTempPath('dinoquiz-questions-broken-');
+    fs.writeFileSync(filePath, '{ not valid json', 'utf-8');
+    try {
+      expect(() => getQuestionsByLevel(1, { filePath })).toThrow(/Failed to parse question bank JSON/);
+    } finally {
+      fs.unlinkSync(filePath);
+    }
   });
 });

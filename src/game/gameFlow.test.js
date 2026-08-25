@@ -130,7 +130,7 @@ describe('selectGameQuestions', () => {
     expect(seen.size).toBe(questions.length);
   });
 
-  test('works against the real 40-question bank (public/data/questions.json)', () => {
+  test('works against the real question bank (public/data/questions.json)', () => {
     const questions = loadQuestionBank();
 
     const selection = selectGameQuestions(questions);
