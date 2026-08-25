@@ -5,3 +5,4 @@ build/
 .trioforge/
 *.log
 .DS_Store
+test-output.txt

@@ -44,7 +44,18 @@ describe('resolveQuestionImage', () => {
     });
   });
 
-  test('"realista" resolves to a sibling styled path, falling back to the guaranteed "dibujo" asset', () => {
+  test('"realista" resolves to the bank\'s own imageRealistic asset, falling back to the guaranteed "dibujo" asset', () => {
+    const question = buildQuestion({ imageRealistic: 'realistic/trex.svg' });
+    const resolved = resolveQuestionImage(question, '7-plus');
+
+    expect(resolved).toEqual({
+      style: 'realista',
+      url: 'realistic/trex.svg',
+      fallbackUrl: 'dinosaurs/trex.svg',
+    });
+  });
+
+  test('"realista" without an imageRealistic field derives a sibling styled path as a last resort (resilience)', () => {
     const question = buildQuestion();
     const resolved = resolveQuestionImage(question, '7-plus');
 
