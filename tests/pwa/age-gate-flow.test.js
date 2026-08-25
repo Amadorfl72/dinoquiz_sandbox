@@ -41,6 +41,7 @@ function buildQuestion(id) {
     correctAnswerIndex: 0,
     funFact: `Dato curioso ${id}`,
     image: 'dinosaurs/trex.png',
+    imageRealistic: 'dinosaurs/realista/trex.png',
   };
 }
 

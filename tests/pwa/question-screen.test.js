@@ -94,6 +94,24 @@ describe('public/scripts/questionScreen.js rewarded-ad CTA (TRIOFSND-86, the imp
 
     expect(extraFunFactBox.hidden).toBe(true);
     expect(rewardedAdStatus.textContent).toBe(strings.rewardedAd.notCompletedMessage);
+    expect(rewardedAdStatus.hidden).toBe(false);
     expect(rewardedAdCta.disabled).toBe(true);
+  });
+
+  // Bug report: "Scroll innecesario ... obliga al scroll para clickar en
+  // Siguiente" — rewardedAdStatus was rendered unconditionally (no `hidden`
+  // like every other optional box here), so its empty <p> still claimed a
+  // line of height plus the question-screen's flex gap on every question,
+  // even with no rewarded-ad service wired in, pushing "Siguiente" down for
+  // nothing to read.
+  test('stays hidden (no blank space) while it has no status message to show', () => {
+    const question = buildQuestion();
+    const { optionButtons, rewardedAdStatus } = renderQuestionScreen(container, question);
+
+    expect(rewardedAdStatus.hidden).toBe(true);
+
+    optionButtons[question.correctAnswerIndex].click();
+
+    expect(rewardedAdStatus.hidden).toBe(true);
   });
 });

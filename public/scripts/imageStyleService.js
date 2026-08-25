@@ -19,9 +19,9 @@
  * the actual realistic assets ship (public/assets/images/realistic/*.svg) --
  * NOT derived by inserting a "realista" segment into the base `image` path,
  * which has no corresponding asset directory. Only a question missing
- * `imageRealistic` (e.g. hand-built test fixtures) falls back to that
- * derived path, purely so callers without the field still get *a* URL
- * instead of `undefined`.
+ * `imageRealistic` (e.g. hand-built test fixtures) falls back to the
+ * cartoon `image` path, purely so callers without the field still get *a*
+ * URL instead of `undefined`.
  *
  * Local fallback (AC: "sin bloquear la partida"): `question.imageFallback`
  * (public/assets/images/fallback/) is always returned as `fallbackUrl`
@@ -74,7 +74,7 @@
     var url = cartoonUrl;
 
     if (style === IMAGE_STYLES.REALISTA) {
-      url = realisticUrl || styledImagePath(cartoonUrl, style);
+      url = realisticUrl || cartoonUrl;
     }
 
     return {
