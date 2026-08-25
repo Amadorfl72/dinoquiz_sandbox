@@ -235,7 +235,7 @@ describe('TRIOFSND-113: install capability (beforeinstallprompt) is fully option
 
     // TRIOFSND-193: '¡Jugar!' opens the age gate before the first question.
     const { ageGate } = require('../../public/i18n/es.json');
-    getByRole(container, 'button', { name: ageGate.sevenOrMoreOption }).click();
+    getByRole(container, 'button', { name: ageGate.eightPlusOption }).click();
 
     const renderers = resolveScreenRenderers();
     const questions = loadQuestions();

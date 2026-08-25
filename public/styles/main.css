@@ -1073,11 +1073,12 @@ body {
 }
 
 /*
- * Age gate screen (TRIOFSND-193) — two big, equally-weighted options so a
- * 6-8 year old can pick one at a glance. Both reuse already AA-checked
- * design tokens (var(--color-primary)/white for the filled option, the same
- * outline treatment as `.results-screen__exit-button` for the other) rather
- * than introducing a third color pairing.
+ * Age gate screen (TRIOFSND-193, exact-age capture TRIOFSND-204) — three big,
+ * equally-weighted options so a 6-8 year old can pick their exact age at a
+ * glance. All three reuse already AA-checked design tokens (the outline
+ * treatment as `.results-screen__exit-button` for the youngest, the neutral
+ * filled pairing used elsewhere for the middle option, var(--color-primary)/
+ * white for the oldest) rather than introducing new color pairings.
  */
 .age-gate-screen {
   display: flex;
@@ -1137,40 +1138,51 @@ body {
   font-size: 2rem;
 }
 
-.age-gate-screen__option--under-seven {
+.age-gate-screen__option--six {
   background-color: transparent;
   color: var(--color-text);
   border: 3px solid var(--color-text);
 }
 
-.age-gate-screen__option--under-seven:hover {
+.age-gate-screen__option--six:hover {
   background-color: var(--color-option-bg-hover);
 }
 
-.age-gate-screen__option--under-seven:active {
+.age-gate-screen__option--six:active {
   background-color: var(--color-option-bg-pressed);
 }
 
-.age-gate-screen__option--under-seven:focus-visible {
+.age-gate-screen__option--six:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
 
-.age-gate-screen__option--seven-or-more {
+.age-gate-screen__option--seven {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+  border: none;
+}
+
+.age-gate-screen__option--seven:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.age-gate-screen__option--eight-plus {
   background-color: var(--color-primary);
   color: var(--color-white);
   border: none;
 }
 
-.age-gate-screen__option--seven-or-more:hover {
+.age-gate-screen__option--eight-plus:hover {
   background-color: var(--color-primary-hover);
 }
 
-.age-gate-screen__option--seven-or-more:active {
+.age-gate-screen__option--eight-plus:active {
   background-color: var(--color-primary-pressed);
 }
 
-.age-gate-screen__option--seven-or-more:focus-visible {
+.age-gate-screen__option--eight-plus:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }

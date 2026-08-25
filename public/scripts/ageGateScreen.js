@@ -1,15 +1,21 @@
 'use strict';
 
 /**
- * Age gate ("selección de edad") screen (TRIOFSND-193).
+ * Age gate ("selección de edad") screen (TRIOFSND-193, exact-age capture
+ * TRIOFSND-204).
  *
  * Shown right after the '¡Jugar!' tap and before the game is prepared (see
- * public/scripts/main.js), so the app can tell apart the two age bands the
- * PRD asks for -- "menos de 7" and "7 años o más" -- without ever asking for
- * a birthdate or any other identifying detail. Two large, clearly labeled
- * buttons, each a real `<button>` for native keyboard/focus support and
- * >=48x48dp touch targets (PRD AC-2), grouped under `role="group"` so
- * assistive tech announces them as a single choice.
+ * public/scripts/main.js), so the app can tell apart three exact ages -- 6,
+ * 7 and 8-or-more -- without ever asking for a birthdate or any other
+ * identifying detail. Three large, clearly labeled buttons, each a real
+ * `<button>` for native keyboard/focus support and >=48x48dp touch targets
+ * (PRD AC-2), grouped under `role="group"` so assistive tech announces them
+ * as a single choice.
+ *
+ * The three-way split (rather than the original two age bands) exists so a
+ * future single-level restriction for 6-7 year olds can be told apart from
+ * unlocking additional levels for 8+ year olds; this screen only captures
+ * the exact age, it doesn't yet gate any content on it.
  *
  * Privacy by design (PRD G7): the selection is kept in a plain in-memory
  * module variable (`selectedAgeBand` below) for the running session only --
@@ -17,7 +23,7 @@
  * network and never handed to the analytics/storage services (contrast with
  * e.g. the mute or ads-removed flags in main.js, which *are* persisted).
  * Reloading the page or starting a new session loses it, by design. Content
- * doesn't yet vary by age band (DinoQuiz ships a single set of
+ * doesn't yet vary by age (DinoQuiz ships a single set of
  * illustrations/questions), so `SAFE_DEFAULT_AGE_BAND` documents the safe
  * fallback the PRD calls for when the age can't be determined (e.g. the
  * screen is skipped or dismissed without a tap): keep using the current,
@@ -34,16 +40,18 @@
 
 (function () {
   var AGE_BANDS = {
-    UNDER_7: 'under-7',
-    SEVEN_OR_MORE: '7-plus',
+    SIX: 'six',
+    SEVEN: 'seven',
+    EIGHT_PLUS: 'eight-plus',
   };
 
   // Only one set of illustrations/questions exists today, so "safe" simply
-  // means "don't change anything" -- the 7-plus band carries no restriction.
-  var SAFE_DEFAULT_AGE_BAND = AGE_BANDS.SEVEN_OR_MORE;
+  // means "don't change anything" -- the eight-plus age carries no restriction.
+  var SAFE_DEFAULT_AGE_BAND = AGE_BANDS.EIGHT_PLUS;
 
-  var UNDER_SEVEN_ICON = '🦕';
-  var SEVEN_OR_MORE_ICON = '🦖';
+  var SIX_ICON = '🥚';
+  var SEVEN_ICON = '🦕';
+  var EIGHT_PLUS_ICON = '🦖';
 
   // In-memory/session only (see module doc comment above) -- intentionally
   // not backed by localStorage/IndexedDB/any storage service.
@@ -53,8 +61,12 @@
     return selectedAgeBand;
   }
 
+  function isKnownAgeBand(ageBand) {
+    return ageBand === AGE_BANDS.SIX || ageBand === AGE_BANDS.SEVEN || ageBand === AGE_BANDS.EIGHT_PLUS;
+  }
+
   function setSelectedAgeBand(ageBand) {
-    selectedAgeBand = ageBand === AGE_BANDS.UNDER_7 || ageBand === AGE_BANDS.SEVEN_OR_MORE ? ageBand : null;
+    selectedAgeBand = isKnownAgeBand(ageBand) ? ageBand : null;
     return selectedAgeBand;
   }
 
@@ -122,23 +134,31 @@
     optionsGroup.setAttribute('role', 'group');
     optionsGroup.setAttribute('aria-labelledby', title.id);
 
-    var underSevenButton = buildOptionButton(
-      'age-gate-screen__option--under-seven',
-      UNDER_SEVEN_ICON,
-      strings.underSevenOption,
-      AGE_BANDS.UNDER_7,
+    var sixButton = buildOptionButton(
+      'age-gate-screen__option--six',
+      SIX_ICON,
+      strings.sixOption,
+      AGE_BANDS.SIX,
       options.onSelect
     );
-    var sevenOrMoreButton = buildOptionButton(
-      'age-gate-screen__option--seven-or-more',
-      SEVEN_OR_MORE_ICON,
-      strings.sevenOrMoreOption,
-      AGE_BANDS.SEVEN_OR_MORE,
+    var sevenButton = buildOptionButton(
+      'age-gate-screen__option--seven',
+      SEVEN_ICON,
+      strings.sevenOption,
+      AGE_BANDS.SEVEN,
+      options.onSelect
+    );
+    var eightPlusButton = buildOptionButton(
+      'age-gate-screen__option--eight-plus',
+      EIGHT_PLUS_ICON,
+      strings.eightPlusOption,
+      AGE_BANDS.EIGHT_PLUS,
       options.onSelect
     );
 
-    optionsGroup.appendChild(underSevenButton);
-    optionsGroup.appendChild(sevenOrMoreButton);
+    optionsGroup.appendChild(sixButton);
+    optionsGroup.appendChild(sevenButton);
+    optionsGroup.appendChild(eightPlusButton);
 
     root.appendChild(title);
     root.appendChild(instructions);
@@ -154,8 +174,9 @@
       title: title,
       instructions: instructions,
       optionsGroup: optionsGroup,
-      underSevenButton: underSevenButton,
-      sevenOrMoreButton: sevenOrMoreButton,
+      sixButton: sixButton,
+      sevenButton: sevenButton,
+      eightPlusButton: eightPlusButton,
     };
   }
 

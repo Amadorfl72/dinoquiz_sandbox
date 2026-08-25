@@ -19,12 +19,16 @@ function buildQuestion(overrides = {}) {
 }
 
 describe('resolveImageStyle', () => {
-  test('resolves the youngest age band to "dibujo"', () => {
-    expect(resolveImageStyle('under-7')).toBe(IMAGE_STYLES.DIBUJO);
+  test('resolves the youngest age (six) to "dibujo"', () => {
+    expect(resolveImageStyle('six')).toBe(IMAGE_STYLES.DIBUJO);
   });
 
-  test('resolves the 7-plus age band to "realista"', () => {
-    expect(resolveImageStyle('7-plus')).toBe(IMAGE_STYLES.REALISTA);
+  test('resolves age seven to "realista"', () => {
+    expect(resolveImageStyle('seven')).toBe(IMAGE_STYLES.REALISTA);
+  });
+
+  test('resolves eight-plus to "realista"', () => {
+    expect(resolveImageStyle('eight-plus')).toBe(IMAGE_STYLES.REALISTA);
   });
 
   test('falls back to "dibujo" when the age band is missing or unrecognized', () => {
@@ -37,7 +41,7 @@ describe('resolveImageStyle', () => {
 describe('resolveQuestionImage', () => {
   test('"dibujo" resolves straight to the question\'s cartoon image path, falling back to its dedicated fallback asset', () => {
     const question = buildQuestion();
-    const resolved = resolveQuestionImage(question, 'under-7');
+    const resolved = resolveQuestionImage(question, 'six');
 
     expect(resolved).toEqual({
       style: 'dibujo',
@@ -48,7 +52,7 @@ describe('resolveQuestionImage', () => {
 
   test('"realista" resolves to the bank\'s own imageRealistic asset, falling back to its dedicated fallback asset', () => {
     const question = buildQuestion({ imageRealistic: 'realistic/trex.svg' });
-    const resolved = resolveQuestionImage(question, '7-plus');
+    const resolved = resolveQuestionImage(question, 'seven');
 
     expect(resolved).toEqual({
       style: 'realista',
@@ -59,7 +63,7 @@ describe('resolveQuestionImage', () => {
 
   test('"realista" without an imageRealistic field derives a sibling styled path as a last resort (resilience)', () => {
     const question = buildQuestion();
-    const resolved = resolveQuestionImage(question, '7-plus');
+    const resolved = resolveQuestionImage(question, 'eight-plus');
 
     expect(resolved).toEqual({
       style: 'realista',
@@ -79,20 +83,20 @@ describe('resolveQuestionImage', () => {
 
   test('"realista" falls back to the cartoon image when imageRealistic is missing', () => {
     const question = buildQuestion({ imageRealistic: undefined });
-    const resolved = resolveQuestionImage(question, '7-plus');
+    const resolved = resolveQuestionImage(question, 'seven');
 
     expect(resolved.url).toBe(question.image);
   });
 
   test('falls back to the cartoon image as fallbackUrl when imageFallback is missing', () => {
     const question = buildQuestion({ imageFallback: undefined });
-    const resolved = resolveQuestionImage(question, 'under-7');
+    const resolved = resolveQuestionImage(question, 'six');
 
     expect(resolved.fallbackUrl).toBe(question.image);
   });
 
   test('is resilient to a missing image field instead of throwing', () => {
     const question = buildQuestion({ image: undefined });
-    expect(() => resolveQuestionImage(question, '7-plus')).not.toThrow();
+    expect(() => resolveQuestionImage(question, 'seven')).not.toThrow();
   });
 });

@@ -3,12 +3,12 @@
 /**
  * Image style resolution service (TRIOFSND-194).
  *
- * Given the age band selected in the age gate (public/scripts/ageGateScreen.js,
- * TRIOFSND-193: 'under-7' | '7-plus'), resolves which visual variant of a
- * question's dinosaur illustration to show -- 'dibujo' (`question.image`,
- * cartoon, matching the PRD's overall visual_direction) for the youngest
- * players, or 'realista' (`question.imageRealistic`) for the 7-plus band,
- * who can handle a more lifelike depiction. Both fields are asset paths that
+ * Given the exact age selected in the age gate (public/scripts/ageGateScreen.js,
+ * TRIOFSND-193/TRIOFSND-204: 'six' | 'seven' | 'eight-plus'), resolves which
+ * visual variant of a question's dinosaur illustration to show -- 'dibujo'
+ * (`question.image`, cartoon, matching the PRD's overall visual_direction)
+ * for the youngest players, or 'realista' (`question.imageRealistic`) from
+ * age 7 up, who can handle a more lifelike depiction. Both fields are asset paths that
  * already come straight from the question bank (src/data/questionBank.js,
  * public/data/questions.json) -- this service only picks which field to use,
  * it never derives a path itself.
@@ -49,8 +49,9 @@
   var DEFAULT_IMAGE_STYLE = IMAGE_STYLES.DIBUJO;
 
   var AGE_BAND_IMAGE_STYLES = {
-    'under-7': IMAGE_STYLES.DIBUJO,
-    '7-plus': IMAGE_STYLES.REALISTA,
+    six: IMAGE_STYLES.DIBUJO,
+    seven: IMAGE_STYLES.REALISTA,
+    'eight-plus': IMAGE_STYLES.REALISTA,
   };
 
   /** Resolves the visual style ('dibujo' | 'realista') for an age band, defaulting to 'dibujo'. */
