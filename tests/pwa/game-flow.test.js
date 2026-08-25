@@ -13,7 +13,7 @@ const { results: strings, question: questionStrings, ageGate: ageGateStrings } =
 // Every test below that clicks the real Home play button (as opposed to
 // calling startNewGame directly) must pick an option here to reach the game.
 function selectAgeGateOption(container) {
-  getByRole(container, 'button', { name: ageGateStrings.sevenOrMoreOption }).click();
+  getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
 }
 
 function buildQuestion(id) {
@@ -387,7 +387,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
   });
 
   describe('TRIOFSND-193: age gate shown between "¡Jugar!" and the prepared game', () => {
-    test('picking "menos de 7" also proceeds into the game', () => {
+    test('picking "6 años" also proceeds into the game', () => {
       const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(10);
@@ -400,7 +400,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
         getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
-        getByRole(container, 'button', { name: ageGateStrings.underSevenOption }).click();
+        getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
 
         expect(container.querySelector('.age-gate-screen')).toBeNull();
         expect(container.querySelector('.question-screen')).not.toBeNull();

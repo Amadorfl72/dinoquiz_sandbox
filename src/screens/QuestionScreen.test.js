@@ -163,17 +163,17 @@ describe('QuestionScreen', () => {
       expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
     });
 
-    test('resolves "dibujo" explicitly for the under-7 age band', () => {
+    test('resolves "dibujo" explicitly for the six-year-old age', () => {
       const question = buildQuestion();
-      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: 'six' });
 
       expect(imageStyle).toBe('dibujo');
       expect(image).toHaveAttribute('src', `/assets/images/${question.image}`);
     });
 
-    test('resolves "realista" for the 7-plus age band', () => {
+    test('resolves "realista" for the seven age', () => {
       const question = buildQuestion();
-      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+      const { image, imageStyle } = renderQuestionScreen(container, question, { ageBand: 'seven' });
 
       expect(imageStyle).toBe('realista');
       expect(image).toHaveAttribute('src', `/assets/images/${question.imageRealistic}`);
@@ -181,7 +181,7 @@ describe('QuestionScreen', () => {
 
     test('falls back to the dedicated fallback asset when the "realista" image fails to load, without blocking the game or changing the alt text', () => {
       const question = buildQuestion();
-      const { image } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'seven' });
       const altBeforeError = image.alt;
 
       image.dispatchEvent(new Event('error'));
@@ -192,7 +192,7 @@ describe('QuestionScreen', () => {
 
     test('falls back to the dedicated fallback asset when the "dibujo" image fails to load', () => {
       const question = buildQuestion();
-      const { image } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'six' });
 
       image.dispatchEvent(new Event('error'));
 
@@ -201,7 +201,7 @@ describe('QuestionScreen', () => {
 
     test('does not retry the fallback again if it also errors, avoiding a load loop', () => {
       const question = buildQuestion();
-      const { image } = renderQuestionScreen(container, question, { ageBand: '7-plus' });
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'seven' });
 
       image.dispatchEvent(new Event('error'));
       const srcAfterFirstError = image.src;
@@ -212,7 +212,7 @@ describe('QuestionScreen', () => {
 
     test('wires no onerror fallback when the resolved image already is its own fallback', () => {
       const question = buildQuestion({ imageFallback: undefined });
-      const { image } = renderQuestionScreen(container, question, { ageBand: 'under-7' });
+      const { image } = renderQuestionScreen(container, question, { ageBand: 'six' });
 
       expect(image.onerror).toBeNull();
     });

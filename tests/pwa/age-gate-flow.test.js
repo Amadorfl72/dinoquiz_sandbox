@@ -127,22 +127,32 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     await rendered;
   }
 
-  test('menores de 7 ("menos de 7 años") ven la variante de dibujo, nunca la realista', async () => {
+  test('6 años ("6 años") ven la variante de dibujo, nunca la realista', async () => {
     await startFromHome(buildQuestionBank(2));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.underSevenOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
 
     expect(container.querySelector('.question-screen')).not.toBeNull();
     expect(currentImageSrc(container)).toContain('dinosaurs/trex.png');
     expect(currentImageSrc(container)).not.toContain('/realista/');
   });
 
-  test('7 años o más ven la variante de imagen realista', async () => {
+  test('7 años ven la variante de imagen realista', async () => {
     await startFromHome(buildQuestionBank(2));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.sevenOrMoreOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
+
+    expect(container.querySelector('.question-screen')).not.toBeNull();
+    expect(currentImageSrc(container)).toContain('dinosaurs/realista/trex.png');
+  });
+
+  test('8 años o más ven la variante de imagen realista', async () => {
+    await startFromHome(buildQuestionBank(2));
+
+    getByRole(container, 'button', { name: homeStrings.playButton }).click();
+    getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
 
     expect(container.querySelector('.question-screen')).not.toBeNull();
     expect(currentImageSrc(container)).toContain('dinosaurs/realista/trex.png');
@@ -153,7 +163,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     await startFromHome(questions);
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.underSevenOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
     expect(currentImageSrc(container)).not.toContain('/realista/');
 
     for (let i = 0; i < 10; i += 1) {
@@ -169,12 +179,12 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     expect(currentImageSrc(container)).not.toContain('/realista/');
   });
 
-  test('una selección de "7 años o más" también persiste sin volver a preguntar tras "Volver a jugar"', async () => {
+  test('una selección de "8 años o más" también persiste sin volver a preguntar tras "Volver a jugar"', async () => {
     const questions = buildQuestionBank(10);
     await startFromHome(questions);
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.sevenOrMoreOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
     expect(currentImageSrc(container)).toContain('/realista/');
 
     for (let i = 0; i < 10; i += 1) {
@@ -193,7 +203,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
   // would also match unrelated words like "image"/"storage"/"message") so a
   // future accidental `console.log(ageBand)`, a `fetch` payload embedding it,
   // or a storage write keyed by it, all get caught regardless of casing.
-  const FORBIDDEN_SUBSTRINGS = ['edad', 'ageband', 'age-band', 'age_band', 'under-7', '7-plus'];
+  const FORBIDDEN_SUBSTRINGS = ['edad', 'ageband', 'age-band', 'age_band', 'six', 'seven', 'eight-plus'];
 
   function assertNoAgeLeak(callsArgs) {
     const serialized = JSON.stringify(callsArgs, (key, value) => (typeof value === 'function' ? '[fn]' : value)) || '';
@@ -280,7 +290,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
     await rendered;
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.underSevenOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
 
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: i % 2 === 0 });
