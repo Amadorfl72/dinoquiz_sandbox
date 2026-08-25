@@ -45,6 +45,24 @@ const PRECACHE_URLS = [
   '/assets/images/dinosaurs/braquiosaurio.svg',
   '/assets/images/dinosaurs/ankylosaurus.svg',
   '/assets/images/dinosaurs/pteranodon.svg',
+  // Realistic photo-style variants (TRIOFSND-195): precached alongside the
+  // cartoon drawings so a player can toggle between visual variants offline
+  // after the first load, without waiting on a runtime fetch.
+  '/assets/images/realistic/trex.svg',
+  '/assets/images/realistic/triceratops.svg',
+  '/assets/images/realistic/velociraptor.svg',
+  '/assets/images/realistic/estegosaurio.svg',
+  '/assets/images/realistic/braquiosaurio.svg',
+  '/assets/images/realistic/ankylosaurus.svg',
+  '/assets/images/realistic/pteranodon.svg',
+  // Fallback images shown when a realistic variant fails to load.
+  '/assets/images/fallback/trex.svg',
+  '/assets/images/fallback/triceratops.svg',
+  '/assets/images/fallback/velociraptor.svg',
+  '/assets/images/fallback/estegosaurio.svg',
+  '/assets/images/fallback/braquiosaurio.svg',
+  '/assets/images/fallback/ankylosaurus.svg',
+  '/assets/images/fallback/pteranodon.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms
