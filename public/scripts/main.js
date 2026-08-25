@@ -241,6 +241,8 @@
     if (typeof require === 'function') {
       return {
         renderHomeScreen: fromWindow.renderHomeScreen || require('./homeScreen').renderHomeScreen,
+        renderAgeGateScreen:
+          fromWindow.renderAgeGateScreen || require('../../src/screens/AgeGateScreen').renderAgeGateScreen,
         renderQuestionScreen:
           fromWindow.renderQuestionScreen || require('../../src/screens/QuestionScreen').renderQuestionScreen,
         renderResultsScreen:
@@ -253,6 +255,31 @@
     }
 
     return null;
+  }
+
+  /**
+   * Age gate (TRIOFSND-193): rendered right after '¡Jugar!' and before the
+   * game is prepared, per the PRD. The two-option choice and its in-memory,
+   * session-only selection live entirely in ageGateScreen.js (never
+   * persisted, logged or sent anywhere from here); this helper only decides
+   * when to move on to `onSelected` once a tap has been made. A missing
+   * renderer (e.g. ageGateScreen.js failed to load in some fallback browser)
+   * degrades gracefully by skipping straight to `onSelected` — the age gate
+   * must never block the game itself, matching the resilience pattern
+   * `installLinkGuard`/`registerServiceWorker` already follow.
+   */
+  function renderAgeGate(container, renderers, ageGateStrings, onSelected) {
+    if (!renderers || typeof renderers.renderAgeGateScreen !== 'function') {
+      onSelected();
+      return null;
+    }
+
+    return renderers.renderAgeGateScreen(container, {
+      strings: ageGateStrings,
+      onSelect: function () {
+        onSelected();
+      },
+    });
   }
 
   function resolveGameFlow(win) {
@@ -639,14 +666,16 @@
   }
 
   /**
-   * Fetches the whole i18n resource once and hands back the three sections
-   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
-   * browser can render the global controls without a `require()` for
+   * Fetches the whole i18n resource once and hands back the sections the
+   * Home screen (and what it kicks off) needs: home/privacy/purchase
+   * (TRIOFSND-66) plus ageGate (TRIOFSND-193, resolved up front here so the
+   * '¡Jugar!' click handler below can render the age gate synchronously,
+   * with no extra fetch on the click itself) — all without a `require()` for
    * `src/i18n`.
    */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase, ageGate: data.ageGate } : null;
     });
   }
 
@@ -977,7 +1006,12 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, adsStorage, undefined, storage, storage);
+              // TRIOFSND-193: the age gate is shown right here -- after
+              // '¡Jugar!', before the game is prepared -- and only then does
+              // `startNewGame` run.
+              renderAgeGate(container, renderers, resources && resources.ageGate, function () {
+                startNewGame(container, renderers, questions, doc, fetchFn, undefined, adsStorage, undefined, storage, storage);
+              });
             }
           });
         }
@@ -1150,6 +1184,7 @@
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
+      renderAgeGate: renderAgeGate,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,
