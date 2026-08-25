@@ -33,10 +33,47 @@
  * Resultados. `calculateMaxStreak` derives that from `state.answers` (each
  * entry's `isCorrect` flag, appended in order as the child answers) without
  * the app shell having to track a running streak counter itself.
+ *
+ * Level selection and progression (TRIOFSND-203): `startLevel` selects the 10
+ * questions for a given difficulty level via `src/data/questionBank`'s
+ * `getQuestionsByLevel` (TRIOFSND-202) -- which already excludes/logs any
+ * individually invalid question -- instead of `selectGameQuestions`'s flat,
+ * level-agnostic bank. `resolveLevelOutcome` then decides, once that level's
+ * 10 questions are all answered, whether to unlock the next level or end the
+ * game, purely from that level's own answers (never a cross-level running
+ * tally) and the child's age band:
+ *   - Ages 6-7 are restricted to level 1 and the game always ends after
+ *     those 10 questions, whatever the score.
+ *   - Age 8+: completing level 5 (MAX_LEVEL) always ends the game; below
+ *     that, >=6 aciertos unlocks and starts the next level, <=5 ends it.
+ * `completeLevel` composes the two: it resolves the outcome and, when a next
+ * level unlocks, also starts it via `startLevel` in the same call.
+ *
+ * Because `src/data/questionBank.js` reads the bank off disk with `fs`, it
+ * cannot be loaded as a plain `<script>` in the no-bundler browser runtime
+ * (see the module doc comment on that file). `startLevel` therefore resolves
+ * it the same way `ageGateScreen.js`'s `resolveDefaultStrings` resolves
+ * `src/i18n` -- via `require` under Node/Jest -- and accepts an injectable
+ * `options.getQuestionsByLevel` override for callers (e.g. a future browser
+ * wiring) that can't rely on `require`.
  */
 
 (function () {
   var QUESTIONS_PER_GAME = 10;
+
+  // Mirrors src/data/questionBank.js's MIN_LEVEL/MAX_LEVEL (TRIOFSND-202):
+  // 5 difficulty levels, numbered 1-5.
+  var MIN_LEVEL = 1;
+  var MAX_LEVEL = 5;
+
+  // TRIOFSND-203 AC: >=6 aciertos (out of the level's 10 questions) unlocks
+  // the next level for an 8+ year old; <=5 ends the game.
+  var LEVEL_UP_MIN_CORRECT = 6;
+
+  // Matches ageGateScreen.js's AGE_BANDS.EIGHT_PLUS value. Kept as a plain
+  // string constant here (rather than requiring that screen module) so this
+  // game-logic file stays decoupled from a specific UI screen.
+  var AGE_BAND_EIGHT_PLUS = 'eight-plus';
 
   function createInitialGameState() {
     return { score: 0, questionIndex: 0, answers: [] };
@@ -130,13 +167,180 @@
     };
   }
 
+  function isValidLevel(level) {
+    return Number.isInteger(level) && level >= MIN_LEVEL && level <= MAX_LEVEL;
+  }
+
+  function isEightPlusAgeBand(ageBand) {
+    return ageBand === AGE_BAND_EIGHT_PLUS;
+  }
+
+  /** Resolves `src/data/questionBank` under Node/Jest; see the module doc comment above. */
+  function resolveQuestionBank() {
+    if (typeof require === 'function') {
+      return require('../../src/data/questionBank');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.data && window.DinoQuiz.data.questionBank) || null;
+  }
+
+  var noopLogService = { logEvent: function () {} };
+  var defaultLogService;
+
+  /** Lazily resolves a shared LogService (Node/Jest via `require`, browser via `window.DinoQuiz`), falling back to a no-op. */
+  function resolveDefaultLogService() {
+    if (defaultLogService) {
+      return defaultLogService;
+    }
+
+    var loggingModule = typeof require === 'function'
+      ? require('../../src/services/logging')
+      : (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.logging);
+
+    defaultLogService = loggingModule && typeof loggingModule.LogService === 'function'
+      ? new loggingModule.LogService()
+      : noopLogService;
+
+    return defaultLogService;
+  }
+
+  /** Every valid question for `level` (TRIOFSND-202's own validation/logging applies, not repeated here). */
+  function getLevelQuestionPool(level, options) {
+    if (typeof options.getQuestionsByLevel === 'function') {
+      return options.getQuestionsByLevel(level, options);
+    }
+
+    var questionBank = resolveQuestionBank();
+    if (!questionBank || typeof questionBank.getQuestionsByLevel !== 'function') {
+      throw new Error('getQuestionsByLevel is not available; pass options.getQuestionsByLevel');
+    }
+
+    return questionBank.getQuestionsByLevel(level, options);
+  }
+
+  /**
+   * Starts a level: selects QUESTIONS_PER_GAME unique random questions from
+   * that level's valid pool (TRIOFSND-203), via `getQuestionsByLevel`
+   * (`options.getQuestionsByLevel`, or `src/data/questionBank`'s by
+   * default -- see the module doc comment above).
+   *
+   * When the level doesn't have QUESTIONS_PER_GAME valid questions left
+   * (e.g. TRIOFSND-202's own validation stripped too many), no game is
+   * started: a `level_generation_failed` event is logged with the level and
+   * the number of valid questions found -- no personal data -- and an error
+   * result is returned instead of throwing, so one broken level never
+   * crashes the app shell.
+   */
+  function startLevel(level, options) {
+    options = options || {};
+
+    if (!isValidLevel(level)) {
+      throw new Error('level must be an integer between ' + MIN_LEVEL + ' and ' + MAX_LEVEL);
+    }
+
+    var logService = options.logService || resolveDefaultLogService();
+    var pool = getLevelQuestionPool(level, options);
+    var validQuestionCount = Array.isArray(pool) ? pool.length : 0;
+
+    if (validQuestionCount < QUESTIONS_PER_GAME) {
+      logService.logEvent('level_generation_failed', { level: level, validQuestionCount: validQuestionCount });
+      return { error: 'level_generation_failed', level: level, validQuestionCount: validQuestionCount };
+    }
+
+    return {
+      level: level,
+      state: createInitialGameState(),
+      questions: selectGameQuestions(pool, QUESTIONS_PER_GAME, options.randomFn, options.previousQuestionIds),
+    };
+  }
+
+  /** Correct answers among `answers` (e.g. a level's `state.answers`) -- exclusively that level's tally, never a cross-level running total. */
+  function countCorrectAnswers(answers) {
+    if (!Array.isArray(answers)) {
+      return 0;
+    }
+
+    return answers.reduce(function (count, answer) {
+      return count + (answer && answer.isCorrect ? 1 : 0);
+    }, 0);
+  }
+
+  /**
+   * Decides what happens once a level's 10 questions are all answered
+   * (TRIOFSND-203): unlock the next level, or end the game. `params`:
+   *   - `level`: the level that was just completed (1-MAX_LEVEL).
+   *   - `answers`: that level's own answers (never a cross-level total --
+   *     `countCorrectAnswers` derives the tally from these alone).
+   *   - `ageBand`: the child's exact age band (see ageGateScreen.js); only
+   *     `'eight-plus'` counts as 8+, everything else (six/seven/unknown) is
+   *     treated as the 6-7 restriction.
+   *
+   * Ages 6-7 are restricted to level 1 and the game always ends after those
+   * 10 questions, whatever the score. Age 8+: completing MAX_LEVEL always
+   * ends the game; below that, >=LEVEL_UP_MIN_CORRECT aciertos unlocks
+   * `level + 1`, otherwise the game ends.
+   */
+  function resolveLevelOutcome(params) {
+    params = params || {};
+    var level = params.level;
+
+    if (!isValidLevel(level)) {
+      throw new Error('level must be an integer between ' + MIN_LEVEL + ' and ' + MAX_LEVEL);
+    }
+
+    var correctCount = countCorrectAnswers(params.answers);
+
+    if (!isEightPlusAgeBand(params.ageBand)) {
+      return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'age_restricted' };
+    }
+
+    if (level >= MAX_LEVEL) {
+      return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'completed_all_levels' };
+    }
+
+    if (correctCount >= LEVEL_UP_MIN_CORRECT) {
+      return { gameOver: false, nextLevel: level + 1, level: level, correctCount: correctCount, reason: 'level_up' };
+    }
+
+    return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'insufficient_score' };
+  }
+
+  /**
+   * Composes `resolveLevelOutcome` and `startLevel`: resolves what happens
+   * when a level's 10 questions are all answered and, when a next level
+   * unlocks, also starts it (attached as `nextLevelGame`) so callers get a
+   * ready-to-play session in one call. `params` is forwarded to `startLevel`
+   * as its `options` (so `randomFn`/`previousQuestionIds`/`logService`/
+   * `getQuestionsByLevel` all apply to the next level too).
+   */
+  function completeLevel(params) {
+    params = params || {};
+    var outcome = resolveLevelOutcome(params);
+
+    if (outcome.gameOver) {
+      return outcome;
+    }
+
+    outcome.nextLevelGame = startLevel(outcome.nextLevel, params);
+    return outcome;
+  }
+
   var api = {
     QUESTIONS_PER_GAME: QUESTIONS_PER_GAME,
+    MIN_LEVEL: MIN_LEVEL,
+    MAX_LEVEL: MAX_LEVEL,
+    LEVEL_UP_MIN_CORRECT: LEVEL_UP_MIN_CORRECT,
+    AGE_BAND_EIGHT_PLUS: AGE_BAND_EIGHT_PLUS,
     createInitialGameState: createInitialGameState,
     shuffle: shuffle,
     calculateMaxStreak: calculateMaxStreak,
     selectGameQuestions: selectGameQuestions,
     startNewGame: startNewGame,
+    isValidLevel: isValidLevel,
+    isEightPlusAgeBand: isEightPlusAgeBand,
+    startLevel: startLevel,
+    countCorrectAnswers: countCorrectAnswers,
+    resolveLevelOutcome: resolveLevelOutcome,
+    completeLevel: completeLevel,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
