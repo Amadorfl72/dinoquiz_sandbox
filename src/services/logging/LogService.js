@@ -270,6 +270,9 @@ LogService.prototype.sendLogs = function (endpointUrl, options) {
       if (!response.ok) {
         throw new Error('HTTP ' + response.status + ': ' + response.statusText);
       }
+      if (typeof response.json !== 'function') {
+        return { success: true };
+      }
       return response.json().catch(function () {
         return { success: true };
       });
