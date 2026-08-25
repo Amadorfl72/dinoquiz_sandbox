@@ -106,7 +106,7 @@ Cada pregunta sigue este esquema:
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
   "image": "dinosaurs/trex.svg",          // ilustración cartoon del dinosaurio
-  "imageRealistic": "realistic/trex.svg", // variante de estilo realista del mismo dinosaurio
+  "imageRealistic": "realistic/trex.jpg", // variante de estilo realista del mismo dinosaurio
   "imageFallback": "fallback/trex.svg",   // asset local de respaldo por dinosaurio, para cuando
                                  // la imagen principal no llega a cargar
   "imageAlt": "..."             // alt educativo y neutral, compartido por las tres variantes

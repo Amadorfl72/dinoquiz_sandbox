@@ -7,7 +7,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-01",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -19,7 +19,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-02",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -31,7 +31,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-03",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -43,7 +43,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.trex-04",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -55,7 +55,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-05",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -67,7 +67,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.trex-06",
     "image": "dinosaurs/trex.svg",
-    "imageRealistic": "realistic/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
     "imageFallback": "fallback/trex.svg",
     "imageAlt": "Ilustración educativa de un Tyrannosaurus Rex, un gran dinosaurio carnívoro del período Cretácico."
   },
@@ -79,7 +79,7 @@
     "correctAnswerIndex": 2,
     "dato_curioso": "funFacts.triceratops-01",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -91,7 +91,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-02",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -103,7 +103,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-03",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -115,7 +115,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.triceratops-04",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -127,7 +127,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-05",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -139,7 +139,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.triceratops-06",
     "image": "dinosaurs/triceratops.svg",
-    "imageRealistic": "realistic/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
     "imageFallback": "fallback/triceratops.svg",
     "imageAlt": "Ilustración educativa de un Triceratops, un dinosaurio herbívoro con tres cuernos del período Cretácico."
   },
@@ -151,7 +151,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-01",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -163,7 +163,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-02",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -175,7 +175,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-03",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -187,7 +187,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-04",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -199,7 +199,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.velociraptor-05",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -211,7 +211,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.velociraptor-06",
     "image": "dinosaurs/velociraptor.svg",
-    "imageRealistic": "realistic/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
     "imageFallback": "fallback/velociraptor.svg",
     "imageAlt": "Ilustración educativa de un Velociraptor, un dinosaurio carnívoro emplumado del período Cretácico."
   },
@@ -223,7 +223,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-01",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -235,7 +235,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-02",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -247,7 +247,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-03",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -259,7 +259,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-04",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -271,7 +271,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.estegosaurio-05",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -283,7 +283,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.estegosaurio-06",
     "image": "dinosaurs/estegosaurio.svg",
-    "imageRealistic": "realistic/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
     "imageFallback": "fallback/estegosaurio.svg",
     "imageAlt": "Ilustración educativa de un Estegosaurio, un dinosaurio herbívoro con placas óseas del período Jurásico."
   },
@@ -295,7 +295,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-01",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -307,7 +307,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-02",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -319,7 +319,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-03",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -331,7 +331,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-04",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -343,7 +343,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.braquiosaurio-05",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -355,7 +355,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.braquiosaurio-06",
     "image": "dinosaurs/braquiosaurio.svg",
-    "imageRealistic": "realistic/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
     "imageFallback": "fallback/braquiosaurio.svg",
     "imageAlt": "Ilustración educativa de un Braquiosaurio, un dinosaurio herbívoro de cuello largo del período Jurásico."
   },
@@ -367,7 +367,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-01",
     "image": "dinosaurs/ankylosaurus.svg",
-    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
     "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
@@ -379,7 +379,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-02",
     "image": "dinosaurs/ankylosaurus.svg",
-    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
     "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
@@ -391,7 +391,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-03",
     "image": "dinosaurs/ankylosaurus.svg",
-    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
     "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
@@ -403,7 +403,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.ankylosaurus-04",
     "image": "dinosaurs/ankylosaurus.svg",
-    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
     "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
@@ -415,7 +415,7 @@
     "correctAnswerIndex": 1,
     "dato_curioso": "funFacts.ankylosaurus-05",
     "image": "dinosaurs/ankylosaurus.svg",
-    "imageRealistic": "realistic/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
     "imageFallback": "fallback/ankylosaurus.svg",
     "imageAlt": "Ilustración educativa de un Ankylosaurus, un dinosaurio herbívoro acorazado del período Cretácico."
   },
@@ -427,7 +427,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-01",
     "image": "dinosaurs/pteranodon.svg",
-    "imageRealistic": "realistic/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
@@ -439,7 +439,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-02",
     "image": "dinosaurs/pteranodon.svg",
-    "imageRealistic": "realistic/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
@@ -451,7 +451,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-03",
     "image": "dinosaurs/pteranodon.svg",
-    "imageRealistic": "realistic/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
@@ -463,7 +463,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-04",
     "image": "dinosaurs/pteranodon.svg",
-    "imageRealistic": "realistic/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   },
@@ -475,7 +475,7 @@
     "correctAnswerIndex": 0,
     "dato_curioso": "funFacts.pteranodon-05",
     "image": "dinosaurs/pteranodon.svg",
-    "imageRealistic": "realistic/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico."
   }

@@ -48,13 +48,13 @@ const PRECACHE_URLS = [
   // Realistic photo-style variants (TRIOFSND-195): precached alongside the
   // cartoon drawings so a player can toggle between visual variants offline
   // after the first load, without waiting on a runtime fetch.
-  '/assets/images/realistic/trex.svg',
-  '/assets/images/realistic/triceratops.svg',
-  '/assets/images/realistic/velociraptor.svg',
-  '/assets/images/realistic/estegosaurio.svg',
-  '/assets/images/realistic/braquiosaurio.svg',
-  '/assets/images/realistic/ankylosaurus.svg',
-  '/assets/images/realistic/pteranodon.svg',
+  '/assets/images/realistic/trex.jpg',
+  '/assets/images/realistic/triceratops.jpg',
+  '/assets/images/realistic/velociraptor.jpg',
+  '/assets/images/realistic/estegosaurio.jpg',
+  '/assets/images/realistic/braquiosaurio.jpg',
+  '/assets/images/realistic/ankylosaurus.jpg',
+  '/assets/images/realistic/pteranodon.jpg',
   // Fallback images shown when a realistic variant fails to load.
   '/assets/images/fallback/trex.svg',
   '/assets/images/fallback/triceratops.svg',
