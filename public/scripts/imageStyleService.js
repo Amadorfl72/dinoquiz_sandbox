@@ -14,9 +14,9 @@
  * it never derives a path itself.
  *
  * The 'realista' URL comes straight from the question bank's own
- * `imageRealistic` field (e.g. "realistic/trex.svg", see
+ * `imageRealistic` field (e.g. "realistic/trex.jpg", see
  * src/data/questionBank.js and public/data/questions.json), which is where
- * the actual realistic assets ship (public/assets/images/realistic/*.svg) --
+ * the actual realistic assets ship (public/assets/images/realistic/*.jpg) --
  * NOT derived by inserting a "realista" segment into the base `image` path,
  * which has no corresponding asset directory. Only a question missing
  * `imageRealistic` (e.g. hand-built test fixtures) falls back to the

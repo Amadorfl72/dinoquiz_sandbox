@@ -54,7 +54,7 @@ describe('TRIOFSND-110: service worker source', () => {
 
     dinosaurs.forEach((dinosaur) => {
       expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
-      expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.svg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.jpg`);
       expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
     });
   });
