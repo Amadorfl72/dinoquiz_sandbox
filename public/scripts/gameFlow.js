@@ -14,10 +14,9 @@
  * split into a "fresh" pool (questions not in that previous set) and a
  * "repeat" pool (the rest); `selectGameQuestions` shuffles the fresh pool in
  * first and only reaches into the repeat pool to fill any slots the fresh
- * pool can't cover. With the real 40-question bank and 10-question games
- * this always yields a replay fully disjoint from the previous game (30
- * fresh candidates for 10 slots); smaller banks degrade gracefully to
- * reusing prior questions instead of throwing.
+ * pool can't cover. With the real question bank and 10-question games this
+ * always yields a replay fully disjoint from the previous game; smaller
+ * banks degrade gracefully to reusing prior questions instead of throwing.
  *
  * Browser bridge: DinoQuiz has no bundler, so the app shell (main.js) cannot
  * `require` this from `src/` at runtime. This module lives under `public/`
