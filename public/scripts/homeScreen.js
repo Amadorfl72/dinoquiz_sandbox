@@ -75,6 +75,13 @@
  * (`renderHome`, public/scripts/main.js). This screen stays a pure,
  * DOM-only component and never touches storage itself; omitting either
  * option renders nothing extra.
+ *
+ * Best score / longest racha (TRIOFSND-96, PRD "Persistencia exclusivamente
+ * local de mejor puntuación, racha máxima"): when provided, `options.bestScore`
+ * and `options.bestStreak` each render their own line near the fun-facts
+ * progress line above, so reopening the app shows what was achieved on this
+ * device so far -- same read-only, storage-agnostic rationale, and each is
+ * independently optional (omitting one still renders the other).
  */
 
 (function () {
@@ -315,6 +322,23 @@
         .replace('{total}', options.totalFunFacts);
     }
 
+    // TRIOFSND-96: the best score/longest racha achieved on this device so
+    // far, read from local storage by the caller (renderHome), same
+    // rationale as funFactsProgress above. Each is independently optional.
+    var bestScoreProgress = null;
+    if (Number.isInteger(options.bestScore)) {
+      bestScoreProgress = document.createElement('p');
+      bestScoreProgress.className = 'home-screen__best-score';
+      bestScoreProgress.textContent = strings.bestScoreFormat.replace('{bestScore}', options.bestScore);
+    }
+
+    var bestStreakProgress = null;
+    if (Number.isInteger(options.bestStreak)) {
+      bestStreakProgress = document.createElement('p');
+      bestStreakProgress.className = 'home-screen__best-streak';
+      bestStreakProgress.textContent = strings.bestStreakFormat.replace('{bestStreak}', options.bestStreak);
+    }
+
     var tooltip = null;
     var tooltipDismissed = false;
     // Dismissal listens on the document, not just `.home-screen`: the
@@ -415,6 +439,12 @@
     if (funFactsProgress) {
       root.appendChild(funFactsProgress);
     }
+    if (bestScoreProgress) {
+      root.appendChild(bestScoreProgress);
+    }
+    if (bestStreakProgress) {
+      root.appendChild(bestStreakProgress);
+    }
     root.appendChild(privacyPanelBuilt.panel);
     root.appendChild(purchasePanelBuilt.panel);
     container.appendChild(root);
@@ -427,6 +457,8 @@
       privacyPolicyButton: privacyPolicyButton,
       parentalNotice: parentalNotice,
       funFactsProgress: funFactsProgress,
+      bestScoreProgress: bestScoreProgress,
+      bestStreakProgress: bestStreakProgress,
       tooltip: tooltip,
       globalControls: globalControls,
       muteButton: muteButton,

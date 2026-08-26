@@ -915,6 +915,103 @@ describe('TRIOFSND-128: end of game persists the best score and longest racha to
   });
 });
 
+describe('TRIOFSND-96: Resultados and Inicio show the persisted best score and longest racha', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('a first game shows its own score/racha as the best so far', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    jest.useFakeTimers();
+    try {
+      // 4 hits, a miss, 3 more hits, 2 misses: score 7/10, longest streak 4.
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, undefined, storage);
+      for (const mark of 'CCCCFCCCFF'.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(container.querySelector('.results-screen__best-score')).toHaveTextContent('7');
+    expect(container.querySelector('.results-screen__best-streak')).toHaveTextContent('4');
+  });
+
+  test('a worse replay still shows the previously-persisted best score/racha, never the worse one just played', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, undefined, storage);
+      for (let i = 0; i < 10; i += 1) {
+        await answerCurrentQuestion(container, { correct: true });
+      }
+      await jest.advanceTimersByTimeAsync(0);
+
+      getByRole(container, 'button', { name: strings.playAgainButton }).click();
+      for (let i = 0; i < 10; i += 1) {
+        await answerCurrentQuestion(container, { correct: false });
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+
+    // The just-played replay scored 0/10, but the best score/racha shown is
+    // still the 10/10 from the first game -- monotonic, never lowered.
+    expect(container.querySelector('.results-screen__score')).toHaveTextContent('0/10');
+    expect(container.querySelector('.results-screen__best-score')).toHaveTextContent('10');
+    expect(container.querySelector('.results-screen__best-streak')).toHaveTextContent('10');
+  });
+
+  test('reopening the app on Inicio shows the best score/racha persisted from a previous session', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const adapter = createMemoryAdapter();
+
+    // Session 1: play a game, best score/racha get persisted.
+    const sessionOneStorage = new DinoQuizStorage([adapter]);
+    await sessionOneStorage.recordScore(8);
+    await sessionOneStorage.recordStreak(5);
+
+    // Session 2 (app reopened): a fresh storage instance over the same
+    // backend reads the previous session's persisted best back.
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+    const sessionTwoStorage = new DinoQuizStorage([adapter]);
+
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+
+    await renderHome(doc, renderHomeScreen, fetchFn, sessionTwoStorage);
+
+    expect(container).toHaveTextContent(home.bestScoreFormat.replace('{bestScore}', '8'));
+    expect(container).toHaveTextContent(home.bestStreakFormat.replace('{bestStreak}', '5'));
+  });
+});
+
 describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts progress', () => {
   let container;
 

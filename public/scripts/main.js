@@ -508,7 +508,35 @@
   }
 
   /**
-   * Persists the just-finished game's score/racha (TRIOFSND-128, PRD
+   * Reads a persisted numeric value (`bestScore`/`maxStreak`) synchronously,
+   * before this game's write below has landed -- prefers the real
+   * `DinoQuizStorage`'s `snapshot()`, falling back to
+   * `createBrowserHomeStorage`'s `get*Sync()` mirrors, same duck-typing
+   * `resolveDiscoveredFunFactsCount` above uses.
+   */
+  function resolvePersistedNumber(storage, snapshotKey, syncGetterName) {
+    if (!storage) {
+      return undefined;
+    }
+    if (typeof storage.snapshot === 'function') {
+      var snapshot = storage.snapshot();
+      return typeof snapshot[snapshotKey] === 'number' ? snapshot[snapshotKey] : undefined;
+    }
+    if (typeof storage[syncGetterName] === 'function') {
+      return storage[syncGetterName]();
+    }
+    return undefined;
+  }
+
+  function combineWithCurrent(previous, current) {
+    if (typeof current !== 'number') {
+      return typeof previous === 'number' ? previous : undefined;
+    }
+    return typeof previous === 'number' ? Math.max(previous, current) : current;
+  }
+
+  /**
+   * Persists the just-finished game's score/racha (TRIOFSND-128/96, PRD
    * "Persistencia exclusivamente local de mejor puntuación, racha máxima"),
    * mirroring the fire-and-forget pattern `onAnswer` already uses for
    * `recordQuestionAnswered`/`markFunFactDiscovered` above: StorageClient's
@@ -519,17 +547,39 @@
    * (src/services/storage/StorageClient.js) only overwrite the persisted
    * bestScore/maxStreak when the new value is strictly higher, so this is
    * safe to call after every game, win or lose.
+   *
+   * Also resolves the values Resultados should *display* right now
+   * (TRIOFSND-96): since the write above is fire-and-forget, its effect on
+   * `storage`'s cache is not observable synchronously (confirmed by
+   * `tests/pwa/game-flow.test.js`'s TRIOFSND-128 suite, which has to flush
+   * pending microtasks before reading storage back) -- so instead of racing
+   * that write, this reads the previously-persisted best synchronously
+   * (before the write above can have landed) and combines it with this
+   * game's own score/racha locally, which is exactly what the write above
+   * will eventually persist anyway.
    */
   function persistBestScoreAndStreak(storage, finalState) {
     if (!storage || !finalState) {
-      return;
+      return { bestScore: undefined, bestStreak: undefined };
     }
+
+    var bestScore = combineWithCurrent(
+      resolvePersistedNumber(storage, 'bestScore', 'getBestScoreSync'),
+      finalState.score
+    );
+    var bestStreak = combineWithCurrent(
+      resolvePersistedNumber(storage, 'maxStreak', 'getMaxStreakSync'),
+      finalState.maxStreak
+    );
+
     if (typeof storage.recordScore === 'function' && typeof finalState.score === 'number') {
       storage.recordScore(finalState.score);
     }
     if (typeof storage.recordStreak === 'function' && typeof finalState.maxStreak === 'number') {
       storage.recordStreak(finalState.maxStreak);
     }
+
+    return { bestScore: bestScore, bestStreak: bestStreak };
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -537,6 +587,11 @@
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
+      // TRIOFSND-96: the best score/longest racha achieved on this device so
+      // far (including this just-finished game), stashed on `finalState` by
+      // `persistBestScoreAndStreak` right before this function is called.
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       // TRIOFSND-129: how many distinct fun facts have been seen on this
@@ -584,7 +639,11 @@
       if (!storage && typeof previousQuestionIds.recordQuestionAnswered === 'function') {
         storage = previousQuestionIds;
       }
-      if (!analyticsStorage && typeof previousQuestionIds.recordEvent === 'function') {
+      if (
+        !analyticsStorage &&
+        (typeof previousQuestionIds.recordEvent === 'function' ||
+          typeof previousQuestionIds.recordGameCompleted === 'function')
+      ) {
         analyticsStorage = previousQuestionIds;
       }
       previousQuestionIds = undefined;
@@ -604,7 +663,9 @@
         var playedQuestionIds = session.questions.map(function (question) {
           return question.id;
         });
-        persistBestScoreAndStreak(storage, finalState);
+        var bestScoreAndStreak = persistBestScoreAndStreak(storage, finalState);
+        finalState.bestScore = bestScoreAndStreak.bestScore;
+        finalState.bestStreak = bestScoreAndStreak.bestStreak;
         // TRIOFSND-98: landing on Resultados is "the game finished" -- record
         // the aggregated, non-PII partida_completada event and fold the final
         // score into the on-device average-score aggregate (client-only, no
@@ -729,7 +790,9 @@
       levelGame,
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
-        persistBestScoreAndStreak(ctx.storage, finalState);
+        var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+        finalState.bestScore = bestScoreAndStreak.bestScore;
+        finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
@@ -787,6 +850,11 @@
         return renderers.renderResultsScreen(container, {
           score: finalState.score,
           maxStreak: finalState.maxStreak,
+          // TRIOFSND-96: the best score/longest racha achieved on this
+          // device so far, resolved in playLevel right before this function
+          // was called.
+          bestScore: finalState.bestScore,
+          bestStreak: finalState.bestStreak,
           level: level,
           levelOutcome: outcome,
           maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
@@ -1078,6 +1146,14 @@
   var MAX_UNLOCKED_LEVEL_KEY = 'dinoquiz:maxUnlockedLevel';
   var DEFAULT_MAX_UNLOCKED_LEVEL = 1;
   var DISCOVERED_FUN_FACTS_KEY = 'dinoquiz:discoveredFunFacts';
+  // TRIOFSND-96: same namespaced keys `src/services/storage`'s StorageClient
+  // itself writes (`bestScore`/`maxStreak`), so both backends agree on the
+  // best score/longest racha achieved on this device once a bundler wires
+  // the real service in.
+  var BEST_SCORE_KEY = 'dinoquiz:bestScore';
+  var MAX_STREAK_KEY = 'dinoquiz:maxStreak';
+  var DEFAULT_BEST_SCORE = 0;
+  var DEFAULT_MAX_STREAK = 0;
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -1090,6 +1166,8 @@
     memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
     memory[MAX_UNLOCKED_LEVEL_KEY] = DEFAULT_MAX_UNLOCKED_LEVEL;
     memory[DISCOVERED_FUN_FACTS_KEY] = [];
+    memory[BEST_SCORE_KEY] = DEFAULT_BEST_SCORE;
+    memory[MAX_STREAK_KEY] = DEFAULT_MAX_STREAK;
 
     function readJSON(key) {
       if (backend) {
@@ -1259,6 +1337,48 @@
       getDiscoveredFunFactsCountSync: function () {
         return (readJSON(DISCOVERED_FUN_FACTS_KEY) || []).length;
       },
+      // TRIOFSND-96: monotonically increasing, mirroring
+      // StorageClient#recordScore/#recordStreak -- only overwrites the
+      // persisted bestScore/maxStreak when the new value is strictly higher,
+      // so this is safe to call after every game, win or lose.
+      recordScore: function (score) {
+        var current = readJSON(BEST_SCORE_KEY);
+        current = typeof current === 'number' ? current : DEFAULT_BEST_SCORE;
+        if (typeof score !== 'number' || score <= current) {
+          return Promise.resolve(current);
+        }
+        writeJSON(BEST_SCORE_KEY, score);
+        return Promise.resolve(score);
+      },
+      recordStreak: function (streak) {
+        var current = readJSON(MAX_STREAK_KEY);
+        current = typeof current === 'number' ? current : DEFAULT_MAX_STREAK;
+        if (typeof streak !== 'number' || streak <= current) {
+          return Promise.resolve(current);
+        }
+        writeJSON(MAX_STREAK_KEY, streak);
+        return Promise.resolve(streak);
+      },
+      getBestScore: function () {
+        var value = readJSON(BEST_SCORE_KEY);
+        return Promise.resolve(typeof value === 'number' ? value : DEFAULT_BEST_SCORE);
+      },
+      getMaxStreak: function () {
+        var value = readJSON(MAX_STREAK_KEY);
+        return Promise.resolve(typeof value === 'number' ? value : DEFAULT_MAX_STREAK);
+      },
+      // Synchronous counterparts (same rationale as getDiscoveredFunFactsCountSync
+      // above): renderResultsFor computes the best score/racha to *display*
+      // synchronously, right when a game ends, without awaiting the
+      // fire-and-forget recordScore/recordStreak write above.
+      getBestScoreSync: function () {
+        var value = readJSON(BEST_SCORE_KEY);
+        return typeof value === 'number' ? value : DEFAULT_BEST_SCORE;
+      },
+      getMaxStreakSync: function () {
+        var value = readJSON(MAX_STREAK_KEY);
+        return typeof value === 'number' ? value : DEFAULT_MAX_STREAK;
+      },
     };
   }
 
@@ -1319,6 +1439,30 @@
       getDiscoveredFunFactsCount: function () {
         return tooltipBackend.getDiscoveredFunFactsCount();
       },
+      // TRIOFSND-96: forwards the best-score/longest-racha persistence so
+      // both `persistBestScoreAndStreak` (recording) and Home/Resultados'
+      // progress display (reading) share the same resolved backend as the
+      // tooltip/analytics half above.
+      recordScore: function (score) {
+        return typeof tooltipBackend.recordScore === 'function'
+          ? tooltipBackend.recordScore(score)
+          : Promise.resolve(undefined);
+      },
+      recordStreak: function (streak) {
+        return typeof tooltipBackend.recordStreak === 'function'
+          ? tooltipBackend.recordStreak(streak)
+          : Promise.resolve(undefined);
+      },
+      getBestScore: function () {
+        return typeof tooltipBackend.getBestScore === 'function'
+          ? tooltipBackend.getBestScore()
+          : Promise.resolve(undefined);
+      },
+      getMaxStreak: function () {
+        return typeof tooltipBackend.getMaxStreak === 'function'
+          ? tooltipBackend.getMaxStreak()
+          : Promise.resolve(undefined);
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -1342,6 +1486,16 @@
     if (typeof tooltipBackend.getDiscoveredFunFactsCountSync === 'function') {
       merged.getDiscoveredFunFactsCountSync = function () {
         return tooltipBackend.getDiscoveredFunFactsCountSync();
+      };
+    }
+    if (typeof tooltipBackend.getBestScoreSync === 'function') {
+      merged.getBestScoreSync = function () {
+        return tooltipBackend.getBestScoreSync();
+      };
+    }
+    if (typeof tooltipBackend.getMaxStreakSync === 'function') {
+      merged.getMaxStreakSync = function () {
+        return tooltipBackend.getMaxStreakSync();
       };
     }
 
@@ -1469,6 +1623,19 @@
           ? tooltipStorage.getDiscoveredFunFactsCount()
           : Promise.resolve(undefined);
 
+      // TRIOFSND-96: the best score/longest racha achieved on this device so
+      // far, shown next to the fun-facts progress above so reopening the app
+      // shows what was achieved (PRD "Persistencia exclusivamente local de
+      // mejor puntuación, racha máxima").
+      var bestScorePromise =
+        tooltipStorage && typeof tooltipStorage.getBestScore === 'function'
+          ? tooltipStorage.getBestScore()
+          : Promise.resolve(undefined);
+      var bestStreakPromise =
+        tooltipStorage && typeof tooltipStorage.getMaxStreak === 'function'
+          ? tooltipStorage.getMaxStreak()
+          : Promise.resolve(undefined);
+
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
 
@@ -1509,16 +1676,23 @@
       }
 
       if (!tooltipStorage) {
-        return discoveredFunFactsCountPromise.then(function (count) {
-          renderOptions.discoveredFunFactsCount = count;
+        return Promise.all([discoveredFunFactsCountPromise, bestScorePromise, bestStreakPromise]).then(function (
+          results
+        ) {
+          renderOptions.discoveredFunFactsCount = results[0];
           renderOptions.totalFunFacts = totalFunFacts;
+          renderOptions.bestScore = results[1];
+          renderOptions.bestStreak = results[2];
           return finishRender();
         });
       }
 
-      return Promise.all([tooltipStorage.hasSeenHomeTooltip(), discoveredFunFactsCountPromise]).then(function (
-        results
-      ) {
+      return Promise.all([
+        tooltipStorage.hasSeenHomeTooltip(),
+        discoveredFunFactsCountPromise,
+        bestScorePromise,
+        bestStreakPromise,
+      ]).then(function (results) {
         var seen = results[0];
         var discoveredFunFactsCount = results[1];
         renderOptions.showTooltip = !seen;
@@ -1530,6 +1704,8 @@
         };
         renderOptions.discoveredFunFactsCount = discoveredFunFactsCount;
         renderOptions.totalFunFacts = totalFunFacts;
+        renderOptions.bestScore = results[2];
+        renderOptions.bestStreak = results[3];
         return finishRender();
       });
     });
