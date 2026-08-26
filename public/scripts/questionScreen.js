@@ -63,15 +63,9 @@
  * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
  * visible `feedback` paragraph are both `aria-live="polite"`, and the
  * dinosaur illustration carries a descriptive `alt` built from the i18n
- * `dinosaurNames` map instead of a generic label. But neither states
- * *which* option was correct in words — a sighted child sees the green
- * highlight, a screen reader user would not. `announcementEl`
- * (`role="status"`, `aria-live="polite"`, visually hidden via `.sr-only`)
- * closes that gap: it is written synchronously in the same click handler
- * that applies the visual/score feedback (no timers, no dependency on the
- * fun-fact reveal or the mute state), so TalkBack/VoiceOver announce
- * acierto/fallo *and* the correct option's text immediately after the tap,
- * exactly like the summary announcement in public/scripts/resultsScreen.js.
+ * `dinosaurNames` map instead of a generic label. Which option was correct,
+ * in words, is covered separately by the single `announcement` region
+ * described below (TRIOFSND-79, AC-14).
  *
  * Fail sound (TRIOFSND-89): a wrong pick additionally plays a soft, neutral
  * effect via public/scripts/audio.js's `playFailSound` — never a harsh/error
@@ -194,24 +188,12 @@
     }
     return contentGuide.validateCopy(strings.feedback.incorrect, 'question.feedback.incorrect');
   }
-  /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
-  function formatAnswerTemplate(format, answerText) {
-    if (typeof format !== 'string') {
-      return answerText;
-    }
-    return format.replace('{answer}', answerText);
-  }
+
   function resolveScoring() {
     if (typeof require === 'function') {
       return require('./scoring');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
-  }
-
-  function formatTemplate(template, values) {
-    return Object.keys(values).reduce(function (result, key) {
-      return result.split('{' + key + '}').join(values[key]);
-    }, template);
   }
 
   // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
@@ -354,11 +336,6 @@
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
 
-    var announcementEl = document.createElement('p');
-    announcementEl.className = 'question-screen__announcement sr-only';
-    announcementEl.setAttribute('role', 'status');
-    announcementEl.setAttribute('aria-live', 'polite');
-
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
     funFactBox.hidden = true;
@@ -462,11 +439,8 @@
             // without seeing the green border. On a hit the tapped/correct
             // option are the same button, already covered by the "¡Genial,
             // acertaste!" feedback below, so no extra label is added.
-            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
+            button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
           }
-          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
-          // this as the correct answer even without seeing the green border.
-          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
           // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
@@ -486,16 +460,13 @@
       }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
-      // Written synchronously, right here, so TalkBack/VoiceOver announce
-      // acierto/fallo and the correct option's text immediately after the
-      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
-      announcementEl.textContent = formatTemplate(
-        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
-        { correctAnswer: correctAnswerText }
-      );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo, the correct option's text and the updated score
+      // immediately after the tap — it never waits on the fun-fact reveal,
+      // a sound cue, or a timer.
       announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
 
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
@@ -533,7 +504,6 @@
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
-    root.appendChild(announcementEl);
     root.appendChild(funFactBox);
     root.appendChild(announcement);
     root.appendChild(rewardedAdCta);
@@ -551,7 +521,6 @@
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
-      announcementEl: announcementEl,
       funFactBox: funFactBox,
       funFact: funFact,
       announcement: announcement,

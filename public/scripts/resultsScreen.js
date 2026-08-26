@@ -82,6 +82,21 @@
     'tonta',
   ]);
 
+  // Accent-strip + tokenize helper, mirroring src/i18n/contentGuide.js's
+  // normalizeToWords exactly. Duplicated locally (like BANNED_WORDS above)
+  // so this browser-loaded screen doesn't need `require` to expose it on the
+  // `api` object below — public/scripts/questionScreen.js's
+  // validateFeedbackCopy calls `resultsScreen.normalizeToWords` directly.
+  function normalizeToWords(text) {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
   // Content-guide guard (TRIOFSND-91, AC-7): motivational messages must never
   // contain negative/discouraging language. Also exposed through
   // src/i18n/contentGuide.js so other screens (e.g. QuestionScreen's
