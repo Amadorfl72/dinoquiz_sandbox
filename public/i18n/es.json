@@ -13,6 +13,8 @@
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
     },
     "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
+    "bestScoreFormat": "Mejor puntuación: {bestScore} puntos",
+    "bestStreakFormat": "Racha máxima: {bestStreak} aciertos seguidos",
     "globalControls": {
       "groupLabel": "Controles globales",
       "muteButton": {
@@ -143,6 +145,8 @@
     "levelFormat": "Nivel {level}",
     "maxLevelUnlockedFormat": "Nivel máximo desbloqueado: {maxLevel}",
     "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
+    "bestScoreFormat": "Mejor puntuación: {bestScore} puntos",
+    "bestStreakFormat": "Racha máxima: {bestStreak} aciertos seguidos",
     "levelOutcome": {
       "levelUp": "¡Genial! Has desbloqueado el nivel {nextLevel}.",
       "completedAllLevels": "¡Enhorabuena! Has completado todos los niveles de DinoQuiz.",

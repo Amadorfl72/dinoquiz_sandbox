@@ -258,6 +258,16 @@ class DinoQuizStorage {
     }
   }
 
+  /** Best score achieved on this device so far (TRIOFSND-96). */
+  async getBestScore() {
+    return this.get('bestScore');
+  }
+
+  /** Longest run of consecutive hits ("racha") achieved on this device so far (TRIOFSND-96). */
+  async getMaxStreak() {
+    return this.get('maxStreak');
+  }
+
   /** Highest level (1-based) the child has unlocked on this device (TRIOFSND-205). */
   async getMaxUnlockedLevel() {
     return this.get('maxUnlockedLevel');

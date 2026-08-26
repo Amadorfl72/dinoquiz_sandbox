@@ -50,6 +50,14 @@
  * in the bank -- read from local storage by the caller (`renderResultsFor`,
  * public/scripts/main.js), same pattern as `options.maxLevelUnlocked` above.
  * Omitting either renders nothing extra.
+ *
+ * Best score / longest racha (TRIOFSND-96, PRD "Persistencia exclusivamente
+ * local de mejor puntuación, racha máxima"): `options.bestScore` and
+ * `options.bestStreak` each render their own line -- the best score/longest
+ * racha achieved on this device so far, including the game just played --
+ * resolved by the caller (`persistBestScoreAndStreak` in
+ * public/scripts/main.js), same read-only rationale as the other optional
+ * pieces above. Each is independently optional.
  */
 
 (function () {
@@ -305,6 +313,23 @@
       });
     }
 
+    // TRIOFSND-96: the best score/longest racha achieved on this device so
+    // far (including the game just played), resolved by the caller. Each is
+    // independently optional, same rationale as maxLevelUnlockedEl above.
+    var bestScoreEl = null;
+    if (Number.isInteger(options.bestScore)) {
+      bestScoreEl = document.createElement('p');
+      bestScoreEl.className = 'results-screen__best-score';
+      bestScoreEl.textContent = formatTemplate(strings.bestScoreFormat, { bestScore: options.bestScore });
+    }
+
+    var bestStreakEl = null;
+    if (Number.isInteger(options.bestStreak)) {
+      bestStreakEl = document.createElement('p');
+      bestStreakEl.className = 'results-screen__best-streak';
+      bestStreakEl.textContent = formatTemplate(strings.bestStreakFormat, { bestStreak: options.bestStreak });
+    }
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'results-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
@@ -329,6 +354,12 @@
     }
     if (funFactsProgressEl) {
       announcementParts.push(funFactsProgressEl.textContent);
+    }
+    if (bestScoreEl) {
+      announcementParts.push(bestScoreEl.textContent);
+    }
+    if (bestStreakEl) {
+      announcementParts.push(bestStreakEl.textContent);
     }
     announcementEl.textContent = announcementParts.join(' ');
 
@@ -422,6 +453,12 @@
     if (funFactsProgressEl) {
       root.appendChild(funFactsProgressEl);
     }
+    if (bestScoreEl) {
+      root.appendChild(bestScoreEl);
+    }
+    if (bestStreakEl) {
+      root.appendChild(bestStreakEl);
+    }
     root.appendChild(announcementEl);
     root.appendChild(actions);
     if (adsSection) {
@@ -438,6 +475,8 @@
       levelOutcomeEl: levelOutcomeEl,
       maxLevelUnlockedEl: maxLevelUnlockedEl,
       funFactsProgressEl: funFactsProgressEl,
+      bestScoreEl: bestScoreEl,
+      bestStreakEl: bestStreakEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,

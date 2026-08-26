@@ -527,6 +527,123 @@ describe('TRIOFSND-129: Home shows the persisted discovered-fun-facts progress',
   });
 });
 
+describe('TRIOFSND-96: Home shows the persisted best score and longest racha', () => {
+  test('renders the best score and longest racha achieved on this device so far', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn(),
+      recordEventOnce: jest.fn(),
+      getBestScore: jest.fn().mockResolvedValue(8),
+      getMaxStreak: jest.fn().mockResolvedValue(5),
+    };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    expect(container).toHaveTextContent(home.bestScoreFormat.replace('{bestScore}', '8'));
+    expect(container).toHaveTextContent(home.bestStreakFormat.replace('{bestStreak}', '5'));
+
+    container.remove();
+  });
+
+  test('renders nothing extra when the storage backend does not expose a best score/racha', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn(),
+      recordEventOnce: jest.fn(),
+    };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    expect(container.querySelector('.home-screen__best-score')).toBeNull();
+    expect(container.querySelector('.home-screen__best-streak')).toBeNull();
+
+    container.remove();
+  });
+});
+
+describe('TRIOFSND-96: createBrowserHomeStorage — native fallback persists best score/racha', () => {
+  function createFakeWindow() {
+    const store = new Map();
+    return {
+      localStorage: {
+        getItem: jest.fn((key) => (store.has(key) ? store.get(key) : null)),
+        setItem: jest.fn((key, value) => store.set(key, value)),
+        removeItem: jest.fn((key) => store.delete(key)),
+      },
+    };
+  }
+
+  test('recordScore/recordStreak only raise the persisted value when the new one is higher (monotonic)', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordScore(5);
+    await storage.recordScore(3);
+    expect(await storage.getBestScore()).toBe(5);
+    expect(storage.getBestScoreSync()).toBe(5);
+
+    await storage.recordStreak(4);
+    await storage.recordStreak(2);
+    expect(await storage.getMaxStreak()).toBe(4);
+    expect(storage.getMaxStreakSync()).toBe(4);
+  });
+
+  test('defaults to 0 before any score/racha has been recorded', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.getBestScore()).toBe(0);
+    expect(await storage.getMaxStreak()).toBe(0);
+    expect(storage.getBestScoreSync()).toBe(0);
+    expect(storage.getMaxStreakSync()).toBe(0);
+  });
+
+  test('persists across a fresh instance backed by the same localStorage (session persistence)', async () => {
+    const win = createFakeWindow();
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+
+    await createBrowserHomeStorage(win).recordScore(7);
+    await createBrowserHomeStorage(win).recordStreak(4);
+
+    const reopened = createBrowserHomeStorage(win);
+    expect(await reopened.getBestScore()).toBe(7);
+    expect(await reopened.getMaxStreak()).toBe(4);
+  });
+
+  test('writes under the same namespaced keys src/services/storage uses', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordScore(6);
+    await storage.recordStreak(3);
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith('dinoquiz:bestScore', JSON.stringify(6));
+    expect(win.localStorage.setItem).toHaveBeenCalledWith('dinoquiz:maxStreak', JSON.stringify(3));
+  });
+});
+
 describe('TRIOFSND-66: mute preference persistence', () => {
   test('loadMutedState returns false when nothing is stored yet', () => {
     const { loadMutedState } = require(MAIN_JS_PATH);

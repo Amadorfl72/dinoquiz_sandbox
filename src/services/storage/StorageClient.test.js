@@ -167,6 +167,30 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('maxStreak')).toBe(4);
   });
 
+  it('getBestScore/getMaxStreak read back the persisted best score and racha (TRIOFSND-96)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getBestScore()).toBe(0);
+    expect(await storage.getMaxStreak()).toBe(0);
+
+    await storage.recordScore(7);
+    await storage.recordStreak(4);
+
+    expect(await storage.getBestScore()).toBe(7);
+    expect(await storage.getMaxStreak()).toBe(4);
+  });
+
+  it('a fresh instance over the same adapter reads back the previously persisted best score/racha', async () => {
+    const adapter = createFakeAdapter();
+    const storage = new DinoQuizStorage([adapter]);
+    await storage.recordScore(9);
+    await storage.recordStreak(6);
+
+    const fresh = new DinoQuizStorage([adapter]);
+    expect(await fresh.getBestScore()).toBe(9);
+    expect(await fresh.getMaxStreak()).toBe(6);
+  });
+
   it('toggleMute flips and returns the new state', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 

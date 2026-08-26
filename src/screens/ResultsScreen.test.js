@@ -353,6 +353,43 @@ describe('discovered fun facts progress (TRIOFSND-129)', () => {
   });
 });
 
+describe('best score / longest racha (TRIOFSND-96)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders no best-score/best-streak elements when neither is provided (unchanged for existing callers)', () => {
+    const { bestScoreEl, bestStreakEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(bestScoreEl).toBeNull();
+    expect(bestStreakEl).toBeNull();
+  });
+
+  test('renders the best score and longest racha independently', () => {
+    expect(renderResultsScreen(container, { score: 6, bestScore: 9 }).bestScoreEl).toHaveTextContent('9');
+    expect(renderResultsScreen(container, { score: 6, bestStreak: 7 }).bestStreakEl).toHaveTextContent('7');
+  });
+
+  test('the aria-live summary announcement includes the best-score/best-streak info', () => {
+    const { announcementEl } = renderResultsScreen(container, { score: 6, bestScore: 9, bestStreak: 7 });
+
+    expect(announcementEl).toHaveTextContent(strings.bestScoreFormat.replace('{bestScore}', '9'));
+    expect(announcementEl).toHaveTextContent(strings.bestStreakFormat.replace('{bestStreak}', '7'));
+  });
+
+  test('the best-score/best-streak copy contains no negative/discouraging language', () => {
+    expect(findBannedWords(strings.bestScoreFormat)).toEqual([]);
+    expect(findBannedWords(strings.bestStreakFormat)).toEqual([]);
+  });
+});
+
 describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
   let container;
 
