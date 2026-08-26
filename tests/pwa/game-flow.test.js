@@ -828,6 +828,80 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
   });
 });
 
+describe('TRIOFSND-128: end of game persists the best score and longest racha to storage', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('a finished game persists its final score and racha via storage.recordScore/recordStreak', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    jest.useFakeTimers();
+    try {
+      // 4 hits, a miss, 3 more hits, 2 misses: score 7/10, longest streak 4.
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, undefined, storage);
+      for (const mark of 'CCCCFCCCFF'.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
+      // The persistence write is fire-and-forget (it never delays Resultados
+      // rendering, see persistBestScoreAndStreak's doc comment) -- flush the
+      // pending microtasks it queued before reading storage back.
+      await jest.advanceTimersByTimeAsync(0);
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(await storage.get('bestScore')).toBe(7);
+    expect(await storage.get('maxStreak')).toBe(4);
+  });
+
+  test('a worse replay never lowers the previously persisted best score/racha (monotonic)', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, undefined, storage);
+      for (let i = 0; i < 10; i += 1) {
+        await answerCurrentQuestion(container, { correct: true });
+      }
+      await jest.advanceTimersByTimeAsync(0);
+      expect(await storage.get('bestScore')).toBe(10);
+      expect(await storage.get('maxStreak')).toBe(10);
+
+      getByRole(container, 'button', { name: strings.playAgainButton }).click();
+      for (let i = 0; i < 10; i += 1) {
+        await answerCurrentQuestion(container, { correct: false });
+      }
+      await jest.advanceTimersByTimeAsync(0);
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(await storage.get('bestScore')).toBe(10);
+    expect(await storage.get('maxStreak')).toBe(10);
+  });
+});
+
 describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts progress', () => {
   let container;
 
@@ -1055,6 +1129,12 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     // Persistence (TRIOFSND-205): the unlocked level survives independently
     // of the rendered screen, readable through the same storage instance.
     expect(await storage.getMaxUnlockedLevel()).toBe(2);
+
+    // Persistence (TRIOFSND-128): the level's final score/racha are recorded
+    // the same way the flat, single-level flow does, through the same storage
+    // instance -- 6 hits back to back (score 6/10, longest streak 6).
+    expect(await storage.get('bestScore')).toBe(6);
+    expect(await storage.get('maxStreak')).toBe(6);
 
     // "Volver a jugar" continues straight into the already-unlocked level 2
     // -- no age gate, no fresh level 1.
