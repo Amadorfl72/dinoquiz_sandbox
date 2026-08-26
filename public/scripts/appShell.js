@@ -6,8 +6,7 @@
  * (TRIOFSND-105, AC-11).
  *
  * `renderMuteToggleButton` mounts into `#mute-toggle` (see public/index.html),
- * a container that lives *outside* `#app`. Screens replace `#app`'s content
- * wholesale on every render (see public/scripts/homeScreen.js and
+ * a container that lives *outside* `#app` (see public/scripts/homeScreen.js and
  * src/screens/*.js, `container.innerHTML = ''`), so mounting the button
  * anywhere inside `#app` would make it disappear on every screen transition.
  * Living in its own sibling container is what makes it a true app-shell
@@ -16,9 +15,36 @@
  * This file follows the same dual CommonJS/browser-global pattern as
  * public/scripts/homeScreen.js so it can be loaded both directly by Jest
  * (via `require`) and as a plain `<script>` in the browser with no bundler.
+ *
+ * `installExternalLinkGuard` (TRIOFSND-121): none of the three screens in the
+ * closed Inicio -> Quiz -> Resultados loop render an `<a>` today, but the PRD
+ * requires the flow to stay a walled garden a 6-8 year-old can't tap their
+ * way out of (no external links, no accidental purchases/ad redirects) even
+ * if a future screen, i18n string or ad/banner integration introduces one by
+ * mistake. Rather than trusting every screen to remember that rule, this
+ * installs a single capturing click listener on the app-shell root (covers
+ * `#app` and `#mute-toggle`, i.e. every current and future screen) that
+ * blocks the default action of any click landing on an anchor whose `href`
+ * resolves to a different origin or whose `target` is `_blank`, and
+ * neutralizes `window.open` so script-driven popups can't leave the app
+ * either. Internal navigation (the privacy policy's hash-based route,
+ * TRIOFSND-116) is left untouched since it never uses `<a>` tags or
+ * `window.open`.
  */
 (function () {
-  var MUTE_STORAGE_KEY = 'dinoquiz.audio.muted';
+  // Canonical key (TRIOFSND-84): must match public/scripts/main.js's
+  // MUTE_STORAGE_KEY and the `dinoquiz:muted` key src/services/storage
+  // namespaces internally, so toggling mute from this shared app-shell
+  // control is actually read by the Home/question rendering flow.
+  var MUTE_STORAGE_KEY = 'dinoquiz:muted';
+
+  // Minimum touch target per the PRD's child-usability requirement (48x48).
+  // Set as an explicit inline pixel style (not left to the stylesheet) so the
+  // computed size is a deterministic, parseable "NNpx" literal in every
+  // renderer -- jsdom does not resolve CSS functions like clamp()/var(), so
+  // relying on public/styles/main.css alone made this button's computed
+  // min-width unparseable there even though it renders fine in a real browser.
+  var MIN_TOUCH_TARGET_PX = 48;
 
   var SPEAKER_ON_ICON =
     '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">' +
@@ -68,6 +94,13 @@
     var button = document.createElement('button');
     button.type = 'button';
     button.className = 'app-shell__mute-toggle';
+    // Inline min-width/min-height fallback for the ≥48x48dp WCAG touch
+    // target (AC-2/AC-11/AC-13/AC-23): keeps the guarantee even when
+    // public/styles/main.css isn't loaded or doesn't resolve (e.g. jsdom
+    // tests rendering into a bare container, where getComputedStyle won't
+    // see external stylesheets).
+    button.style.minWidth = '48px';
+    button.style.minHeight = '48px';
 
     function applyState() {
       button.setAttribute('aria-pressed', String(isMuted));
@@ -94,12 +127,96 @@
     return { root: button, isMuted: function () { return isMuted; } };
   }
 
+  /**
+   * True when `href` would navigate away from `baseHref`'s origin, or when
+   * the anchor opens a new browsing context (`target="_blank"`) -- either
+   * way, a tap would take the child out of the closed Inicio/Quiz/Resultados
+   * loop. Same-origin/relative/hash hrefs (e.g. the privacy policy route)
+   * resolve to `baseHref`'s own origin and are left alone. An `href` that
+   * fails to parse as a URL (empty, `javascript:`, malformed) is treated as
+   * non-external -- it can't leave the app's origin either.
+   */
+  function isExternalAnchor(anchor, baseHref) {
+    if (!anchor || typeof anchor.getAttribute !== 'function') {
+      return false;
+    }
+
+    if (anchor.getAttribute('target') === '_blank') {
+      return true;
+    }
+
+    var href = anchor.getAttribute('href');
+    if (!href) {
+      return false;
+    }
+
+    try {
+      var resolved = new URL(href, baseHref);
+      var base = new URL(baseHref);
+      return resolved.origin !== base.origin;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Installs a single capturing click listener on `root` (defaults to the
+   * whole document, so it covers every current and future screen) that
+   * cancels navigation for any external anchor (see `isExternalAnchor`), and
+   * neutralizes `win.open` so script-driven popups can't leave the app.
+   * Returns `{ destroy }` to remove the listener/restore `window.open`
+   * (mainly for tests); returns `null` when there's no DOM to guard.
+   */
+  function installExternalLinkGuard(root, win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    root = root || (typeof document !== 'undefined' ? document : undefined);
+
+    if (!root || typeof root.addEventListener !== 'function') {
+      return null;
+    }
+
+    function handleClick(event) {
+      var target = event.target;
+      var anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
+      if (!anchor) {
+        return;
+      }
+
+      var baseHref = (win && win.location && win.location.href) || (root.baseURI || 'http://localhost/');
+      if (isExternalAnchor(anchor, baseHref)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+
+    root.addEventListener('click', handleClick, true);
+
+    var originalOpen = win && win.open;
+    if (win) {
+      win.open = function () {
+        return null;
+      };
+    }
+
+    return {
+      destroy: function () {
+        root.removeEventListener('click', handleClick, true);
+        if (win) {
+          win.open = originalOpen;
+        }
+      },
+    };
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      MIN_TOUCH_TARGET_PX: MIN_TOUCH_TARGET_PX,
       renderMuteToggleButton: renderMuteToggleButton,
       readStoredMute: readStoredMute,
       writeStoredMute: writeStoredMute,
+      isExternalAnchor: isExternalAnchor,
+      installExternalLinkGuard: installExternalLinkGuard,
     };
   }
 
@@ -107,5 +224,7 @@
     window.DinoQuiz = window.DinoQuiz || {};
     window.DinoQuiz.appShell = window.DinoQuiz.appShell || {};
     window.DinoQuiz.appShell.renderMuteToggleButton = renderMuteToggleButton;
+    window.DinoQuiz.appShell.isExternalAnchor = isExternalAnchor;
+    window.DinoQuiz.appShell.installExternalLinkGuard = installExternalLinkGuard;
   }
 })();

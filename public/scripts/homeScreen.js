@@ -56,6 +56,16 @@
  * view (public/scripts/privacyPolicyScreen.js) in a single tap — it is a
  * plain button with a descriptive `aria-label`/`title` from the i18n
  * resource (no icon-only, unlabeled control), reachable from Home in <2 taps.
+ *
+ * Offline purchase guard (TRIOFSND-112): the in-app purchase is the one
+ * resource in DinoQuiz that actually needs a network connection (everything
+ * else ships precached, see public/service-worker.js). Confirming the
+ * purchase panel's "Comprar ahora" button first checks connectivity via
+ * `public/scripts/network.js`'s `isOnline` (injectable as `options.isOnline`
+ * for tests); when offline it shows a friendly, inline reconnect notice
+ * inside the same panel instead of calling `options.onPurchase`, so a child
+ * or parent tapping it with no signal gets a clear explanation without the
+ * rest of the app (or even the rest of this panel) being blocked.
  */
 
 (function () {
@@ -81,6 +91,19 @@
       return i18n.getStrings(locale || i18n.DEFAULT_LOCALE)[section];
     }
     return null;
+  }
+
+  function resolveIsOnline(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.network) {
+      return win.DinoQuiz.services.network.isOnline;
+    }
+    if (typeof require === 'function') {
+      return require('../../src/services/network').isOnline;
+    }
+    return function () {
+      return true;
+    };
   }
 
   function buildDisclosurePanel(id, headingText, closeButtonLabel) {
@@ -178,7 +201,7 @@
     return built;
   }
 
-  function buildPurchasePanel(strings, onPurchase) {
+  function buildPurchasePanel(strings, onPurchase, isOnline) {
     var built = buildDisclosurePanel('home-screen-purchase-panel', strings.heading, strings.closeButton);
 
     appendParagraphs(built.body, [strings.description]);
@@ -188,16 +211,32 @@
     priceEl.textContent = strings.priceLabel;
     built.body.appendChild(priceEl);
 
+    var offlineNotice = document.createElement('p');
+    offlineNotice.className = 'home-screen__purchase-offline-notice';
+    offlineNotice.setAttribute('role', 'alert');
+    offlineNotice.textContent = strings.offlineNotice;
+    offlineNotice.hidden = true;
+    built.body.appendChild(offlineNotice);
+
     var purchaseButton = document.createElement('button');
     purchaseButton.type = 'button';
     purchaseButton.className = 'home-screen__purchase-confirm-button';
     purchaseButton.textContent = strings.purchaseButton;
-    if (typeof onPurchase === 'function') {
-      purchaseButton.addEventListener('click', onPurchase);
-    }
+    purchaseButton.addEventListener('click', function (event) {
+      if (typeof isOnline === 'function' && !isOnline()) {
+        offlineNotice.hidden = false;
+        return;
+      }
+
+      offlineNotice.hidden = true;
+      if (typeof onPurchase === 'function') {
+        onPurchase(event);
+      }
+    });
     built.body.appendChild(purchaseButton);
 
     built.purchaseButton = purchaseButton;
+    built.offlineNotice = offlineNotice;
     return built;
   }
 
@@ -335,7 +374,8 @@
 
     var purchaseBuilt = buildIconButton('home-screen__purchase-button', PURCHASE_ICON, controlsStrings.purchaseButton);
     var purchaseButton = purchaseBuilt.button;
-    var purchasePanelBuilt = buildPurchasePanel(purchaseStrings, options.onPurchase);
+    var isOnline = options.isOnline || resolveIsOnline();
+    var purchasePanelBuilt = buildPurchasePanel(purchaseStrings, options.onPurchase, isOnline);
     wireDisclosure(purchaseButton, purchasePanelBuilt.panel, purchasePanelBuilt.closeButton);
 
     globalControls.appendChild(muteButton);
@@ -369,6 +409,7 @@
       purchaseButton: purchaseButton,
       purchasePanel: purchasePanelBuilt.panel,
       purchaseConfirmButton: purchasePanelBuilt.purchaseButton,
+      purchaseOfflineNotice: purchasePanelBuilt.offlineNotice,
       isMuted: function () {
         return muted;
       },

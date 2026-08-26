@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="velociraptorFallbackTitle">
+  <title id="velociraptorFallbackTitle">Silueta de Velociraptor</title>
+  <path d="M30 150 q-16 -10 -14 -34 q20 6 30 -4 q14 22 40 24 q4 -20 26 -30 q6 -12 20 -10 q10 2 8 12 q16 4 22 20 l-10 6 q4 8 -4 12 l-8 -8 q-14 8 -30 2 q-2 10 -14 10 q0 -10 -8 -14 q-16 6 -26 -2 q-2 8 -12 8 q0 -10 -6 -14 q-8 6 -14 22 z"
+        fill="#6E5A3F" stroke="#2B2116" stroke-width="6" stroke-linejoin="round"/>
+</svg>

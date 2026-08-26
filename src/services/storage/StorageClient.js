@@ -2,6 +2,7 @@ const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { DEFAULT_STATE } = require('./types');
+const { LogService } = require('../logging');
 
 const NAMESPACE = 'dinoquiz:';
 const PERSISTED_KEYS = [
@@ -11,7 +12,17 @@ const PERSISTED_KEYS = [
   'muted',
   'homeTooltipSeen',
   'analyticsEventCounts',
+  'questionStats',
+  'questionAnsweredEvents',
+  'adsRemoved',
+  'maxUnlockedLevel',
 ];
+
+// Stable technical code for setMaxUnlockedLevel's persistence-failure log
+// (TRIOFSND-205): deliberately carries no metadata, so it never leaks age,
+// answers or which level was reached -- only that a write degraded to
+// in-memory.
+const MAX_UNLOCKED_LEVEL_PERSIST_ERROR_CODE = 'storage_max_unlocked_level_persist_error';
 
 function namespacedKey(key) {
   return `${NAMESPACE}${key}`;
@@ -36,7 +47,13 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
+  #cache = {
+    ...DEFAULT_STATE,
+    discoveredFunFacts: [],
+    analyticsEventCounts: {},
+    questionStats: {},
+    questionAnsweredEvents: [],
+  };
   #listeners = new Map();
   #initPromise = null;
 
@@ -58,8 +75,14 @@ class DinoQuizStorage {
     }
   };
 
-  constructor(adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()]) {
+  #logService;
+
+  constructor(
+    adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
+    logService = new LogService()
+  ) {
     this.#adapters = adapters;
+    this.#logService = logService;
   }
 
   init() {
@@ -141,6 +164,8 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+      questionStats: { ...this.#cache.questionStats },
+      questionAnsweredEvents: [...this.#cache.questionAnsweredEvents],
     };
   }
 
@@ -230,6 +255,36 @@ class DinoQuizStorage {
     }
   }
 
+  /** Highest level (1-based) the child has unlocked on this device (TRIOFSND-205). */
+  async getMaxUnlockedLevel() {
+    return this.get('maxUnlockedLevel');
+  }
+
+  /**
+   * Advances the persisted max unlocked level (TRIOFSND-205), mirroring
+   * `recordScore`/`recordStreak`: monotonically increasing, ignores any
+   * `level` that isn't a bigger integer than what's already unlocked. Only
+   * this single number is persisted -- never per-level aciertos, answers or
+   * age.
+   *
+   * If every storage backend is unavailable, `set` already degrades to an
+   * in-memory adapter so the game keeps working without blocking the child;
+   * this only adds a stable, data-free technical log code for that
+   * degraded-persistence case.
+   */
+  async setMaxUnlockedLevel(level) {
+    const current = await this.get('maxUnlockedLevel');
+    if (!Number.isInteger(level) || level <= current) {
+      return current;
+    }
+
+    const persisted = await this.set('maxUnlockedLevel', level);
+    if (!persisted) {
+      this.#logService.logEvent(MAX_UNLOCKED_LEVEL_PERSIST_ERROR_CODE);
+    }
+    return level;
+  }
+
   async markFunFactDiscovered(funFactId) {
     const discovered = await this.get('discoveredFunFacts');
     if (!discovered.includes(funFactId)) {
@@ -255,6 +310,19 @@ class DinoQuizStorage {
 
   async markHomeTooltipSeen() {
     await this.set('homeTooltipSeen', true);
+  }
+
+  /**
+   * Whether the single ads-removal in-app purchase (PRD: "eliminar anuncios")
+   * has been completed on this device. Screens gate banners/rewarded ads on
+   * this flag (TRIOFSND-97, AC-20/AC-21).
+   */
+  async hasRemovedAds() {
+    return this.get('adsRemoved');
+  }
+
+  async setAdsRemoved(adsRemoved) {
+    await this.set('adsRemoved', adsRemoved);
   }
 
   /**
@@ -286,6 +354,90 @@ class DinoQuizStorage {
     const next = (counts[eventName] || 0) + 1;
     await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
+  }
+
+  /**
+   * Registers a resolved question locally (TRIOFSND-80): this is the single
+   * write point for the whole feature, called once per accepted answer from
+   * the bootstrap's `onAnswer` handler (public/scripts/main.js), never from
+   * the question screen, so an answer is never recorded/aggregated twice.
+   *
+   * Persists the minimal, non-PII event `{ tipo: 'pregunta_respondida',
+   * id_pregunta, acierto }` (no name/age/email/ad-or-install id/free text/
+   * IP/device data) onto the local history, and incrementally updates that
+   * question's `total_respuestas`/`total_aciertos` counters -- raw, never
+   * rounded -- so its historic `porcentaje_acierto` (`getQuestionStats`) can
+   * be derived at any time without replaying individual answers.
+   */
+  async recordQuestionAnswered(id_pregunta, acierto) {
+    const event = { tipo: 'pregunta_respondida', id_pregunta, acierto: Boolean(acierto) };
+
+    const events = await this.get('questionAnsweredEvents');
+    await this.set('questionAnsweredEvents', [...events, event]);
+    await this.recordEvent('pregunta_respondida');
+
+    const stats = await this.get('questionStats');
+    const current = stats[id_pregunta] || { total_respuestas: 0, total_aciertos: 0 };
+    const next = {
+      total_respuestas: current.total_respuestas + 1,
+      total_aciertos: current.total_aciertos + (event.acierto ? 1 : 0),
+    };
+    await this.set('questionStats', { ...stats, [id_pregunta]: next });
+
+    return this.getQuestionStats(id_pregunta);
+  }
+
+  /**
+   * Historic aggregate for a question: raw counters plus `porcentaje_acierto`
+   * computed from them at full precision (never rounded, never averaged from
+   * previously-rounded percentages). Always a finite number between 0 and
+   * 100, `0` -- never `NaN`/`Infinity` -- for a question with no answers yet.
+   */
+  async getQuestionStats(id_pregunta) {
+    const stats = await this.get('questionStats');
+    const { total_respuestas, total_aciertos } = stats[id_pregunta] || {
+      total_respuestas: 0,
+      total_aciertos: 0,
+    };
+    const porcentaje_acierto = total_respuestas > 0 ? (total_aciertos / total_respuestas) * 100 : 0;
+    return { total_respuestas, total_aciertos, porcentaje_acierto };
+  }
+
+  /**
+   * Aggregated, non-PII acierto/fallo counter for the `pregunta_respondida`
+   * event (TRIOFSND-92, PRD logging_observability). A thin validation seam
+   * over `recordQuestionAnswered`, so the tally shares the single
+   * `questionStats` source of truth instead of a second persisted key. It
+   * never records which child answered or the option chosen, so the only
+   * thing derivable later is the % de fallo por pregunta in aggregate, not
+   * any individual child's performance. An invalid/missing `id_pregunta` or
+   * a `resultado` outside acierto/fallo is skipped rather than recorded
+   * under an anonymous key.
+   */
+  async recordQuestionResult(idPregunta, resultado) {
+    if (typeof idPregunta !== 'string' || idPregunta.length === 0) {
+      // No valid id_pregunta: skip rather than create an anonymous/empty key.
+      return undefined;
+    }
+    if (resultado !== 'acierto' && resultado !== 'fallo') {
+      return undefined;
+    }
+
+    await this.recordQuestionAnswered(idPregunta, resultado === 'acierto');
+    return this.getQuestionResults(idPregunta);
+  }
+
+  /** Aggregated `{acierto, fallo}` view of a question, derived from `questionStats`. */
+  async getQuestionResults(idPregunta) {
+    const { total_respuestas, total_aciertos } = await this.getQuestionStats(idPregunta);
+    return { acierto: total_aciertos, fallo: total_respuestas - total_aciertos };
+  }
+
+  /** Resolves to the aggregated failure rate (0-100) for `idPregunta`, or 0 before any answer. */
+  async getQuestionFailureRate(idPregunta) {
+    const { acierto, fallo } = await this.getQuestionResults(idPregunta);
+    const total = acierto + fallo;
+    return total > 0 ? (fallo / total) * 100 : 0;
   }
 }
 

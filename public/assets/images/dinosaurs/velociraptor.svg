@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="velociraptorTitle">
+  <title id="velociraptorTitle">Velociraptor</title>
+  <!-- Tail -->
+  <path d="M90 280 q-50 -20 -50 -70" fill="none" stroke="#8E24AA" stroke-width="24" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="190" cy="345" rx="22" ry="18" fill="#6A1B9A" stroke="#38006B" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="22" ry="18" fill="#6A1B9A" stroke="#38006B" stroke-width="6"/>
+  <!-- Claw -->
+  <path d="M270 335 l24 -10 -4 18 z" fill="#FFF8E1" stroke="#38006B" stroke-width="4"/>
+  <!-- Body -->
+  <ellipse cx="220" cy="255" rx="95" ry="70" fill="#8E24AA" stroke="#38006B" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="220" cy="268" rx="55" ry="40" fill="#FFF3E0"/>
+  <!-- Arms -->
+  <path d="M170 235 q-24 6 -30 28" fill="none" stroke="#8E24AA" stroke-width="12" stroke-linecap="round"/>
+  <!-- Neck/Head -->
+  <ellipse cx="315" cy="165" rx="55" ry="40" fill="#8E24AA" stroke="#38006B" stroke-width="8"/>
+  <path d="M340 150 l55 -14 -22 40 z" fill="#8E24AA" stroke="#38006B" stroke-width="6"/>
+  <!-- Feather crest -->
+  <g fill="#FBC02D" stroke="#38006B" stroke-width="4">
+    <path d="M280 125 l10 -26 12 22 z"/>
+    <path d="M300 118 l10 -28 12 24 z"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="330" cy="150" r="9" fill="#38006B"/>
+  <circle cx="333" cy="147" r="3" fill="#FFFFFF"/>
+</svg>

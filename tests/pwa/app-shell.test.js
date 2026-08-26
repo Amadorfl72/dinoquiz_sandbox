@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-
 const { renderMuteToggleButton, MUTE_STORAGE_KEY, readStoredMute, writeStoredMute } = require('../../public/scripts/appShell');
 const { getStrings } = require('../../src/i18n');
 
@@ -14,12 +13,17 @@ describe('renderMuteToggleButton', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
+    document.body.appendChild(container);
     mockStorage = {
       getItem: jest.fn(),
       setItem: jest.fn(),
       removeItem: jest.fn(),
       clear: jest.fn(),
     };
+  });
+
+  afterEach(() => {
+    container.remove();
   });
 
   test('renders a button in the provided container', () => {
@@ -174,13 +178,11 @@ describe('renderMuteToggleButton', () => {
     mockStorage.getItem.mockReturnValue('false');
     renderMuteToggleButton(container, { strings: getStrings('es').muteButton, storage: mockStorage });
     const button = container.querySelector('button');
-
     expect(button.classList.contains('app-shell__mute-toggle')).toBe(true);
 
-    // jsdom does not load the external stylesheet, so `.app-shell__mute-toggle`'s
-    // declared min-width/min-height never reach window.getComputedStyle() here.
-    // Read the declared rule from the stylesheet instead, same approach as
-    // ResultsScreen.test.js uses for its own 48dp/64dp touch-target checks.
+    // jsdom doesn't load external stylesheets, so getComputedStyle can't see
+    // main.css here; read the rule directly instead (same approach as the
+    // other 48x48dp touch-target checks, e.g. tests/pwa/home-screen.test.js).
     const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
     const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
@@ -326,7 +328,7 @@ describe('writeStoredMute', () => {
 });
 
 describe('MUTE_STORAGE_KEY', () => {
-  test('is exported with expected value', () => {
-    expect(MUTE_STORAGE_KEY).toBe('dinoquiz.audio.muted');
+  test('matches the canonical dinoquiz:muted key read by Home/question rendering', () => {
+    expect(MUTE_STORAGE_KEY).toBe('dinoquiz:muted');
   });
 });

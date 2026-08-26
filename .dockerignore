@@ -1,0 +1,12 @@
+node_modules
+tests
+.git
+.github
+coverage
+.trioforge
+*.log
+.DS_Store
+README.md
+CONVENTIONS.md
+jest.config.js
+package-lock.json

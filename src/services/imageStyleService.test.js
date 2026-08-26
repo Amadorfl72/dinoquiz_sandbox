@@ -1,0 +1,102 @@
+'use strict';
+
+const {
+  IMAGE_STYLES,
+  DEFAULT_IMAGE_STYLE,
+  resolveImageStyle,
+  resolveQuestionImage,
+} = require('./imageStyleService');
+
+function buildQuestion(overrides = {}) {
+  return {
+    id: 'trex-01',
+    dinosaur: 'trex',
+    image: 'dinosaurs/trex.svg',
+    imageRealistic: 'realistic/trex.svg',
+    imageFallback: 'fallback/trex.svg',
+    ...overrides,
+  };
+}
+
+describe('resolveImageStyle', () => {
+  test('resolves the youngest age (six) to "dibujo"', () => {
+    expect(resolveImageStyle('six')).toBe(IMAGE_STYLES.DIBUJO);
+  });
+
+  test('resolves age seven to "realista"', () => {
+    expect(resolveImageStyle('seven')).toBe(IMAGE_STYLES.REALISTA);
+  });
+
+  test('resolves eight-plus to "realista"', () => {
+    expect(resolveImageStyle('eight-plus')).toBe(IMAGE_STYLES.REALISTA);
+  });
+
+  test('falls back to "dibujo" when the age band is missing or unrecognized', () => {
+    expect(resolveImageStyle(null)).toBe(DEFAULT_IMAGE_STYLE);
+    expect(resolveImageStyle(undefined)).toBe(DEFAULT_IMAGE_STYLE);
+    expect(resolveImageStyle('not-a-band')).toBe(DEFAULT_IMAGE_STYLE);
+  });
+});
+
+describe('resolveQuestionImage', () => {
+  test('"dibujo" resolves straight to the question\'s cartoon image path, falling back to its dedicated fallback asset', () => {
+    const question = buildQuestion();
+    const resolved = resolveQuestionImage(question, 'six');
+
+    expect(resolved).toEqual({
+      style: 'dibujo',
+      url: 'dinosaurs/trex.svg',
+      fallbackUrl: 'fallback/trex.svg',
+    });
+  });
+
+  test('"realista" resolves to the bank\'s own imageRealistic asset, falling back to its dedicated fallback asset', () => {
+    const question = buildQuestion({ imageRealistic: 'realistic/trex.svg' });
+    const resolved = resolveQuestionImage(question, 'seven');
+
+    expect(resolved).toEqual({
+      style: 'realista',
+      url: 'realistic/trex.svg',
+      fallbackUrl: 'fallback/trex.svg',
+    });
+  });
+
+  test('"realista" without an imageRealistic field derives a sibling styled path as a last resort (resilience)', () => {
+    const question = buildQuestion();
+    const resolved = resolveQuestionImage(question, 'eight-plus');
+
+    expect(resolved).toEqual({
+      style: 'realista',
+      url: 'realistic/trex.svg',
+      fallbackUrl: 'fallback/trex.svg',
+    });
+  });
+
+  test('an unknown age band keeps today\'s single asset set (safe default)', () => {
+    const question = buildQuestion();
+    const resolved = resolveQuestionImage(question, null);
+
+    expect(resolved.style).toBe(DEFAULT_IMAGE_STYLE);
+    expect(resolved.url).toBe(question.image);
+    expect(resolved.fallbackUrl).toBe(question.imageFallback);
+  });
+
+  test('"realista" falls back to the cartoon image when imageRealistic is missing', () => {
+    const question = buildQuestion({ imageRealistic: undefined });
+    const resolved = resolveQuestionImage(question, 'seven');
+
+    expect(resolved.url).toBe(question.image);
+  });
+
+  test('falls back to the cartoon image as fallbackUrl when imageFallback is missing', () => {
+    const question = buildQuestion({ imageFallback: undefined });
+    const resolved = resolveQuestionImage(question, 'six');
+
+    expect(resolved.fallbackUrl).toBe(question.image);
+  });
+
+  test('is resilient to a missing image field instead of throwing', () => {
+    const question = buildQuestion({ image: undefined });
+    expect(() => resolveQuestionImage(question, 'seven')).not.toThrow();
+  });
+});

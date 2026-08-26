@@ -27,8 +27,9 @@
  * player through the selected questions one at a time via
  * public/scripts/questionScreen.js; once the last question is answered it
  * shows public/scripts/resultsScreen.js, whose 'Volver a jugar' calls back
- * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
- * and whose 'Salir' calls `renderHome` again.
+ * into `startNewGame` (fresh state + a new random subset of questions that
+ * avoids repeating the previous game's questions when possible, TRIOFSND-101
+ * AC-9) and whose 'Salir' calls `renderHome` again.
  *
  * No-bundler runtime: DinoQuiz ships without a build step, so `require` does
  * not exist in the browser. Every screen and the game logic are loaded as
@@ -73,23 +74,36 @@
  * `options.purchaseStrings`, giving the browser path the same pre-resolved
  * strings the Node/Jest path gets via `require`.
  *
- * `renderHome`'s optional `storage` argument wires the first-run '¡Jugar!'
- * tooltip (TRIOFSND-65) to a storage backend: when given, it resolves
- * whether the tooltip was already dismissed on this device and passes the
- * persistence/analytics callbacks through to `renderHomeScreen`.
+ * `renderHome`'s optional `storage` argument is a single object, duck-typed
+ * against two independent interfaces so callers can opt into either or both:
+ *   - `getItem`/`setItem` (a plain `localStorage`-shaped backend) wires the
+ *     mute toggle (TRIOFSND-66): `MUTE_STORAGE_KEY` matches the namespaced
+ *     key `src/services/storage` itself writes (`dinoquiz:muted`,
+ *     JSON-encoded), so any backend sharing that key round-trips with it.
+ *   - `hasSeenHomeTooltip`/`markHomeTooltipSeen`/`recordEventOnce` wires the
+ *     first-run '¡Jugar!' tooltip (TRIOFSND-65): when present, `renderHome`
+ *     resolves whether the tooltip was already dismissed on this device and
+ *     passes the persistence/analytics callbacks through to
+ *     `renderHomeScreen`. Neither interface is required -- omitting
+ *     `storage` entirely (as direct callers of `renderHome` may for tests)
+ *     skips both; passing neither argument at all renders Home with plain
+ *     strings only (no surprise mute/tooltip side effects) -- useful for
+ *     bare unit renders.
  *
- * Two backends can fill that argument. `loadDinoQuizStorage` requires the
- * CommonJS `src/services/storage` module — this only resolves under
- * Node/Jest (or a future bundler); a real unbundled browser has no
- * `require`, so it always returns `null` there. For that case,
- * `createBrowserHomeStorage` implements the same storage interface directly
- * against `window.localStorage` (namespaced the same way as
- * `src/services/storage`, degrading to an in-memory object if localStorage
- * throws/is unavailable), the same way `loadHomeStrings` above fetches the
- * i18n resource natively instead of going through `src/i18n`'s loader. The
- * bootstrap below tries the CommonJS path first and falls back to the
- * native browser one, so the tooltip, its persisted "seen" flag and the
- * analytics counters all work in the real, bundler-less PWA.
+ * `resolveHomeStorage` builds the real, combined backend used by the actual
+ * app-shell entry points (`renderRoute`, "Salir" from Resultados). Two
+ * sources can fill it. `loadDinoQuizStorage` requires the CommonJS
+ * `src/services/storage` module — this only resolves under Node/Jest (or a
+ * future bundler); a real unbundled browser has no `require`, so it always
+ * returns `null` there. For that case, `createBrowserHomeStorage`
+ * implements both interfaces directly against `window.localStorage`
+ * (namespaced the same way as `src/services/storage`, degrading to an
+ * in-memory object if localStorage throws/is unavailable), the same way
+ * `loadHomeStrings` above fetches the i18n resource natively instead of
+ * going through `src/i18n`'s loader. `resolveHomeStorage` tries the
+ * CommonJS path first and falls back to the native browser one, so mute,
+ * the tooltip, its persisted "seen" flag, the analytics counters and the
+ * `first_tap_jugar` counter all work in the real, bundler-less PWA.
  *
  * Starting a game (TRIOFSND-67): the '¡Jugar!' click handler wired below
  * records the aggregated, non-PII `partida_iniciada` event (via
@@ -100,6 +114,56 @@
  * tooltip and fires `first_tap_jugar`) run synchronously off the same click
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
+ *
+ * Answer registration (TRIOFSND-80): `renderQuestionAt`'s `onAnswer` handler
+ * below is the single write point for the whole feature — questionScreen.js
+ * only computes correctness and reports it, it never touches storage, so an
+ * answer is never recorded/aggregated twice. On every accepted answer (hit
+ * or miss, and thanks to questionScreen.js's own `answered` guard exactly
+ * once per question) it calls `storage.recordQuestionAnswered(question.id,
+ * result.isCorrect)`, which persists the minimal, non-PII `pregunta_respondida`
+ * event and incrementally updates that question's historic accuracy — see
+ * `DinoQuizStorage#recordQuestionAnswered` (src/services/storage/StorageClient.js)
+ * and its `createBrowserHomeStorage` mirror below for the exact contract.
+ *
+ * Aggregated question failures (TRIOFSND-92): a separate `analyticsStorage`
+ * client is threaded through `startNewGame` -> `renderQuestionAt` ->
+ * `renderResultsFor` (replay reuses it too), so the `onAnswer` handler in
+ * `renderQuestionAt` also records the aggregated, non-PII `pregunta_respondida`
+ * event (AC-18) via `analyticsStorage.recordEvent` on every answered
+ * question, and additionally records `pregunta_respondida_fallo` whenever
+ * `result.isCorrect` is false. Since the client-only
+ * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
+ * per-event payloads, the failure count travels as its own counter instead
+ * of a field on `pregunta_respondida` -- comparing the two counters is what
+ * yields the aggregated "% acierto por pregunta" the PRD's
+ * logging_observability calls for, independently of TRIOFSND-80's
+ * per-question `recordQuestionAnswered` aggregate above.
+ *
+ * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
+ * question 10 was just answered, derives the game's racha (longest run of
+ * consecutive hits) from `session.state.answers` via
+ * `gameFlow.calculateMaxStreak`, and stashes it on `session.state.maxStreak`
+ * next to the already-tracked final `score`. `renderResultsFor` then forwards
+ * both into `renderResultsScreen`'s options, so the closed Quiz -> Resultados
+ * loop always hands off both pieces of end-of-game data together.
+ *
+ * Functional fallback without Service Worker/manifest support (TRIOFSND-113):
+ * DinoQuiz's official support matrix is the last 2 major versions of Chrome,
+ * Edge and Safari, but some older tablets or embedded/in-app browsers outside
+ * that matrix don't support Service Worker or installable manifests.
+ * `resolvePlatformSupport` (mirroring `src/services/platformSupport`'s
+ * `detectPwaSupport`) detects that up front and `logPlatformSupportFallback`
+ * logs a diagnostic — nothing more, since it must never block or degrade the
+ * actual game. That guarantee already falls out of how this file is built:
+ * `registerServiceWorker` is feature-detected and fire-and-forget (see the
+ * `window.addEventListener('load', ...)` handler below), while
+ * `bootstrapBrowserApp` fetches `/i18n/es.json` and `/data/questions.json`
+ * with plain `fetch`, independent of whether a service worker is present.
+ * So a browser lacking PWA support simply never gets installability or
+ * offline caching — it still plays the full Inicio -> Quiz -> Resultados loop
+ * over the network exactly like a supported browser (see
+ * tests/pwa/pwa-fallback.test.js).
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -131,6 +195,43 @@
     }
   }
 
+  // Ads-removal purchase flag (TRIOFSND-97, AC-20/AC-21): same rationale and
+  // namespaced-key convention as MUTE_STORAGE_KEY above -- src/services/storage
+  // models `adsRemoved` too (see StorageClient#hasRemovedAds/#setAdsRemoved),
+  // but this no-bundler browser path reads/writes localStorage directly under
+  // the same `dinoquiz:adsRemoved` key so both paths agree once a bundler
+  // wires the real service in. Results gates its banner/rewarded ad on this
+  // flag; the home purchase confirm button (see homeScreen.js's
+  // `options.onPurchase`) sets it to `true`, once and for good, on this device.
+  var ADS_REMOVED_STORAGE_KEY = 'dinoquiz:adsRemoved';
+
+  function loadAdsRemovedState(storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return false;
+    }
+
+    try {
+      var raw = storageObj.getItem(ADS_REMOVED_STORAGE_KEY);
+      return raw !== null ? JSON.parse(raw) === true : false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function persistAdsRemovedState(adsRemoved, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(ADS_REMOVED_STORAGE_KEY, JSON.stringify(adsRemoved));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist the ads-removed preference', error);
+    }
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   function resolveScreenRenderers(win) {
@@ -140,6 +241,8 @@
     if (typeof require === 'function') {
       return {
         renderHomeScreen: fromWindow.renderHomeScreen || require('./homeScreen').renderHomeScreen,
+        renderAgeGateScreen:
+          fromWindow.renderAgeGateScreen || require('../../src/screens/AgeGateScreen').renderAgeGateScreen,
         renderQuestionScreen:
           fromWindow.renderQuestionScreen || require('../../src/screens/QuestionScreen').renderQuestionScreen,
         renderResultsScreen:
@@ -152,6 +255,31 @@
     }
 
     return null;
+  }
+
+  /**
+   * Age gate (TRIOFSND-193): rendered right after '¡Jugar!' and before the
+   * game is prepared, per the PRD. The two-option choice and its in-memory,
+   * session-only selection live entirely in ageGateScreen.js (never
+   * persisted, logged or sent anywhere from here); this helper only decides
+   * when to move on to `onSelected` once a tap has been made. A missing
+   * renderer (e.g. ageGateScreen.js failed to load in some fallback browser)
+   * degrades gracefully by skipping straight to `onSelected` — the age gate
+   * must never block the game itself, matching the resilience pattern
+   * `installLinkGuard`/`registerServiceWorker` already follow.
+   */
+  function renderAgeGate(container, renderers, ageGateStrings, onSelected) {
+    if (!renderers || typeof renderers.renderAgeGateScreen !== 'function') {
+      onSelected();
+      return null;
+    }
+
+    return renderers.renderAgeGateScreen(container, {
+      strings: ageGateStrings,
+      onSelect: function () {
+        onSelected();
+      },
+    });
   }
 
   function resolveGameFlow(win) {
@@ -189,7 +317,6 @@
     if (!Array.isArray(rawQuestions)) {
       return [];
     }
-    var funFacts = strings ? strings.funFacts : null;
     return rawQuestions.map(function (question) {
       var prepared = {};
       for (var key in question) {
@@ -197,7 +324,10 @@
           prepared[key] = question[key];
         }
       }
-      prepared.funFact = resolveFunFact(funFacts, question.dato_curioso);
+      // `dato_curioso` is a dotted key like "funFacts.trex-01", so it must be
+      // resolved against the full strings bundle, not `strings.funFacts`
+      // (which would look up the "funFacts" segment twice and always miss).
+      prepared.funFact = resolveFunFact(strings, question.dato_curioso);
       return prepared;
     });
   }
@@ -225,9 +355,55 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
-  /** Renders the question at `session.state.questionIndex`, then advances or completes on 'Siguiente'. */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj) {
+  // Extra wall-clock time (TRIOFSND-84) the flow controller waits, on top of
+  // the question screen's own MIN_ADVANCE_DELAY_MS gate on "Siguiente"
+  // (public/scripts/questionScreen.js, AC-6), before auto-advancing a child
+  // who never taps the button themselves. Giving that grace period after the
+  // button becomes clickable means the automatic advance never races the
+  // moment the button first becomes tappable.
+  var AUTO_ADVANCE_GRACE_MS = 4000;
+
+  /**
+   * Renders the question at `session.state.questionIndex`, then advances to
+   * the next one (or completes the game) either when the child taps
+   * "Siguiente" or, if they don't, automatically once
+   * `MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS` has elapsed since the
+   * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
+   * avance automático) lleva a la siguiente pregunta"). Both paths funnel
+   * through the same `advance()` so a game is only ever walked forward once
+   * per question, whichever trigger fires first. `analyticsStorage` records
+   * the aggregated `pregunta_respondida`/`pregunta_respondida_fallo` event
+   * counters (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client
+   * whose `recordQuestionAnswered` call updates that question's historic
+   * accuracy aggregate.
+   */
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage) {
     var question = session.questions[session.state.questionIndex];
+    var advanced = false;
+    var autoAdvanceTimer = null;
+
+    function advance() {
+      if (advanced) return;
+      advanced = true;
+
+      if (autoAdvanceTimer !== null) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+
+      session.state.questionIndex += 1;
+
+      if (session.state.questionIndex >= session.questions.length) {
+        onGameComplete(session.state);
+      } else {
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage);
+      }
+    }
+
+    var minAdvanceDelayMs =
+      (typeof renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS === 'number' &&
+        renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
+      0;
 
     return renderers.renderQuestionScreen(container, question, {
       score: session.state.score,
@@ -242,52 +418,140 @@
             isCorrect: result.isCorrect,
           },
         ]);
+
+        // TRIOFSND-92: the aggregated acierto/fallo tally keys off the
+        // stable bank id (never the visible text or index); an invalid or
+        // missing id is skipped rather than recorded/aggregated under an
+        // anonymous key.
+        if (
+          storage &&
+          typeof storage.recordQuestionAnswered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
+          storage.recordQuestionAnswered(question.id, result.isCorrect);
+        }
+
+        if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
+          analyticsStorage.recordEvent('pregunta_respondida');
+
+          if (!result.isCorrect) {
+            analyticsStorage.recordEvent('pregunta_respondida_fallo');
+          }
+        }
+
+        autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
-        session.state.questionIndex += 1;
-
-        if (session.state.questionIndex >= session.questions.length) {
-          onGameComplete(session.state);
-        } else {
-          renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+        if (session.state.questionIndex + 1 >= session.questions.length) {
+          // TRIOFSND-95: question 10 was just answered — the final score is
+          // already tracked incrementally on session.state.score, but the
+          // racha (longest run of consecutive hits) only makes sense once
+          // every answer of the game is known, so it's derived here, right
+          // before handing the finished game off to Resultados.
+          session.state.maxStreak = resolveGameFlow().calculateMaxStreak(session.state.answers);
         }
+        advance();
       },
     });
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      // AC-20/AC-21: the banner/rewarded ad only render while this is false.
+      adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       onExit: function () {
-        renderHome(doc, renderers.renderHomeScreen, fetchFn);
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          homeStorage,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage
+        );
       },
     });
   }
 
-  /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj) {
+  /**
+   * Resets game state (score/questionIndex/answers) and navigates to the
+   * first question of a new game. `previousQuestionIds` (TRIOFSND-101, AC-9)
+   * is the id list of the immediately previous game, if any — passed through
+   * to the selection engine (public/scripts/gameFlow.js) so a replay avoids
+   * repeating them when the bank has enough fresh candidates. Passed by
+   * `renderResultsFor` on 'Volver a jugar'; omitted for a first game from
+   * Inicio. `analyticsStorage` and `storage` (TRIOFSND-80's per-question
+   * accuracy client) are forwarded through to renderQuestionAt/renderResultsFor
+   * unchanged.
+   */
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds, analyticsStorage, storage) {
+    // The 8th slot has had two owners: TRIOFSND-80/92 callers passed their
+    // per-question / analytics storage here, then TRIOFSND-101 inserted
+    // `previousQuestionIds` in that position and silently shifted them one to
+    // the right. An object with storage methods cannot be a list of ids, so
+    // honour the older callers instead of dropping their analytics on the
+    // floor (the audit's signature-drift finding, fixed at the seam).
+    if (previousQuestionIds && !Array.isArray(previousQuestionIds)) {
+      if (!storage && typeof previousQuestionIds.recordQuestionAnswered === 'function') {
+        storage = previousQuestionIds;
+      }
+      if (!analyticsStorage && typeof previousQuestionIds.recordEvent === 'function') {
+        analyticsStorage = previousQuestionIds;
+      }
+      previousQuestionIds = undefined;
+    }
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
-    var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var session = gameFlow.startNewGame(questions, { randomFn: randomFn, previousQuestionIds: previousQuestionIds });
 
     renderQuestionAt(
       container,
       renderers,
       session,
       function (finalState) {
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj);
+        var playedQuestionIds = session.questions.map(function (question) {
+          return question.id;
+        });
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
-      storageObj
+      storageObj,
+      analyticsStorage,
+      storage
     );
 
     return session;
+  }
+
+  /**
+   * Resolves and installs `appShell.js`'s `installExternalLinkGuard`
+   * (TRIOFSND-121), the same way `resolveScreenRenderers`/`resolveGameFlow`
+   * resolve their browser-global vs. `require`d counterparts. A missing
+   * resolver (e.g. appShell.js failed to load) just means no guard installs
+   * -- it never blocks the rest of the bootstrap.
+   */
+  function installLinkGuard(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var installer =
+      (win && win.DinoQuiz && win.DinoQuiz.appShell && win.DinoQuiz.appShell.installExternalLinkGuard) ||
+      (typeof require === 'function' ? require('./appShell').installExternalLinkGuard : undefined);
+
+    if (typeof installer !== 'function') {
+      return null;
+    }
+
+    return installer(win && win.document, win);
   }
 
   function registerServiceWorker(nav, swPath) {
@@ -298,15 +562,102 @@
       return Promise.resolve(null);
     }
 
-    return nav.serviceWorker
-      .register(swPath)
-      .then(function (registration) {
-        return registration;
-      })
-      .catch(function (error) {
-        console.error('DinoQuiz: service worker registration failed', error);
-        return null;
-      });
+    // TRIOFSND-113: `register` can reject asynchronously (handled by the
+    // `.catch` below) but can also throw synchronously on some embedded/
+    // in-app browsers before it ever returns a promise. Both are treated as
+    // a recoverable, non-blocking fallback -- neither should reach the
+    // `window.addEventListener('load', ...)` bootstrap handler as an
+    // unhandled exception/rejection.
+    try {
+      return nav.serviceWorker
+        .register(swPath)
+        .then(function (registration) {
+          return registration;
+        })
+        .catch(function (error) {
+          console.error('DinoQuiz: service worker registration failed', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('DinoQuiz: service worker registration failed', error);
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * TRIOFSND-113: capability snapshot used to log a diagnostic when a tablet
+   * or embedded browser falls outside the official support matrix (last 2
+   * major versions of Chrome/Edge/Safari) and therefore lacks full
+   * service-worker/manifest support. Mirrors `src/services/platformSupport`'s
+   * `detectPwaSupport` -- required directly under Node/Jest, duplicated
+   * inline for the real, bundler-less browser where `require` doesn't exist,
+   * same dual pattern as `loadDinoQuizStorage`/`createBrowserHomeStorage`
+   * above. Never throws and never gates the game itself: `bootstrapBrowserApp`
+   * fetches i18n/question JSON over plain `fetch` regardless of what this
+   * reports, so "modo navegador normal" (no install, no advanced cache) keeps
+   * the game fully playable either way.
+   */
+  function resolvePlatformSupport(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var nav = (win && win.navigator) || (typeof navigator !== 'undefined' ? navigator : undefined);
+    var doc = (win && win.document) || (typeof document !== 'undefined' ? document : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/platformSupport').detectPwaSupport(nav, doc);
+    }
+
+    var serviceWorker = !!nav && 'serviceWorker' in nav;
+    var manifest = false;
+    if (doc && typeof doc.createElement === 'function') {
+      try {
+        var link = doc.createElement('link');
+        manifest = !!(
+          link.relList &&
+          typeof link.relList.supports === 'function' &&
+          link.relList.supports('manifest')
+        );
+      } catch (error) {
+        manifest = false;
+      }
+    }
+
+    return { serviceWorker: serviceWorker, manifest: manifest, isFullySupported: serviceWorker && manifest };
+  }
+
+  /** Logs a non-blocking diagnostic (no analytics event, no PII) when running in the functional fallback mode. */
+  function logPlatformSupportFallback(support) {
+    if (!support || support.isFullySupported) {
+      return;
+    }
+
+    console.info(
+      'DinoQuiz: PWA install/offline-cache features are unavailable in this browser ' +
+        '(serviceWorker=' +
+        support.serviceWorker +
+        ', manifest=' +
+        support.manifest +
+        '). Falling back to normal browser mode: no install, no advanced cache, the game itself still works.'
+    );
+  }
+
+  /**
+   * Resolves the logging service, following the same dual CommonJS/global
+   * pattern as resolveScreenRenderers. The browser-based app loads logging.js
+   * as a plain <script> and exposes it on window.DinoQuiz.services.logging;
+   * Node/Jest tests require it directly. Returns a LogService instance ready
+   * for logging access and PWA installation events.
+   */
+  function resolveLogger(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var LogService =
+      (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.logging && win.DinoQuiz.services.logging.LogService) ||
+      (typeof require === 'function' ? require('../../src/services/logging').LogService : undefined);
+
+    if (typeof LogService !== 'function') {
+      return null;
+    }
+
+    return new LogService();
   }
 
   function fetchJson(fetchFn, resourcePath) {
@@ -336,11 +687,20 @@
     });
   }
 
+  /**
+   * Fetches the whole i18n resource once and hands back the sections the
+   * Home screen (and what it kicks off) needs: home/privacy/purchase
+   * (TRIOFSND-66) plus ageGate (TRIOFSND-193, resolved up front here so the
+   * '¡Jugar!' click handler below can render the age gate synchronously,
+   * with no extra fetch on the click itself) — all without a `require()` for
+   * `src/i18n`.
+   */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase, ageGate: data.ageGate } : null;
     });
   }
+
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
@@ -382,6 +742,8 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
+  var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -389,6 +751,8 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[QUESTION_STATS_KEY] = {};
+    memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -433,16 +797,132 @@
         }
         return Promise.resolve(counts[eventName]);
       },
+      // Plain, synchronous localStorage-shaped surface (TRIOFSND-66) so the
+      // same object also satisfies renderHome's mute duck-type — real users
+      // get mute persistence and the tooltip/analytics counters from one
+      // resolved backend (see resolveHomeStorage below).
+      getItem: function (key) {
+        if (backend) {
+          try {
+            return backend.getItem(key);
+          } catch (error) {
+            // Fall through to the in-memory value below.
+          }
+        }
+        return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null;
+      },
+      setItem: function (key, value) {
+        memory[key] = value;
+        if (backend) {
+          try {
+            backend.setItem(key, value);
+          } catch (error) {
+            // Quota exceeded or unavailable: the write still lands in
+            // `memory` above so the app stays correct for the rest of this
+            // session, it just won't persist past it.
+          }
+        }
+      },
       recordEvent: function (eventName) {
         var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
         counts[eventName] = (counts[eventName] || 0) + 1;
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
       },
+      // TRIOFSND-80: single write point (called from onAnswer in the
+      // bootstrap below, never from questionScreen.js). Persists the
+      // minimal, non-PII event { tipo: 'pregunta_respondida', id_pregunta,
+      // acierto } -- no name/age/email/ad-or-install id/free text/IP/device
+      // data -- and incrementally updates that question's total_respuestas/
+      // total_aciertos counters (raw, never rounded) for the historic %
+      // de acierto.
+      recordQuestionAnswered: function (questionId, isCorrect) {
+        var acierto = Boolean(isCorrect);
+
+        var events = readJSON(QUESTION_ANSWERED_EVENTS_KEY) || [];
+        events = events.concat([{ tipo: 'pregunta_respondida', id_pregunta: questionId, acierto: acierto }]);
+        writeJSON(QUESTION_ANSWERED_EVENTS_KEY, events);
+
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.pregunta_respondida = (counts.pregunta_respondida || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        stats[questionId] = {
+          total_respuestas: current.total_respuestas + 1,
+          total_aciertos: current.total_aciertos + (acierto ? 1 : 0),
+        };
+        writeJSON(QUESTION_STATS_KEY, stats);
+        return Promise.resolve(stats[questionId]);
+      },
+      // Historic per-question aggregate: raw counters plus porcentaje_acierto
+      // computed at full precision (0 -- never NaN/Infinity -- when the
+      // question has no answers yet).
+      getQuestionStats: function (questionId) {
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        var porcentaje = current.total_respuestas > 0 ? (current.total_aciertos / current.total_respuestas) * 100 : 0;
+        return Promise.resolve({
+          total_respuestas: current.total_respuestas,
+          total_aciertos: current.total_aciertos,
+          porcentaje_acierto: porcentaje,
+        });
+      },
     };
   }
 
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, storageObj) {
+  /**
+   * Resolves the real, production storage backend for `renderHome`: the
+   * tooltip/analytics half (`loadDinoQuizStorage()`, falling back to
+   * `createBrowserHomeStorage()` in a real unbundled browser) merged with a
+   * `getItem`/`setItem` pass-through to `window.localStorage` for the mute
+   * preference, so both halves of `renderHome`'s duck-typed `storage`
+   * argument resolve from the one object the bootstrap passes in.
+   */
+  function resolveHomeStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var tooltipBackend = loadDinoQuizStorage() || createBrowserHomeStorage(win);
+    var localStorageBackend = win && win.localStorage;
+
+    return {
+      hasSeenHomeTooltip: function () {
+        return tooltipBackend.hasSeenHomeTooltip();
+      },
+      markHomeTooltipSeen: function () {
+        return tooltipBackend.markHomeTooltipSeen();
+      },
+      recordEventOnce: function (eventName) {
+        return tooltipBackend.recordEventOnce(eventName);
+      },
+      getItem: function (key) {
+        return localStorageBackend ? localStorageBackend.getItem(key) : null;
+      },
+      setItem: function (key, value) {
+        if (localStorageBackend) {
+          localStorageBackend.setItem(key, value);
+        }
+      },
+    };
+  }
+
+  /**
+   * `storage` (5th arg) and `muteStorageObj` (6th arg) are two independent
+   * optional backends. `storage` (matching `src/services/storage`'s
+   * `dinoQuizStorage` or `createBrowserHomeStorage`, TRIOFSND-65) drives the
+   * first-run tooltip; when omitted it falls back to
+   * `loadDinoQuizStorage()`/`createBrowserHomeStorage()` so the tooltip
+   * still works for real, unbundled-browser callers that don't pass one
+   * explicitly. `muteStorageObj` is a raw `getItem`/`setItem` object
+   * (matching `localStorage`, TRIOFSND-66) that persists the mute
+   * preference; when omitted it falls back to `storage` itself if that also
+   * exposes `getItem`/`setItem` (as `resolveHomeStorage()` does), so a
+   * single combined backend still wires both concerns for production
+   * callers. Either can be passed as an explicit falsy-shaped stand-in to
+   * opt out (e.g. a bare unit render with a `renderHomeScreen` mock that
+   * only cares about the fetched strings).
+   */
+  function renderHome(doc, renderHomeScreen, fetchFn, storage, onOpenPrivacyPolicy, muteStorageObj) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -460,18 +940,78 @@
       return Promise.resolve(null);
     }
 
-    return loadHomeResources(fetchFn).then(function (resources) {
-      storage = storage || loadDinoQuizStorage() || createBrowserHomeStorage();
+    // Positional-drift seam (audit finding): TRIOFSND-92 callers pass their
+    // tooltip/analytics storage where onOpenPrivacyPolicy now lives — the
+    // privacy-policy PR inserted its callback at position 5 and shifted them.
+    // A storage-shaped object cannot be a callback; honour the older contract.
+    if (onOpenPrivacyPolicy && typeof onOpenPrivacyPolicy !== 'function') {
+      if (
+        !storage &&
+        (typeof onOpenPrivacyPolicy.recordEvent === 'function' ||
+          typeof onOpenPrivacyPolicy.hasSeenHomeTooltip === 'function')
+      ) {
+        storage = onOpenPrivacyPolicy;
+      }
+      onOpenPrivacyPolicy = undefined;
+    }
 
+    // Remember what the CALLER handed us before the ambient fallback kicks
+    // in: an explicitly-passed backend must win over window.localStorage for
+    // every write this function wires (mute already honours this; the
+    // purchase flag must too, or a test/native caller's purchase silently
+    // lands in a storage nobody reads).
+    var explicitStorage = storage;
+    storage = storage || resolveHomeStorage(doc.defaultView);
+
+    var tooltipStorage =
+      storage && typeof storage.hasSeenHomeTooltip === 'function'
+        ? storage
+        : loadDinoQuizStorage() || createBrowserHomeStorage();
+
+    // The ads-removed flag's backend, shared by the purchase write below and
+    // the game the play button starts: an explicitly-passed raw backend wins
+    // over the ambient localStorage wrapper (see explicitStorage above).
+    var adsStorage =
+      explicitStorage && typeof explicitStorage.setItem === 'function'
+        ? explicitStorage
+        : muteStorageObj && typeof muteStorageObj.setItem === 'function'
+          ? muteStorageObj
+          : storage;
+
+    var resolvedMuteStorage =
+      muteStorageObj && typeof muteStorageObj.getItem === 'function'
+        ? muteStorageObj
+        : storage && typeof storage.getItem === 'function'
+        ? storage
+        : null;
+
+    return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
         ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
         : {};
-      if (typeof onOpenPrivacyPolicy === 'function') {
+
+      if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
-      renderOptions.muted = loadMutedState(storageObj);
-      renderOptions.onToggleMute = function (muted) {
-        persistMutedState(muted, storageObj);
+
+      if (resolvedMuteStorage) {
+        renderOptions.muted = loadMutedState(resolvedMuteStorage);
+        renderOptions.onToggleMute = function (muted) {
+          persistMutedState(muted, resolvedMuteStorage);
+        };
+      }
+      // TRIOFSND-97: the single remove-ads purchase has no real payment SDK
+      // in this offline-first PWA (see CONVENTIONS.md: "Sin backend"), so
+      // confirming it locally marks the purchase as done -- from here on
+      // Resultados stops rendering the banner/rewarded ad (AC-21).
+      renderOptions.onPurchase = function () {
+        // Resolve the write target the same way the mute preference does:
+        // prefer `storage` when it is a raw getItem/setItem backend, else the
+        // resolved mute storage. A caller that only passes `muteStorageObj`
+        // (the TRIOFSND-97 contract test does) must still see the purchase
+        // persist — losing a purchase to argument plumbing is the one failure
+        // mode this flag cannot afford.
+        persistAdsRemovedState(true, adsStorage);
       };
 
       function finishRender() {
@@ -485,8 +1025,15 @@
             var renderers = resolveScreenRenderers();
             var questions = loadQuestions();
             if (renderers && questions && questions.length > 0) {
-              storage.recordEvent('partida_iniciada');
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj);
+              if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
+                tooltipStorage.recordEvent('partida_iniciada');
+              }
+              // TRIOFSND-193: the age gate is shown right here -- after
+              // '¡Jugar!', before the game is prepared -- and only then does
+              // `startNewGame` run.
+              renderAgeGate(container, renderers, resources && resources.ageGate, function () {
+                startNewGame(container, renderers, questions, doc, fetchFn, undefined, adsStorage, undefined, storage, storage);
+              });
             }
           });
         }
@@ -494,13 +1041,17 @@
         return homeApi;
       }
 
-      return storage.hasSeenHomeTooltip().then(function (seen) {
+      if (!tooltipStorage) {
+        return finishRender();
+      }
+
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          storage.markHomeTooltipSeen();
+          tooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          storage.recordEventOnce('first_tap_jugar');
+          tooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -565,16 +1116,27 @@
       });
     }
 
-    return renderHome(doc, undefined, fetchFn, function () {
-      navigateToPrivacyPolicy(loc);
-    });
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      undefined,
+      fetchFn,
+      homeStorage,
+      function () {
+        navigateToPrivacyPolicy(loc);
+      },
+      homeStorage
+    );
   }
 
   /**
-   * Browser-only startup: fetch the i18n strings and the question bank once,
-   * stash the play-ready data on `window.DinoQuiz` so `loadQuestions()` and
-   * the screens can read it synchronously, then render Home. Runs after the
-   * screen/game `<script>`s have registered themselves on `window.DinoQuiz`.
+   * Browser-only startup: fetch the i18n strings and the question bank once
+   * and stash the play-ready data on `window.DinoQuiz` so `loadQuestions()`
+   * and the screens can read it synchronously. Runs after the screen/game
+   * `<script>`s have registered themselves on `window.DinoQuiz`; the actual
+   * first paint is left to the `renderRoute()` call that follows it in the
+   * `load` listener below, so the route (Home vs. the privacy policy hash)
+   * is only ever rendered once.
    */
   function bootstrapBrowserApp() {
     if (typeof window === 'undefined') {
@@ -585,7 +1147,7 @@
 
     var fetchFn = typeof fetch === 'function' ? fetch : undefined;
     if (typeof fetchFn !== 'function') {
-      return renderHome();
+      return Promise.resolve(null);
     }
 
     return fetchJson(fetchFn, '/i18n/es.json')
@@ -598,15 +1160,38 @@
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to prepare the game data', error);
-      })
-      .then(function () {
-        return renderHome();
       });
   }
-  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+
+  // Only self-bootstrap in a real, unbundled browser: under Node/Jest,
+  // `require` always exists and the test files drive `startNewGame`/
+  // `renderHome`/`renderRoute` explicitly against their own `#app` container,
+  // so attaching this would race a jsdom-dispatched `load` event against
+  // whatever container the test currently has mounted.
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.addEventListener === 'function' &&
+    typeof require !== 'function'
+  ) {
     window.addEventListener('load', function () {
-      registerServiceWorker();
+      logPlatformSupportFallback(resolvePlatformSupport());
+      installLinkGuard();
+
+      var logger = resolveLogger();
+      if (logger) {
+        logger.logAppAccess({ locale: 'es' });
+      }
+
+      registerServiceWorker().then(function (registration) {
+        if (logger && registration) {
+          logger.logServiceWorkerInstall({ scope: registration.scope });
+        }
+      });
+
       bootstrapBrowserApp().then(function () {
+        if (logger) {
+          logger.logManifestLoad({ success: true });
+        }
         renderRoute();
         renderMuteToggle();
       });
@@ -620,10 +1205,15 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      resolvePlatformSupport: resolvePlatformSupport,
+      logPlatformSupportFallback: logPlatformSupportFallback,
+      resolveLogger: resolveLogger,
+      installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
       loadDinoQuizStorage: loadDinoQuizStorage,
       createBrowserHomeStorage: createBrowserHomeStorage,
+      resolveHomeStorage: resolveHomeStorage,
       loadPrivacyPolicyStrings: loadPrivacyPolicyStrings,
       navigateToPrivacyPolicy: navigateToPrivacyPolicy,
       navigateHome: navigateHome,
@@ -631,16 +1221,22 @@
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
+      renderAgeGate: renderAgeGate,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,
       prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
+      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
+      loadAdsRemovedState: loadAdsRemovedState,
+      persistAdsRemovedState: persistAdsRemovedState,
+      ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="triceratopsTitle">
+  <title id="triceratopsTitle">Triceratops</title>
+  <!-- Legs -->
+  <ellipse cx="140" cy="345" rx="26" ry="18" fill="#8D6E63" stroke="#4E342E" stroke-width="6"/>
+  <ellipse cx="220" cy="345" rx="26" ry="18" fill="#8D6E63" stroke="#4E342E" stroke-width="6"/>
+  <ellipse cx="290" cy="335" rx="24" ry="18" fill="#8D6E63" stroke="#4E342E" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="220" cy="260" rx="120" ry="85" fill="#A1887F" stroke="#4E342E" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="220" cy="278" rx="72" ry="48" fill="#FFF8E1"/>
+  <!-- Frill -->
+  <path d="M100 160 q-30 -60 40 -90 q40 30 40 70 z" fill="#8D6E63" stroke="#4E342E" stroke-width="8"/>
+  <!-- Head -->
+  <ellipse cx="130" cy="190" rx="68" ry="55" fill="#A1887F" stroke="#4E342E" stroke-width="8"/>
+  <!-- Horns -->
+  <path d="M95 150 l-22 -46 22 20 z" fill="#FFF8E1" stroke="#4E342E" stroke-width="5"/>
+  <path d="M145 145 l-4 -50 20 28 z" fill="#FFF8E1" stroke="#4E342E" stroke-width="5"/>
+  <path d="M75 195 l-40 5 30 -22 z" fill="#FFF8E1" stroke="#4E342E" stroke-width="5"/>
+  <!-- Eye -->
+  <circle cx="118" cy="175" r="10" fill="#4E342E"/>
+  <circle cx="121" cy="171" r="3.5" fill="#FFFFFF"/>
+  <!-- Smile -->
+  <path d="M85 210 q20 14 45 3" fill="none" stroke="#4E342E" stroke-width="5" stroke-linecap="round"/>
+</svg>

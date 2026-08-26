@@ -39,6 +39,26 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
+  test('precaches both the drawn and realistic/fallback variant for every dinosaur (TRIOFSND-195)', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const dinosaurs = [
+      'trex',
+      'triceratops',
+      'velociraptor',
+      'estegosaurio',
+      'braquiosaurio',
+      'ankylosaurus',
+      'pteranodon',
+    ];
+
+    dinosaurs.forEach((dinosaur) => {
+      expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.jpg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
+    });
+  });
+
   test('drops old caches and claims clients on activate', () => {
     expect(swContent).toMatch(/caches\s*\.\s*keys/);
     expect(swContent).toMatch(/caches\.delete/);

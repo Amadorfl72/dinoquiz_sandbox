@@ -1,0 +1,65 @@
+# Managed by TrioForge — anti-regression test gate. Fails the required check
+# only when the PR introduces test failures not already present on main.
+# Edit via TrioForge re-provisioning rather than by hand.
+name: trioforge-tests
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  trioforge-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '20'
+      - name: Anti-regression test diff (PR vs main)
+        run: |
+          set -eu
+          cat > /tmp/tf-diff.js <<'TFDIFF'
+
+const fs = require('fs');
+const fails = (p) => {
+  let names = new Set();
+  try {
+    const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+    for (const suite of (j.testResults || [])) {
+      // A suite that failed to even load reports no assertionResults; count it
+      // by its file path so a crashing/new broken suite is caught too.
+      const ars = suite.assertionResults || [];
+      if (suite.status === 'failed' && ars.length === 0) {
+        names.add('SUITE:' + (suite.name || suite.testFilePath || '?'));
+      }
+      for (const a of ars) {
+        if (a.status === 'failed') names.add((suite.name || '') + ' > ' + a.fullName);
+      }
+    }
+  } catch (e) { /* missing/empty report → treat as no known failures */ }
+  return names;
+};
+const pr = fails(process.argv[2]);
+const base = fails(process.argv[3]);
+const regressions = [...pr].filter((n) => !base.has(n));
+if (regressions.length) {
+  const tag = '::error::trioforge-tests: ';
+  for (const n of regressions) console.log(tag + 'NEW test failure: ' + n);
+  console.log(tag + regressions.length + ' new failing test(s) vs main — blocking');
+  process.exit(1);
+}
+console.log('trioforge-tests: no new failures vs main (' + pr.size + ' pre-existing carried).');
+
+TFDIFF
+          run_tests() {
+            # $1 = JSON report path. Runs in the current worktree.
+            npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+            npx --yes jest --json --outputFile="$1" --ci || true
+          }
+          # PR merge result (GitHub checks out the merge commit for pull_request).
+          run_tests /tmp/tf-pr.json
+          # Baseline: the base branch (main) in a detached worktree.
+          git worktree add --detach /tmp/tf-base "origin/${{ github.base_ref }}"
+          ( cd /tmp/tf-base && run_tests /tmp/tf-base.json )
+          node /tmp/tf-diff.js /tmp/tf-pr.json /tmp/tf-base.json

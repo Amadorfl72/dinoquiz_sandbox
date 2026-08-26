@@ -11,6 +11,18 @@
  * readers announce it as one coherent sentence as soon as the screen
  * renders, in addition to the visible elements being individually readable.
  *
+ * Ads (TRIOFSND-97, AC-20/AC-21): a discreet banner and an optional, clearly
+ * labeled rewarded ad render below the actions row -- but only while
+ * `options.adsRemoved` is not `true`. That flag is read from local storage
+ * by the caller (see `renderResultsFor` in public/scripts/main.js, which
+ * mirrors the `dinoquiz:adsRemoved` key the home screen's remove-ads
+ * purchase button sets); this screen stays a pure, DOM-only component that
+ * doesn't touch storage itself, consistent with how `onPlayAgain`/`onExit`
+ * are handled. Watching the rewarded ad is entirely optional and never
+ * blocks "Volver a jugar" -- if `options.onWatchRewardedAd` is omitted the
+ * button simply renders with no effect, per the PRD's "si no se ve el
+ * rewarded, la partida funciona igual".
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -19,6 +31,18 @@
  * `src/i18n` loader under Node. It registers on
  * `window.DinoQuiz.screens.renderResultsScreen`; the canonical
  * `src/screens/ResultsScreen.js` re-exports this file.
+ *
+ * Level progress UI (TRIOFSND-206): three independent, optional pieces of
+ * level state render alongside the existing score/stars for the level just
+ * played -- `options.level` (which level this result is for),
+ * `options.levelOutcome` (the `gameFlow.js` `resolveLevelOutcome`/
+ * `completeLevel` shape, resolved into an always-positive message describing
+ * whether the next level unlocked or the game ended, and why), and
+ * `options.maxLevelUnlocked` (the highest level unlocked on this device so
+ * far). None of the three touch storage or expose the child's age band --
+ * this screen stays a pure, DOM-only component, same as `options.adsRemoved`
+ * above. Omitting all three renders exactly what this screen rendered before
+ * TRIOFSND-206.
  */
 
 (function () {
@@ -35,7 +59,9 @@
 
   // Content-guide guard: words that would read as negative/discouraging to a
   // 6-8 year old. Motivational messages must never contain any of these
-  // (matched as whole, accent-stripped words, not substrings).
+  // (matched as whole, accent-stripped words, not substrings). Exported so
+  // other screens (e.g. QuestionScreen's failure feedback, TRIOFSND-91) can
+  // audit their own copy against the same list instead of duplicating it.
   var BANNED_WORDS = new Set([
     'mal',
     'malo',
@@ -68,6 +94,34 @@
     'tonta',
   ]);
 
+  // Content-guide guard (TRIOFSND-91, AC-7): motivational messages must never
+  // contain negative/discouraging language. Also exposed through
+  // src/i18n/contentGuide.js so other screens (e.g. QuestionScreen's
+  // wrong-answer feedback) can share this same list without duplicating it.
+  function resolveContentGuide() {
+    return typeof require === 'function' ? require('../../src/i18n/contentGuide') : null;
+  }
+
+  // Kept as a thin wrapper (delegating to the shared content guide when
+  // available) because it is exposed on `api.normalizeToWords` and reused by
+  // questionScreen.js's copy audit. The TRIOFSND-91 refactor moved the
+  // canonical implementation into src/i18n/contentGuide.js but left this
+  // reference dangling on `api` — restoring it un-poisons every suite that
+  // requires resultsScreen.js (was: ReferenceError on module load).
+  function normalizeToWords(text) {
+    var contentGuide = resolveContentGuide();
+    if (contentGuide) {
+      return contentGuide.normalizeToWords(text);
+    }
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
   function resolveStrings(options) {
     options = options || {};
     if (options.strings) {
@@ -79,16 +133,6 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.results : null;
-  }
-
-  function normalizeToWords(text) {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(Boolean);
   }
 
   function calculateStars(score) {
@@ -109,16 +153,15 @@
       return ['messages must be a non-empty array of strings'];
     }
 
+    var contentGuide = resolveContentGuide();
+
     messages.forEach(function (message, index) {
       if (typeof message !== 'string' || message.trim() === '') {
         errors.push('message at index ' + index + ' must be a non-empty string');
         return;
       }
 
-      var words = normalizeToWords(message);
-      var bannedWordsFound = words.filter(function (word) {
-        return BANNED_WORDS.has(word);
-      });
+      var bannedWordsFound = contentGuide ? contentGuide.findBannedWords(message) : [];
       if (bannedWordsFound.length > 0) {
         errors.push(
           'message at index ' + index + ' ("' + message + '") contains negative language: ' + bannedWordsFound.join(', ')
@@ -146,6 +189,34 @@
     }, template);
   }
 
+  // Level progression outcome (TRIOFSND-206): `options.levelOutcome` mirrors
+  // the shape `gameFlow.js`'s `resolveLevelOutcome`/`completeLevel` already
+  // return -- `{ gameOver, nextLevel, level, correctCount, reason }` -- so a
+  // caller can pass that result straight through. `reason` picks the
+  // always-positive copy to show: unlocking the next level, finishing at
+  // MAX_LEVEL, ending for insufficient score, or the age-restricted single
+  // level ending -- never the child's age band or the raw correctCount.
+  function resolveLevelOutcomeMessage(strings, levelOutcome) {
+    if (!levelOutcome || typeof levelOutcome !== 'object') {
+      return null;
+    }
+
+    var levelOutcomeStrings = (strings && strings.levelOutcome) || {};
+
+    switch (levelOutcome.reason) {
+      case 'level_up':
+        return formatTemplate(levelOutcomeStrings.levelUp || '', { nextLevel: levelOutcome.nextLevel });
+      case 'completed_all_levels':
+        return levelOutcomeStrings.completedAllLevels || '';
+      case 'insufficient_score':
+        return levelOutcomeStrings.insufficientScore || '';
+      case 'age_restricted':
+        return levelOutcomeStrings.ageRestricted || '';
+      default:
+        return null;
+    }
+  }
+
   function renderResultsScreen(container, options) {
     options = options || {};
     var strings = resolveStrings(options);
@@ -169,6 +240,15 @@
     heading.className = 'results-screen__heading';
     heading.textContent = strings.heading;
 
+    // TRIOFSND-206: identifies which level this result belongs to -- never
+    // the child's age band, which stays out of this screen entirely.
+    var levelEl = null;
+    if (typeof options.level === 'number') {
+      levelEl = document.createElement('p');
+      levelEl.className = 'results-screen__level';
+      levelEl.textContent = formatTemplate(strings.levelFormat, { level: options.level });
+    }
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'results-screen__score';
     scoreEl.textContent = formatTemplate(strings.scoreFormat, { score: score, total: total });
@@ -183,17 +263,51 @@
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
 
+    // TRIOFSND-206: whether the next level unlocked, or the game ended (at
+    // MAX_LEVEL or for insufficient score) -- see resolveLevelOutcomeMessage.
+    var levelOutcomeMessage = resolveLevelOutcomeMessage(strings, options.levelOutcome);
+    var levelOutcomeEl = null;
+    if (levelOutcomeMessage) {
+      levelOutcomeEl = document.createElement('p');
+      levelOutcomeEl.className = 'results-screen__level-outcome';
+      levelOutcomeEl.textContent = levelOutcomeMessage;
+    }
+
+    // TRIOFSND-206: the highest level unlocked on this device so far. Read
+    // from local storage by the caller (this screen stays a pure, DOM-only
+    // component, same as `options.adsRemoved` above).
+    var maxLevelUnlockedEl = null;
+    if (typeof options.maxLevelUnlocked === 'number') {
+      maxLevelUnlockedEl = document.createElement('p');
+      maxLevelUnlockedEl.className = 'results-screen__max-level-unlocked';
+      maxLevelUnlockedEl.textContent = formatTemplate(strings.maxLevelUnlockedFormat, {
+        maxLevel: options.maxLevelUnlocked,
+      });
+    }
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'results-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
     announcementEl.setAttribute('aria-live', 'polite');
-    announcementEl.textContent = formatTemplate(strings.summaryAnnouncement, {
-      score: score,
-      total: total,
-      stars: stars,
-      maxStars: MAX_STARS,
-      message: message,
-    });
+    var announcementParts = [
+      formatTemplate(strings.summaryAnnouncement, {
+        score: score,
+        total: total,
+        stars: stars,
+        maxStars: MAX_STARS,
+        message: message,
+      }),
+    ];
+    if (levelEl) {
+      announcementParts.push(levelEl.textContent);
+    }
+    if (levelOutcomeEl) {
+      announcementParts.push(levelOutcomeEl.textContent);
+    }
+    if (maxLevelUnlockedEl) {
+      announcementParts.push(maxLevelUnlockedEl.textContent);
+    }
+    announcementEl.textContent = announcementParts.join(' ');
 
     var actions = document.createElement('div');
     actions.className = 'results-screen__actions';
@@ -219,22 +333,90 @@
       actions.appendChild(exitButton);
     }
 
+    // AC-20/AC-21: hidden once the remove-ads purchase has been made.
+    var showAds = options.adsRemoved !== true;
+    var adsSection = null;
+    var adBanner = null;
+    var rewardedAdButton = null;
+    if (showAds) {
+      var adsStrings = strings.ads;
+
+      adsSection = document.createElement('div');
+      adsSection.className = 'results-screen__ads';
+      adsSection.setAttribute('role', 'complementary');
+      adsSection.setAttribute('aria-label', adsStrings.groupLabel);
+
+      adBanner = document.createElement('div');
+      adBanner.className = 'results-screen__ad-banner';
+
+      var adBannerBadge = document.createElement('span');
+      adBannerBadge.className = 'results-screen__ad-badge';
+      adBannerBadge.textContent = adsStrings.bannerBadge;
+
+      var adBannerMessage = document.createElement('p');
+      adBannerMessage.className = 'results-screen__ad-banner-message';
+      adBannerMessage.textContent = adsStrings.bannerMessage;
+
+      adBanner.appendChild(adBannerBadge);
+      adBanner.appendChild(adBannerMessage);
+
+      rewardedAdButton = document.createElement('button');
+      rewardedAdButton.type = 'button';
+      rewardedAdButton.className = 'results-screen__rewarded-ad-button';
+      rewardedAdButton.setAttribute('aria-label', adsStrings.rewardedBadge + ': ' + adsStrings.rewardedButton);
+
+      var rewardedAdBadge = document.createElement('span');
+      rewardedAdBadge.className = 'results-screen__ad-badge';
+      rewardedAdBadge.setAttribute('aria-hidden', 'true');
+      rewardedAdBadge.textContent = adsStrings.rewardedBadge;
+
+      var rewardedAdLabel = document.createElement('span');
+      rewardedAdLabel.textContent = adsStrings.rewardedButton;
+
+      rewardedAdButton.appendChild(rewardedAdBadge);
+      rewardedAdButton.appendChild(rewardedAdLabel);
+      if (typeof options.onWatchRewardedAd === 'function') {
+        rewardedAdButton.addEventListener('click', options.onWatchRewardedAd);
+      }
+
+      adsSection.appendChild(adBanner);
+      adsSection.appendChild(rewardedAdButton);
+    }
+
     root.appendChild(heading);
+    if (levelEl) {
+      root.appendChild(levelEl);
+    }
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
+    if (levelOutcomeEl) {
+      root.appendChild(levelOutcomeEl);
+    }
+    if (maxLevelUnlockedEl) {
+      root.appendChild(maxLevelUnlockedEl);
+    }
     root.appendChild(announcementEl);
     root.appendChild(actions);
+    if (adsSection) {
+      root.appendChild(adsSection);
+    }
     container.appendChild(root);
 
     return {
       root: root,
+      levelEl: levelEl,
       scoreEl: scoreEl,
       starsEl: starsEl,
       messageEl: messageEl,
+      levelOutcomeEl: levelOutcomeEl,
+      maxLevelUnlockedEl: maxLevelUnlockedEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,
+      adsSection: adsSection,
+      adBanner: adBanner,
+      rewardedAdButton: rewardedAdButton,
     };
   }
 
@@ -244,9 +426,11 @@
     MAX_STARS: MAX_STARS,
     STAR_TIERS: STAR_TIERS,
     BANNED_WORDS: BANNED_WORDS,
+    normalizeToWords: normalizeToWords,
     calculateStars: calculateStars,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
+    resolveLevelOutcomeMessage: resolveLevelOutcomeMessage,
     renderResultsScreen: renderResultsScreen,
   };
 

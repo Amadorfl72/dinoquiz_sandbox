@@ -8,3 +8,4 @@ build/
 test-results/
 playwright-report/
 blob-report/
+test-output.txt
