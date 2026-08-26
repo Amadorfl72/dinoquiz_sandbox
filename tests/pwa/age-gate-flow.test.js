@@ -32,7 +32,10 @@ const {
   question: questionStrings,
 } = require('../../public/i18n/es.json');
 
-function buildQuestion(id) {
+// `level` defaults to 1 (TRIOFSND-207's multi-level orchestration reads it
+// from every question) so every existing single-level scenario here still
+// gets a single, always-valid level-1 pool.
+function buildQuestion(id, level) {
   return {
     id,
     dinosaur: 'trex',
@@ -42,11 +45,20 @@ function buildQuestion(id) {
     funFact: `Dato curioso ${id}`,
     image: 'dinosaurs/trex.png',
     imageRealistic: 'dinosaurs/realista/trex.png',
+    level: level || 1,
   };
 }
 
-function buildQuestionBank(count) {
-  return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
+function buildQuestionBank(count, level) {
+  return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`, level));
+}
+
+/** A flat bank covering every level in `levels` (10 questions each), for scenarios that unlock past level 1. */
+function buildLeveledQuestionBank(levels) {
+  return levels.reduce(
+    (all, level) => all.concat(buildQuestionBank(10, level).map((question, index) => ({ ...question, id: `q-l${level}-${index}` }))),
+    []
+  );
 }
 
 async function answerCurrentQuestion(container, { correct }) {
@@ -128,7 +140,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
   }
 
   test('6 años ("6 años") ven la variante de dibujo, nunca la realista', async () => {
-    await startFromHome(buildQuestionBank(2));
+    await startFromHome(buildQuestionBank(10));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
@@ -139,7 +151,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
   });
 
   test('7 años ven la variante de imagen realista', async () => {
-    await startFromHome(buildQuestionBank(2));
+    await startFromHome(buildQuestionBank(10));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
@@ -149,7 +161,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
   });
 
   test('8 años o más ven la variante de imagen realista', async () => {
-    await startFromHome(buildQuestionBank(2));
+    await startFromHome(buildQuestionBank(10));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
@@ -169,6 +181,9 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: true });
     }
+    // TRIOFSND-207: finishing a level persists/reads maxUnlockedLevel through
+    // the (Promise-based) storage service before Resultados renders.
+    await jest.advanceTimersByTimeAsync(0);
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
     getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
@@ -180,7 +195,10 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
   });
 
   test('una selección de "8 años o más" también persiste sin volver a preguntar tras "Volver a jugar"', async () => {
-    const questions = buildQuestionBank(10);
+    // TRIOFSND-207: 10/10 aciertos as an 8+ year old unlocks level 2 (>=6
+    // aciertos), so "Volver a jugar" here continues straight into it -- a
+    // second level's worth of questions must exist for that to succeed.
+    const questions = buildLeveledQuestionBank([1, 2]);
     await startFromHome(questions);
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
@@ -190,6 +208,9 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: true });
     }
+    // TRIOFSND-207: finishing a level persists/reads maxUnlockedLevel through
+    // the (Promise-based) storage service before Resultados renders.
+    await jest.advanceTimersByTimeAsync(0);
 
     getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
 
@@ -295,6 +316,9 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: i % 2 === 0 });
     }
+    // TRIOFSND-207: finishing a level persists/reads maxUnlockedLevel through
+    // the (Promise-based) storage service before Resultados renders.
+    await jest.advanceTimersByTimeAsync(0);
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
     getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
@@ -303,6 +327,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: true });
     }
+    await jest.advanceTimersByTimeAsync(0);
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
     getByRole(container, 'button', { name: resultsStrings.exitButton }).click();
