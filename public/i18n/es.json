@@ -12,6 +12,7 @@
       "label": "Nota para madres y padres",
       "message": "Esta app no usa cuentas ni guarda datos en la nube: todo el progreso (puntuación, racha y datos curiosos descubiertos) se guarda solo en este dispositivo. Si reinstalas la app o cambias de dispositivo, ese progreso se perderá."
     },
+    "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
     "globalControls": {
       "groupLabel": "Controles globales",
       "muteButton": {
@@ -142,6 +143,7 @@
     "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
     "levelFormat": "Nivel {level}",
     "maxLevelUnlockedFormat": "Nivel máximo desbloqueado: {maxLevel}",
+    "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
     "levelOutcome": {
       "levelUp": "¡Genial! Has desbloqueado el nivel {nextLevel}.",
       "completedAllLevels": "¡Enhorabuena! Has completado todos los niveles de DinoQuiz.",

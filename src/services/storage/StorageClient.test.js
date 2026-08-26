@@ -143,6 +143,18 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('discoveredFunFacts')).toEqual(['trex-01', 'triceratops-02']);
   });
 
+  it('getDiscoveredFunFactsCount reflects the number of distinct discovered fun facts (TRIOFSND-129)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getDiscoveredFunFactsCount()).toBe(0);
+
+    await storage.markFunFactDiscovered('trex-01');
+    await storage.markFunFactDiscovered('trex-01');
+    await storage.markFunFactDiscovered('triceratops-02');
+
+    expect(await storage.getDiscoveredFunFactsCount()).toBe(2);
+  });
+
   it('only raises bestScore and maxStreak when the new value is higher', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 

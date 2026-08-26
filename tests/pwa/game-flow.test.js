@@ -310,6 +310,41 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
   });
 
+  test('TRIOFSND-129: onAnswer registers the fun fact as discovered, on both a hit and a miss', async () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = { markFunFactDiscovered: jest.fn().mockResolvedValue(undefined) };
+
+    // previousQuestionIds (8th slot) is left undefined so the positional-drift
+    // compatibility shim in startNewGame doesn't need to guess where `storage`
+    // belongs; analyticsStorage/storage (9th/10th) are set directly instead.
+    startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
+
+    await answerCurrentQuestion(container, { correct: true });
+    expect(storage.markFunFactDiscovered).toHaveBeenNthCalledWith(1, 'q-0');
+
+    await answerCurrentQuestion(container, { correct: false });
+    expect(storage.markFunFactDiscovered).toHaveBeenNthCalledWith(2, 'q-1');
+
+    expect(storage.markFunFactDiscovered).toHaveBeenCalledTimes(2);
+  });
+
+  test('TRIOFSND-129: a duplicate tap on an already-answered question does not register the fun fact a second time', async () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = { markFunFactDiscovered: jest.fn().mockResolvedValue(undefined) };
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
+
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    buttons[1].click(); // wrong answer first (correctAnswerIndex is 0)
+    buttons[0].click(); // second tap on the same, already-answered question: ignored
+
+    expect(storage.markFunFactDiscovered).toHaveBeenCalledTimes(1);
+  });
+
   test('TRIOFSND-101: "Volver a jugar" avoids repeating the previous game\'s questions when the bank has enough fresh candidates (AC-9)', async () => {
     jest.useFakeTimers();
     try {
@@ -778,6 +813,51 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     expect(container.textContent).toContain('0/10');
     expect(options.score).toBe(0);
     expect(options.maxStreak).toBe(0);
+  });
+});
+
+describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts progress', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('reflects the fun facts discovered during the just-finished game, out of the full loaded bank', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    const capturedOptions = [];
+    const renderResultsScreen = renderers.renderResultsScreen;
+    renderers.renderResultsScreen = (resultsContainer, options) => {
+      capturedOptions.push(options);
+      return renderResultsScreen(resultsContainer, options);
+    };
+
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
+      for (let i = 0; i < 10; i += 1) {
+        await answerCurrentQuestion(container, { correct: true });
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(capturedOptions[0].discoveredFunFactsCount).toBe(10);
+    expect(capturedOptions[0].totalFunFacts).toBe(10);
+    expect(container.textContent).toContain(strings.funFactsProgressFormat.replace('{count}', '10').replace('{total}', '10'));
   });
 });
 
