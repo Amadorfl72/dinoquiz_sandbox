@@ -16,7 +16,10 @@ function selectAgeGateOption(container) {
   getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
 }
 
-function buildQuestion(id) {
+// `level` defaults to 1 so every existing caller that doesn't care about
+// multi-level orchestration (TRIOFSND-207) still gets a single, always-valid
+// level-1 pool -- exactly like before that feature existed.
+function buildQuestion(id, level) {
   return {
     id,
     dinosaur: 'trex',
@@ -25,11 +28,20 @@ function buildQuestion(id) {
     correctAnswerIndex: 0,
     funFact: `Dato curioso ${id}`,
     image: 'dinosaurs/trex.png',
+    level: level || 1,
   };
 }
 
-function buildQuestionBank(count) {
-  return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`));
+function buildQuestionBank(count, level) {
+  return Array.from({ length: count }, (_, index) => buildQuestion(`q-${index}`, level));
+}
+
+/** A flat bank covering every level in `levels` (10 questions each), for TRIOFSND-207's level-chaining scenarios. */
+function buildLeveledQuestionBank(levels) {
+  return levels.reduce((all, level) => all.concat(buildQuestionBank(10, level).map((question, index) => ({
+    ...question,
+    id: `q-l${level}-${index}`,
+  }))), []);
 }
 
 // Answers the currently visible question and advances manually via
@@ -946,14 +958,207 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
       try {
         playButton.click();
         selectAgeGateOption(container);
+        // TRIOFSND-207: a level-1-only bank has no level 2 to unlock, so this
+        // stays at level 1 -- score doesn't matter to what's under test here
+        // (the ads-removed flag), but leveling up would need a real level 2
+        // pool this fixture doesn't provide.
         for (let i = 0; i < 10; i += 1) {
-          await answerCurrentQuestion(container, { correct: true });
+          await answerCurrentQuestion(container, { correct: false });
         }
+        // TRIOFSND-207: finishing a level persists/reads maxUnlockedLevel
+        // through the (async, Promise-based) storage service before
+        // Resultados renders -- let that settle before asserting on the DOM.
+        await jest.advanceTimersByTimeAsync(0);
       } finally {
         jest.useRealTimers();
       }
 
+      expect(container.querySelector('.results-screen')).not.toBeNull();
       expect(container.querySelector('.results-screen__ads')).toBeNull();
+    });
+  });
+});
+
+describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/terminar) and safe exit on level generation failure', () => {
+  let container;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+
+    // jsdom has no real media playback; stub it out like the sibling suite above.
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    container.remove();
+  });
+
+  /** Plays every question of the currently rendered level following a hit/miss pattern (C/F), then lets the async level-completion work (maxUnlockedLevel persistence) settle. */
+  async function playLevelWithPattern(pattern) {
+    for (const mark of pattern.split('')) {
+      await answerCurrentQuestion(container, { correct: mark === 'C' });
+    }
+    await jest.advanceTimersByTimeAsync(0);
+  }
+
+  test('restricción 6-7 años: el juego siempre termina tras el nivel 1, aunque la puntuación sea perfecta', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    // A level 2 pool exists too, so a wrong "always unlocks" implementation
+    // would be caught by this test instead of failing to generate anyway.
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'six', randomFn: () => 0 });
+
+    await playLevelWithPattern('CCCCCCCCCC');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.ageRestricted);
+    expect(container.querySelector('.results-screen__level')).toHaveTextContent('1');
+
+    // "Volver a jugar" starts over at level 1 (game over, whatever the score).
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+    expect(container.querySelector('.age-gate-screen')).toBeNull();
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
+  });
+
+  test('desbloqueo con 8 años: >=6 aciertos desbloquea y continúa en el nivel siguiente, persistiendo el nivel máximo desbloqueado en el dispositivo', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    expect(await storage.getMaxUnlockedLevel()).toBe(1);
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      randomFn: () => 0,
+      storage,
+    });
+
+    // 6/10 is exactly the level-up threshold (gameFlow.js's LEVEL_UP_MIN_CORRECT).
+    await playLevelWithPattern('CCCCCCFFFF');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '2'));
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('2');
+
+    // Persistence (TRIOFSND-205): the unlocked level survives independently
+    // of the rendered screen, readable through the same storage instance.
+    expect(await storage.getMaxUnlockedLevel()).toBe(2);
+
+    // "Volver a jugar" continues straight into the already-unlocked level 2
+    // -- no age gate, no fresh level 1.
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+    expect(container.querySelector('.age-gate-screen')).toBeNull();
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('2');
+  });
+
+  test('fin por puntuación insuficiente: <6 aciertos en un nivel intermedio termina la partida sin desbloquear el siguiente nivel', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    // 5/10 is one short of the level-up threshold.
+    await playLevelWithPattern('CCCCCFFFFF');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.insufficientScore);
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toBeNull();
+
+    // "Volver a jugar" starts a fresh level 1 game, not level 2.
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
+  });
+
+  test('fin en nivel 5: la partida siempre termina al completar el nivel 5 (MAX_LEVEL), sea cual sea la puntuación', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10, 5);
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      level: 5,
+      randomFn: () => 0,
+    });
+
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('5');
+
+    await playLevelWithPattern('CCCCCCCCCC');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.completedAllLevels);
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toBeNull();
+  });
+
+  describe('salida segura a Inicio cuando gameFlow no puede generar un nivel (menos de 10 preguntas válidas)', () => {
+    let consoleErrorSpy;
+
+    beforeEach(() => {
+      consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    test('el propio nivel 1 no se puede generar: se muestra Inicio en vez de una partida rota', async () => {
+      const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      // Only 5 valid level-1 questions -- below gameFlow.js's QUESTIONS_PER_GAME (10).
+      const questions = buildQuestionBank(5, 1);
+      const fetchFn = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+      });
+
+      // The safe exit renders Inicio via renderHome(), which resolves
+      // asynchronously (it awaits the i18n fetch) -- await it directly.
+      await startLevelGame(container, renderers, questions, document, fetchFn, { ageBand: 'eight-plus' });
+
+      expect(container.querySelector('.question-screen')).toBeNull();
+
+      // No crash, no broken screen: back to a normal, playable Inicio.
+      expect(getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton })).toBeInTheDocument();
+
+      // The diagnostic never carries the child's age band or any answer --
+      // only the technical level/count gameFlow.js's startLevel already logs.
+      const serializedLogs = JSON.stringify(consoleErrorSpy.mock.calls).toLowerCase();
+      expect(serializedLogs).not.toContain('eight-plus');
+      expect(serializedLogs).not.toContain('ageband');
+    });
+
+    test('el nivel siguiente no se puede generar al desbloquearlo: sale a Inicio en vez de prometer un nivel roto', async () => {
+      const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      // Level 1 is complete (10 questions) but level 2 only has 4 -- fewer
+      // than gameFlow.js's QUESTIONS_PER_GAME (10) once unlocked.
+      const questions = buildQuestionBank(10, 1).concat(buildQuestionBank(4, 2));
+      const fetchFn = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ home: require('../../public/i18n/es.json').home }),
+      });
+
+      startLevelGame(container, renderers, questions, document, fetchFn, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+      // 10/10 unlocks level 2, which this bank can't actually generate.
+      await playLevelWithPattern('CCCCCCCCCC');
+
+      expect(container.querySelector('.results-screen')).toBeNull();
+      expect(getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton })).toBeInTheDocument();
+
+      const serializedLogs = JSON.stringify(consoleErrorSpy.mock.calls).toLowerCase();
+      expect(serializedLogs).not.toContain('eight-plus');
+      expect(serializedLogs).not.toContain('ageband');
     });
   });
 });

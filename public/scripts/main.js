@@ -377,7 +377,7 @@
    * whose `recordQuestionAnswered` call updates that question's historic
    * accuracy aggregate.
    */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext) {
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
@@ -396,7 +396,7 @@
       if (session.state.questionIndex >= session.questions.length) {
         onGameComplete(session.state);
       } else {
-        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage);
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext);
       }
     }
 
@@ -405,7 +405,7 @@
         renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
       0;
 
-    return renderers.renderQuestionScreen(container, question, {
+    var questionOptions = {
       score: session.state.score,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
@@ -467,7 +467,19 @@
         }
         advance();
       },
-    });
+    };
+
+    // TRIOFSND-207: `levelContext` is only set by the multi-level orchestrator
+    // (startLevelGame/playLevel below) -- the older flat, level-agnostic game
+    // (startNewGame) never passes it, so it keeps rendering with no progress
+    // row at all, exactly as before this feature existed.
+    if (levelContext && typeof levelContext.level === 'number') {
+      questionOptions.level = levelContext.level;
+      questionOptions.questionNumber = session.state.questionIndex + 1;
+      questionOptions.totalQuestions = session.questions.length;
+    }
+
+    return renderers.renderQuestionScreen(container, question, questionOptions);
   }
 
   /**
@@ -575,6 +587,237 @@
     );
 
     return session;
+  }
+
+  /**
+   * Multi-level orchestration (TRIOFSND-207): the real '¡Jugar!' entry point
+   * (see `finishRender`'s click handler below) plays through gameFlow.js's
+   * `startLevel`/`completeLevel`/`resolveLevelOutcome` (TRIOFSND-203) instead
+   * of the flat, single-level `startNewGame` above, chaining levels 1-5 as
+   * each level's outcome dictates: continue automatically isn't offered here
+   * -- a level always ends on Resultados first (with an always-positive
+   * message about what happened, TRIOFSND-206) and 'Volver a jugar' is what
+   * actually moves on, either into the just-unlocked next level or into a
+   * fresh level 1 once the game is over (age-restricted after level 1,
+   * insufficient score, or MAX_LEVEL completed).
+   */
+
+  /** Resolves ageGateScreen.js the same require-or-window way as resolveScreenRenderers/resolveGameFlow. */
+  function resolveAgeGateApi(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var fromWindow = (win && win.DinoQuiz && win.DinoQuiz.screens && win.DinoQuiz.screens.ageGate) || null;
+    if (fromWindow) {
+      return fromWindow;
+    }
+    return typeof require === 'function' ? require('../../src/screens/AgeGateScreen') : null;
+  }
+
+  /**
+   * Reads the child's already-selected age band (TRIOFSND-193/204) once,
+   * right before a level starts, so the whole level chain that follows
+   * decides continue/unlock/end from that single, frozen value rather than
+   * re-reading ageGateScreen's in-memory selection (which stays session-only
+   * and is never persisted or logged, per that screen's own privacy-by-design
+   * doc comment) at every level boundary.
+   */
+  function resolveCurrentAgeBand(win) {
+    var ageGate = resolveAgeGateApi(win);
+    return ageGate && typeof ageGate.getSelectedAgeBand === 'function' ? ageGate.getSelectedAgeBand() : null;
+  }
+
+  /**
+   * A `getQuestionsByLevel`-shaped resolver (see gameFlow.js's
+   * `getLevelQuestionPool`) over an already-loaded flat question array --
+   * either the real bank (`loadQuestions()`, level-tagged 1-5 in
+   * /data/questions.json) or a test fixture. Passed explicitly so
+   * `startLevel`/`completeLevel` never fall back to `src/data/questionBank`'s
+   * own `require`/`fs`-based resolution, which only works under Node/Jest;
+   * this one-line filter works identically there and in the real, bundler-less
+   * browser.
+   */
+  function buildGetQuestionsByLevel(questions) {
+    return function (level) {
+      return Array.isArray(questions)
+        ? questions.filter(function (question) {
+            return question && question.level === level;
+          })
+        : [];
+    };
+  }
+
+  /**
+   * Safe exit (TRIOFSND-207): when gameFlow can't generate a level's
+   * questions (fewer than QUESTIONS_PER_GAME valid entries for that level --
+   * `startLevel`'s own `level_generation_failed`, already logged with only
+   * the level and the count found, no personal data), the game cannot safely
+   * continue. The only sane recovery is the same destination "Salir" already
+   * uses -- Inicio -- so a single broken level never leaves the child stuck
+   * on a crashed or empty screen. The diagnostic below mirrors that: level
+   * and count only, never the child's age band or any answer.
+   */
+  function exitToHomeSafely(container, renderers, doc, fetchFn, failure) {
+    console.error(
+      'DinoQuiz: level generation failed (level=' +
+        (failure && failure.level) +
+        ', validQuestionCount=' +
+        (failure && failure.validQuestionCount) +
+        '), exiting safely to Inicio'
+    );
+
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      renderers.renderHomeScreen,
+      fetchFn,
+      homeStorage,
+      function () {
+        navigateToPrivacyPolicy();
+      },
+      homeStorage
+    );
+  }
+
+  /**
+   * Plays one already-started level (`levelGame`, as returned by
+   * `gameFlow.startLevel`/attached as `completeLevel`'s `nextLevelGame`) end
+   * to end, then resolves what happens next via `gameFlow.completeLevel` and
+   * hands off to `finishLevel`. `ctx` carries everything that must survive
+   * across the whole level chain: `ageBand` (resolved once, see
+   * `resolveCurrentAgeBand`), `randomFn`, `getQuestionsByLevel`, and the
+   * mute/ads (`storageObj`), analytics and per-question (`analyticsStorage`/
+   * `storage`) backends already threaded through the flat flow above.
+   */
+  function playLevel(container, renderers, questions, doc, fetchFn, levelGame, ctx) {
+    var gameFlow = resolveGameFlow();
+
+    return renderQuestionAt(
+      container,
+      renderers,
+      levelGame,
+      function (finalState) {
+        finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+
+        var outcome = gameFlow.completeLevel({
+          level: levelGame.level,
+          answers: finalState.answers,
+          ageBand: ctx.ageBand,
+          getQuestionsByLevel: ctx.getQuestionsByLevel,
+          randomFn: ctx.randomFn,
+        });
+
+        // The level just played is always resolved (gameOver/reason are
+        // final either way); only a next level that gameFlow tried and
+        // failed to generate needs the safe exit -- showing Resultados first
+        // would promise a level-up that can't actually be delivered.
+        if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+          exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+          return;
+        }
+
+        finishLevel(container, renderers, questions, doc, fetchFn, levelGame.level, finalState, outcome, ctx);
+      },
+      ctx.storageObj,
+      ctx.analyticsStorage,
+      ctx.storage,
+      { level: levelGame.level }
+    );
+  }
+
+  /**
+   * Renders Resultados for the level just finished, persisting a newly
+   * unlocked level (TRIOFSND-205) before reading back the device's highest
+   * unlocked level so Resultados can show it (TRIOFSND-206). 'Volver a
+   * jugar' either continues into the already-generated `outcome.nextLevelGame`
+   * (level-up) or starts a brand new game at level 1 (game over, whatever the
+   * reason); 'Salir' goes to Inicio, exactly like the flat flow's Resultados.
+   */
+  function finishLevel(container, renderers, questions, doc, fetchFn, level, finalState, outcome, ctx) {
+    var storage = ctx.storage;
+
+    var persistUnlock = function () {
+      if (!outcome.gameOver && storage && typeof storage.setMaxUnlockedLevel === 'function') {
+        return Promise.resolve(storage.setMaxUnlockedLevel(outcome.nextLevel));
+      }
+      return Promise.resolve(null);
+    };
+
+    var readMaxUnlockedLevel = function () {
+      return storage && typeof storage.getMaxUnlockedLevel === 'function'
+        ? Promise.resolve(storage.getMaxUnlockedLevel())
+        : Promise.resolve(null);
+    };
+
+    return persistUnlock()
+      .then(readMaxUnlockedLevel)
+      .then(function (maxLevelUnlocked) {
+        return renderers.renderResultsScreen(container, {
+          score: finalState.score,
+          maxStreak: finalState.maxStreak,
+          level: level,
+          levelOutcome: outcome,
+          maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+          // AC-20/AC-21: the banner/rewarded ad only render while this is false.
+          adsRemoved: loadAdsRemovedState(ctx.storageObj),
+          onPlayAgain: function () {
+            if (!outcome.gameOver && outcome.nextLevelGame) {
+              playLevel(container, renderers, questions, doc, fetchFn, outcome.nextLevelGame, ctx);
+            } else {
+              startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+            }
+          },
+          onExit: function () {
+            var homeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderers.renderHomeScreen,
+              fetchFn,
+              homeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              homeStorage
+            );
+          },
+        });
+      });
+  }
+
+  /**
+   * Starts (or restarts) the multi-level game at `ctx.level` (level 1 by
+   * default) -- the real '¡Jugar!' entry point uses this once the age gate
+   * resolves. `ctx.ageBand`, when omitted, is resolved here via
+   * `resolveCurrentAgeBand()` so a first call from Inicio always captures the
+   * age just selected; every subsequent level in the same game chain reuses
+   * that same frozen value (see `playLevel`/`finishLevel` above), never
+   * re-reading it.
+   */
+  function startLevelGame(container, renderers, questions, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var gameFlow = resolveGameFlow();
+    if (!gameFlow || !Array.isArray(questions) || questions.length === 0) {
+      return null;
+    }
+
+    var getQuestionsByLevel = ctx.getQuestionsByLevel || buildGetQuestionsByLevel(questions);
+    var resolvedCtx = {
+      ageBand: ctx.ageBand !== undefined ? ctx.ageBand : resolveCurrentAgeBand(),
+      randomFn: ctx.randomFn,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      getQuestionsByLevel: getQuestionsByLevel,
+    };
+
+    var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
+      getQuestionsByLevel: getQuestionsByLevel,
+      randomFn: ctx.randomFn,
+    });
+
+    if (levelGame && levelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, levelGame);
+    }
+
+    return playLevel(container, renderers, questions, doc, fetchFn, levelGame, resolvedCtx);
   }
 
   /**
@@ -787,6 +1030,13 @@
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
   var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
   var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
+  // TRIOFSND-205/207: same namespaced key `src/services/storage`'s
+  // StorageClient itself writes (`maxUnlockedLevel`), so both backends agree
+  // on the highest level unlocked on this device once a bundler wires the
+  // real service in. Level 1 is always accessible, hence the default of 1
+  // (mirrors src/services/storage/types.js's DEFAULT_STATE).
+  var MAX_UNLOCKED_LEVEL_KEY = 'dinoquiz:maxUnlockedLevel';
+  var DEFAULT_MAX_UNLOCKED_LEVEL = 1;
   var DISCOVERED_FUN_FACTS_KEY = 'dinoquiz:discoveredFunFacts';
 
   function createBrowserHomeStorage(win) {
@@ -797,6 +1047,7 @@
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
     memory[QUESTION_STATS_KEY] = {};
     memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
+    memory[MAX_UNLOCKED_LEVEL_KEY] = DEFAULT_MAX_UNLOCKED_LEVEL;
     memory[DISCOVERED_FUN_FACTS_KEY] = [];
 
     function readJSON(key) {
@@ -914,6 +1165,24 @@
           porcentaje_acierto: porcentaje,
         });
       },
+      // TRIOFSND-205: highest level (1-based) the child has unlocked on this
+      // device -- only this single number, never per-level answers or age.
+      getMaxUnlockedLevel: function () {
+        var level = readJSON(MAX_UNLOCKED_LEVEL_KEY);
+        return Promise.resolve(typeof level === 'number' ? level : DEFAULT_MAX_UNLOCKED_LEVEL);
+      },
+      // Monotonically increasing, mirroring StorageClient#setMaxUnlockedLevel:
+      // ignores any `level` that isn't a bigger integer than what's already
+      // unlocked.
+      setMaxUnlockedLevel: function (level) {
+        var current = readJSON(MAX_UNLOCKED_LEVEL_KEY);
+        current = typeof current === 'number' ? current : DEFAULT_MAX_UNLOCKED_LEVEL;
+        if (!Number.isInteger(level) || level <= current) {
+          return Promise.resolve(current);
+        }
+        writeJSON(MAX_UNLOCKED_LEVEL_KEY, level);
+        return Promise.resolve(level);
+      },
       // TRIOFSND-129: registers a "dato curioso" as seen on this device,
       // once per distinct funFactId (never a duplicate entry) -- mirrors
       // DinoQuizStorage#markFunFactDiscovered (src/services/storage/StorageClient.js).
@@ -958,6 +1227,19 @@
       },
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
+      },
+      // TRIOFSND-205/207: forwarded the same way as the tooltip methods above
+      // so `startLevelGame`/`finishLevel` can persist/read the highest
+      // unlocked level through this one resolved backend too.
+      getMaxUnlockedLevel: function () {
+        return typeof tooltipBackend.getMaxUnlockedLevel === 'function'
+          ? tooltipBackend.getMaxUnlockedLevel()
+          : Promise.resolve(DEFAULT_MAX_UNLOCKED_LEVEL);
+      },
+      setMaxUnlockedLevel: function (level) {
+        return typeof tooltipBackend.setMaxUnlockedLevel === 'function'
+          ? tooltipBackend.setMaxUnlockedLevel(level)
+          : Promise.resolve(DEFAULT_MAX_UNLOCKED_LEVEL);
       },
       // TRIOFSND-129: forwards fun-fact discovery tracking so both
       // `renderQuestionAt`'s onAnswer handler (recording) and the Home/
@@ -1133,11 +1415,17 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              // TRIOFSND-193: the age gate is shown right here -- after
-              // '¡Jugar!', before the game is prepared -- and only then does
-              // `startNewGame` run.
+              // TRIOFSND-193/207: the age gate is shown right here -- after
+              // '¡Jugar!', before the game is prepared -- and only once it
+              // resolves does `startLevelGame` retrieve that selection
+              // (`resolveCurrentAgeBand`) and start the multi-level game at
+              // level 1.
               renderAgeGate(container, renderers, resources && resources.ageGate, function () {
-                startNewGame(container, renderers, questions, doc, fetchFn, undefined, adsStorage, undefined, storage, storage);
+                startLevelGame(container, renderers, questions, doc, fetchFn, {
+                  storageObj: adsStorage,
+                  analyticsStorage: storage,
+                  storage: storage,
+                });
               });
             }
           });
@@ -1342,6 +1630,13 @@
       loadQuestions: loadQuestions,
       prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
+      resolveAgeGateApi: resolveAgeGateApi,
+      resolveCurrentAgeBand: resolveCurrentAgeBand,
+      buildGetQuestionsByLevel: buildGetQuestionsByLevel,
+      exitToHomeSafely: exitToHomeSafely,
+      playLevel: playLevel,
+      finishLevel: finishLevel,
+      startLevelGame: startLevelGame,
       AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
@@ -1352,6 +1647,7 @@
       loadAdsRemovedState: loadAdsRemovedState,
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
+      MAX_UNLOCKED_LEVEL_KEY: MAX_UNLOCKED_LEVEL_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }
