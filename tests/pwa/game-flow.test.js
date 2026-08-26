@@ -1248,8 +1248,9 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(await storage.get('maxStreak')).toBe(6);
 
     // "Volver a jugar" continues straight into the already-unlocked level 2
-    // -- no age gate, no fresh level 1.
-    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+    // -- no age gate, no fresh level 1. The main button now reads the
+    // next-level label instead of the generic "Volver a jugar".
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
     expect(container.querySelector('.age-gate-screen')).toBeNull();
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('2');
   });

@@ -232,6 +232,19 @@
     }
   }
 
+  // Main button label (TRIOFSND-206 follow-up): mirrors the exact criterion
+  // `finishLevel`'s `onPlayAgain` handler in public/scripts/main.js uses to
+  // decide whether "Volver a jugar" continues into the next level
+  // (`!levelOutcome.gameOver && levelOutcome.nextLevelGame`) -- if so, the
+  // button reads `strings.nextLevelButtonFormat` interpolated with the real
+  // next level number instead of the generic `strings.playAgainButton`.
+  function resolvePlayAgainButtonLabel(strings, levelOutcome) {
+    if (levelOutcome && typeof levelOutcome === 'object' && !levelOutcome.gameOver && levelOutcome.nextLevelGame) {
+      return formatTemplate(strings.nextLevelButtonFormat, { level: levelOutcome.nextLevel });
+    }
+    return strings.playAgainButton;
+  }
+
   function renderResultsScreen(container, options) {
     options = options || {};
     var strings = resolveStrings(options);
@@ -369,7 +382,7 @@
     var playAgainButton = document.createElement('button');
     playAgainButton.type = 'button';
     playAgainButton.className = 'results-screen__play-again-button';
-    playAgainButton.textContent = strings.playAgainButton;
+    playAgainButton.textContent = resolvePlayAgainButtonLabel(strings, options.levelOutcome);
     if (typeof options.onPlayAgain === 'function') {
       playAgainButton.addEventListener('click', options.onPlayAgain);
     }
@@ -497,6 +510,7 @@
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
     resolveLevelOutcomeMessage: resolveLevelOutcomeMessage,
+    resolvePlayAgainButtonLabel: resolvePlayAgainButtonLabel,
     renderResultsScreen: renderResultsScreen,
   };
 
