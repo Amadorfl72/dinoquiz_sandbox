@@ -214,7 +214,9 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     // the (Promise-based) storage service before Resultados renders.
     await jest.advanceTimersByTimeAsync(0);
 
-    getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
+    // 10/10 unlocked level 2, so the main button now reads the next-level
+    // label instead of the generic "Volver a jugar".
+    getByRole(container, 'button', { name: resultsStrings.nextLevelButtonFormat.replace('{level}', '2') }).click();
 
     expect(container.querySelector('.age-gate-screen')).toBeNull();
     expect(currentImageSrc(container)).toContain('/realista/');

@@ -278,6 +278,36 @@ describe('level progress UI (TRIOFSND-206)', () => {
     expect(maxLevelUnlockedEl).toHaveTextContent('3');
   });
 
+  test('the main button reads the next-level label when the next level was unlocked (same criterion as main.js\'s outcome.nextLevelGame)', () => {
+    const { playAgainButton } = renderResultsScreen(container, {
+      score: 8,
+      level: 2,
+      levelOutcome: {
+        gameOver: false,
+        nextLevel: 3,
+        level: 2,
+        correctCount: 8,
+        reason: 'level_up',
+        nextLevelGame: {},
+      },
+    });
+
+    expect(playAgainButton).toHaveTextContent(strings.nextLevelButtonFormat.replace('{level}', '3'));
+  });
+
+  test.each([
+    ['completed_all_levels', { gameOver: true, nextLevel: null, level: 5, correctCount: 9, reason: 'completed_all_levels' }],
+    ['insufficient_score', { gameOver: true, nextLevel: null, level: 2, correctCount: 4, reason: 'insufficient_score' }],
+    [
+      'level_up without a generated nextLevelGame',
+      { gameOver: false, nextLevel: 3, level: 2, correctCount: 8, reason: 'level_up' },
+    ],
+  ])('the main button keeps the generic play-again label for %s', (_label, levelOutcome) => {
+    const { playAgainButton } = renderResultsScreen(container, { score: 6, level: levelOutcome.level, levelOutcome });
+
+    expect(playAgainButton).toHaveTextContent(strings.playAgainButton);
+  });
+
   test('the aria-live summary announcement includes the level, outcome and max-level-unlocked info', () => {
     const { announcementEl } = renderResultsScreen(container, {
       score: 8,
