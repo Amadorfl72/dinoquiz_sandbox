@@ -12,6 +12,7 @@ const PERSISTED_KEYS = [
   'homeTooltipSeen',
   'analyticsEventCounts',
   'adsRemoved',
+  'scoreMetrics',
 ];
 
 function namespacedKey(key) {
@@ -37,7 +38,12 @@ function keyFromNamespaced(namespaced) {
 class DinoQuizStorage {
   #adapters;
   #activeAdapter = null;
-  #cache = { ...DEFAULT_STATE, discoveredFunFacts: [], analyticsEventCounts: {} };
+  #cache = {
+    ...DEFAULT_STATE,
+    discoveredFunFacts: [],
+    analyticsEventCounts: {},
+    scoreMetrics: { ...DEFAULT_STATE.scoreMetrics },
+  };
   #listeners = new Map();
   #initPromise = null;
 
@@ -142,6 +148,7 @@ class DinoQuizStorage {
       ...this.#cache,
       discoveredFunFacts: [...this.#cache.discoveredFunFacts],
       analyticsEventCounts: { ...this.#cache.analyticsEventCounts },
+      scoreMetrics: { ...this.#cache.scoreMetrics },
     };
   }
 
@@ -300,6 +307,33 @@ class DinoQuizStorage {
     const next = (counts[eventName] || 0) + 1;
     await this.set('analyticsEventCounts', { ...counts, [eventName]: next });
     return next;
+  }
+
+  /**
+   * Called once a game finishes (Resultados, TRIOFSND-98). Records the
+   * aggregated, non-PII `partida_completada` event via `recordEvent` and
+   * folds the final score into the on-device `scoreMetrics` aggregate
+   * (games completed, total score, average score) -- no backend, client-only,
+   * reusable for a future completion-rate metric alongside a "games started"
+   * counter (see `partida_iniciada`, TRIOFSND-67).
+   */
+  async recordGameCompleted(score) {
+    await this.recordEvent('partida_completada');
+
+    const current = await this.get('scoreMetrics');
+    const gamesCompleted = current.gamesCompleted + 1;
+    const totalScore = current.totalScore + score;
+    const updated = {
+      gamesCompleted,
+      totalScore,
+      averageScore: totalScore / gamesCompleted,
+    };
+    await this.set('scoreMetrics', updated);
+    return updated;
+  }
+
+  async getScoreMetrics() {
+    return this.get('scoreMetrics');
   }
 }
 

@@ -208,12 +208,6 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
   }
 
-  function formatTemplate(template, values) {
-    return Object.keys(values).reduce(function (result, key) {
-      return result.split('{' + key + '}').join(values[key]);
-    }, template);
-  }
-
   // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
   // curioso heading are the copy a child sees right after a miss, so they are
   // held to the same no-reproach standard as ResultsScreen's motivational
@@ -353,11 +347,17 @@
 
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
+    feedback.setAttribute('aria-live', 'polite');
 
+    // Single accessible result announcement (TRIOFSND-79, AC-14): `announcementEl`
+    // and `announcement` are two names for the SAME node (the return object
+    // below exposes both) -- there must be exactly one `role="status"`
+    // element per question, or a screen reader announces the outcome twice.
     var announcementEl = document.createElement('p');
     announcementEl.className = 'question-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
     announcementEl.setAttribute('aria-live', 'polite');
+    var announcement = announcementEl;
 
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
@@ -371,11 +371,6 @@
 
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
-
-    var announcement = document.createElement('p');
-    announcement.className = 'question-screen__announcement sr-only';
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
 
     var rewardedAdStrings = strings.rewardedAd || {};
 
@@ -464,9 +459,6 @@
             // acertaste!" feedback below, so no extra label is added.
             button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabel, button.textContent));
           }
-          // Descriptive label (TRIOFSND-90, AC-14) so a screen reader announces
-          // this as the correct answer even without seeing the green border.
-          button.setAttribute('aria-label', formatAnswerTemplate(strings.correctOptionAriaLabelFormat, button.textContent));
         } else if (index === selectedIndex) {
           button.classList.add(NEUTRAL_CLASS);
           // Neutral label (never "wrong"/"incorrect") for the tapped option (AC-7).
@@ -486,17 +478,14 @@
       }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
-      // Written synchronously, right here, so TalkBack/VoiceOver announce
-      // acierto/fallo and the correct option's text immediately after the
-      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
-      announcementEl.textContent = formatTemplate(
-        correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
-        { correctAnswer: correctAnswerText }
-      );
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
-      announcement.textContent = buildResultAnnouncement(strings, question, correct, score);
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo, the correct option's text, the dato curioso and the
+      // updated score as one coherent sentence — it never waits on the
+      // fun-fact reveal, a sound cue, or a timer (TRIOFSND-79/TRIOFSND-90, AC-14).
+      announcementEl.textContent = buildResultAnnouncement(strings, question, correct, score);
 
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
@@ -535,7 +524,6 @@
     root.appendChild(feedback);
     root.appendChild(announcementEl);
     root.appendChild(funFactBox);
-    root.appendChild(announcement);
     root.appendChild(rewardedAdCta);
     root.appendChild(rewardedAdStatus);
     root.appendChild(extraFunFactBox);

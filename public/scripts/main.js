@@ -420,6 +420,13 @@
       renderers,
       session,
       function (finalState) {
+        // TRIOFSND-98: landing on Resultados is "the game finished" -- record
+        // the aggregated, non-PII partida_completada event and fold the final
+        // score into the on-device average-score aggregate (client-only, no
+        // backend) right here, once per game, before Resultados renders.
+        if (analyticsStorage && typeof analyticsStorage.recordGameCompleted === 'function') {
+          analyticsStorage.recordGameCompleted(finalState.score);
+        }
         renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage);
       },
       storageObj,
@@ -548,6 +555,12 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  // On-device average-score aggregate (TRIOFSND-98): mirrors the shape
+  // src/services/storage's DinoQuizStorage#recordGameCompleted persists under
+  // its own `dinoquiz:scoreMetrics` namespaced key, so this no-bundler browser
+  // path and a future bundler-backed one agree on the same value.
+  var SCORE_METRICS_KEY = 'dinoquiz:scoreMetrics';
+  var EMPTY_SCORE_METRICS = { gamesCompleted: 0, totalScore: 0, averageScore: 0 };
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -555,6 +568,7 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[SCORE_METRICS_KEY] = EMPTY_SCORE_METRICS;
 
     function readJSON(key) {
       if (backend) {
@@ -631,6 +645,22 @@
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
       },
+      // TRIOFSND-98: records the aggregated, non-PII partida_completada event
+      // (via the same recordEvent counter above) and folds the final score
+      // into the on-device average-score aggregate, reusable for a future
+      // completion-rate metric.
+      recordGameCompleted: function (score) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.partida_completada = (counts.partida_completada || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var metrics = readJSON(SCORE_METRICS_KEY) || EMPTY_SCORE_METRICS;
+        var gamesCompleted = metrics.gamesCompleted + 1;
+        var totalScore = metrics.totalScore + score;
+        var updated = { gamesCompleted: gamesCompleted, totalScore: totalScore, averageScore: totalScore / gamesCompleted };
+        writeJSON(SCORE_METRICS_KEY, updated);
+        return Promise.resolve(updated);
+      },
     };
   }
 
@@ -656,6 +686,17 @@
       },
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
+      },
+      // TRIOFSND-92/TRIOFSND-98: forwards the repeatable, aggregated event
+      // counter (partida_iniciada, pregunta_respondida...) and the
+      // game-completion helper (partida_completada + average-score
+      // aggregate) so the real app-shell flow, not just tests that pass an
+      // explicit storage double, actually records them.
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
+      recordGameCompleted: function (score) {
+        return tooltipBackend.recordGameCompleted(score);
       },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
@@ -736,7 +777,7 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storage);
+        persistAdsRemovedState(true, resolvedMuteStorage);
       };
 
       function finishRender() {
@@ -753,7 +794,12 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storage, storage);
+              // The mute/ads-removed flags (TRIOFSND-66/TRIOFSND-97) are read
+              // and written through `resolvedMuteStorage` above (onToggleMute/
+              // onPurchase) -- startNewGame's `storageObj` must read from that
+              // same backend, or a purchase confirmed here would still show
+              // ads on this very game's Resultados screen.
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedMuteStorage, tooltipStorage);
             }
           });
         }

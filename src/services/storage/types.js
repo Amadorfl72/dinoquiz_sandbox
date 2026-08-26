@@ -1,4 +1,11 @@
 /**
+ * @typedef {Object} ScoreMetrics
+ * @property {number} gamesCompleted
+ * @property {number} totalScore
+ * @property {number} averageScore
+ */
+
+/**
  * @typedef {Object} DinoQuizPersistedState
  * @property {number} bestScore
  * @property {number} maxStreak
@@ -7,6 +14,7 @@
  * @property {boolean} homeTooltipSeen
  * @property {Object.<string, number>} analyticsEventCounts
  * @property {boolean} adsRemoved
+ * @property {ScoreMetrics} scoreMetrics
  */
 
 /** @type {DinoQuizPersistedState} */
@@ -18,6 +26,7 @@ const DEFAULT_STATE = {
   homeTooltipSeen: false,
   analyticsEventCounts: {},
   adsRemoved: false,
+  scoreMetrics: { gamesCompleted: 0, totalScore: 0, averageScore: 0 },
 };
 
 /**
