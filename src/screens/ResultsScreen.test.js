@@ -295,6 +295,31 @@ describe('level progress UI (TRIOFSND-206)', () => {
     expect(playAgainButton).toHaveTextContent(strings.nextLevelButtonFormat.replace('{level}', '3'));
   });
 
+  test('the main button is still an accessible <button> with the interpolated next-level name, and clicking it still calls onPlayAgain', () => {
+    const onPlayAgain = jest.fn();
+    const { playAgainButton } = renderResultsScreen(container, {
+      score: 8,
+      level: 2,
+      onPlayAgain,
+      levelOutcome: {
+        gameOver: false,
+        nextLevel: 2,
+        level: 1,
+        correctCount: 8,
+        reason: 'level_up',
+        nextLevelGame: {},
+      },
+    });
+
+    const expectedName = strings.nextLevelButtonFormat.replace('{level}', '2');
+    expect(playAgainButton.tagName).toBe('BUTTON');
+    expect(getByRole(container, 'button', { name: expectedName })).toBe(playAgainButton);
+
+    playAgainButton.click();
+
+    expect(onPlayAgain).toHaveBeenCalledTimes(1);
+  });
+
   test.each([
     ['completed_all_levels', { gameOver: true, nextLevel: null, level: 5, correctCount: 9, reason: 'completed_all_levels' }],
     ['insufficient_score', { gameOver: true, nextLevel: null, level: 2, correctCount: 4, reason: 'insufficient_score' }],
@@ -306,6 +331,25 @@ describe('level progress UI (TRIOFSND-206)', () => {
     const { playAgainButton } = renderResultsScreen(container, { score: 6, level: levelOutcome.level, levelOutcome });
 
     expect(playAgainButton).toHaveTextContent(strings.playAgainButton);
+  });
+
+  test.each([
+    ['game over with no next level unlocked (insufficient score)', { gameOver: true, nextLevel: null, level: 2, correctCount: 4, reason: 'insufficient_score' }],
+    ['max level already completed', { gameOver: true, nextLevel: null, level: 5, correctCount: 9, reason: 'completed_all_levels' }],
+  ])('the main button reads "Volver a jugar" and clicking it still calls onPlayAgain for %s', (_label, levelOutcome) => {
+    const onPlayAgain = jest.fn();
+    const { playAgainButton } = renderResultsScreen(container, {
+      score: 6,
+      level: levelOutcome.level,
+      levelOutcome,
+      onPlayAgain,
+    });
+
+    expect(getByRole(container, 'button', { name: strings.playAgainButton })).toBe(playAgainButton);
+
+    playAgainButton.click();
+
+    expect(onPlayAgain).toHaveBeenCalledTimes(1);
   });
 
   test('the aria-live summary announcement includes the level, outcome and max-level-unlocked info', () => {
