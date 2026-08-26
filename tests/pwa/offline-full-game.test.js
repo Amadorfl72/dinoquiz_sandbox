@@ -18,7 +18,7 @@ const i18n = require('../../public/i18n/es.json');
 const { results: resultsStrings, question: questionStrings } = i18n;
 const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 const { EXPECTED_QUESTION_COUNT } = require('../../src/data/questionBank');
-const { QUESTIONS_PER_GAME } = require('../../src/game/questionSelector');
+const { QUESTIONS_PER_GAME } = require('../../src/game/gameFlow');
 
 /** Mirrors the real browser bootstrap: resolves each question's dato_curioso i18n key into `funFact`. */
 function prepareQuestions(rawQuestions) {
