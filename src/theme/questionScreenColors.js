@@ -27,6 +27,17 @@ const QUESTION_SCREEN_COLORS = Object.freeze({
   // Extra dato curioso box unlocked by the rewarded ad: blue highlight,
   // distinct from the free dato curioso's yellow box.
   extraFunFact: Object.freeze({ background: '#E3F2FD', text: '#0D47A1' }),
+  // "Nivel" insignia (TRIOFSND-206): dark blue fill, reuses the existing
+  // `focusRingOnLight` token so this badge never introduces a new hue.
+  levelBadge: Object.freeze({ background: COLORS.focusRingOnLight, text: COLORS.white }),
+  // "Progreso" insignia (TRIOFSND-206): reuses the results screen's star
+  // color so level progress and star progress read as the same concept.
+  // `COLORS.stars` ('#9C6500') is the dark-amber shade already picked for
+  // AA (see designTokens.js) — do not confuse it with the brighter
+  // `focusRingOnDark`/palette amber ('#FBC02D'), which would fail white
+  // text at ~1.66:1. White on `COLORS.stars` measures ~4.91:1, above the
+  // 4.5:1 floor (see contrast.test.js).
+  progressBadge: Object.freeze({ background: COLORS.stars, text: COLORS.white }),
 });
 
 /**

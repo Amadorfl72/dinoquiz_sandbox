@@ -68,6 +68,16 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
     const { background, text } = QUESTION_SCREEN_COLORS.extraFunFact;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
+
+  test('the "Nivel" insignia meets AA (TRIOFSND-206)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.levelBadge;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the "Progreso" insignia meets AA (TRIOFSND-206)', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.progressBadge;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purchase controls)', () => {
