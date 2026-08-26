@@ -5,9 +5,12 @@
   "description": "DinoQuiz — PWA de quiz de dinosaurios (frontend puro, sin backend).",
   "scripts": {
     "test": "jest",
-    "test:ci": "jest --ci"
+    "test:ci": "jest --ci",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "jest": "^29.7.0",
