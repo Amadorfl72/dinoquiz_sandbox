@@ -5,17 +5,12 @@
  * TRIOFSND-204).
  *
  * Shown right after the '¡Jugar!' tap and before the game is prepared (see
- * public/scripts/main.js), so the app can tell apart three exact ages -- 6,
- * 7 and 8-or-more -- without ever asking for a birthdate or any other
- * identifying detail. Three large, clearly labeled buttons, each a real
+ * public/scripts/main.js), so the app can tell apart two age bands -- 7 years
+ * or younger, and 8-or-more -- without ever asking for a birthdate or any
+ * other identifying detail. Two large, clearly labeled buttons, each a real
  * `<button>` for native keyboard/focus support and >=48x48dp touch targets
  * (PRD AC-2), grouped under `role="group"` so assistive tech announces them
  * as a single choice.
- *
- * The three-way split (rather than the original two age bands) exists so a
- * future single-level restriction for 6-7 year olds can be told apart from
- * unlocking additional levels for 8+ year olds; this screen only captures
- * the exact age, it doesn't yet gate any content on it.
  *
  * Privacy by design (PRD G7): the selection is kept in a plain in-memory
  * module variable (`selectedAgeBand` below) for the running session only --
@@ -40,7 +35,6 @@
 
 (function () {
   var AGE_BANDS = {
-    SIX: 'six',
     SEVEN: 'seven',
     EIGHT_PLUS: 'eight-plus',
   };
@@ -49,7 +43,6 @@
   // means "don't change anything" -- the eight-plus age carries no restriction.
   var SAFE_DEFAULT_AGE_BAND = AGE_BANDS.EIGHT_PLUS;
 
-  var SIX_ICON = '🥚';
   var SEVEN_ICON = '🦕';
   var EIGHT_PLUS_ICON = '🦖';
 
@@ -62,7 +55,7 @@
   }
 
   function isKnownAgeBand(ageBand) {
-    return ageBand === AGE_BANDS.SIX || ageBand === AGE_BANDS.SEVEN || ageBand === AGE_BANDS.EIGHT_PLUS;
+    return ageBand === AGE_BANDS.SEVEN || ageBand === AGE_BANDS.EIGHT_PLUS;
   }
 
   function setSelectedAgeBand(ageBand) {
@@ -134,13 +127,6 @@
     optionsGroup.setAttribute('role', 'group');
     optionsGroup.setAttribute('aria-labelledby', title.id);
 
-    var sixButton = buildOptionButton(
-      'age-gate-screen__option--six',
-      SIX_ICON,
-      strings.sixOption,
-      AGE_BANDS.SIX,
-      options.onSelect
-    );
     var sevenButton = buildOptionButton(
       'age-gate-screen__option--seven',
       SEVEN_ICON,
@@ -156,7 +142,6 @@
       options.onSelect
     );
 
-    optionsGroup.appendChild(sixButton);
     optionsGroup.appendChild(sevenButton);
     optionsGroup.appendChild(eightPlusButton);
 
@@ -174,7 +159,6 @@
       title: title,
       instructions: instructions,
       optionsGroup: optionsGroup,
-      sixButton: sixButton,
       sevenButton: sevenButton,
       eightPlusButton: eightPlusButton,
     };

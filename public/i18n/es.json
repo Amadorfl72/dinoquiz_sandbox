@@ -31,8 +31,7 @@
   "ageGate": {
     "screenTitle": "¿Cuántos años tienes?",
     "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
-    "sixOption": "6 años",
-    "sevenOption": "7 años",
+    "sevenOption": "7 años o menos",
     "eightPlusOption": "8 años o más"
   },
   "privacyPolicy": {

@@ -3,8 +3,8 @@
 /**
  * Image style resolution service (TRIOFSND-194).
  *
- * Given the exact age selected in the age gate (public/scripts/ageGateScreen.js,
- * TRIOFSND-193/TRIOFSND-204: 'six' | 'seven' | 'eight-plus'), resolves which
+ * Given the age band selected in the age gate (public/scripts/ageGateScreen.js,
+ * TRIOFSND-193/TRIOFSND-204: 'seven' | 'eight-plus'), resolves which
  * visual variant of a question's dinosaur illustration to show -- 'dibujo'
  * (`question.image`, cartoon, matching the PRD's overall visual_direction)
  * for the youngest players, or 'realista' (`question.imageRealistic`) from

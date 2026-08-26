@@ -434,7 +434,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
   });
 
   describe('TRIOFSND-193: age gate shown between "¡Jugar!" and the prepared game', () => {
-    test('picking "6 años" also proceeds into the game', () => {
+    test('picking "7 años o menos" also proceeds into the game', () => {
       const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(10);
@@ -447,7 +447,8 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const rendered = renderHome(document, renderers.renderHomeScreen, fetchFn).then(() => {
         getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
 
-        getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
+        expect(ageGateStrings.sixOption).toBeUndefined();
+        getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
 
         expect(container.querySelector('.age-gate-screen')).toBeNull();
         expect(container.querySelector('.question-screen')).not.toBeNull();
@@ -1082,14 +1083,14 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     await jest.advanceTimersByTimeAsync(0);
   }
 
-  test('restricción 6-7 años: el juego siempre termina tras el nivel 1, aunque la puntuación sea perfecta', async () => {
+  test('restricción 7 años o menos: el juego siempre termina tras el nivel 1, aunque la puntuación sea perfecta', async () => {
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     // A level 2 pool exists too, so a wrong "always unlocks" implementation
     // would be caught by this test instead of failing to generate anyway.
     const questions = buildLeveledQuestionBank([1, 2]);
 
-    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'six', randomFn: () => 0 });
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'seven', randomFn: () => 0 });
 
     await playLevelWithPattern('CCCCCCCCCC');
 
