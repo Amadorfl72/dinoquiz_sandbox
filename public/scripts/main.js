@@ -202,6 +202,84 @@
     }
   }
 
+  // Progress persistence (TRIOFSND-85, AC): "descubiertos X/Y" datos
+  // curiosos, mejor puntuación y racha máxima. Same rationale and namespaced-
+  // key convention as MUTE_STORAGE_KEY/ADS_REMOVED_STORAGE_KEY above --
+  // src/services/storage already models bestScore/maxStreak/discoveredFunFacts
+  // (see StorageClient#recordScore/#recordStreak/#markFunFactDiscovered), but
+  // this no-bundler browser path reads/writes localStorage directly under the
+  // same `dinoquiz:*` keys so both paths agree once a bundler wires the real
+  // service in. Kept synchronous (unlike DinoQuizStorage's async API) so the
+  // progress indicator on Resultados always renders in the same tick the
+  // screen mounts, with no render-blocking storage round-trip.
+  var BEST_SCORE_STORAGE_KEY = 'dinoquiz:bestScore';
+  var MAX_STREAK_STORAGE_KEY = 'dinoquiz:maxStreak';
+  var DISCOVERED_FUN_FACTS_STORAGE_KEY = 'dinoquiz:discoveredFunFacts';
+
+  function readJsonState(key, storageObj, fallback) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return fallback;
+    }
+
+    try {
+      var raw = storageObj.getItem(key);
+      return raw !== null ? JSON.parse(raw) : fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function writeJsonState(key, value, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist progress state', error);
+    }
+  }
+
+  /** Compares this game's score/racha against the persisted bests, updating them if beaten, and returns the (possibly updated) all-time bests. */
+  function recordGameProgress(score, maxStreak, storageObj) {
+    var bestScore = readJsonState(BEST_SCORE_STORAGE_KEY, storageObj, 0);
+    if (typeof score === 'number' && score > bestScore) {
+      bestScore = score;
+      writeJsonState(BEST_SCORE_STORAGE_KEY, bestScore, storageObj);
+    }
+
+    var bestStreak = readJsonState(MAX_STREAK_STORAGE_KEY, storageObj, 0);
+    if (typeof maxStreak === 'number' && maxStreak > bestStreak) {
+      bestStreak = maxStreak;
+      writeJsonState(MAX_STREAK_STORAGE_KEY, bestStreak, storageObj);
+    }
+
+    return { bestScore: bestScore, maxStreak: bestStreak };
+  }
+
+  function loadDiscoveredFunFacts(storageObj) {
+    var discovered = readJsonState(DISCOVERED_FUN_FACTS_STORAGE_KEY, storageObj, []);
+    return Array.isArray(discovered) ? discovered : [];
+  }
+
+  /** Adds `funFactId` to the persisted set of discovered datos curiosos (deduplicated) -- called every time a new one is shown. */
+  function markFunFactDiscovered(funFactId, storageObj) {
+    if (typeof funFactId !== 'string' || funFactId === '') {
+      return loadDiscoveredFunFacts(storageObj);
+    }
+
+    var discovered = loadDiscoveredFunFacts(storageObj);
+    if (discovered.indexOf(funFactId) === -1) {
+      discovered = discovered.concat([funFactId]);
+      writeJsonState(DISCOVERED_FUN_FACTS_STORAGE_KEY, discovered, storageObj);
+    }
+
+    return discovered;
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   function resolveScreenRenderers(win) {
@@ -333,7 +411,7 @@
       if (session.state.questionIndex >= session.questions.length) {
         onGameComplete(session.state);
       } else {
-        renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage);
       }
     }
 
@@ -366,6 +444,9 @@
 
         autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
+      onFunFactShown: function (funFactId) {
+        markFunFactDiscovered(funFactId, storageObj);
+      },
       onNext: function () {
         if (session.state.questionIndex + 1 >= session.questions.length) {
           // TRIOFSND-95: question 10 was just answered — the final score is
@@ -382,11 +463,25 @@
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
+    // TRIOFSND-85: compares this game's score/racha against the persisted
+    // bests (updating them if beaten) and reads back the current discovered-
+    // facts count, all synchronously, so the progress indicator below is
+    // always correct as soon as Resultados mounts -- recalculated fresh even
+    // on a reopened app, never a stale value from earlier in the session.
+    var bests = recordGameProgress(finalState.score, finalState.maxStreak, storageObj);
+    var discoveredFunFacts = loadDiscoveredFunFacts(storageObj);
+
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
+      progress: {
+        bestScore: bests.bestScore,
+        maxStreak: bests.maxStreak,
+        discoveredCount: discoveredFunFacts.length,
+        totalFacts: Array.isArray(questions) ? questions.length : 0,
+      },
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
       },
@@ -942,6 +1037,12 @@
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
+      recordGameProgress: recordGameProgress,
+      loadDiscoveredFunFacts: loadDiscoveredFunFacts,
+      markFunFactDiscovered: markFunFactDiscovered,
+      BEST_SCORE_STORAGE_KEY: BEST_SCORE_STORAGE_KEY,
+      MAX_STREAK_STORAGE_KEY: MAX_STREAK_STORAGE_KEY,
+      DISCOVERED_FUN_FACTS_STORAGE_KEY: DISCOVERED_FUN_FACTS_STORAGE_KEY,
     };
   }
 })();

@@ -149,6 +149,12 @@
       "bannerMessage": "Descubre más aventuras con dinosaurios.",
       "rewardedBadge": "Anuncio",
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
+    },
+    "progress": {
+      "discoveredLabel": "Descubiertos {discovered}/{total}",
+      "discoveredAriaLabel": "Datos curiosos descubiertos: {discovered} de {total}",
+      "bestScoreLabel": "Mejor puntuación: {bestScore}",
+      "maxStreakLabel": "Racha máxima: {maxStreak}"
     }
   },
   "question": {

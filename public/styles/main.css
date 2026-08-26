@@ -846,6 +846,42 @@ body {
   color: var(--color-text);
 }
 
+/*
+ * Progress indicator (TRIOFSND-85) — "Descubiertos X/Y" datos curiosos plus
+ * the all-time best score and racha, recalculated every time Resultados
+ * mounts. Reuses the same neutral gray tokens as the ads banner below so it
+ * reads as a secondary, informational block rather than competing with the
+ * primary score/stars.
+ */
+.results-screen__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.results-screen__progress-discovered {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: bold;
+}
+
+.results-screen__progress-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+}
+
+.results-screen__progress-stat {
+  font-size: var(--font-size-min);
+}
+
 .results-screen__actions {
   display: flex;
   flex-direction: column;

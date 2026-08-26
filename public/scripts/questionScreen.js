@@ -130,6 +130,11 @@
  * adapter is plugged into it. Whatever the ad service resolves with, the
  * CTA never touches `nextButton` or its advance timer — the game always
  * continues.
+ *
+ * Progress persistence (TRIOFSND-85): `options.onFunFactShown(question.id)`
+ * fires every time a dato curioso is revealed (i.e. on every answer, correct
+ * or not), so the caller can add it to the locally persisted "descubiertos"
+ * set that drives the progress indicator on Resultados (AC).
  */
 
 (function () {
@@ -462,6 +467,15 @@
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
+
+      // Progress persistence (TRIOFSND-85): every time a new dato curioso is
+      // shown, the caller (public/scripts/main.js) gets a chance to add its
+      // id to the persisted "descubiertos" set -- this screen stays a pure,
+      // DOM-only component and never touches storage itself, consistent with
+      // onAnswer/onNext above.
+      if (typeof options.onFunFactShown === 'function') {
+        options.onFunFactShown(question.id);
+      }
 
       // Written synchronously, right here, so TalkBack/VoiceOver announce
       // acierto/fallo, the correct option's text and the updated score

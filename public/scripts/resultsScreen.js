@@ -11,6 +11,15 @@
  * readers announce it as one coherent sentence as soon as the screen
  * renders, in addition to the visible elements being individually readable.
  *
+ * Progress indicator (TRIOFSND-85): when `options.progress` is provided
+ * (`{ discoveredCount, totalFacts, bestScore, maxStreak }`, all persisted
+ * locally by the caller — see public/scripts/main.js), this screen renders a
+ * "Descubiertos X/Y" indicator plus the all-time best score and longest
+ * racha, recalculated fresh from storage every time Resultados mounts (so it
+ * reflects the current, post-game state even on a reopened app). It is a
+ * plain group, not a second `role="status"` region, so it never competes
+ * with `announcementEl` below for assistive tech announcing the outcome.
+ *
  * Ads (TRIOFSND-97, AC-20/AC-21): a discreet banner and an optional, clearly
  * labeled rewarded ad render below the actions row -- but only while
  * `options.adsRemoved` is not `true`. That flag is read from local storage
@@ -209,6 +218,54 @@
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
 
+    var progressEl = null;
+    var progressDiscoveredEl = null;
+    var progressBestScoreEl = null;
+    var progressMaxStreakEl = null;
+    if (options.progress) {
+      var progress = options.progress;
+      var progressStrings = strings.progress;
+
+      progressEl = document.createElement('div');
+      progressEl.className = 'results-screen__progress';
+      progressEl.setAttribute('role', 'group');
+      progressEl.setAttribute(
+        'aria-label',
+        formatTemplate(progressStrings.discoveredAriaLabel, {
+          discovered: progress.discoveredCount,
+          total: progress.totalFacts,
+        })
+      );
+
+      progressDiscoveredEl = document.createElement('p');
+      progressDiscoveredEl.className = 'results-screen__progress-discovered';
+      progressDiscoveredEl.textContent = formatTemplate(progressStrings.discoveredLabel, {
+        discovered: progress.discoveredCount,
+        total: progress.totalFacts,
+      });
+
+      var progressStatsEl = document.createElement('div');
+      progressStatsEl.className = 'results-screen__progress-stats';
+
+      progressBestScoreEl = document.createElement('span');
+      progressBestScoreEl.className = 'results-screen__progress-stat';
+      progressBestScoreEl.textContent = formatTemplate(progressStrings.bestScoreLabel, {
+        bestScore: progress.bestScore,
+      });
+
+      progressMaxStreakEl = document.createElement('span');
+      progressMaxStreakEl.className = 'results-screen__progress-stat';
+      progressMaxStreakEl.textContent = formatTemplate(progressStrings.maxStreakLabel, {
+        maxStreak: progress.maxStreak,
+      });
+
+      progressStatsEl.appendChild(progressBestScoreEl);
+      progressStatsEl.appendChild(progressMaxStreakEl);
+
+      progressEl.appendChild(progressDiscoveredEl);
+      progressEl.appendChild(progressStatsEl);
+    }
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'results-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
@@ -299,6 +356,9 @@
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
+    if (progressEl) {
+      root.appendChild(progressEl);
+    }
     root.appendChild(announcementEl);
     root.appendChild(actions);
     if (adsSection) {
@@ -311,6 +371,10 @@
       scoreEl: scoreEl,
       starsEl: starsEl,
       messageEl: messageEl,
+      progressEl: progressEl,
+      progressDiscoveredEl: progressDiscoveredEl,
+      progressBestScoreEl: progressBestScoreEl,
+      progressMaxStreakEl: progressMaxStreakEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,

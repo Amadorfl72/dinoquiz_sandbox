@@ -203,6 +203,63 @@ describe('ResultsScreen rendering', () => {
   });
 });
 
+describe('Progress indicator (TRIOFSND-85: descubiertos X/Y, mejor puntuación y racha máxima)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('does not render the progress indicator when options.progress is omitted', () => {
+    const { progressEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(progressEl).toBeNull();
+    expect(container.querySelector('.results-screen__progress')).toBeNull();
+  });
+
+  test('renders "Descubiertos X/Y", the best score and the longest racha from options.progress', () => {
+    const { progressEl, progressDiscoveredEl, progressBestScoreEl, progressMaxStreakEl } = renderResultsScreen(
+      container,
+      { score: 6, progress: { discoveredCount: 5, totalFacts: 40, bestScore: 9, maxStreak: 7 } }
+    );
+
+    expect(progressEl).not.toBeNull();
+    expect(container.contains(progressEl)).toBe(true);
+    expect(progressDiscoveredEl).toHaveTextContent('5/40');
+    expect(progressBestScoreEl).toHaveTextContent('9');
+    expect(progressMaxStreakEl).toHaveTextContent('7');
+  });
+
+  test('the progress indicator is not a second status region (avoids competing with the single announcement region)', () => {
+    const { progressEl, announcementEl } = renderResultsScreen(container, {
+      score: 6,
+      progress: { discoveredCount: 1, totalFacts: 40, bestScore: 1, maxStreak: 1 },
+    });
+
+    expect(progressEl).not.toHaveAttribute('role', 'status');
+    expect(getByRole(container, 'status')).toBe(announcementEl);
+  });
+
+  test('does not hardcode copy — the progress labels come from the es locale resource file', () => {
+    renderResultsScreen(container, {
+      score: 6,
+      locale: 'es',
+      progress: { discoveredCount: 3, totalFacts: 40, bestScore: 8, maxStreak: 6 },
+    });
+
+    expect(container.textContent).toContain(
+      strings.progress.discoveredLabel.replace('{discovered}', '3').replace('{total}', '40')
+    );
+    expect(container.textContent).toContain(strings.progress.bestScoreLabel.replace('{bestScore}', '8'));
+    expect(container.textContent).toContain(strings.progress.maxStreakLabel.replace('{maxStreak}', '6'));
+  });
+});
+
 describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
   let container;
 

@@ -495,6 +495,103 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
   });
 });
 
+describe('TRIOFSND-85: local persistence of discovered fun facts, best score and max streak', () => {
+  let container;
+
+  function createMemoryStorage() {
+    const store = {};
+    return {
+      getItem: jest.fn((key) => (Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null)),
+      setItem: jest.fn((key, value) => {
+        store[key] = value;
+      }),
+    };
+  }
+
+  /** Plays a full 10-question game against `storageObj`, returning the options Resultados was rendered with. */
+  async function playGameWithStorageAndPattern(pattern, storageObj, questions, renderersOverride) {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = renderersOverride || resolveScreenRenderers();
+
+    const capturedOptions = [];
+    const renderResultsScreen = renderers.renderResultsScreen;
+    renderers.renderResultsScreen = (resultsContainer, options) => {
+      capturedOptions.push(options);
+      return renderResultsScreen(resultsContainer, options);
+    };
+
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
+      for (const mark of pattern.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+
+    return capturedOptions[capturedOptions.length - 1];
+  }
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('recordGameProgress keeps the highest score/racha across calls and persists under the dinoquiz:* keys', () => {
+    const { recordGameProgress, BEST_SCORE_STORAGE_KEY, MAX_STREAK_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const storageObj = createMemoryStorage();
+
+    expect(recordGameProgress(6, 3, storageObj)).toEqual({ bestScore: 6, maxStreak: 3 });
+    expect(recordGameProgress(4, 5, storageObj)).toEqual({ bestScore: 6, maxStreak: 5 });
+
+    expect(JSON.parse(storageObj.getItem(BEST_SCORE_STORAGE_KEY))).toBe(6);
+    expect(JSON.parse(storageObj.getItem(MAX_STREAK_STORAGE_KEY))).toBe(5);
+  });
+
+  test('markFunFactDiscovered adds a new id without duplicating an already-seen one', () => {
+    const { markFunFactDiscovered, DISCOVERED_FUN_FACTS_STORAGE_KEY } = require(MAIN_JS_PATH);
+    const storageObj = createMemoryStorage();
+
+    markFunFactDiscovered('trex-01', storageObj);
+    markFunFactDiscovered('trex-01', storageObj);
+    const discovered = markFunFactDiscovered('triceratops-01', storageObj);
+
+    expect(discovered).toEqual(['trex-01', 'triceratops-01']);
+    expect(JSON.parse(storageObj.getItem(DISCOVERED_FUN_FACTS_STORAGE_KEY))).toEqual(['trex-01', 'triceratops-01']);
+  });
+
+  test('playing a full game marks every shown dato curioso as discovered and reports the count on Resultados', async () => {
+    const questions = buildQuestionBank(10);
+    const storageObj = createMemoryStorage();
+
+    const options = await playGameWithStorageAndPattern('CCCCCCCCCC', storageObj, questions);
+
+    expect(options.progress).toEqual({ bestScore: 10, maxStreak: 10, discoveredCount: 10, totalFacts: 10 });
+  });
+
+  test('reopening the app (a fresh game against the same storage) recalculates the progress indicator from persisted state', async () => {
+    const questions = buildQuestionBank(10);
+    const storageObj = createMemoryStorage();
+
+    // First "session": a strong game sets the bests and discovers every fact.
+    const firstGameOptions = await playGameWithStorageAndPattern('CCCCCCCCCC', storageObj, questions);
+    expect(firstGameOptions.progress).toEqual({ bestScore: 10, maxStreak: 10, discoveredCount: 10, totalFacts: 10 });
+
+    // Second "session" (simulates reopening the app): a weak game must not
+    // regress the persisted bests, and the already-discovered facts stay
+    // discovered (same 10-question bank, so no new ids appear).
+    const secondGameOptions = await playGameWithStorageAndPattern('FFFFFFFFFF', storageObj, questions);
+    expect(secondGameOptions.progress).toEqual({ bestScore: 10, maxStreak: 10, discoveredCount: 10, totalFacts: 10 });
+  });
+});
+
 describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads purchase flag', () => {
   let container;
 

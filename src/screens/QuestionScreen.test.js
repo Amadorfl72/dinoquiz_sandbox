@@ -190,6 +190,19 @@ describe('QuestionScreen', () => {
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
     });
+
+    test('calls onFunFactShown with the question id once the dato curioso is revealed (TRIOFSND-85)', () => {
+      const question = buildQuestion({ id: 'trex-01' });
+      const onFunFactShown = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { onFunFactShown });
+
+      expect(onFunFactShown).not.toHaveBeenCalled();
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(onFunFactShown).toHaveBeenCalledTimes(1);
+      expect(onFunFactShown).toHaveBeenCalledWith('trex-01');
+    });
   });
 
   describe('on an incorrect answer (TRIOFSND-88: no penalty)', () => {
@@ -240,6 +253,17 @@ describe('QuestionScreen', () => {
       expect(funFact).toHaveTextContent(question.funFact);
       expect(funFact).toBeVisible();
       expect(nextButton).toBeVisible();
+    });
+
+    test('also calls onFunFactShown with the question id, same as a hit (TRIOFSND-85)', () => {
+      const question = buildQuestion({ id: 'triceratops-02' });
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const onFunFactShown = jest.fn();
+      const { optionButtons } = renderQuestionScreen(container, question, { onFunFactShown });
+
+      optionButtons[wrongIndex].click();
+
+      expect(onFunFactShown).toHaveBeenCalledWith('triceratops-02');
     });
 
     test('shows a neutral/positive-toned message, never a negative one', () => {
