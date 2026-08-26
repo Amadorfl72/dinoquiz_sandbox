@@ -507,6 +507,31 @@
     return undefined;
   }
 
+  /**
+   * Persists the just-finished game's score/racha (TRIOFSND-128, PRD
+   * "Persistencia exclusivamente local de mejor puntuación, racha máxima"),
+   * mirroring the fire-and-forget pattern `onAnswer` already uses for
+   * `recordQuestionAnswered`/`markFunFactDiscovered` above: StorageClient's
+   * `set()` updates its in-memory cache synchronously, so nothing here needs
+   * to await the write settling. Duck-typed so a storage double missing
+   * these methods (or no storage at all) is skipped rather than throwing.
+   * `DinoQuizStorage#recordScore`/`#recordStreak`
+   * (src/services/storage/StorageClient.js) only overwrite the persisted
+   * bestScore/maxStreak when the new value is strictly higher, so this is
+   * safe to call after every game, win or lose.
+   */
+  function persistBestScoreAndStreak(storage, finalState) {
+    if (!storage || !finalState) {
+      return;
+    }
+    if (typeof storage.recordScore === 'function' && typeof finalState.score === 'number') {
+      storage.recordScore(finalState.score);
+    }
+    if (typeof storage.recordStreak === 'function' && typeof finalState.maxStreak === 'number') {
+      storage.recordStreak(finalState.maxStreak);
+    }
+  }
+
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
     return renderers.renderResultsScreen(container, {
@@ -579,6 +604,7 @@
         var playedQuestionIds = session.questions.map(function (question) {
           return question.id;
         });
+        persistBestScoreAndStreak(storage, finalState);
         renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       storageObj,
@@ -696,6 +722,7 @@
       levelGame,
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+        persistBestScoreAndStreak(ctx.storage, finalState);
 
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
