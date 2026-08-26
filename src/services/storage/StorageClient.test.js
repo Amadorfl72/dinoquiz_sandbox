@@ -152,6 +152,50 @@ describe('DinoQuizStorage', () => {
     expect(await storage.get('maxStreak')).toBe(4);
   });
 
+  it('raises bestScore and maxStreak when a later game beats the previous best (e.g. 5 to 8)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordScore(5);
+    expect(await storage.get('bestScore')).toBe(5);
+    await storage.recordScore(8);
+    expect(await storage.get('bestScore')).toBe(8);
+
+    await storage.recordStreak(5);
+    expect(await storage.get('maxStreak')).toBe(5);
+    await storage.recordStreak(8);
+    expect(await storage.get('maxStreak')).toBe(8);
+  });
+
+  it('persists bestScore and maxStreak across sessions (a new instance sharing the same backend reads the same bests)', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+
+    const firstSession = new DinoQuizStorage([adapter()]);
+    await firstSession.recordScore(5);
+    await firstSession.recordStreak(4);
+
+    const reopenedSession = new DinoQuizStorage([adapter()]);
+    expect(await reopenedSession.get('bestScore')).toBe(5);
+    expect(await reopenedSession.get('maxStreak')).toBe(4);
+
+    // A later session beats the previous best (5 -> 8): the raised value
+    // persists into a third session, as if the app were reopened again.
+    await reopenedSession.recordScore(8);
+    await reopenedSession.recordStreak(2);
+
+    const thirdSession = new DinoQuizStorage([adapter()]);
+    expect(await thirdSession.get('bestScore')).toBe(8);
+    expect(await thirdSession.get('maxStreak')).toBe(4);
+  });
+
   it('toggleMute flips and returns the new state', async () => {
     const storage = new DinoQuizStorage([createFakeAdapter()]);
 

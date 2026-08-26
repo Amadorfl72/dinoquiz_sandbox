@@ -202,6 +202,58 @@
     }
   }
 
+  // Best score / max streak persistence (TRIOFSND-96): same rationale and
+  // namespaced-key convention as MUTE_STORAGE_KEY/ADS_REMOVED_STORAGE_KEY
+  // above -- src/services/storage models `bestScore`/`maxStreak` too (see
+  // StorageClient#recordScore/#recordStreak), but this no-bundler browser
+  // path reads/writes localStorage directly under the same
+  // `dinoquiz:bestScore`/`dinoquiz:maxStreak` keys so both paths agree once
+  // a bundler wires the real service in. `recordIfHigher` only overwrites
+  // the stored value when the just-finished game beat it, mirroring
+  // StorageClient's recordScore/recordStreak comparison, and returns the
+  // resulting (possibly unchanged) best so the caller can hand it straight
+  // to Resultados for display.
+  var BEST_SCORE_STORAGE_KEY = 'dinoquiz:bestScore';
+  var MAX_STREAK_STORAGE_KEY = 'dinoquiz:maxStreak';
+
+  function loadNumberState(key, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return 0;
+    }
+
+    try {
+      var raw = storageObj.getItem(key);
+      var parsed = raw !== null ? JSON.parse(raw) : 0;
+      return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function persistNumberState(key, value, storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist ' + key, error);
+    }
+  }
+
+  /** Reads the persisted value at `key`, and -- only if `value` beats it -- persists `value` as the new best. Always returns the resulting best. */
+  function recordIfHigher(key, value, storageObj) {
+    var previousBest = loadNumberState(key, storageObj);
+    if (typeof value !== 'number' || value <= previousBest) {
+      return previousBest;
+    }
+    persistNumberState(key, value, storageObj);
+    return value;
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   function resolveScreenRenderers(win) {
@@ -382,9 +434,22 @@
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
+    // TRIOFSND-96: compare this game's score/racha against the previously
+    // persisted bests and only overwrite the ones just beaten (e.g. a
+    // session going from a best of 5 to 8 updates the stored best; a lower
+    // score leaves it untouched) -- mirrors StorageClient#recordScore/
+    // #recordStreak's comparison. The (possibly unchanged) resulting bests
+    // are handed to Resultados so a record set on the very last game of a
+    // session is reflected immediately, and any earlier session's best is
+    // reflected as soon as the app is reopened and a game is played.
+    var bestScore = recordIfHigher(BEST_SCORE_STORAGE_KEY, finalState.score, storageObj);
+    var maxStreak = recordIfHigher(MAX_STREAK_STORAGE_KEY, finalState.maxStreak, storageObj);
+
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
+      bestScore: bestScore,
+      bestStreak: maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
       onPlayAgain: function () {
@@ -657,6 +722,9 @@
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
       },
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -684,7 +752,17 @@
    * opt out (e.g. a bare unit render with a `renderHomeScreen` mock that
    * only cares about the fetched strings).
    */
-  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicy, storage, muteStorageObj) {
+  function renderHome(doc, renderHomeScreen, fetchFn, onOpenPrivacyPolicyOrStorage, storage, muteStorageObj) {
+    var onOpenPrivacyPolicy;
+    if (typeof onOpenPrivacyPolicyOrStorage === 'function') {
+      onOpenPrivacyPolicy = onOpenPrivacyPolicyOrStorage;
+    } else if (onOpenPrivacyPolicyOrStorage) {
+      // Back-compat: some callers still pass the storage backend positionally
+      // as the 4th argument (pre-TRIOFSND-116, before onOpenPrivacyPolicy was
+      // inserted into the signature) instead of the 5th.
+      storage = storage || onOpenPrivacyPolicyOrStorage;
+    }
+
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderHomeScreen =
       renderHomeScreen ||
@@ -736,7 +814,7 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, storageObj);
+        persistAdsRemovedState(true, resolvedMuteStorage);
       };
 
       function finishRender() {
@@ -753,7 +831,7 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, storage, resolvedMuteStorage);
+              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedMuteStorage, storage);
             }
           });
         }
@@ -761,17 +839,17 @@
         return homeApi;
       }
 
-      if (!tooltipStorageObj) {
+      if (!tooltipStorage) {
         return finishRender();
       }
 
-      return tooltipStorageObj.hasSeenHomeTooltip().then(function (seen) {
+      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
-          tooltipStorageObj.markHomeTooltipSeen();
+          tooltipStorage.markHomeTooltipSeen();
         };
         renderOptions.onPlayButtonClick = function () {
-          tooltipStorageObj.recordEventOnce('first_tap_jugar');
+          tooltipStorage.recordEventOnce('first_tap_jugar');
         };
         return finishRender();
       });
@@ -934,10 +1012,12 @@
       loadMutedState: loadMutedState,
       persistMutedState: persistMutedState,
       MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
-      AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       loadAdsRemovedState: loadAdsRemovedState,
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
+      recordIfHigher: recordIfHigher,
+      BEST_SCORE_STORAGE_KEY: BEST_SCORE_STORAGE_KEY,
+      MAX_STREAK_STORAGE_KEY: MAX_STREAK_STORAGE_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }

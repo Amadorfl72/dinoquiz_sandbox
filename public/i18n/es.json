@@ -132,6 +132,8 @@
     "scoreLabel": "Puntuación",
     "scoreFormat": "{score}/{total}",
     "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
+    "bestScoreFormat": "Mejor puntuación: {bestScore}/{total}",
+    "bestStreakFormat": "Mejor racha: {bestStreak} aciertos seguidos",
     "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
     "playAgainButton": "Volver a jugar",
     "exitButton": "Salir",

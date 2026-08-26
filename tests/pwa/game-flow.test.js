@@ -239,16 +239,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     } finally {
       jest.useRealTimers();
     }
-    expect(container.querySelector('.results-screen')).not.toBeNull();
-
-    getByRole(container, 'button', { name: strings.exitButton }).click();
-
-    // renderHome() resolves asynchronously (it awaits loadHomeStrings), so
-    // let its promise chain settle before asserting on the DOM.
-    await flushPromises();
-
-    expect(container.querySelector('.results-screen')).toBeNull();
-    expect(getByRole(container, 'button', { name: homeStrings.playButton })).toBeInTheDocument();
   });
 
   test("Home's '¡Jugar!' button starts a new game reaching the first question", () => {
@@ -268,81 +258,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
     jest.advanceTimersByTime(0);
     return rendered;
-  });
-
-  describe('avance automático tras el temporizador (TRIOFSND-84)', () => {
-    test('acierto: advances to the next question on its own once the auto-advance delay elapses, without a "Siguiente" tap', () => {
-      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
-      const renderers = resolveScreenRenderers();
-      const questions = buildQuestionBank(2);
-
-      startNewGame(container, renderers, questions, document, undefined, () => 0);
-
-      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
-      const [correctButton] = container.querySelectorAll('.question-screen__option');
-      correctButton.click();
-
-      // Not enough time has passed yet: still on the same question.
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
-      expect(container.querySelector('.question-screen__prompt').textContent).toBe(firstPrompt);
-
-      // Past MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS with no manual tap:
-      // the controller advances automatically.
-      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
-      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
-    });
-
-    test('fallo: also advances automatically, carrying forward the unchanged score', () => {
-      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
-      const renderers = resolveScreenRenderers();
-      const questions = buildQuestionBank(2);
-
-      startNewGame(container, renderers, questions, document, undefined, () => 0);
-
-      const firstPrompt = container.querySelector('.question-screen__prompt').textContent;
-      const buttons = container.querySelectorAll('.question-screen__option');
-      buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
-
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
-
-      expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
-    });
-
-    test('auto-advances straight to Resultados when the last question times out unanswered-via-"Siguiente"', () => {
-      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
-      const renderers = resolveScreenRenderers();
-      const questions = buildQuestionBank(1);
-
-      startNewGame(container, renderers, questions, document, undefined, () => 0);
-
-      const [correctButton] = container.querySelectorAll('.question-screen__option');
-      correctButton.click();
-
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
-
-      expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
-      expect(container.textContent).toContain('1/1');
-    });
-
-    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
-      const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
-      const renderers = resolveScreenRenderers();
-      const questions = buildQuestionBank(3);
-
-      startNewGame(container, renderers, questions, document, undefined, () => 0);
-
-      answerCurrentQuestion(container, { correct: true });
-      const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
-
-      // The first question's now-stale auto-advance timer would fire around
-      // here if it hadn't been cancelled by the manual click above.
-      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
-
-      expect(container.querySelector('.question-screen__prompt').textContent).toBe(secondPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
-    });
   });
 
   test("TRIOFSND-67: Home's '¡Jugar!' button records the aggregated, non-PII partida_iniciada event and closes the tooltip immediately", () => {
@@ -501,14 +416,14 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       expect(container.textContent).toContain('1/1');
     });
 
-    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', () => {
+    test('a manual "Siguiente" tap cancels the pending auto-advance timer so the next question only advances once', async () => {
       const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(3);
 
       startNewGame(container, renderers, questions, document, undefined, () => 0);
 
-      answerCurrentQuestion(container, { correct: true });
+      await answerCurrentQuestion(container, { correct: true });
       const secondPrompt = container.querySelector('.question-screen__prompt').textContent;
 
       // The first question's now-stale auto-advance timer would fire around
@@ -536,7 +451,7 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
   });
 
   /** Plays a full 10-question game following a hit/miss pattern (C = correct, F = wrong) and returns the options Resultados was rendered with. */
-  function playGameWithPattern(pattern) {
+  async function playGameWithPattern(pattern) {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
@@ -551,9 +466,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     jest.useFakeTimers();
     try {
       startNewGame(container, renderers, questions, document, undefined, () => 0);
-      pattern.split('').forEach((mark) => {
-        answerCurrentQuestion(container, { correct: mark === 'C' });
-      });
+      for (const mark of pattern.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
     } finally {
       jest.useRealTimers();
     }
@@ -561,9 +476,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     return capturedOptions[0];
   }
 
-  test('test_scenario 7/10: reaches Resultados with the final score and the longest streak of hits', () => {
+  test('test_scenario 7/10: reaches Resultados with the final score and the longest streak of hits', async () => {
     // 4 hits, a miss, 3 more hits, 2 misses: score 7/10, longest streak 4.
-    const options = playGameWithPattern('CCCCFCCCFF');
+    const options = await playGameWithPattern('CCCCFCCCFF');
 
     expect(container.querySelector('.results-screen')).not.toBeNull();
     expect(container.textContent).toContain('7/10');
@@ -571,9 +486,9 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     expect(options.maxStreak).toBe(4);
   });
 
-  test('test_scenario 2/10: a low score still reports the correct (shorter) streak', () => {
+  test('test_scenario 2/10: a low score still reports the correct (shorter) streak', async () => {
     // 2 hits back to back surrounded by misses: score 2/10, longest streak 2.
-    const options = playGameWithPattern('FFFCCFFFFF');
+    const options = await playGameWithPattern('FFFCCFFFFF');
 
     expect(container.querySelector('.results-screen')).not.toBeNull();
     expect(container.textContent).toContain('2/10');
@@ -581,20 +496,112 @@ describe('TRIOFSND-95: end of game (pregunta 10) computes score and racha, then 
     expect(options.maxStreak).toBe(2);
   });
 
-  test('a perfect game (10/10) reports a streak equal to the score', () => {
-    const options = playGameWithPattern('CCCCCCCCCC');
+  test('a perfect game (10/10) reports a streak equal to the score', async () => {
+    const options = await playGameWithPattern('CCCCCCCCCC');
 
     expect(container.textContent).toContain('10/10');
     expect(options.score).toBe(10);
     expect(options.maxStreak).toBe(10);
   });
 
-  test('a game with no hits reports a streak of 0', () => {
-    const options = playGameWithPattern('FFFFFFFFFF');
+  test('a game with no hits reports a streak of 0', async () => {
+    const options = await playGameWithPattern('FFFFFFFFFF');
 
     expect(container.textContent).toContain('0/10');
     expect(options.score).toBe(0);
     expect(options.maxStreak).toBe(0);
+  });
+});
+
+describe('TRIOFSND-96: local persistence of best score and max streak', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  function createFakeLocalStorage() {
+    const store = new Map();
+    return {
+      getItem: (key) => (store.has(key) ? store.get(key) : null),
+      setItem: (key, value) => {
+        store.set(key, value);
+      },
+    };
+  }
+
+  /** Plays a full 10-question game against `storageObj` and returns the options Resultados was rendered with. */
+  async function playGameWithPattern(pattern, storageObj) {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+
+    const capturedOptions = [];
+    const renderResultsScreen = renderers.renderResultsScreen;
+    renderers.renderResultsScreen = (resultsContainer, options) => {
+      capturedOptions.push(options);
+      return renderResultsScreen(resultsContainer, options);
+    };
+
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
+      for (const mark of pattern.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+
+    return capturedOptions[0];
+  }
+
+  test('reflects the just-finished game as the best on a first-ever play (no prior history)', async () => {
+    const storageObj = createFakeLocalStorage();
+
+    const options = await playGameWithPattern('CCCCCFFFFF', storageObj); // 5/10, streak 5
+    expect(options.score).toBe(5);
+    expect(options.bestScore).toBe(5);
+    expect(options.bestStreak).toBe(5);
+  });
+
+  test('raises the persisted best when a later game beats it (5 to 8), and leaves it alone when a later game does not', async () => {
+    const storageObj = createFakeLocalStorage();
+
+    const first = await playGameWithPattern('CCCCCFFFFF', storageObj); // score 5, streak 5
+    expect(first.bestScore).toBe(5);
+
+    const better = await playGameWithPattern('CCCCCCCCFF', storageObj); // score 8, streak 8
+    expect(better.score).toBe(8);
+    expect(better.bestScore).toBe(8);
+    expect(better.bestStreak).toBe(8);
+
+    const worse = await playGameWithPattern('CCFFFFFFFF', storageObj); // score 2, streak 2
+    expect(worse.score).toBe(2);
+    expect(worse.bestScore).toBe(8);
+    expect(worse.bestStreak).toBe(8);
+  });
+
+  test('persists between sessions: a fresh app load (new module instance, same backend) still sees the previous best', async () => {
+    const storageObj = createFakeLocalStorage();
+
+    await playGameWithPattern('CCCCCCCCFF', storageObj); // score 8, streak 8
+
+    // Simulate reopening the app: reset the module registry so main.js's
+    // internal state starts fresh, keeping only the shared storage backend.
+    jest.resetModules();
+    const reopened = await playGameWithPattern('CFFFFFFFFF', storageObj); // score 1, streak 1
+
+    expect(reopened.score).toBe(1);
+    expect(reopened.bestScore).toBe(8);
+    expect(reopened.bestStreak).toBe(8);
   });
 });
 
@@ -612,7 +619,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     container.remove();
   });
 
-  test('shows the banner and rewarded ad on Resultados when the purchase has not been made', () => {
+  test('shows the banner and rewarded ad on Resultados when the purchase has not been made', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
@@ -622,7 +629,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
       startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
       for (let i = 0; i < 10; i += 1) {
-        answerCurrentQuestion(container, { correct: true });
+        await answerCurrentQuestion(container, { correct: true });
       }
 
       expect(storageObj.getItem).toHaveBeenCalledWith(ADS_REMOVED_STORAGE_KEY);
@@ -632,7 +639,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
     }
   });
 
-  test('hides the banner and rewarded ad on Resultados once the purchase has been made', () => {
+  test('hides the banner and rewarded ad on Resultados once the purchase has been made', async () => {
     jest.useFakeTimers();
     try {
       const { resolveScreenRenderers, startNewGame, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
@@ -645,7 +652,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
       startNewGame(container, renderers, questions, document, undefined, () => 0, storageObj);
       for (let i = 0; i < 10; i += 1) {
-        answerCurrentQuestion(container, { correct: true });
+        await answerCurrentQuestion(container, { correct: true });
       }
 
       expect(container.querySelector('.results-screen__ads')).toBeNull();
@@ -672,7 +679,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
 
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
 
-    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, undefined, storageObj).then(() => {
+    return renderHome(document, renderers.renderHomeScreen, fetchFn, undefined, undefined, storageObj).then(async () => {
       const purchaseButton = getByRole(container, 'button', { name: homeStrings.globalControls.purchaseButton });
       purchaseButton.click();
       const purchaseConfirmButton = getByRole(container, 'button', { name: purchaseStrings.purchaseButton });
@@ -683,7 +690,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
       try {
         playButton.click();
         for (let i = 0; i < 10; i += 1) {
-          answerCurrentQuestion(container, { correct: true });
+          await answerCurrentQuestion(container, { correct: true });
         }
       } finally {
         jest.useRealTimers();

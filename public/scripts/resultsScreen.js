@@ -210,6 +210,27 @@
     starsEl.setAttribute('aria-label', formatTemplate(strings.starsLabel, { stars: stars, maxStars: MAX_STARS }));
     starsEl.textContent = '★'.repeat(stars) + '☆'.repeat(MAX_STARS - stars);
 
+    // TRIOFSND-96: the locally persisted best score / longest racha, so a
+    // record set on this device is reflected here every time Resultados
+    // renders -- including right after reopening the app and playing a
+    // fresh game. `options.bestScore`/`options.bestStreak` are optional
+    // (omitted by bare unit renders and callers that don't track history)
+    // so this stays backward-compatible; each only renders when its value
+    // is a valid non-negative integer.
+    var bestScoreEl = null;
+    if (Number.isInteger(options.bestScore) && options.bestScore >= MIN_SCORE) {
+      bestScoreEl = document.createElement('p');
+      bestScoreEl.className = 'results-screen__best-score';
+      bestScoreEl.textContent = formatTemplate(strings.bestScoreFormat, { bestScore: options.bestScore, total: total });
+    }
+
+    var bestStreakEl = null;
+    if (Number.isInteger(options.bestStreak) && options.bestStreak >= 0) {
+      bestStreakEl = document.createElement('p');
+      bestStreakEl.className = 'results-screen__best-streak';
+      bestStreakEl.textContent = formatTemplate(strings.bestStreakFormat, { bestStreak: options.bestStreak });
+    }
+
     var messageEl = document.createElement('p');
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
@@ -303,6 +324,12 @@
     root.appendChild(heading);
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
+    if (bestScoreEl) {
+      root.appendChild(bestScoreEl);
+    }
+    if (bestStreakEl) {
+      root.appendChild(bestStreakEl);
+    }
     root.appendChild(messageEl);
     root.appendChild(announcementEl);
     root.appendChild(actions);
@@ -315,6 +342,8 @@
       root: root,
       scoreEl: scoreEl,
       starsEl: starsEl,
+      bestScoreEl: bestScoreEl,
+      bestStreakEl: bestStreakEl,
       messageEl: messageEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,

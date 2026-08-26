@@ -135,6 +135,20 @@ describe('ResultsScreen rendering', () => {
     expect(starsEl.textContent).toBe('★'.repeat(expectedStars) + '☆'.repeat(MAX_STARS - expectedStars));
   });
 
+  test('does not render best score/streak elements when they are not provided (TRIOFSND-96)', () => {
+    const { bestScoreEl, bestStreakEl } = renderResultsScreen(container, { score: 5 });
+
+    expect(bestScoreEl).toBeNull();
+    expect(bestStreakEl).toBeNull();
+  });
+
+  test('renders the locally persisted best score and max streak when provided (TRIOFSND-96)', () => {
+    const { bestScoreEl, bestStreakEl } = renderResultsScreen(container, { score: 5, bestScore: 8, bestStreak: 6 });
+
+    expect(bestScoreEl).toHaveTextContent('8/10');
+    expect(bestStreakEl).toHaveTextContent('6');
+  });
+
   test('renders a motivational message from the i18n resource', () => {
     const { messageEl } = renderResultsScreen(container, { score: 5 });
 
