@@ -440,6 +440,20 @@
           }
         }
 
+        // TRIOFSND-129: the fun fact reveals right after every answer,
+        // hit or miss alike (see questionScreen.js's handleSelect), so it
+        // is registered as "seen" here unconditionally -- keyed off the
+        // same stable bank id as recordQuestionAnswered above, never the
+        // visible text.
+        if (
+          storage &&
+          typeof storage.markFunFactDiscovered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
+          storage.markFunFactDiscovered(question.id);
+        }
+
         autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
@@ -468,6 +482,31 @@
     return renderers.renderQuestionScreen(container, question, questionOptions);
   }
 
+  /**
+   * Resolves the count of distinct "datos curiosos" discovered on this
+   * device so far (TRIOFSND-129), synchronously -- `renderResultsFor` below
+   * renders Resultados the instant a game ends, with no promise to await.
+   * Prefers the real `DinoQuizStorage`'s `snapshot()` (its in-memory cache
+   * is already current by the time a game ends, since every write updates
+   * it synchronously -- see StorageClient.js's `set()`), falling back to
+   * `createBrowserHomeStorage`'s `getDiscoveredFunFactsCountSync()` in a
+   * real, unbundled browser. Returns `undefined` for any other storage
+   * shape (e.g. a test double), so the caller renders nothing extra.
+   */
+  function resolveDiscoveredFunFactsCount(storage) {
+    if (!storage) {
+      return undefined;
+    }
+    if (typeof storage.snapshot === 'function') {
+      var snapshot = storage.snapshot();
+      return Array.isArray(snapshot.discoveredFunFacts) ? snapshot.discoveredFunFacts.length : undefined;
+    }
+    if (typeof storage.getDiscoveredFunFactsCountSync === 'function') {
+      return storage.getDiscoveredFunFactsCountSync();
+    }
+    return undefined;
+  }
+
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
   function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
     return renderers.renderResultsScreen(container, {
@@ -475,6 +514,10 @@
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
+      // TRIOFSND-129: how many distinct fun facts have been seen on this
+      // device so far, out of the total available in the loaded bank.
+      discoveredFunFactsCount: resolveDiscoveredFunFactsCount(storage),
+      totalFunFacts: Array.isArray(questions) ? questions.length : undefined,
       onPlayAgain: function () {
         startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
@@ -994,6 +1037,7 @@
   // (mirrors src/services/storage/types.js's DEFAULT_STATE).
   var MAX_UNLOCKED_LEVEL_KEY = 'dinoquiz:maxUnlockedLevel';
   var DEFAULT_MAX_UNLOCKED_LEVEL = 1;
+  var DISCOVERED_FUN_FACTS_KEY = 'dinoquiz:discoveredFunFacts';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -1004,6 +1048,7 @@
     memory[QUESTION_STATS_KEY] = {};
     memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
     memory[MAX_UNLOCKED_LEVEL_KEY] = DEFAULT_MAX_UNLOCKED_LEVEL;
+    memory[DISCOVERED_FUN_FACTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -1138,6 +1183,25 @@
         writeJSON(MAX_UNLOCKED_LEVEL_KEY, level);
         return Promise.resolve(level);
       },
+      // TRIOFSND-129: registers a "dato curioso" as seen on this device,
+      // once per distinct funFactId (never a duplicate entry) -- mirrors
+      // DinoQuizStorage#markFunFactDiscovered (src/services/storage/StorageClient.js).
+      markFunFactDiscovered: function (funFactId) {
+        var discovered = readJSON(DISCOVERED_FUN_FACTS_KEY) || [];
+        if (discovered.indexOf(funFactId) === -1) {
+          writeJSON(DISCOVERED_FUN_FACTS_KEY, discovered.concat([funFactId]));
+        }
+        return Promise.resolve();
+      },
+      getDiscoveredFunFactsCount: function () {
+        return Promise.resolve((readJSON(DISCOVERED_FUN_FACTS_KEY) || []).length);
+      },
+      // Synchronous counterpart used where a result must be available
+      // without awaiting a promise (renderResultsFor renders Resultados
+      // synchronously right when a game ends, see public/scripts/main.js).
+      getDiscoveredFunFactsCountSync: function () {
+        return (readJSON(DISCOVERED_FUN_FACTS_KEY) || []).length;
+      },
     };
   }
 
@@ -1154,7 +1218,7 @@
     var tooltipBackend = loadDinoQuizStorage() || createBrowserHomeStorage(win);
     var localStorageBackend = win && win.localStorage;
 
-    return {
+    var merged = {
       hasSeenHomeTooltip: function () {
         return tooltipBackend.hasSeenHomeTooltip();
       },
@@ -1177,6 +1241,16 @@
           ? tooltipBackend.setMaxUnlockedLevel(level)
           : Promise.resolve(DEFAULT_MAX_UNLOCKED_LEVEL);
       },
+      // TRIOFSND-129: forwards fun-fact discovery tracking so both
+      // `renderQuestionAt`'s onAnswer handler (recording) and the Home/
+      // Resultados progress display (reading) share the same backend as
+      // the tooltip/analytics half above.
+      markFunFactDiscovered: function (funFactId) {
+        return tooltipBackend.markFunFactDiscovered(funFactId);
+      },
+      getDiscoveredFunFactsCount: function () {
+        return tooltipBackend.getDiscoveredFunFactsCount();
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -1186,6 +1260,24 @@
         }
       },
     };
+
+    // Whichever synchronous accessor `tooltipBackend` exposes (the real
+    // DinoQuizStorage's `snapshot()`, or createBrowserHomeStorage's
+    // `getDiscoveredFunFactsCountSync()`) is forwarded as-is, so a
+    // synchronous caller (renderResultsFor) can read it without awaiting a
+    // promise.
+    if (typeof tooltipBackend.snapshot === 'function') {
+      merged.snapshot = function () {
+        return tooltipBackend.snapshot();
+      };
+    }
+    if (typeof tooltipBackend.getDiscoveredFunFactsCountSync === 'function') {
+      merged.getDiscoveredFunFactsCountSync = function () {
+        return tooltipBackend.getDiscoveredFunFactsCountSync();
+      };
+    }
+
+    return merged;
   }
 
   /**
@@ -1296,6 +1388,19 @@
         persistAdsRemovedState(true, adsStorage);
       };
 
+      // TRIOFSND-129: how many distinct fun facts have been seen on this
+      // device so far, out of the total available in the loaded bank —
+      // `loadQuestions()` reads the already-loaded bank synchronously (see
+      // its own doc comment), same source `startNewGame` uses below.
+      var totalFunFacts = (function () {
+        var questions = loadQuestions();
+        return Array.isArray(questions) ? questions.length : undefined;
+      })();
+      var discoveredFunFactsCountPromise =
+        tooltipStorage && typeof tooltipStorage.getDiscoveredFunFactsCount === 'function'
+          ? tooltipStorage.getDiscoveredFunFactsCount()
+          : Promise.resolve(undefined);
+
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
 
@@ -1330,10 +1435,18 @@
       }
 
       if (!tooltipStorage) {
-        return finishRender();
+        return discoveredFunFactsCountPromise.then(function (count) {
+          renderOptions.discoveredFunFactsCount = count;
+          renderOptions.totalFunFacts = totalFunFacts;
+          return finishRender();
+        });
       }
 
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return Promise.all([tooltipStorage.hasSeenHomeTooltip(), discoveredFunFactsCountPromise]).then(function (
+        results
+      ) {
+        var seen = results[0];
+        var discoveredFunFactsCount = results[1];
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
           tooltipStorage.markHomeTooltipSeen();
@@ -1341,6 +1454,8 @@
         renderOptions.onPlayButtonClick = function () {
           tooltipStorage.recordEventOnce('first_tap_jugar');
         };
+        renderOptions.discoveredFunFactsCount = discoveredFunFactsCount;
+        renderOptions.totalFunFacts = totalFunFacts;
         return finishRender();
       });
     });

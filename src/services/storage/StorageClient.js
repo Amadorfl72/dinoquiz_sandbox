@@ -292,6 +292,12 @@ class DinoQuizStorage {
     }
   }
 
+  /** Count of distinct "datos curiosos" discovered on this device so far (TRIOFSND-129). */
+  async getDiscoveredFunFactsCount() {
+    const discovered = await this.get('discoveredFunFacts');
+    return discovered.length;
+  }
+
   async setMuted(muted) {
     await this.set('muted', muted);
   }

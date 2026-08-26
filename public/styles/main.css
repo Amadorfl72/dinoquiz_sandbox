@@ -240,6 +240,12 @@ body {
   color: var(--color-text);
 }
 
+.home-screen__fun-facts-progress {
+  max-width: 60ch;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
+}
+
 /*
  * First-run tooltip (TRIOFSND-65): a small speech bubble with an upward
  * arrow pointing at the play button above it. Shown only once, so the
@@ -864,7 +870,8 @@ body {
 }
 
 .results-screen__level-outcome,
-.results-screen__max-level-unlocked {
+.results-screen__max-level-unlocked,
+.results-screen__fun-facts-progress {
   font-size: var(--font-size-body);
   margin: 0;
   color: var(--color-text);

@@ -43,6 +43,13 @@
  * this screen stays a pure, DOM-only component, same as `options.adsRemoved`
  * above. Omitting all three renders exactly what this screen rendered before
  * TRIOFSND-206.
+ *
+ * Discovered fun facts progress (TRIOFSND-129): when both `options.discoveredFunFactsCount`
+ * and `options.totalFunFacts` are provided, a line shows how many "datos
+ * curiosos" have been seen on this device so far out of the total available
+ * in the bank -- read from local storage by the caller (`renderResultsFor`,
+ * public/scripts/main.js), same pattern as `options.maxLevelUnlocked` above.
+ * Omitting either renders nothing extra.
  */
 
 (function () {
@@ -285,6 +292,19 @@
       });
     }
 
+    // TRIOFSND-129: the count of distinct "datos curiosos" discovered on
+    // this device so far, out of the total available in the bank. Read from
+    // local storage by the caller, same rationale as maxLevelUnlockedEl above.
+    var funFactsProgressEl = null;
+    if (Number.isInteger(options.discoveredFunFactsCount) && Number.isInteger(options.totalFunFacts)) {
+      funFactsProgressEl = document.createElement('p');
+      funFactsProgressEl.className = 'results-screen__fun-facts-progress';
+      funFactsProgressEl.textContent = formatTemplate(strings.funFactsProgressFormat, {
+        count: options.discoveredFunFactsCount,
+        total: options.totalFunFacts,
+      });
+    }
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'results-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
@@ -306,6 +326,9 @@
     }
     if (maxLevelUnlockedEl) {
       announcementParts.push(maxLevelUnlockedEl.textContent);
+    }
+    if (funFactsProgressEl) {
+      announcementParts.push(funFactsProgressEl.textContent);
     }
     announcementEl.textContent = announcementParts.join(' ');
 
@@ -396,6 +419,9 @@
     if (maxLevelUnlockedEl) {
       root.appendChild(maxLevelUnlockedEl);
     }
+    if (funFactsProgressEl) {
+      root.appendChild(funFactsProgressEl);
+    }
     root.appendChild(announcementEl);
     root.appendChild(actions);
     if (adsSection) {
@@ -411,6 +437,7 @@
       messageEl: messageEl,
       levelOutcomeEl: levelOutcomeEl,
       maxLevelUnlockedEl: maxLevelUnlockedEl,
+      funFactsProgressEl: funFactsProgressEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,

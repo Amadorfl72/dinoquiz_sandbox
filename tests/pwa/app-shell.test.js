@@ -187,8 +187,12 @@ describe('renderMuteToggleButton', () => {
     const ruleMatch = css.match(/\.app-shell__mute-toggle\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
-    const minWidth = parseFloat(ruleMatch[1].match(/min-width:\s*([\d.]+)px/)[1]);
-    const minHeight = parseFloat(ruleMatch[1].match(/min-height:\s*([\d.]+)px/)[1]);
+    const minWidth = Math.max(
+      ...Array.from(ruleMatch[1].matchAll(/min-width:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
+    const minHeight = Math.max(
+      ...Array.from(ruleMatch[1].matchAll(/min-height:\s*([\d.]+)px/g)).map((match) => parseFloat(match[1]))
+    );
 
     expect(minWidth).toBeGreaterThanOrEqual(48);
     expect(minHeight).toBeGreaterThanOrEqual(48);

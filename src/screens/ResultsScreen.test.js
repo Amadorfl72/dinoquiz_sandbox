@@ -305,6 +305,54 @@ describe('level progress UI (TRIOFSND-206)', () => {
   });
 });
 
+describe('discovered fun facts progress (TRIOFSND-129)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders no fun-facts-progress element when the data is not provided (unchanged for existing callers)', () => {
+    const { funFactsProgressEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(funFactsProgressEl).toBeNull();
+  });
+
+  test('renders no fun-facts-progress element when only one of the two counts is provided', () => {
+    expect(renderResultsScreen(container, { score: 6, discoveredFunFactsCount: 5 }).funFactsProgressEl).toBeNull();
+    expect(renderResultsScreen(container, { score: 6, totalFunFacts: 150 }).funFactsProgressEl).toBeNull();
+  });
+
+  test('renders the discovered/total fun facts count', () => {
+    const { funFactsProgressEl } = renderResultsScreen(container, {
+      score: 6,
+      discoveredFunFactsCount: 12,
+      totalFunFacts: 150,
+    });
+
+    expect(funFactsProgressEl).toHaveTextContent('12/150');
+  });
+
+  test('the aria-live summary announcement includes the fun-facts-progress info', () => {
+    const { announcementEl } = renderResultsScreen(container, {
+      score: 6,
+      discoveredFunFactsCount: 12,
+      totalFunFacts: 150,
+    });
+
+    expect(announcementEl).toHaveTextContent('Datos curiosos descubiertos: 12/150');
+  });
+
+  test('the fun-facts-progress copy contains no negative/discouraging language', () => {
+    expect(findBannedWords(strings.funFactsProgressFormat)).toEqual([]);
+  });
+});
+
 describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
   let container;
 
