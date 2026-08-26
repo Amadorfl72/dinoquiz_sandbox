@@ -8,7 +8,8 @@
     "test:ci": "jest --ci",
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test tests/e2e/accessibility.spec.js"
+    "test:a11y": "jest tests/e2e/accessibility.test.js",
+    "postinstall": "npm run test:e2e:install"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
