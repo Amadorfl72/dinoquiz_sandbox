@@ -432,3 +432,51 @@ simplemente no obtiene instalación ni caché offline avanzada -- pero completa 
 Inicio -> Quiz -> Resultados por red, como demuestra
 [`tests/pwa/pwa-fallback.test.js`](tests/pwa/pwa-fallback.test.js) simulando un `navigator`
 sin `serviceWorker`.
+
+## Auditoría de accesibilidad automática (TRIOFSND-137)
+
+El PRD (`mvp_scope`) exige "accesibilidad básica: contraste WCAG AA, controles grandes y
+compatibilidad con lectores de pantalla" y una "política de privacidad accesible desde la
+pantalla de inicio". Hasta ahora esto se verificaba solo con tests unitarios puntuales (p.ej.
+[`src/theme/contrast.js`](src/theme/contrast.js)/`contrast.test.js` para pares de color
+concretos) y comentarios de diseño en cada pantalla, sin una auditoría automática de extremo a
+extremo. [`tests/e2e/accessibility.spec.js`](tests/e2e/accessibility.spec.js) añade esa
+auditoría con [axe-core](https://github.com/dequelabs/axe-core) (vía
+[`@axe-core/playwright`](https://www.npmjs.com/package/@axe-core/playwright)) contra las 4
+pantallas principales de la PWA renderizadas en un Chromium real (`tests/e2e/server.js` sirve
+`public/`, igual que `tests/e2e/offline-full-game.spec.js`):
+
+1. **Inicio** (`/`).
+2. **Quiz** (pantalla de pregunta, tras pulsar "¡Jugar!").
+3. **Resultados** (tras completar las 10 preguntas de una partida).
+4. **Política de privacidad** (`#/privacidad`, enlazada desde Inicio).
+
+Cada pantalla se analiza contra las reglas WCAG 2.0/2.1 A y AA de axe-core
+(`wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa`), que cubren exactamente lo que pide esta historia:
+contraste de color (`color-contrast`), roles/atributos ARIA (`aria-*`, `button-name`,
+`aria-allowed-attr`...) y presencia de labels/alt-text (`image-alt`, `label`, `link-name`...).
+El test falla si axe reporta **cualquier** violación en esas reglas para la pantalla
+correspondiente — el listado de violaciones (regla, impacto y nodo afectado) queda en el
+`expect` fallido y en el reporte de Playwright.
+
+**Cómo ejecutarla en local:**
+
+```bash
+npm run test:e2e:install   # una vez, instala Chromium para Playwright
+npm run test:a11y          # solo la auditoría de accesibilidad
+npm run test:e2e           # toda la suite e2e (accesibilidad + offline/PWA)
+```
+
+**Resultado de la auditoría inicial (base para el Definition of Done "auditoría de
+accesibilidad básica"):** las 4 pantallas pasan sin violaciones WCAG 2.0/2.1 A/AA — consistente
+con el trabajo previo de contraste (`src/theme/contrast.js`), `alt`/`aria-label` explícitos en
+imágenes e iconos (`homeScreen.js`, `questionScreen.js`) y el patrón de disclosure ARIA de los
+controles globales (`aria-expanded`/`aria-controls`). Si una PR futura introduce una regresión,
+`npm run test:a11y` la reproduce en local con el mismo detalle que en el `expect` de la suite.
+
+**Nota sobre CI:** el workflow gestionado por TrioForge (`.github/workflows/trioforge-tests.yml`)
+ejecuta hoy `npm test` (Jest/jsdom), que no puede correr Chromium real ni axe-core con layout —
+por eso esta auditoría vive en la suite Playwright (`npm run test:e2e`), igual que las pruebas
+offline/PWA existentes. Engancharla al gate de CI requiere tocar ese workflow, fuera del alcance
+de cambios de aplicación de esta tarea; mientras tanto, `npm run test:a11y` es el comando de
+referencia para el "pipeline de build" local/pre-merge y para revisiones manuales de PR.
