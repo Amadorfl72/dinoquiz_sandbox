@@ -76,7 +76,6 @@ async function flushPromises() {
   await new Promise((resolve) => setTimeout(resolve, 0));
   jest.useFakeTimers();
 }
-
 describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> Volver a jugar / Salir', () => {
   let container;
   let addEventListenerSpy;
@@ -668,15 +667,28 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     });
   });
 
-  describe('avance automático tras el temporizador (TRIOFSND-84)', () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
+  test('TRIOFSND-98: landing on Resultados records the aggregated, non-PII partida_completada event with the final score', async () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+    const analyticsStorage = { recordGameCompleted: jest.fn().mockResolvedValue({ gamesCompleted: 1, totalScore: 7, averageScore: 7 }) };
 
-    afterEach(() => {
+    jest.useFakeTimers();
+    try {
+      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, analyticsStorage);
+      for (const mark of 'CCCCFCCCFF'.split('')) {
+        await answerCurrentQuestion(container, { correct: mark === 'C' });
+      }
+    } finally {
       jest.useRealTimers();
-    });
+    }
 
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(analyticsStorage.recordGameCompleted).toHaveBeenCalledTimes(1);
+    expect(analyticsStorage.recordGameCompleted).toHaveBeenCalledWith(7);
+  });
+
+  describe('auto-advance behavior', () => {
     test('acierto: advances to the next question on its own once the auto-advance delay elapses, without a "Siguiente" tap', () => {
       const { resolveScreenRenderers, startNewGame, AUTO_ADVANCE_GRACE_MS } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
@@ -998,6 +1010,7 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
         await answerCurrentQuestion(container, { correct: true });
       }
 
+      expect(container.querySelector('.results-screen')).not.toBeNull();
       expect(container.querySelector('.results-screen__ads')).toBeNull();
     } finally {
       jest.useRealTimers();

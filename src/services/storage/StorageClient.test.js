@@ -282,6 +282,49 @@ describe('DinoQuizStorage', () => {
     });
   });
 
+  it('recordGameCompleted defaults to zeroed score metrics before any game finishes (TRIOFSND-98)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    expect(await storage.getScoreMetrics()).toEqual({ gamesCompleted: 0, totalScore: 0, averageScore: 0 });
+  });
+
+  it('recordGameCompleted records the aggregated, non-PII partida_completada event (TRIOFSND-98)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordGameCompleted(7);
+
+    expect(await storage.getEventCount('partida_completada')).toBe(1);
+  });
+
+  it('recordGameCompleted folds the score into the on-device average-score aggregate (TRIOFSND-98)', async () => {
+    const storage = new DinoQuizStorage([createFakeAdapter()]);
+
+    await storage.recordGameCompleted(6);
+    await storage.recordGameCompleted(8);
+    const metrics = await storage.recordGameCompleted(10);
+
+    expect(metrics).toEqual({ gamesCompleted: 3, totalScore: 24, averageScore: 8 });
+    expect(await storage.getScoreMetrics()).toEqual(metrics);
+  });
+
+  it('persists score metrics across instances sharing the same backend (TRIOFSND-98)', async () => {
+    const store = new Map();
+    const adapter = () =>
+      createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        async setItem(key, value) {
+          store.set(key, value);
+        },
+      });
+    const storage = new DinoQuizStorage([adapter()]);
+    await storage.recordGameCompleted(5);
+
+    const reopened = new DinoQuizStorage([adapter()]);
+    expect(await reopened.getScoreMetrics()).toEqual({ gamesCompleted: 1, totalScore: 5, averageScore: 5 });
+  });
+
   describe('TRIOFSND-92: aggregated acierto/fallo view over questionStats (recordQuestionResult)', () => {
     it('recordQuestionResult aggregates acierto and fallo counts per id_pregunta over the shared questionStats aggregate', async () => {
       const storage = new DinoQuizStorage([createFakeAdapter()]);

@@ -1,4 +1,11 @@
 /**
+ * @typedef {Object} ScoreMetrics
+ * @property {number} gamesCompleted
+ * @property {number} totalScore
+ * @property {number} averageScore
+ */
+
+/**
  * @typedef {Object} QuestionStats
  * @property {number} total_respuestas
  * @property {number} total_aciertos
@@ -25,6 +32,7 @@
  * @property {Object.<string, QuestionStats>} questionStats
  * @property {QuestionAnsweredEvent[]} questionAnsweredEvents
  * @property {boolean} adsRemoved
+ * @property {ScoreMetrics} scoreMetrics
  * @property {number} maxUnlockedLevel
  */
 
@@ -39,6 +47,7 @@ const DEFAULT_STATE = {
   questionStats: {},
   questionAnsweredEvents: [],
   adsRemoved: false,
+  scoreMetrics: { gamesCompleted: 0, totalScore: 0, averageScore: 0 },
   // Level 1 is always accessible (TRIOFSND-203), so it's the unlocked floor
   // even before any level has been completed.
   maxUnlockedLevel: 1,

@@ -605,6 +605,13 @@
           return question.id;
         });
         persistBestScoreAndStreak(storage, finalState);
+        // TRIOFSND-98: landing on Resultados is "the game finished" -- record
+        // the aggregated, non-PII partida_completada event and fold the final
+        // score into the on-device average-score aggregate (client-only, no
+        // backend) right here, once per game, before Resultados renders.
+        if (analyticsStorage && typeof analyticsStorage.recordGameCompleted === 'function') {
+          analyticsStorage.recordGameCompleted(finalState.score);
+        }
         renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       storageObj,
@@ -1055,6 +1062,12 @@
 
   var HOME_TOOLTIP_SEEN_KEY = 'dinoquiz:homeTooltipSeen';
   var ANALYTICS_EVENT_COUNTS_KEY = 'dinoquiz:analyticsEventCounts';
+  // On-device average-score aggregate (TRIOFSND-98): mirrors the shape
+  // src/services/storage's DinoQuizStorage#recordGameCompleted persists under
+  // its own `dinoquiz:scoreMetrics` namespaced key, so this no-bundler browser
+  // path and a future bundler-backed one agree on the same value.
+  var SCORE_METRICS_KEY = 'dinoquiz:scoreMetrics';
+  var EMPTY_SCORE_METRICS = { gamesCompleted: 0, totalScore: 0, averageScore: 0 };
   var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
   var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
   // TRIOFSND-205/207: same namespaced key `src/services/storage`'s
@@ -1072,6 +1085,7 @@
     var memory = {};
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
+    memory[SCORE_METRICS_KEY] = EMPTY_SCORE_METRICS;
     memory[QUESTION_STATS_KEY] = {};
     memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
     memory[MAX_UNLOCKED_LEVEL_KEY] = DEFAULT_MAX_UNLOCKED_LEVEL;
@@ -1151,6 +1165,22 @@
         counts[eventName] = (counts[eventName] || 0) + 1;
         writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
         return Promise.resolve(counts[eventName]);
+      },
+      // TRIOFSND-98: records the aggregated, non-PII partida_completada event
+      // (via the same recordEvent counter above) and folds the final score
+      // into the on-device average-score aggregate, reusable for a future
+      // completion-rate metric.
+      recordGameCompleted: function (score) {
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.partida_completada = (counts.partida_completada || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var metrics = readJSON(SCORE_METRICS_KEY) || EMPTY_SCORE_METRICS;
+        var gamesCompleted = metrics.gamesCompleted + 1;
+        var totalScore = metrics.totalScore + score;
+        var updated = { gamesCompleted: gamesCompleted, totalScore: totalScore, averageScore: totalScore / gamesCompleted };
+        writeJSON(SCORE_METRICS_KEY, updated);
+        return Promise.resolve(updated);
       },
       // TRIOFSND-80: single write point (called from onAnswer in the
       // bootstrap below, never from questionScreen.js). Persists the
@@ -1254,6 +1284,17 @@
       },
       recordEventOnce: function (eventName) {
         return tooltipBackend.recordEventOnce(eventName);
+      },
+      // TRIOFSND-92/TRIOFSND-98: forwards the repeatable, aggregated event
+      // counter (partida_iniciada, pregunta_respondida...) and the
+      // game-completion helper (partida_completada + average-score
+      // aggregate) so the real app-shell flow, not just tests that pass an
+      // explicit storage double, actually records them.
+      recordEvent: function (eventName) {
+        return tooltipBackend.recordEvent(eventName);
+      },
+      recordGameCompleted: function (score) {
+        return tooltipBackend.recordGameCompleted(score);
       },
       // TRIOFSND-205/207: forwarded the same way as the tooltip methods above
       // so `startLevelGame`/`finishLevel` can persist/read the highest
@@ -1447,9 +1488,15 @@
               // resolves does `startLevelGame` retrieve that selection
               // (`resolveCurrentAgeBand`) and start the multi-level game at
               // level 1.
+              //
+              // The mute/ads-removed flags (TRIOFSND-66/TRIOFSND-97) are read
+              // and written through `resolvedMuteStorage` above (onToggleMute/
+              // onPurchase) -- startLevelGame's `storageObj` must read from that
+              // same backend, or a purchase confirmed here would still show
+              // ads on this very game's Resultados screen.
               renderAgeGate(container, renderers, resources && resources.ageGate, function () {
                 startLevelGame(container, renderers, questions, doc, fetchFn, {
-                  storageObj: adsStorage,
+                  storageObj: resolvedMuteStorage,
                   analyticsStorage: storage,
                   storage: storage,
                 });

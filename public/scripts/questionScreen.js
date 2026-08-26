@@ -257,7 +257,6 @@
       return result.split('{' + key + '}').join(values[key]);
     }, template);
   }
-
   // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
   // curioso heading are the copy a child sees right after a miss, so they are
   // held to the same no-reproach standard as ResultsScreen's motivational
@@ -487,10 +486,15 @@
     feedback.className = 'question-screen__feedback';
     feedback.setAttribute('aria-live', 'polite');
 
+    // Single accessible result announcement (TRIOFSND-79, AC-14): `announcementEl`
+    // and `announcement` are two names for the SAME node (the return object
+    // below exposes both) -- there must be exactly one `role="status"`
+    // element per question, or a screen reader announces the outcome twice.
     var announcementEl = document.createElement('p');
     announcementEl.className = 'question-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
     announcementEl.setAttribute('aria-live', 'polite');
+    var announcement = announcementEl;
 
     var funFactBox = document.createElement('div');
     funFactBox.className = 'question-screen__fun-fact-box';
@@ -509,7 +513,6 @@
     // and the merge kept both, so screen readers announced every answer twice
     // and getByRole('status') found two nodes. One element, both names.
     var announcement = announcementEl;
-
     var rewardedAdStrings = strings.rewardedAd || {};
 
     var rewardedAdCta = document.createElement('button');
@@ -627,23 +630,14 @@
       }
       scoreEl.textContent = strings.scoreLabel + ': ' + score;
 
-      // Written synchronously, right here, so TalkBack/VoiceOver announce
-      // acierto/fallo and the correct option's text immediately after the
-      // tap — it never waits on the fun-fact reveal, a sound cue, or a timer.
-      var announcementParts = [
-        formatTemplate(
-          correct ? strings.answerAnnouncement.correct : strings.answerAnnouncement.incorrect,
-          { correctAnswer: correctAnswerText }
-        ),
-      ];
-      if (typeof question.funFact === 'string' && question.funFact.trim() !== '') {
-        announcementParts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
-      }
-      announcementParts.push(strings.scoreLabel + ': ' + score);
-      announcementEl.textContent = announcementParts.join(' ');
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
+      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // acierto/fallo, the correct option's text, the dato curioso and the
+      // updated score as one coherent sentence — it never waits on the
+      // fun-fact reveal, a sound cue, or a timer (TRIOFSND-79/TRIOFSND-90, AC-14).
+      announcementEl.textContent = buildResultAnnouncement(strings, question, correct, score);
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
       }
