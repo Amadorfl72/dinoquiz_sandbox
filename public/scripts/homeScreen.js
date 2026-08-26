@@ -66,6 +66,15 @@
  * inside the same panel instead of calling `options.onPurchase`, so a child
  * or parent tapping it with no signal gets a clear explanation without the
  * rest of the app (or even the rest of this panel) being blocked.
+ *
+ * Discovered fun facts progress (TRIOFSND-129): when both
+ * `options.discoveredFunFactsCount` and `options.totalFunFacts` are
+ * provided, a line near the parental notice shows how many "datos
+ * curiosos" have been seen on this device so far out of the total
+ * available in the bank -- read from local storage by the caller
+ * (`renderHome`, public/scripts/main.js). This screen stays a pure,
+ * DOM-only component and never touches storage itself; omitting either
+ * option renders nothing extra.
  */
 
 (function () {
@@ -293,6 +302,19 @@
     parentalNotice.setAttribute('aria-label', strings.parentalNotice.label);
     parentalNotice.textContent = strings.parentalNotice.message;
 
+    // TRIOFSND-129: the count of distinct "datos curiosos" discovered on
+    // this device so far, out of the total available in the bank. Read from
+    // local storage by the caller (renderHome), same rationale as the
+    // parental notice above.
+    var funFactsProgress = null;
+    if (Number.isInteger(options.discoveredFunFactsCount) && Number.isInteger(options.totalFunFacts)) {
+      funFactsProgress = document.createElement('p');
+      funFactsProgress.className = 'home-screen__fun-facts-progress';
+      funFactsProgress.textContent = strings.funFactsProgressFormat
+        .replace('{count}', options.discoveredFunFactsCount)
+        .replace('{total}', options.totalFunFacts);
+    }
+
     var tooltip = null;
     var tooltipDismissed = false;
     // Dismissal listens on the document, not just `.home-screen`: the
@@ -390,6 +412,9 @@
     root.appendChild(privacyPolicyButton);
     root.appendChild(globalControls);
     root.appendChild(parentalNotice);
+    if (funFactsProgress) {
+      root.appendChild(funFactsProgress);
+    }
     root.appendChild(privacyPanelBuilt.panel);
     root.appendChild(purchasePanelBuilt.panel);
     container.appendChild(root);
@@ -401,6 +426,7 @@
       playButton: playButton,
       privacyPolicyButton: privacyPolicyButton,
       parentalNotice: parentalNotice,
+      funFactsProgress: funFactsProgress,
       tooltip: tooltip,
       globalControls: globalControls,
       muteButton: muteButton,

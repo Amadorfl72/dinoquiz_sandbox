@@ -15,6 +15,12 @@
  * child from pressing "Siguiente" (PRD: "si no se ve el rewarded, la
  * partida funciona igual").
  *
+ * Feedback sound effects (TRIOFSND-78, AC-5/AC-11): the implementation's
+ * `soundService.preload()` runs right after mount, and `handleSelect` calls
+ * `playCorrect`/`playIncorrect` synchronously with the visual feedback — the
+ * service reads the persisted mute flag before every play (see
+ * public/scripts/soundService.js and `src/services/sound`).
+ *
  * The implementation lives in public/scripts/questionScreen.js because the
  * browser renders this screen directly, and without a bundler it must be
  * loaded there as a `<script>` (see public/index.html) — the same rationale

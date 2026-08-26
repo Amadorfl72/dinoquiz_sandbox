@@ -349,6 +349,64 @@ describe('TRIOFSND-65: createBrowserHomeStorage — native fallback for a real, 
     );
   });
 
+  test('TRIOFSND-80: recordQuestionAnswered registers pregunta_respondida and aggregates per-question accuracy, no PII', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.recordQuestionAnswered('trex-01', true);
+    await storage.recordQuestionAnswered('trex-01', false);
+
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:questionAnsweredEvents',
+      JSON.stringify([
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: true },
+        { tipo: 'pregunta_respondida', id_pregunta: 'trex-01', acierto: false },
+      ])
+    );
+    expect(win.localStorage.setItem).toHaveBeenCalledWith(
+      'dinoquiz:analyticsEventCounts',
+      JSON.stringify({ pregunta_respondida: 2 })
+    );
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:questionStats',
+      JSON.stringify({ 'trex-01': { total_respuestas: 2, total_aciertos: 1 } })
+    );
+    expect(await storage.getQuestionStats('trex-01')).toEqual({
+      total_respuestas: 2,
+      total_aciertos: 1,
+      porcentaje_acierto: 50,
+    });
+  });
+
+  test('TRIOFSND-80: getQuestionStats defaults to zero counters and a 0% for a question with no history', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const storage = createBrowserHomeStorage(createFakeWindow());
+
+    expect(await storage.getQuestionStats('never-answered')).toEqual({
+      total_respuestas: 0,
+      total_aciertos: 0,
+      porcentaje_acierto: 0,
+    });
+  });
+
+  test('TRIOFSND-129: markFunFactDiscovered registers a fun fact once, without duplicates', async () => {
+    const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
+    const win = createFakeWindow();
+    const storage = createBrowserHomeStorage(win);
+
+    await storage.markFunFactDiscovered('trex-01');
+    await storage.markFunFactDiscovered('trex-01');
+    await storage.markFunFactDiscovered('triceratops-02');
+
+    expect(win.localStorage.setItem).toHaveBeenLastCalledWith(
+      'dinoquiz:discoveredFunFacts',
+      JSON.stringify(['trex-01', 'triceratops-02'])
+    );
+    expect(await storage.getDiscoveredFunFactsCount()).toBe(2);
+    expect(storage.getDiscoveredFunFactsCountSync()).toBe(2);
+  });
+
   test('degrades to an in-memory store instead of throwing when localStorage is unavailable (e.g. Safari private mode)', async () => {
     const { createBrowserHomeStorage } = require(MAIN_JS_PATH);
     const win = {
@@ -410,6 +468,60 @@ describe('TRIOFSND-66: renderHome supplies privacy/purchase i18n sections the br
     fireEvent.click(purchaseButton);
     expect(container).toHaveTextContent(purchase.heading);
     expect(container).toHaveTextContent(purchase.priceLabel);
+
+    container.remove();
+  });
+});
+
+describe('TRIOFSND-129: Home shows the persisted discovered-fun-facts progress', () => {
+  test('renders how many fun facts were discovered so far out of the full loaded bank', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+    const { EXPECTED_QUESTION_COUNT } = require('../../src/data/questionBank');
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn(),
+      recordEventOnce: jest.fn(),
+      getDiscoveredFunFactsCount: jest.fn().mockResolvedValue(3),
+    };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    expect(container).toHaveTextContent(
+      home.funFactsProgressFormat.replace('{count}', '3').replace('{total}', String(EXPECTED_QUESTION_COUNT))
+    );
+
+    container.remove();
+  });
+
+  test('renders nothing extra when the storage backend does not expose a discovered-fun-facts count', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const { renderHomeScreen } = require('../../public/scripts/homeScreen');
+    const { home, privacy, purchase } = require('../../public/i18n/es.json');
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const doc = { getElementById: jest.fn().mockReturnValue(container) };
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home, privacy, purchase }),
+    });
+    const storage = {
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      markHomeTooltipSeen: jest.fn(),
+      recordEventOnce: jest.fn(),
+    };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    expect(container.querySelector('.home-screen__fun-facts-progress')).toBeNull();
 
     container.remove();
   });

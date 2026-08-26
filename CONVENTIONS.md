@@ -1,6 +1,7 @@
 # Convenciones de estructura — DinoQuiz
 
-> **Contrato de arquitectura del proyecto.** Toda tarea DEBE respetar estas
+> **Contrato de arquitectura del proyecto — EJECUTABLE.** `tests/conventions.test.js` falla el CI si una rama lo viola; si necesitas cambiar una regla, cambia el test y este documento en la misma PR.
+> Toda tarea DEBE respetar estas
 > ubicaciones canónicas. No dupliques un concepto en dos sitios ni inventes un
 > layout nuevo: extiende el que hay. El objetivo es que ramas independientes no
 > coloquen el mismo fichero en rutas distintas (causa merges irresolubles).
@@ -25,7 +26,7 @@ DinoQuiz es una **PWA frontend sin paso de build** (no hay bundler). Regla base:
 | Estilos | `public/styles/` | CSS servido. |
 | **i18n (DATOS)** | **`public/i18n/<locale>.json`** | El navegador los hace `fetch('/i18n/es.json')` y el SW los precachea → DEBEN estar en `public/`. NUNCA en `src/i18n/*.json`. |
 | **i18n (loader)** | **`src/i18n/index.js`** | `getStrings(locale)`; hace `require('../../public/i18n/es.json')`. El código y los tests obtienen strings por AQUÍ, no leyendo el JSON a mano. |
-| Pantallas | `src/screens/<Nombre>Screen.js` | Una pantalla = un fichero. NO en `public/scripts/`. |
+| Pantallas | **implementación** en `public/scripts/<nombre>Screen.js`; **shim** en `src/screens/<Nombre>Screen.js` | Sin bundler, el navegador solo carga `<script>` desde `public/`. El módulo de `src/screens/` es un re-export (`module.exports = require('../../public/scripts/…')`) para Jest — NUNCA una segunda implementación. Lo vigila `tests/conventions.test.js`. |
 | Lógica de juego | `src/game/` | scoring, flujo. |
 | Datos (banco preguntas) | `src/data/` | `questionBank.js`, `questions.json`. |
 | Servicios (storage, analytics) | `src/services/` | Client-side; sin backend. |

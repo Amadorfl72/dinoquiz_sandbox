@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v7';
+const SW_VERSION = 'v10';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -24,13 +24,17 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/styles/main.css',
   '/scripts/scoring.js',
+  '/scripts/soundService.js',
   '/scripts/adsService.js',
   '/scripts/gameFlow.js',
   '/scripts/audio.js',
   '/scripts/network.js',
+  '/scripts/logging.js',
   '/scripts/appShell.js',
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
+  '/scripts/ageGateScreen.js',
+  '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/main.js',
@@ -43,6 +47,30 @@ const PRECACHE_URLS = [
   '/assets/images/dinosaurs/braquiosaurio.svg',
   '/assets/images/dinosaurs/ankylosaurus.svg',
   '/assets/images/dinosaurs/pteranodon.svg',
+  // Realistic photo-style variants (TRIOFSND-195): precached alongside the
+  // cartoon drawings so a player can toggle between visual variants offline
+  // after the first load, without waiting on a runtime fetch.
+  '/assets/images/realistic/trex.jpg',
+  '/assets/images/realistic/triceratops.jpg',
+  '/assets/images/realistic/velociraptor.jpg',
+  '/assets/images/realistic/estegosaurio.jpg',
+  '/assets/images/realistic/braquiosaurio.jpg',
+  '/assets/images/realistic/ankylosaurus.jpg',
+  '/assets/images/realistic/pteranodon.jpg',
+  // Fallback images shown when a realistic variant fails to load.
+  '/assets/images/fallback/trex.svg',
+  '/assets/images/fallback/triceratops.svg',
+  '/assets/images/fallback/velociraptor.svg',
+  '/assets/images/fallback/estegosaurio.svg',
+  '/assets/images/fallback/braquiosaurio.svg',
+  '/assets/images/fallback/ankylosaurus.svg',
+  '/assets/images/fallback/pteranodon.svg',
+  // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
+  // the app shell instead of left to runtime caching, so the very first
+  // answer in a fresh install can still play its sfx within the <300ms
+  // budget while offline.
+  '/assets/sounds/correct.wav',
+  '/assets/sounds/incorrect.wav',
   '/assets/sounds/fail-neutral.wav',
   '/i18n/es.json',
   '/data/questions.json',

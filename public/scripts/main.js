@@ -27,8 +27,9 @@
  * player through the selected questions one at a time via
  * public/scripts/questionScreen.js; once the last question is answered it
  * shows public/scripts/resultsScreen.js, whose 'Volver a jugar' calls back
- * into `startNewGame` (fresh state + a new random subset of questions, AC-9)
- * and whose 'Salir' calls `renderHome` again.
+ * into `startNewGame` (fresh state + a new random subset of questions that
+ * avoids repeating the previous game's questions when possible, TRIOFSND-101
+ * AC-9) and whose 'Salir' calls `renderHome` again.
  *
  * No-bundler runtime: DinoQuiz ships without a build step, so `require` does
  * not exist in the browser. Every screen and the game logic are loaded as
@@ -114,18 +115,30 @@
  * event, so the tooltip closes and the first question renders in the same
  * tick — no perceptible delay after the tap.
  *
- * Aggregated question failures (TRIOFSND-92): that same analytics `storage`
- * is threaded through `startNewGame` -> `renderQuestionAt` ->
- * `renderResultsFor` (replay reuses it too) as `analyticsStorage`, so the
- * `onAnswer` handler in `renderQuestionAt` records the canonical, non-PII
- * `pregunta_respondida` event (AC-18) via `storage.recordEvent` on every
- * answered question, and additionally records `pregunta_respondida_fallo`
- * whenever `result.isCorrect` is false. Since the client-only
+ * Answer registration (TRIOFSND-80): `renderQuestionAt`'s `onAnswer` handler
+ * below is the single write point for the whole feature — questionScreen.js
+ * only computes correctness and reports it, it never touches storage, so an
+ * answer is never recorded/aggregated twice. On every accepted answer (hit
+ * or miss, and thanks to questionScreen.js's own `answered` guard exactly
+ * once per question) it calls `storage.recordQuestionAnswered(question.id,
+ * result.isCorrect)`, which persists the minimal, non-PII `pregunta_respondida`
+ * event and incrementally updates that question's historic accuracy — see
+ * `DinoQuizStorage#recordQuestionAnswered` (src/services/storage/StorageClient.js)
+ * and its `createBrowserHomeStorage` mirror below for the exact contract.
+ *
+ * Aggregated question failures (TRIOFSND-92): a separate `analyticsStorage`
+ * client is threaded through `startNewGame` -> `renderQuestionAt` ->
+ * `renderResultsFor` (replay reuses it too), so the `onAnswer` handler in
+ * `renderQuestionAt` also records the aggregated, non-PII `pregunta_respondida`
+ * event (AC-18) via `analyticsStorage.recordEvent` on every answered
+ * question, and additionally records `pregunta_respondida_fallo` whenever
+ * `result.isCorrect` is false. Since the client-only
  * `recordEvent`/`recordEventOnce` API aggregates by event name rather than
  * per-event payloads, the failure count travels as its own counter instead
  * of a field on `pregunta_respondida` -- comparing the two counters is what
  * yields the aggregated "% acierto por pregunta" the PRD's
- * logging_observability calls for.
+ * logging_observability calls for, independently of TRIOFSND-80's
+ * per-question `recordQuestionAnswered` aggregate above.
  *
  * End of game (TRIOFSND-95): `renderQuestionAt`'s 'Siguiente' handler detects
  * question 10 was just answered, derives the game's racha (longest run of
@@ -134,6 +147,23 @@
  * next to the already-tracked final `score`. `renderResultsFor` then forwards
  * both into `renderResultsScreen`'s options, so the closed Quiz -> Resultados
  * loop always hands off both pieces of end-of-game data together.
+ *
+ * Functional fallback without Service Worker/manifest support (TRIOFSND-113):
+ * DinoQuiz's official support matrix is the last 2 major versions of Chrome,
+ * Edge and Safari, but some older tablets or embedded/in-app browsers outside
+ * that matrix don't support Service Worker or installable manifests.
+ * `resolvePlatformSupport` (mirroring `src/services/platformSupport`'s
+ * `detectPwaSupport`) detects that up front and `logPlatformSupportFallback`
+ * logs a diagnostic — nothing more, since it must never block or degrade the
+ * actual game. That guarantee already falls out of how this file is built:
+ * `registerServiceWorker` is feature-detected and fire-and-forget (see the
+ * `window.addEventListener('load', ...)` handler below), while
+ * `bootstrapBrowserApp` fetches `/i18n/es.json` and `/data/questions.json`
+ * with plain `fetch`, independent of whether a service worker is present.
+ * So a browser lacking PWA support simply never gets installability or
+ * offline caching — it still plays the full Inicio -> Quiz -> Resultados loop
+ * over the network exactly like a supported browser (see
+ * tests/pwa/pwa-fallback.test.js).
  */
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
@@ -211,6 +241,8 @@
     if (typeof require === 'function') {
       return {
         renderHomeScreen: fromWindow.renderHomeScreen || require('./homeScreen').renderHomeScreen,
+        renderAgeGateScreen:
+          fromWindow.renderAgeGateScreen || require('../../src/screens/AgeGateScreen').renderAgeGateScreen,
         renderQuestionScreen:
           fromWindow.renderQuestionScreen || require('../../src/screens/QuestionScreen').renderQuestionScreen,
         renderResultsScreen:
@@ -223,6 +255,31 @@
     }
 
     return null;
+  }
+
+  /**
+   * Age gate (TRIOFSND-193): rendered right after '¡Jugar!' and before the
+   * game is prepared, per the PRD. The two-option choice and its in-memory,
+   * session-only selection live entirely in ageGateScreen.js (never
+   * persisted, logged or sent anywhere from here); this helper only decides
+   * when to move on to `onSelected` once a tap has been made. A missing
+   * renderer (e.g. ageGateScreen.js failed to load in some fallback browser)
+   * degrades gracefully by skipping straight to `onSelected` — the age gate
+   * must never block the game itself, matching the resilience pattern
+   * `installLinkGuard`/`registerServiceWorker` already follow.
+   */
+  function renderAgeGate(container, renderers, ageGateStrings, onSelected) {
+    if (!renderers || typeof renderers.renderAgeGateScreen !== 'function') {
+      onSelected();
+      return null;
+    }
+
+    return renderers.renderAgeGateScreen(container, {
+      strings: ageGateStrings,
+      onSelect: function () {
+        onSelected();
+      },
+    });
   }
 
   function resolveGameFlow(win) {
@@ -260,7 +317,6 @@
     if (!Array.isArray(rawQuestions)) {
       return [];
     }
-    var funFacts = strings ? strings.funFacts : null;
     return rawQuestions.map(function (question) {
       var prepared = {};
       for (var key in question) {
@@ -268,7 +324,10 @@
           prepared[key] = question[key];
         }
       }
-      prepared.funFact = resolveFunFact(funFacts, question.dato_curioso);
+      // `dato_curioso` is a dotted key like "funFacts.trex-01", so it must be
+      // resolved against the full strings bundle, not `strings.funFacts`
+      // (which would look up the "funFacts" segment twice and always miss).
+      prepared.funFact = resolveFunFact(strings, question.dato_curioso);
       return prepared;
     });
   }
@@ -312,9 +371,13 @@
    * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
    * avance automático) lleva a la siguiente pregunta"). Both paths funnel
    * through the same `advance()` so a game is only ever walked forward once
-   * per question, whichever trigger fires first.
+   * per question, whichever trigger fires first. `analyticsStorage` records
+   * the aggregated `pregunta_respondida`/`pregunta_respondida_fallo` event
+   * counters (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client
+   * whose `recordQuestionAnswered` call updates that question's historic
+   * accuracy aggregate.
    */
-  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage) {
+  function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext) {
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
@@ -333,7 +396,7 @@
       if (session.state.questionIndex >= session.questions.length) {
         onGameComplete(session.state);
       } else {
-        renderQuestionAt(container, renderers, session, onGameComplete, storageObj);
+        renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext);
       }
     }
 
@@ -342,7 +405,7 @@
         renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
       0;
 
-    return renderers.renderQuestionScreen(container, question, {
+    var questionOptions = {
       score: session.state.score,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
@@ -356,12 +419,39 @@
           },
         ]);
 
+        // TRIOFSND-92: the aggregated acierto/fallo tally keys off the
+        // stable bank id (never the visible text or index); an invalid or
+        // missing id is skipped rather than recorded/aggregated under an
+        // anonymous key.
+        if (
+          storage &&
+          typeof storage.recordQuestionAnswered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
+          storage.recordQuestionAnswered(question.id, result.isCorrect);
+        }
+
         if (analyticsStorage && typeof analyticsStorage.recordEvent === 'function') {
           analyticsStorage.recordEvent('pregunta_respondida');
 
           if (!result.isCorrect) {
             analyticsStorage.recordEvent('pregunta_respondida_fallo');
           }
+        }
+
+        // TRIOFSND-129: the fun fact reveals right after every answer,
+        // hit or miss alike (see questionScreen.js's handleSelect), so it
+        // is registered as "seen" here unconditionally -- keyed off the
+        // same stable bank id as recordQuestionAnswered above, never the
+        // visible text.
+        if (
+          storage &&
+          typeof storage.markFunFactDiscovered === 'function' &&
+          typeof question.id === 'string' &&
+          question.id.length > 0
+        ) {
+          storage.markFunFactDiscovered(question.id);
         }
 
         autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
@@ -377,18 +467,84 @@
         }
         advance();
       },
-    });
+    };
+
+    // TRIOFSND-207: `levelContext` is only set by the multi-level orchestrator
+    // (startLevelGame/playLevel below) -- the older flat, level-agnostic game
+    // (startNewGame) never passes it, so it keeps rendering with no progress
+    // row at all, exactly as before this feature existed.
+    if (levelContext && typeof levelContext.level === 'number') {
+      questionOptions.level = levelContext.level;
+      questionOptions.questionNumber = session.state.questionIndex + 1;
+      questionOptions.totalQuestions = session.questions.length;
+    }
+
+    return renderers.renderQuestionScreen(container, question, questionOptions);
+  }
+
+  /**
+   * Resolves the count of distinct "datos curiosos" discovered on this
+   * device so far (TRIOFSND-129), synchronously -- `renderResultsFor` below
+   * renders Resultados the instant a game ends, with no promise to await.
+   * Prefers the real `DinoQuizStorage`'s `snapshot()` (its in-memory cache
+   * is already current by the time a game ends, since every write updates
+   * it synchronously -- see StorageClient.js's `set()`), falling back to
+   * `createBrowserHomeStorage`'s `getDiscoveredFunFactsCountSync()` in a
+   * real, unbundled browser. Returns `undefined` for any other storage
+   * shape (e.g. a test double), so the caller renders nothing extra.
+   */
+  function resolveDiscoveredFunFactsCount(storage) {
+    if (!storage) {
+      return undefined;
+    }
+    if (typeof storage.snapshot === 'function') {
+      var snapshot = storage.snapshot();
+      return Array.isArray(snapshot.discoveredFunFacts) ? snapshot.discoveredFunFacts.length : undefined;
+    }
+    if (typeof storage.getDiscoveredFunFactsCountSync === 'function') {
+      return storage.getDiscoveredFunFactsCountSync();
+    }
+    return undefined;
+  }
+
+  /**
+   * Persists the just-finished game's score/racha (TRIOFSND-128, PRD
+   * "Persistencia exclusivamente local de mejor puntuación, racha máxima"),
+   * mirroring the fire-and-forget pattern `onAnswer` already uses for
+   * `recordQuestionAnswered`/`markFunFactDiscovered` above: StorageClient's
+   * `set()` updates its in-memory cache synchronously, so nothing here needs
+   * to await the write settling. Duck-typed so a storage double missing
+   * these methods (or no storage at all) is skipped rather than throwing.
+   * `DinoQuizStorage#recordScore`/`#recordStreak`
+   * (src/services/storage/StorageClient.js) only overwrite the persisted
+   * bestScore/maxStreak when the new value is strictly higher, so this is
+   * safe to call after every game, win or lose.
+   */
+  function persistBestScoreAndStreak(storage, finalState) {
+    if (!storage || !finalState) {
+      return;
+    }
+    if (typeof storage.recordScore === 'function' && typeof finalState.score === 'number') {
+      storage.recordScore(finalState.score);
+    }
+    if (typeof storage.recordStreak === 'function' && typeof finalState.maxStreak === 'number') {
+      storage.recordStreak(finalState.maxStreak);
+    }
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
-  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage) {
+  function renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage) {
     return renderers.renderResultsScreen(container, {
       score: finalState.score,
       maxStreak: finalState.maxStreak,
       // AC-20/AC-21: the banner/rewarded ad only render while this is false.
       adsRemoved: loadAdsRemovedState(storageObj),
+      // TRIOFSND-129: how many distinct fun facts have been seen on this
+      // device so far, out of the total available in the loaded bank.
+      discoveredFunFactsCount: resolveDiscoveredFunFactsCount(storage),
+      totalFunFacts: Array.isArray(questions) ? questions.length : undefined,
       onPlayAgain: function () {
-        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, analyticsStorage);
+        startNewGame(container, renderers, questions, doc, fetchFn, undefined, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       onExit: function () {
         var homeStorage = resolveHomeStorage();
@@ -406,20 +562,49 @@
     });
   }
 
-  /** Resets game state (score/questionIndex/answers) and navigates to the first question of a new game. */
-  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, analyticsStorage) {
+  /**
+   * Resets game state (score/questionIndex/answers) and navigates to the
+   * first question of a new game. `previousQuestionIds` (TRIOFSND-101, AC-9)
+   * is the id list of the immediately previous game, if any — passed through
+   * to the selection engine (public/scripts/gameFlow.js) so a replay avoids
+   * repeating them when the bank has enough fresh candidates. Passed by
+   * `renderResultsFor` on 'Volver a jugar'; omitted for a first game from
+   * Inicio. `analyticsStorage` and `storage` (TRIOFSND-80's per-question
+   * accuracy client) are forwarded through to renderQuestionAt/renderResultsFor
+   * unchanged.
+   */
+  function startNewGame(container, renderers, questions, doc, fetchFn, randomFn, storageObj, previousQuestionIds, analyticsStorage, storage) {
+    // The 8th slot has had two owners: TRIOFSND-80/92 callers passed their
+    // per-question / analytics storage here, then TRIOFSND-101 inserted
+    // `previousQuestionIds` in that position and silently shifted them one to
+    // the right. An object with storage methods cannot be a list of ids, so
+    // honour the older callers instead of dropping their analytics on the
+    // floor (the audit's signature-drift finding, fixed at the seam).
+    if (previousQuestionIds && !Array.isArray(previousQuestionIds)) {
+      if (!storage && typeof previousQuestionIds.recordQuestionAnswered === 'function') {
+        storage = previousQuestionIds;
+      }
+      if (!analyticsStorage && typeof previousQuestionIds.recordEvent === 'function') {
+        analyticsStorage = previousQuestionIds;
+      }
+      previousQuestionIds = undefined;
+    }
     var gameFlow = resolveGameFlow();
     if (!gameFlow || !questions || questions.length === 0) {
       return null;
     }
 
-    var session = gameFlow.startNewGame(questions, { randomFn: randomFn });
+    var session = gameFlow.startNewGame(questions, { randomFn: randomFn, previousQuestionIds: previousQuestionIds });
 
     renderQuestionAt(
       container,
       renderers,
       session,
       function (finalState) {
+        var playedQuestionIds = session.questions.map(function (question) {
+          return question.id;
+        });
+        persistBestScoreAndStreak(storage, finalState);
         // TRIOFSND-98: landing on Resultados is "the game finished" -- record
         // the aggregated, non-PII partida_completada event and fold the final
         // score into the on-device average-score aggregate (client-only, no
@@ -427,13 +612,246 @@
         if (analyticsStorage && typeof analyticsStorage.recordGameCompleted === 'function') {
           analyticsStorage.recordGameCompleted(finalState.score);
         }
-        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, analyticsStorage);
+        renderResultsFor(container, renderers, questions, finalState, doc, fetchFn, storageObj, playedQuestionIds, analyticsStorage, storage);
       },
       storageObj,
-      analyticsStorage
+      analyticsStorage,
+      storage
     );
 
     return session;
+  }
+
+  /**
+   * Multi-level orchestration (TRIOFSND-207): the real '¡Jugar!' entry point
+   * (see `finishRender`'s click handler below) plays through gameFlow.js's
+   * `startLevel`/`completeLevel`/`resolveLevelOutcome` (TRIOFSND-203) instead
+   * of the flat, single-level `startNewGame` above, chaining levels 1-5 as
+   * each level's outcome dictates: continue automatically isn't offered here
+   * -- a level always ends on Resultados first (with an always-positive
+   * message about what happened, TRIOFSND-206) and 'Volver a jugar' is what
+   * actually moves on, either into the just-unlocked next level or into a
+   * fresh level 1 once the game is over (age-restricted after level 1,
+   * insufficient score, or MAX_LEVEL completed).
+   */
+
+  /** Resolves ageGateScreen.js the same require-or-window way as resolveScreenRenderers/resolveGameFlow. */
+  function resolveAgeGateApi(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var fromWindow = (win && win.DinoQuiz && win.DinoQuiz.screens && win.DinoQuiz.screens.ageGate) || null;
+    if (fromWindow) {
+      return fromWindow;
+    }
+    return typeof require === 'function' ? require('../../src/screens/AgeGateScreen') : null;
+  }
+
+  /**
+   * Reads the child's already-selected age band (TRIOFSND-193/204) once,
+   * right before a level starts, so the whole level chain that follows
+   * decides continue/unlock/end from that single, frozen value rather than
+   * re-reading ageGateScreen's in-memory selection (which stays session-only
+   * and is never persisted or logged, per that screen's own privacy-by-design
+   * doc comment) at every level boundary.
+   */
+  function resolveCurrentAgeBand(win) {
+    var ageGate = resolveAgeGateApi(win);
+    return ageGate && typeof ageGate.getSelectedAgeBand === 'function' ? ageGate.getSelectedAgeBand() : null;
+  }
+
+  /**
+   * A `getQuestionsByLevel`-shaped resolver (see gameFlow.js's
+   * `getLevelQuestionPool`) over an already-loaded flat question array --
+   * either the real bank (`loadQuestions()`, level-tagged 1-5 in
+   * /data/questions.json) or a test fixture. Passed explicitly so
+   * `startLevel`/`completeLevel` never fall back to `src/data/questionBank`'s
+   * own `require`/`fs`-based resolution, which only works under Node/Jest;
+   * this one-line filter works identically there and in the real, bundler-less
+   * browser.
+   */
+  function buildGetQuestionsByLevel(questions) {
+    return function (level) {
+      return Array.isArray(questions)
+        ? questions.filter(function (question) {
+            return question && question.level === level;
+          })
+        : [];
+    };
+  }
+
+  /**
+   * Safe exit (TRIOFSND-207): when gameFlow can't generate a level's
+   * questions (fewer than QUESTIONS_PER_GAME valid entries for that level --
+   * `startLevel`'s own `level_generation_failed`, already logged with only
+   * the level and the count found, no personal data), the game cannot safely
+   * continue. The only sane recovery is the same destination "Salir" already
+   * uses -- Inicio -- so a single broken level never leaves the child stuck
+   * on a crashed or empty screen. The diagnostic below mirrors that: level
+   * and count only, never the child's age band or any answer.
+   */
+  function exitToHomeSafely(container, renderers, doc, fetchFn, failure) {
+    console.error(
+      'DinoQuiz: level generation failed (level=' +
+        (failure && failure.level) +
+        ', validQuestionCount=' +
+        (failure && failure.validQuestionCount) +
+        '), exiting safely to Inicio'
+    );
+
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      renderers.renderHomeScreen,
+      fetchFn,
+      homeStorage,
+      function () {
+        navigateToPrivacyPolicy();
+      },
+      homeStorage
+    );
+  }
+
+  /**
+   * Plays one already-started level (`levelGame`, as returned by
+   * `gameFlow.startLevel`/attached as `completeLevel`'s `nextLevelGame`) end
+   * to end, then resolves what happens next via `gameFlow.completeLevel` and
+   * hands off to `finishLevel`. `ctx` carries everything that must survive
+   * across the whole level chain: `ageBand` (resolved once, see
+   * `resolveCurrentAgeBand`), `randomFn`, `getQuestionsByLevel`, and the
+   * mute/ads (`storageObj`), analytics and per-question (`analyticsStorage`/
+   * `storage`) backends already threaded through the flat flow above.
+   */
+  function playLevel(container, renderers, questions, doc, fetchFn, levelGame, ctx) {
+    var gameFlow = resolveGameFlow();
+
+    return renderQuestionAt(
+      container,
+      renderers,
+      levelGame,
+      function (finalState) {
+        finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+        persistBestScoreAndStreak(ctx.storage, finalState);
+
+        var outcome = gameFlow.completeLevel({
+          level: levelGame.level,
+          answers: finalState.answers,
+          ageBand: ctx.ageBand,
+          getQuestionsByLevel: ctx.getQuestionsByLevel,
+          randomFn: ctx.randomFn,
+        });
+
+        // The level just played is always resolved (gameOver/reason are
+        // final either way); only a next level that gameFlow tried and
+        // failed to generate needs the safe exit -- showing Resultados first
+        // would promise a level-up that can't actually be delivered.
+        if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+          exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+          return;
+        }
+
+        finishLevel(container, renderers, questions, doc, fetchFn, levelGame.level, finalState, outcome, ctx);
+      },
+      ctx.storageObj,
+      ctx.analyticsStorage,
+      ctx.storage,
+      { level: levelGame.level }
+    );
+  }
+
+  /**
+   * Renders Resultados for the level just finished, persisting a newly
+   * unlocked level (TRIOFSND-205) before reading back the device's highest
+   * unlocked level so Resultados can show it (TRIOFSND-206). 'Volver a
+   * jugar' either continues into the already-generated `outcome.nextLevelGame`
+   * (level-up) or starts a brand new game at level 1 (game over, whatever the
+   * reason); 'Salir' goes to Inicio, exactly like the flat flow's Resultados.
+   */
+  function finishLevel(container, renderers, questions, doc, fetchFn, level, finalState, outcome, ctx) {
+    var storage = ctx.storage;
+
+    var persistUnlock = function () {
+      if (!outcome.gameOver && storage && typeof storage.setMaxUnlockedLevel === 'function') {
+        return Promise.resolve(storage.setMaxUnlockedLevel(outcome.nextLevel));
+      }
+      return Promise.resolve(null);
+    };
+
+    var readMaxUnlockedLevel = function () {
+      return storage && typeof storage.getMaxUnlockedLevel === 'function'
+        ? Promise.resolve(storage.getMaxUnlockedLevel())
+        : Promise.resolve(null);
+    };
+
+    return persistUnlock()
+      .then(readMaxUnlockedLevel)
+      .then(function (maxLevelUnlocked) {
+        return renderers.renderResultsScreen(container, {
+          score: finalState.score,
+          maxStreak: finalState.maxStreak,
+          level: level,
+          levelOutcome: outcome,
+          maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+          // AC-20/AC-21: the banner/rewarded ad only render while this is false.
+          adsRemoved: loadAdsRemovedState(ctx.storageObj),
+          onPlayAgain: function () {
+            if (!outcome.gameOver && outcome.nextLevelGame) {
+              playLevel(container, renderers, questions, doc, fetchFn, outcome.nextLevelGame, ctx);
+            } else {
+              startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+            }
+          },
+          onExit: function () {
+            var homeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderers.renderHomeScreen,
+              fetchFn,
+              homeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              homeStorage
+            );
+          },
+        });
+      });
+  }
+
+  /**
+   * Starts (or restarts) the multi-level game at `ctx.level` (level 1 by
+   * default) -- the real '¡Jugar!' entry point uses this once the age gate
+   * resolves. `ctx.ageBand`, when omitted, is resolved here via
+   * `resolveCurrentAgeBand()` so a first call from Inicio always captures the
+   * age just selected; every subsequent level in the same game chain reuses
+   * that same frozen value (see `playLevel`/`finishLevel` above), never
+   * re-reading it.
+   */
+  function startLevelGame(container, renderers, questions, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var gameFlow = resolveGameFlow();
+    if (!gameFlow || !Array.isArray(questions) || questions.length === 0) {
+      return null;
+    }
+
+    var getQuestionsByLevel = ctx.getQuestionsByLevel || buildGetQuestionsByLevel(questions);
+    var resolvedCtx = {
+      ageBand: ctx.ageBand !== undefined ? ctx.ageBand : resolveCurrentAgeBand(),
+      randomFn: ctx.randomFn,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      getQuestionsByLevel: getQuestionsByLevel,
+    };
+
+    var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
+      getQuestionsByLevel: getQuestionsByLevel,
+      randomFn: ctx.randomFn,
+    });
+
+    if (levelGame && levelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, levelGame);
+    }
+
+    return playLevel(container, renderers, questions, doc, fetchFn, levelGame, resolvedCtx);
   }
 
   /**
@@ -464,15 +882,102 @@
       return Promise.resolve(null);
     }
 
-    return nav.serviceWorker
-      .register(swPath)
-      .then(function (registration) {
-        return registration;
-      })
-      .catch(function (error) {
-        console.error('DinoQuiz: service worker registration failed', error);
-        return null;
-      });
+    // TRIOFSND-113: `register` can reject asynchronously (handled by the
+    // `.catch` below) but can also throw synchronously on some embedded/
+    // in-app browsers before it ever returns a promise. Both are treated as
+    // a recoverable, non-blocking fallback -- neither should reach the
+    // `window.addEventListener('load', ...)` bootstrap handler as an
+    // unhandled exception/rejection.
+    try {
+      return nav.serviceWorker
+        .register(swPath)
+        .then(function (registration) {
+          return registration;
+        })
+        .catch(function (error) {
+          console.error('DinoQuiz: service worker registration failed', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('DinoQuiz: service worker registration failed', error);
+      return Promise.resolve(null);
+    }
+  }
+
+  /**
+   * TRIOFSND-113: capability snapshot used to log a diagnostic when a tablet
+   * or embedded browser falls outside the official support matrix (last 2
+   * major versions of Chrome/Edge/Safari) and therefore lacks full
+   * service-worker/manifest support. Mirrors `src/services/platformSupport`'s
+   * `detectPwaSupport` -- required directly under Node/Jest, duplicated
+   * inline for the real, bundler-less browser where `require` doesn't exist,
+   * same dual pattern as `loadDinoQuizStorage`/`createBrowserHomeStorage`
+   * above. Never throws and never gates the game itself: `bootstrapBrowserApp`
+   * fetches i18n/question JSON over plain `fetch` regardless of what this
+   * reports, so "modo navegador normal" (no install, no advanced cache) keeps
+   * the game fully playable either way.
+   */
+  function resolvePlatformSupport(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var nav = (win && win.navigator) || (typeof navigator !== 'undefined' ? navigator : undefined);
+    var doc = (win && win.document) || (typeof document !== 'undefined' ? document : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/platformSupport').detectPwaSupport(nav, doc);
+    }
+
+    var serviceWorker = !!nav && 'serviceWorker' in nav;
+    var manifest = false;
+    if (doc && typeof doc.createElement === 'function') {
+      try {
+        var link = doc.createElement('link');
+        manifest = !!(
+          link.relList &&
+          typeof link.relList.supports === 'function' &&
+          link.relList.supports('manifest')
+        );
+      } catch (error) {
+        manifest = false;
+      }
+    }
+
+    return { serviceWorker: serviceWorker, manifest: manifest, isFullySupported: serviceWorker && manifest };
+  }
+
+  /** Logs a non-blocking diagnostic (no analytics event, no PII) when running in the functional fallback mode. */
+  function logPlatformSupportFallback(support) {
+    if (!support || support.isFullySupported) {
+      return;
+    }
+
+    console.info(
+      'DinoQuiz: PWA install/offline-cache features are unavailable in this browser ' +
+        '(serviceWorker=' +
+        support.serviceWorker +
+        ', manifest=' +
+        support.manifest +
+        '). Falling back to normal browser mode: no install, no advanced cache, the game itself still works.'
+    );
+  }
+
+  /**
+   * Resolves the logging service, following the same dual CommonJS/global
+   * pattern as resolveScreenRenderers. The browser-based app loads logging.js
+   * as a plain <script> and exposes it on window.DinoQuiz.services.logging;
+   * Node/Jest tests require it directly. Returns a LogService instance ready
+   * for logging access and PWA installation events.
+   */
+  function resolveLogger(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var LogService =
+      (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.logging && win.DinoQuiz.services.logging.LogService) ||
+      (typeof require === 'function' ? require('../../src/services/logging').LogService : undefined);
+
+    if (typeof LogService !== 'function') {
+      return null;
+    }
+
+    return new LogService();
   }
 
   function fetchJson(fetchFn, resourcePath) {
@@ -503,14 +1008,16 @@
   }
 
   /**
-   * Fetches the whole i18n resource once and hands back the three sections
-   * the Home screen needs (home/privacy/purchase, TRIOFSND-66) so the
-   * browser can render the global controls without a `require()` for
+   * Fetches the whole i18n resource once and hands back the sections the
+   * Home screen (and what it kicks off) needs: home/privacy/purchase
+   * (TRIOFSND-66) plus ageGate (TRIOFSND-193, resolved up front here so the
+   * '¡Jugar!' click handler below can render the age gate synchronously,
+   * with no extra fetch on the click itself) — all without a `require()` for
    * `src/i18n`.
    */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase } : null;
+      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase, ageGate: data.ageGate } : null;
     });
   }
 
@@ -561,6 +1068,16 @@
   // path and a future bundler-backed one agree on the same value.
   var SCORE_METRICS_KEY = 'dinoquiz:scoreMetrics';
   var EMPTY_SCORE_METRICS = { gamesCompleted: 0, totalScore: 0, averageScore: 0 };
+  var QUESTION_STATS_KEY = 'dinoquiz:questionStats';
+  var QUESTION_ANSWERED_EVENTS_KEY = 'dinoquiz:questionAnsweredEvents';
+  // TRIOFSND-205/207: same namespaced key `src/services/storage`'s
+  // StorageClient itself writes (`maxUnlockedLevel`), so both backends agree
+  // on the highest level unlocked on this device once a bundler wires the
+  // real service in. Level 1 is always accessible, hence the default of 1
+  // (mirrors src/services/storage/types.js's DEFAULT_STATE).
+  var MAX_UNLOCKED_LEVEL_KEY = 'dinoquiz:maxUnlockedLevel';
+  var DEFAULT_MAX_UNLOCKED_LEVEL = 1;
+  var DISCOVERED_FUN_FACTS_KEY = 'dinoquiz:discoveredFunFacts';
 
   function createBrowserHomeStorage(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -569,6 +1086,10 @@
     memory[HOME_TOOLTIP_SEEN_KEY] = false;
     memory[ANALYTICS_EVENT_COUNTS_KEY] = {};
     memory[SCORE_METRICS_KEY] = EMPTY_SCORE_METRICS;
+    memory[QUESTION_STATS_KEY] = {};
+    memory[QUESTION_ANSWERED_EVENTS_KEY] = [];
+    memory[MAX_UNLOCKED_LEVEL_KEY] = DEFAULT_MAX_UNLOCKED_LEVEL;
+    memory[DISCOVERED_FUN_FACTS_KEY] = [];
 
     function readJSON(key) {
       if (backend) {
@@ -661,6 +1182,83 @@
         writeJSON(SCORE_METRICS_KEY, updated);
         return Promise.resolve(updated);
       },
+      // TRIOFSND-80: single write point (called from onAnswer in the
+      // bootstrap below, never from questionScreen.js). Persists the
+      // minimal, non-PII event { tipo: 'pregunta_respondida', id_pregunta,
+      // acierto } -- no name/age/email/ad-or-install id/free text/IP/device
+      // data -- and incrementally updates that question's total_respuestas/
+      // total_aciertos counters (raw, never rounded) for the historic %
+      // de acierto.
+      recordQuestionAnswered: function (questionId, isCorrect) {
+        var acierto = Boolean(isCorrect);
+
+        var events = readJSON(QUESTION_ANSWERED_EVENTS_KEY) || [];
+        events = events.concat([{ tipo: 'pregunta_respondida', id_pregunta: questionId, acierto: acierto }]);
+        writeJSON(QUESTION_ANSWERED_EVENTS_KEY, events);
+
+        var counts = readJSON(ANALYTICS_EVENT_COUNTS_KEY) || {};
+        counts.pregunta_respondida = (counts.pregunta_respondida || 0) + 1;
+        writeJSON(ANALYTICS_EVENT_COUNTS_KEY, counts);
+
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        stats[questionId] = {
+          total_respuestas: current.total_respuestas + 1,
+          total_aciertos: current.total_aciertos + (acierto ? 1 : 0),
+        };
+        writeJSON(QUESTION_STATS_KEY, stats);
+        return Promise.resolve(stats[questionId]);
+      },
+      // Historic per-question aggregate: raw counters plus porcentaje_acierto
+      // computed at full precision (0 -- never NaN/Infinity -- when the
+      // question has no answers yet).
+      getQuestionStats: function (questionId) {
+        var stats = readJSON(QUESTION_STATS_KEY) || {};
+        var current = stats[questionId] || { total_respuestas: 0, total_aciertos: 0 };
+        var porcentaje = current.total_respuestas > 0 ? (current.total_aciertos / current.total_respuestas) * 100 : 0;
+        return Promise.resolve({
+          total_respuestas: current.total_respuestas,
+          total_aciertos: current.total_aciertos,
+          porcentaje_acierto: porcentaje,
+        });
+      },
+      // TRIOFSND-205: highest level (1-based) the child has unlocked on this
+      // device -- only this single number, never per-level answers or age.
+      getMaxUnlockedLevel: function () {
+        var level = readJSON(MAX_UNLOCKED_LEVEL_KEY);
+        return Promise.resolve(typeof level === 'number' ? level : DEFAULT_MAX_UNLOCKED_LEVEL);
+      },
+      // Monotonically increasing, mirroring StorageClient#setMaxUnlockedLevel:
+      // ignores any `level` that isn't a bigger integer than what's already
+      // unlocked.
+      setMaxUnlockedLevel: function (level) {
+        var current = readJSON(MAX_UNLOCKED_LEVEL_KEY);
+        current = typeof current === 'number' ? current : DEFAULT_MAX_UNLOCKED_LEVEL;
+        if (!Number.isInteger(level) || level <= current) {
+          return Promise.resolve(current);
+        }
+        writeJSON(MAX_UNLOCKED_LEVEL_KEY, level);
+        return Promise.resolve(level);
+      },
+      // TRIOFSND-129: registers a "dato curioso" as seen on this device,
+      // once per distinct funFactId (never a duplicate entry) -- mirrors
+      // DinoQuizStorage#markFunFactDiscovered (src/services/storage/StorageClient.js).
+      markFunFactDiscovered: function (funFactId) {
+        var discovered = readJSON(DISCOVERED_FUN_FACTS_KEY) || [];
+        if (discovered.indexOf(funFactId) === -1) {
+          writeJSON(DISCOVERED_FUN_FACTS_KEY, discovered.concat([funFactId]));
+        }
+        return Promise.resolve();
+      },
+      getDiscoveredFunFactsCount: function () {
+        return Promise.resolve((readJSON(DISCOVERED_FUN_FACTS_KEY) || []).length);
+      },
+      // Synchronous counterpart used where a result must be available
+      // without awaiting a promise (renderResultsFor renders Resultados
+      // synchronously right when a game ends, see public/scripts/main.js).
+      getDiscoveredFunFactsCountSync: function () {
+        return (readJSON(DISCOVERED_FUN_FACTS_KEY) || []).length;
+      },
     };
   }
 
@@ -677,7 +1275,7 @@
     var tooltipBackend = loadDinoQuizStorage() || createBrowserHomeStorage(win);
     var localStorageBackend = win && win.localStorage;
 
-    return {
+    var merged = {
       hasSeenHomeTooltip: function () {
         return tooltipBackend.hasSeenHomeTooltip();
       },
@@ -698,6 +1296,29 @@
       recordGameCompleted: function (score) {
         return tooltipBackend.recordGameCompleted(score);
       },
+      // TRIOFSND-205/207: forwarded the same way as the tooltip methods above
+      // so `startLevelGame`/`finishLevel` can persist/read the highest
+      // unlocked level through this one resolved backend too.
+      getMaxUnlockedLevel: function () {
+        return typeof tooltipBackend.getMaxUnlockedLevel === 'function'
+          ? tooltipBackend.getMaxUnlockedLevel()
+          : Promise.resolve(DEFAULT_MAX_UNLOCKED_LEVEL);
+      },
+      setMaxUnlockedLevel: function (level) {
+        return typeof tooltipBackend.setMaxUnlockedLevel === 'function'
+          ? tooltipBackend.setMaxUnlockedLevel(level)
+          : Promise.resolve(DEFAULT_MAX_UNLOCKED_LEVEL);
+      },
+      // TRIOFSND-129: forwards fun-fact discovery tracking so both
+      // `renderQuestionAt`'s onAnswer handler (recording) and the Home/
+      // Resultados progress display (reading) share the same backend as
+      // the tooltip/analytics half above.
+      markFunFactDiscovered: function (funFactId) {
+        return tooltipBackend.markFunFactDiscovered(funFactId);
+      },
+      getDiscoveredFunFactsCount: function () {
+        return tooltipBackend.getDiscoveredFunFactsCount();
+      },
       getItem: function (key) {
         return localStorageBackend ? localStorageBackend.getItem(key) : null;
       },
@@ -707,6 +1328,24 @@
         }
       },
     };
+
+    // Whichever synchronous accessor `tooltipBackend` exposes (the real
+    // DinoQuizStorage's `snapshot()`, or createBrowserHomeStorage's
+    // `getDiscoveredFunFactsCountSync()`) is forwarded as-is, so a
+    // synchronous caller (renderResultsFor) can read it without awaiting a
+    // promise.
+    if (typeof tooltipBackend.snapshot === 'function') {
+      merged.snapshot = function () {
+        return tooltipBackend.snapshot();
+      };
+    }
+    if (typeof tooltipBackend.getDiscoveredFunFactsCountSync === 'function') {
+      merged.getDiscoveredFunFactsCountSync = function () {
+        return tooltipBackend.getDiscoveredFunFactsCountSync();
+      };
+    }
+
+    return merged;
   }
 
   /**
@@ -743,12 +1382,43 @@
       return Promise.resolve(null);
     }
 
+    // Positional-drift seam (audit finding): TRIOFSND-92 callers pass their
+    // tooltip/analytics storage where onOpenPrivacyPolicy now lives — the
+    // privacy-policy PR inserted its callback at position 5 and shifted them.
+    // A storage-shaped object cannot be a callback; honour the older contract.
+    if (onOpenPrivacyPolicy && typeof onOpenPrivacyPolicy !== 'function') {
+      if (
+        !storage &&
+        (typeof onOpenPrivacyPolicy.recordEvent === 'function' ||
+          typeof onOpenPrivacyPolicy.hasSeenHomeTooltip === 'function')
+      ) {
+        storage = onOpenPrivacyPolicy;
+      }
+      onOpenPrivacyPolicy = undefined;
+    }
+
+    // Remember what the CALLER handed us before the ambient fallback kicks
+    // in: an explicitly-passed backend must win over window.localStorage for
+    // every write this function wires (mute already honours this; the
+    // purchase flag must too, or a test/native caller's purchase silently
+    // lands in a storage nobody reads).
+    var explicitStorage = storage;
     storage = storage || resolveHomeStorage(doc.defaultView);
 
     var tooltipStorage =
       storage && typeof storage.hasSeenHomeTooltip === 'function'
         ? storage
         : loadDinoQuizStorage() || createBrowserHomeStorage();
+
+    // The ads-removed flag's backend, shared by the purchase write below and
+    // the game the play button starts: an explicitly-passed raw backend wins
+    // over the ambient localStorage wrapper (see explicitStorage above).
+    var adsStorage =
+      explicitStorage && typeof explicitStorage.setItem === 'function'
+        ? explicitStorage
+        : muteStorageObj && typeof muteStorageObj.setItem === 'function'
+          ? muteStorageObj
+          : storage;
 
     var resolvedMuteStorage =
       muteStorageObj && typeof muteStorageObj.getItem === 'function'
@@ -777,8 +1447,27 @@
       // confirming it locally marks the purchase as done -- from here on
       // Resultados stops rendering the banner/rewarded ad (AC-21).
       renderOptions.onPurchase = function () {
-        persistAdsRemovedState(true, resolvedMuteStorage);
+        // Resolve the write target the same way the mute preference does:
+        // prefer `storage` when it is a raw getItem/setItem backend, else the
+        // resolved mute storage. A caller that only passes `muteStorageObj`
+        // (the TRIOFSND-97 contract test does) must still see the purchase
+        // persist — losing a purchase to argument plumbing is the one failure
+        // mode this flag cannot afford.
+        persistAdsRemovedState(true, adsStorage);
       };
+
+      // TRIOFSND-129: how many distinct fun facts have been seen on this
+      // device so far, out of the total available in the loaded bank —
+      // `loadQuestions()` reads the already-loaded bank synchronously (see
+      // its own doc comment), same source `startNewGame` uses below.
+      var totalFunFacts = (function () {
+        var questions = loadQuestions();
+        return Array.isArray(questions) ? questions.length : undefined;
+      })();
+      var discoveredFunFactsCountPromise =
+        tooltipStorage && typeof tooltipStorage.getDiscoveredFunFactsCount === 'function'
+          ? tooltipStorage.getDiscoveredFunFactsCount()
+          : Promise.resolve(undefined);
 
       function finishRender() {
         var homeApi = renderHomeScreen(container, renderOptions);
@@ -794,12 +1483,24 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
+              // TRIOFSND-193/207: the age gate is shown right here -- after
+              // '¡Jugar!', before the game is prepared -- and only once it
+              // resolves does `startLevelGame` retrieve that selection
+              // (`resolveCurrentAgeBand`) and start the multi-level game at
+              // level 1.
+              //
               // The mute/ads-removed flags (TRIOFSND-66/TRIOFSND-97) are read
               // and written through `resolvedMuteStorage` above (onToggleMute/
-              // onPurchase) -- startNewGame's `storageObj` must read from that
+              // onPurchase) -- startLevelGame's `storageObj` must read from that
               // same backend, or a purchase confirmed here would still show
               // ads on this very game's Resultados screen.
-              startNewGame(container, renderers, questions, doc, fetchFn, undefined, resolvedMuteStorage, tooltipStorage);
+              renderAgeGate(container, renderers, resources && resources.ageGate, function () {
+                startLevelGame(container, renderers, questions, doc, fetchFn, {
+                  storageObj: resolvedMuteStorage,
+                  analyticsStorage: storage,
+                  storage: storage,
+                });
+              });
             }
           });
         }
@@ -808,10 +1509,18 @@
       }
 
       if (!tooltipStorage) {
-        return finishRender();
+        return discoveredFunFactsCountPromise.then(function (count) {
+          renderOptions.discoveredFunFactsCount = count;
+          renderOptions.totalFunFacts = totalFunFacts;
+          return finishRender();
+        });
       }
 
-      return tooltipStorage.hasSeenHomeTooltip().then(function (seen) {
+      return Promise.all([tooltipStorage.hasSeenHomeTooltip(), discoveredFunFactsCountPromise]).then(function (
+        results
+      ) {
+        var seen = results[0];
+        var discoveredFunFactsCount = results[1];
         renderOptions.showTooltip = !seen;
         renderOptions.onTooltipDismiss = function () {
           tooltipStorage.markHomeTooltipSeen();
@@ -819,6 +1528,8 @@
         renderOptions.onPlayButtonClick = function () {
           tooltipStorage.recordEventOnce('first_tap_jugar');
         };
+        renderOptions.discoveredFunFactsCount = discoveredFunFactsCount;
+        renderOptions.totalFunFacts = totalFunFacts;
         return finishRender();
       });
     });
@@ -940,9 +1651,24 @@
     typeof require !== 'function'
   ) {
     window.addEventListener('load', function () {
+      logPlatformSupportFallback(resolvePlatformSupport());
       installLinkGuard();
-      registerServiceWorker();
+
+      var logger = resolveLogger();
+      if (logger) {
+        logger.logAppAccess({ locale: 'es' });
+      }
+
+      registerServiceWorker().then(function (registration) {
+        if (logger && registration) {
+          logger.logServiceWorkerInstall({ scope: registration.scope });
+        }
+      });
+
       bootstrapBrowserApp().then(function () {
+        if (logger) {
+          logger.logManifestLoad({ success: true });
+        }
         renderRoute();
         renderMuteToggle();
       });
@@ -956,6 +1682,9 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      resolvePlatformSupport: resolvePlatformSupport,
+      logPlatformSupportFallback: logPlatformSupportFallback,
+      resolveLogger: resolveLogger,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
@@ -969,11 +1698,19 @@
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
+      renderAgeGate: renderAgeGate,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,
       prepareBrowserQuestions: prepareBrowserQuestions,
       startNewGame: startNewGame,
+      resolveAgeGateApi: resolveAgeGateApi,
+      resolveCurrentAgeBand: resolveCurrentAgeBand,
+      buildGetQuestionsByLevel: buildGetQuestionsByLevel,
+      exitToHomeSafely: exitToHomeSafely,
+      playLevel: playLevel,
+      finishLevel: finishLevel,
+      startLevelGame: startLevelGame,
       AUTO_ADVANCE_GRACE_MS: AUTO_ADVANCE_GRACE_MS,
       renderQuestionAt: renderQuestionAt,
       renderResultsFor: renderResultsFor,
@@ -984,6 +1721,7 @@
       loadAdsRemovedState: loadAdsRemovedState,
       persistAdsRemovedState: persistAdsRemovedState,
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
+      MAX_UNLOCKED_LEVEL_KEY: MAX_UNLOCKED_LEVEL_KEY,
       renderMuteToggle: renderMuteToggle,
     };
   }

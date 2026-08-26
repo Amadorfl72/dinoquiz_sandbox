@@ -94,6 +94,14 @@
  * generic label, and the dato curioso is `aria-live="polite"` so
  * TalkBack/VoiceOver announce it as soon as it's revealed.
  *
+ * Feedback sound effects (TRIOFSND-78, AC-5/AC-11): `resolveSoundService`'s
+ * `preload()` runs right after mount, alongside `warmUpFeedbackAnimation`, so
+ * the first tap doesn't pay any decode/allocation cost. `handleSelect` then
+ * calls `playCorrect`/`playIncorrect` synchronously, in the same tick as the
+ * visual feedback classes — the service itself reads the persisted mute flag
+ * (localStorage, see soundService.js) before every play and simply skips the
+ * audio when muted, so the visual feedback is identical either way.
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen — which the browser
  * actually runs — lives under `public/` and follows the dual CommonJS/global
  * pattern of public/scripts/homeScreen.js. It resolves its i18n strings from
@@ -108,7 +116,7 @@
  * `dinosaurNames` map) plus the resolved `question.funFact` (the same
  * "dato curioso" already shown in the fun-fact box) — via `imageAlt`/
  * `imageAltFunFact`, so screen readers announce a descriptive name + fact
- * for every question in the 40-question bank instead of a generic label.
+ * for every question in the bank instead of a generic label.
  *
  * Accessible result announcement (TRIOFSND-79, AC-14): answering used to
  * mark `feedback`, `scoreEl` and `funFact` as independent `aria-live`
@@ -136,6 +144,28 @@
  * adapter is plugged into it. Whatever the ad service resolves with, the
  * CTA never touches `nextButton` or its advance timer — the game always
  * continues.
+ *
+ * Image style by age (TRIOFSND-194): the dinosaur illustration's variant
+ * ('dibujo' | 'realista') is resolved from the age band selected in the age
+ * gate (TRIOFSND-193) via `src/services/imageStyleService`, resolved the
+ * same `require`-else-`window.DinoQuiz` way as the other services above.
+ * `options.ageBand` lets callers/tests inject the band directly; otherwise
+ * it falls back to `ageGateScreen`'s in-memory, session-only selection. If
+ * the resolved style's image fails to load, the `<img>`'s `onerror` swaps
+ * it to the service's `fallbackUrl` (`question.imageFallback`) exactly once,
+ * so a missing/broken style variant never blocks the game.
+ * The `alt` text (`resolveImageAlt`) stays built from the dinosaur/fun-fact
+ * data regardless of which style image is showing, since it describes the
+ * dinosaur, not the illustration style.
+ *
+ * Level progress UI (TRIOFSND-206): when the caller passes `options.level`
+ * and `options.questionNumber`, a progress row shows the active level next
+ * to the "N de 10" progress within this level -- never the child's age band
+ * (never read here) nor an aggregated score from other levels (`score`
+ * already reflects only the level being played, since `gameFlow.js`'s
+ * `startLevel` resets it per level). Omitting `options.questionNumber`
+ * renders no progress row at all, so existing callers that don't pass level
+ * data see no change.
  */
 
 (function () {
@@ -145,6 +175,7 @@
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
   var MIN_ADVANCE_DELAY_MS = 4000;
+  var DEFAULT_TOTAL_QUESTIONS = 10;
 
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
@@ -208,6 +239,24 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
   }
 
+  function resolveSoundService(options) {
+    if (options.soundService) {
+      return options.soundService;
+    }
+    if (typeof require === 'function') {
+      return require('./soundService').soundService;
+    }
+    return (
+      (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.soundService) ||
+      null
+    );
+  }
+
+  function formatTemplate(template, values) {
+    return Object.keys(values).reduce(function (result, key) {
+      return result.split('{' + key + '}').join(values[key]);
+    }, template);
+  }
   // TRIOFSND-91 content-guide audit: the "incorrect" feedback and the dato
   // curioso heading are the copy a child sees right after a miss, so they are
   // held to the same no-reproach standard as ResultsScreen's motivational
@@ -253,6 +302,52 @@
       return require('./audio');
     }
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.audio) || null;
+  }
+
+  function resolveImageStyleService(options) {
+    if (options && options.imageStyleService) {
+      return options.imageStyleService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/imageStyleService');
+      } catch (error) {
+        return null;
+      }
+    }
+    return (
+      (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.imageStyleService) ||
+      null
+    );
+  }
+
+  function resolveAgeGateScreen() {
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/screens/AgeGateScreen');
+      } catch (error) {
+        return null;
+      }
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.screens && window.DinoQuiz.screens.ageGate) || null;
+  }
+
+  /** `options.ageBand` lets callers/tests inject it directly; otherwise falls back to ageGateScreen's in-memory session selection. */
+  function resolveAgeBand(options) {
+    if (options && typeof options.ageBand === 'string') {
+      return options.ageBand;
+    }
+    var ageGateScreen = resolveAgeGateScreen();
+    return ageGateScreen && typeof ageGateScreen.getSelectedAgeBand === 'function' ? ageGateScreen.getSelectedAgeBand() : null;
+  }
+
+  /** Resolves the style/URL/fallback for a question's illustration; degrades to the raw image path if the service is unavailable. */
+  function resolveQuestionImage(question, options) {
+    var imageStyleService = resolveImageStyleService(options);
+    if (!imageStyleService || typeof imageStyleService.resolveQuestionImage !== 'function') {
+      return { style: null, url: question.image, fallbackUrl: question.image };
+    }
+    return imageStyleService.resolveQuestionImage(question, resolveAgeBand(options));
   }
 
   function resolveRewardedAdService(options) {
@@ -308,6 +403,7 @@
     options = options || {};
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
+    var soundService = resolveSoundService(options);
     var audio = resolveAudio();
     var playFailSound =
       typeof options.playFailSound === 'function'
@@ -326,15 +422,56 @@
     var root = document.createElement('div');
     root.className = 'question-screen';
 
+    var resolvedImage = resolveQuestionImage(question, options);
+
     var image = document.createElement('img');
     image.className = 'question-screen__image';
-    image.src = IMAGE_BASE_PATH + question.image;
+    image.src = IMAGE_BASE_PATH + resolvedImage.url;
+    // Alt text describes the dinosaur, not the illustration style, so it
+    // stays the same whichever style image ends up loading (TRIOFSND-194).
     image.alt = resolveImageAlt(strings, question.dinosaur, question.funFact);
     image.decoding = 'async';
+
+    if (resolvedImage.url !== resolvedImage.fallbackUrl) {
+      // Sin bloquear la partida (TRIOFSND-194): a broken/missing style
+      // variant swaps to the guaranteed-to-exist fallback exactly once,
+      // instead of leaving a broken image or retrying forever.
+      image.onerror = function () {
+        image.onerror = null;
+        image.src = IMAGE_BASE_PATH + resolvedImage.fallbackUrl;
+      };
+    }
 
     var prompt = document.createElement('h2');
     prompt.className = 'question-screen__prompt';
     prompt.textContent = question.question;
+
+    // Level/progress row (TRIOFSND-206): shows the active level next to the
+    // "N de 10" progress, never the child's age band or a cross-level
+    // running tally -- `score`/`scoreEl` below already only ever reflects
+    // the level currently being played (see gameFlow.js's per-level state).
+    var progressRow = null;
+    var levelEl = null;
+    var progressEl = null;
+    if (typeof options.questionNumber === 'number') {
+      progressRow = document.createElement('div');
+      progressRow.className = 'question-screen__progress-row';
+
+      if (typeof options.level === 'number') {
+        levelEl = document.createElement('p');
+        levelEl.className = 'question-screen__level';
+        levelEl.textContent = formatTemplate(strings.levelFormat, { level: options.level });
+        progressRow.appendChild(levelEl);
+      }
+
+      progressEl = document.createElement('p');
+      progressEl.className = 'question-screen__progress';
+      progressEl.textContent = formatTemplate(strings.progressFormat, {
+        current: options.questionNumber,
+        total: options.totalQuestions || DEFAULT_TOTAL_QUESTIONS,
+      });
+      progressRow.appendChild(progressEl);
+    }
 
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
@@ -372,6 +509,10 @@
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
 
+    // TRIOFSND-79 + TRIOFSND-90 each added "the single announcement region"
+    // and the merge kept both, so screen readers announced every answer twice
+    // and getByRole('status') found two nodes. One element, both names.
+    var announcement = announcementEl;
     var rewardedAdStrings = strings.rewardedAd || {};
 
     var rewardedAdCta = document.createElement('button');
@@ -384,6 +525,7 @@
     var rewardedAdStatus = document.createElement('p');
     rewardedAdStatus.className = 'question-screen__rewarded-ad-status';
     rewardedAdStatus.setAttribute('aria-live', 'polite');
+    rewardedAdStatus.hidden = true;
 
     var extraFunFactBox = document.createElement('div');
     extraFunFactBox.className = 'question-screen__fun-fact-box question-screen__extra-fun-fact-box';
@@ -404,6 +546,7 @@
       if (rewardedAdCta.disabled) return;
       rewardedAdCta.disabled = true;
       rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
+      rewardedAdStatus.hidden = false;
 
       rewardedAdService.request().then(function (result) {
         if (result && result.granted) {
@@ -411,6 +554,7 @@
           extraFunFact.textContent = extraFact;
           extraFunFactBox.hidden = false;
           rewardedAdStatus.textContent = '';
+          rewardedAdStatus.hidden = true;
           rewardedAdCta.hidden = true;
         } else {
           rewardedAdStatus.textContent = rewardedAdStrings.notCompletedMessage;
@@ -444,6 +588,14 @@
       score = scoring.applyAnswerToScore(score, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
+      if (soundService) {
+        if (correct) {
+          soundService.playCorrect();
+        } else {
+          soundService.playIncorrect();
+        }
+      }
+
       optionButtons.forEach(function (button, index) {
         button.disabled = true;
 
@@ -466,13 +618,13 @@
         }
       });
 
+      var correctAnswerText = question.options[question.correctAnswerIndex];
       if (correct) {
         feedback.textContent = strings.feedback.correct;
       } else {
         // Spell out the correct answer's text in the aria-live announcement
         // (TRIOFSND-90, AC-7): a TalkBack/VoiceOver user hears this instead of
         // relying on the visual border to know which option was right.
-        var correctAnswerText = question.options[question.correctAnswerIndex];
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
@@ -486,7 +638,6 @@
       // updated score as one coherent sentence — it never waits on the
       // fun-fact reveal, a sound cue, or a timer (TRIOFSND-79/TRIOFSND-90, AC-14).
       announcementEl.textContent = buildResultAnnouncement(strings, question, correct, score);
-
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
       }
@@ -519,6 +670,9 @@
 
     root.appendChild(image);
     root.appendChild(prompt);
+    if (progressRow) {
+      root.appendChild(progressRow);
+    }
     root.appendChild(scoreEl);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
@@ -531,11 +685,18 @@
     container.appendChild(root);
 
     warmUpFeedbackAnimation();
+    if (soundService) {
+      soundService.preload();
+    }
 
     return {
       root: root,
       image: image,
+      imageStyle: resolvedImage.style,
       prompt: prompt,
+      progressRow: progressRow,
+      levelEl: levelEl,
+      progressEl: progressEl,
       scoreEl: scoreEl,
       optionButtons: optionButtons,
       feedback: feedback,

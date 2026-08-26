@@ -39,6 +39,45 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
+  test('precache list includes every <script> the app shell (public/index.html) loads', () => {
+    // Regression: any script missing here fails to load once the SW serves
+    // an offline session that never fetched it directly over the network
+    // (e.g. ageGateScreen.js was left out, so a fully-offline "8+ años"
+    // player never got their age band captured -- gameFlow.js's
+    // resolveLevelOutcome then always fell back to the age-restricted path,
+    // ending the game after every level's 10 questions regardless of score).
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const indexHtmlPath = path.resolve(__dirname, '../../public/index.html');
+    const indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+    const scriptSrcs = Array.from(indexHtml.matchAll(/<script\s+src="([^"]+)"/g)).map((match) => match[1]);
+
+    expect(scriptSrcs.length).toBeGreaterThan(0);
+    scriptSrcs.forEach((src) => {
+      expect(PRECACHE_URLS).toContain(src);
+    });
+  });
+
+  test('precaches both the drawn and realistic/fallback variant for every dinosaur (TRIOFSND-195)', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const dinosaurs = [
+      'trex',
+      'triceratops',
+      'velociraptor',
+      'estegosaurio',
+      'braquiosaurio',
+      'ankylosaurus',
+      'pteranodon',
+    ];
+
+    dinosaurs.forEach((dinosaur) => {
+      expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.jpg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
+    });
+  });
+
   test('drops old caches and claims clients on activate', () => {
     expect(swContent).toMatch(/caches\s*\.\s*keys/);
     expect(swContent).toMatch(/caches\.delete/);

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="ankylosaurusFallbackTitle">
+  <title id="ankylosaurusFallbackTitle">Silueta de Ankylosaurus</title>
+  <path d="M14 130 a12 12 0 1 1 0.1 0 z" fill="#4A3C30" stroke="#241C15" stroke-width="5"/>
+  <path d="M26 130 q10 -2 14 -14 q30 10 70 6 q10 -18 34 -18 q16 0 18 14 q10 2 10 14 l-12 2 q0 10 -10 10 l-2 -10 q-60 8 -104 -2 q-4 6 -18 2 z"
+        fill="#7A6A57" stroke="#241C15" stroke-width="6" stroke-linejoin="round"/>
+</svg>

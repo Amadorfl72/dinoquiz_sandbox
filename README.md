@@ -13,6 +13,50 @@ npm install
 npm test
 ```
 
+## Docker
+
+DinoQuiz también puede ejecutarse contenerizado con [Docker](https://docs.docker.com/get-docker/)
+(versión con soporte de `docker compose`), sirviendo el contenido de `public/` con nginx
+(ver [`Dockerfile`](Dockerfile) y [`docker/nginx.conf`](docker/nginx.conf)). No hace falta tener
+Node ni ninguna otra dependencia instalada en la máquina: basta con Docker.
+
+**Requisitos previos:** tener Docker instalado y en ejecución.
+
+**Construir la imagen:**
+
+```bash
+docker compose build
+```
+
+**Levantar el contenedor:**
+
+```bash
+docker compose up -d
+```
+
+La app queda disponible en [http://localhost:8080](http://localhost:8080) (ver el mapeo de
+puertos `8080:80` en [`docker-compose.yml`](docker-compose.yml)).
+
+**Parar el contenedor:**
+
+```bash
+docker compose down
+```
+
+**Reconstruir tras cambios:** `docker compose build` usa la caché de capas de Docker, así que
+solo reconstruye las capas afectadas por los ficheros que hayan cambiado (por ejemplo, si solo
+cambia algo bajo `public/`, la capa de la imagen base de nginx no se vuelve a descargar ni
+reconstruir). Para forzar una reconstrucción completa e ignorar la caché:
+
+```bash
+docker compose build --no-cache
+```
+
+**Sin credenciales:** la imagen no requiere ni embebe ningún secreto, credencial, API key o
+variable de entorno — coherente con que DinoQuiz es una PWA sin backend ni cuentas de usuario
+(ver `out_of_scope` del PRD). `docker-compose.yml` no define ninguna variable `environment` ni
+fichero `.env`.
+
 ## PWA: instalación y despliegue (TRIOFSND-139)
 
 DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
@@ -42,7 +86,8 @@ DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
 
 ## Banco de preguntas
 
-El banco de 40 preguntas vive en [`public/data/questions.json`](public/data/questions.json)
+El banco de 150 preguntas (30 por cada uno de los 5 niveles) vive en
+[`public/data/questions.json`](public/data/questions.json)
 y se carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js). El JSON
 vive bajo `public/` (igual que [`public/i18n/es.json`](public/i18n/es.json)) para que el
 navegador pueda hacerle `fetch('/data/questions.json')` en tiempo de ejecución sin duplicarlo
@@ -61,7 +106,12 @@ Cada pregunta sigue este esquema:
   "correctAnswerIndex": 0,      // índice de la opción correcta
   "dato_curioso": "funFacts.trex-01", // clave i18n (ver src/i18n/es.json) del dato curioso
                                  // mostrado tras responder; el texto nunca va hardcodeado aquí
-  "image": "dinosaurs/trex.svg" // referencia a la ilustración del dinosaurio
+  "image": "dinosaurs/trex.svg",          // ilustración cartoon del dinosaurio
+  "imageRealistic": "realistic/trex.jpg", // variante de estilo realista del mismo dinosaurio
+  "imageFallback": "fallback/trex.svg",   // asset local de respaldo por dinosaurio, para cuando
+                                 // la imagen principal no llega a cargar
+  "imageAlt": "...",            // alt educativo y neutral, compartido por las tres variantes
+  "level": 1                    // nivel de dificultad, entero de 1 a 5
 }
 ```
 
@@ -70,14 +120,36 @@ respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no 
 recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
 
+**TRIOFSND-202 — niveles y `getQuestionsByLevel()`:** el banco contiene exactamente 150
+preguntas, 30 por cada uno de los 5 niveles (`level`, entero 1-5); `getLevelCoverageErrors()`
+comprueba ese reparto y `loadQuestionBank()` lo exige junto a la cobertura por dinosaurio.
+`getQuestionsByLevel(level, options)` en
+[`src/data/questionBank.js`](src/data/questionBank.js) valida los campos obligatorios de cada
+entrada (esquema más las variantes de imagen AW5) y, por cada entrada inválida, emite un evento
+`content_validation_failed` (con el id técnico, el nivel y la regla incumplida) a través del
+servicio de logging ([`src/services/logging`](src/services/logging)) en lugar de incluirla en
+el resultado — una entrada incompleta nunca bloquea el resto del nivel.
+
+**AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
+pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver
+`hasImageVariants`/`filterQuestionsWithImageVariants` en
+[`src/data/questionBank.js`](src/data/questionBank.js)), en vez de invalidar todo el banco por
+una única entrada incompleta; `src/data/questionBank.test.js` cubre tanto ese filtrado como el
+resto de validaciones sobre el banco real.
+
 Las ilustraciones referenciadas por `image` viven en
 [`public/assets/images/dinosaurs/`](public/assets/images/dinosaurs) — un SVG cartoon por
 especie (trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
-pteranodon), en el mismo estilo que la mascota. Son ligeros y no requieren red, por lo que el
-service worker los precachea junto al resto del app shell (ver
-[`public/service-worker.js`](public/service-worker.js)) y quedan disponibles offline desde el
-primer arranque; `src/data/questionBank.test.js` verifica que cada `image` del banco resuelva
-a un fichero real bajo esa carpeta.
+pteranodon), en el mismo estilo que la mascota. Las variantes `imageRealistic` viven en
+[`public/assets/images/realistic/`](public/assets/images/realistic) (misma silueta, paleta y
+texturas más naturalistas, sin texto incrustado) y las `imageFallback` en
+[`public/assets/images/fallback/`](public/assets/images/fallback) (siluetas de un solo color,
+un fichero por dinosaurio). Cada una de esas dos carpetas documenta la licencia de sus SVG en
+su propio `CREDITS.md`. Todas son ligeras y no requieren red, por lo que quedan cubiertas por
+el runtime-cache del service worker bajo `/assets/images/` (ver
+[`public/service-worker.js`](public/service-worker.js)) y disponibles offline tras el primer
+uso; `src/data/questionBank.test.js` verifica que `image`, `imageRealistic` e `imageFallback`
+de cada pregunta del banco resuelvan a un fichero real bajo `public/assets/images/`.
 
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
@@ -86,7 +158,7 @@ resto de textos de la UI.
 ## Motor de selección aleatoria de preguntas
 
 [`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al
-iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de 40 de forma
+iniciar una partida, elige `QUESTIONS_PER_GAME` (10) preguntas del banco de forma
 aleatoria:
 
 - `shuffle(items, randomFn)` baraja el banco completo con un Fisher-Yates (sin mutar el
@@ -333,3 +405,30 @@ navegación interna (la ruta por hash de la política de privacidad, TRIOFSND-11
 `<a>` ni `window.open`, así que no se ve afectada. `public/scripts/main.js` lo instala una vez
 al arrancar (`installLinkGuard`, en el listener `load`), junto al registro del service worker
 (ver [`tests/pwa/external-link-guard.test.js`](tests/pwa/external-link-guard.test.js)).
+
+## Fallback funcional sin Service Worker / manifest (TRIOFSND-113)
+
+La matriz de soporte oficial de DinoQuiz son las últimas 2 versiones mayores de Chrome, Edge
+y Safari, que soportan Service Worker y manifest instalable. Algunas tablets antiguas o
+navegadores embebidos/in-app quedan fuera de esa matriz y no soportan ninguno de los dos, así
+que la app debe seguir siendo jugable en "modo navegador normal" (sin instalación ni caché
+avanzada) también ahí.
+
+[`src/services/platformSupport.js`](src/services/platformSupport.js) centraliza la detección
+de capacidades (`isServiceWorkerSupported`, `isManifestSupported`, `detectPwaSupport`): cada
+comprobación degrada a `false` en vez de lanzar cuando falta el global correspondiente, así
+que nunca bloquea el arranque. [`public/scripts/main.js`](public/scripts/main.js) expone el
+mismo cálculo como `resolvePlatformSupport` (vía `require` bajo Node/Jest, duplicado en línea
+para el navegador real sin bundler, mismo patrón dual que `loadDinoQuizStorage`/
+`createBrowserHomeStorage`) y, si el navegador no tiene soporte completo,
+`logPlatformSupportFallback` deja un `console.info` de diagnóstico -- sin evento de analytics
+nuevo (los eventos enviados son exactamente los de AC-18) y sin ningún dato personal.
+
+La garantía de que el juego sigue funcionando no depende de ese diagnóstico: `registerServiceWorker`
+ya hace feature-detection (`'serviceWorker' in nav`) y es "fire and forget" en el arranque, y
+`bootstrapBrowserApp` carga `/i18n/es.json` y `/data/questions.json` con `fetch` normal,
+independientemente de si hay service worker registrado. Un navegador sin soporte PWA
+simplemente no obtiene instalación ni caché offline avanzada -- pero completa igual el flujo
+Inicio -> Quiz -> Resultados por red, como demuestra
+[`tests/pwa/pwa-fallback.test.js`](tests/pwa/pwa-fallback.test.js) simulando un `navigator`
+sin `serviceWorker`.
