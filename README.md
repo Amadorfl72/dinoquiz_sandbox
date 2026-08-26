@@ -433,6 +433,60 @@ Inicio -> Quiz -> Resultados por red, como demuestra
 [`tests/pwa/pwa-fallback.test.js`](tests/pwa/pwa-fallback.test.js) simulando un `navigator`
 sin `serviceWorker`.
 
+## Auditoría de accesibilidad automática (TRIOFSND-137)
+
+El PRD (`mvp_scope`) exige "accesibilidad básica: contraste WCAG AA, controles grandes y
+compatibilidad con lectores de pantalla" y una "política de privacidad accesible desde la
+pantalla de inicio". Hasta ahora esto se verificaba solo con tests unitarios puntuales (p.ej.
+[`src/theme/contrast.js`](src/theme/contrast.js)/`contrast.test.js` para pares de color
+concretos) y comentarios de diseño en cada pantalla, sin una auditoría automática de extremo a
+extremo. [`tests/e2e/accessibility.test.js`](tests/e2e/accessibility.test.js) añade esa
+auditoría con [axe-core](https://github.com/dequelabs/axe-core) (vía
+[`@axe-core/playwright`](https://www.npmjs.com/package/@axe-core/playwright)) contra las 4
+pantallas principales de la PWA renderizadas en un Chromium real (`tests/e2e/server.js` sirve
+`public/`, igual que `tests/e2e/offline-full-game.spec.js`). Es un test de **Jest** (no solo de
+Playwright): sobrescribe `testEnvironment` a `node` (jsdom no puede pintar layout real para que
+axe calcule contraste) y lanza Chromium directamente vía `chromium` de `@playwright/test`, sin
+pasar por su test runner. Esto permite que la auditoría corra dentro de `jest`, que es lo que
+ejecuta el pipeline de CI/build del frontend:
+
+1. **Inicio** (`/`).
+2. **Quiz** (pantalla de pregunta, tras pulsar "¡Jugar!").
+3. **Resultados** (tras completar las 10 preguntas de una partida).
+4. **Política de privacidad** (`#/privacidad`, enlazada desde Inicio).
+
+Cada pantalla se analiza contra las reglas WCAG 2.0/2.1 A y AA de axe-core
+(`wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa`), que cubren exactamente lo que pide esta historia:
+contraste de color (`color-contrast`), roles/atributos ARIA (`aria-*`, `button-name`,
+`aria-allowed-attr`...) y presencia de labels/alt-text (`image-alt`, `label`, `link-name`...).
+El test falla si axe reporta **cualquier** violación en esas reglas para la pantalla
+correspondiente — el listado de violaciones (regla, impacto y nodo afectado) queda en el
+`expect` fallido.
+
+**Cómo ejecutarla en local:**
+
+```bash
+npm run test:e2e:install   # una vez, instala Chromium para Playwright/axe
+npm run test:a11y          # solo la auditoría de accesibilidad (jest)
+npm test                   # toda la suite (unitarios + auditoría de accesibilidad)
+```
+
+**Resultado de la auditoría inicial (base para el Definition of Done "auditoría de
+accesibilidad básica"):** las 4 pantallas pasan sin violaciones WCAG 2.0/2.1 A/AA — consistente
+con el trabajo previo de contraste (`src/theme/contrast.js`), `alt`/`aria-label` explícitos en
+imágenes e iconos (`homeScreen.js`, `questionScreen.js`) y el patrón de disclosure ARIA de los
+controles globales (`aria-expanded`/`aria-controls`). Si una PR futura introduce una regresión,
+`npm run test:a11y` la reproduce en local con el mismo detalle que en el `expect` de la suite.
+
+**Enganchada al pipeline de CI:** el workflow gestionado por TrioForge
+(`.github/workflows/trioforge-tests.yml`) ejecuta `npx jest --ci` contra todo el repo, y
+`tests/e2e/accessibility.test.js` cae dentro de `testMatch` (`tests/**/*.test.js`) como un test
+de Jest más — por eso una regresión de contraste, rol ARIA o label/alt-text hace fallar ese gate
+igual que cualquier otro test, sin necesitar un paso de CI dedicado a Playwright. Lo único que el
+pipeline necesita para poder lanzar Chromium es el binario del navegador: el script
+`postinstall` (`npm run test:e2e:install`) lo instala automáticamente en cada `npm ci`/`npm
+install`, antes de que corra `jest`.
+
 ## Auditoría de privacidad y tráfico de red (TRIOFSND-119)
 
 El PRD (G7) exige evitar cuentas, PII, publicidad, tracking individual y cualquier transmisión
