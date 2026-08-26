@@ -522,6 +522,22 @@ body {
   color: var(--color-text);
 }
 
+.question-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
+.question-screen__level,
+.question-screen__progress {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .question-screen__feedback {
   font-size: var(--font-size-body);
   margin: 8px 0;
@@ -836,6 +852,20 @@ body {
 .results-screen__score {
   font-size: var(--font-size-heading-sm);
   font-weight: bold;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.results-screen__level {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.results-screen__level-outcome,
+.results-screen__max-level-unlocked {
+  font-size: var(--font-size-body);
   margin: 0;
   color: var(--color-text);
 }

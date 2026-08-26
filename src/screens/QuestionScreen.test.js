@@ -154,6 +154,48 @@ describe('QuestionScreen', () => {
     expect(image.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  describe('level progress UI (TRIOFSND-206)', () => {
+    test('renders no progress row when questionNumber is not provided (unchanged for existing callers)', () => {
+      const { progressRow, levelEl, progressEl } = renderQuestionScreen(container, buildQuestion());
+
+      expect(progressRow).toBeNull();
+      expect(levelEl).toBeNull();
+      expect(progressEl).toBeNull();
+    });
+
+    test('renders "N de 10" progress when questionNumber is provided', () => {
+      const { progressEl } = renderQuestionScreen(container, buildQuestion(), { questionNumber: 4 });
+
+      expect(progressEl).toHaveTextContent('4 de 10');
+    });
+
+    test('respects an explicit totalQuestions instead of the 10-question default', () => {
+      const { progressEl } = renderQuestionScreen(container, buildQuestion(), { questionNumber: 2, totalQuestions: 5 });
+
+      expect(progressEl).toHaveTextContent('2 de 5');
+    });
+
+    test('renders the active level next to the progress, without a level element when level is omitted', () => {
+      const withoutLevel = renderQuestionScreen(container, buildQuestion(), { questionNumber: 1 });
+      expect(withoutLevel.levelEl).toBeNull();
+
+      container.innerHTML = '';
+      const withLevel = renderQuestionScreen(container, buildQuestion(), { questionNumber: 1, level: 3 });
+      expect(withLevel.levelEl).toHaveTextContent('Nivel 3');
+      expect(withLevel.progressEl).toHaveTextContent('1 de 10');
+    });
+
+    test('never exposes the child age band or a cross-level score total in the progress row', () => {
+      const { progressRow } = renderQuestionScreen(container, buildQuestion(), {
+        questionNumber: 1,
+        level: 2,
+        ageBand: 'eight-plus',
+      });
+
+      expect(progressRow.textContent).not.toMatch(/años|age|eight-plus/i);
+    });
+  });
+
   describe('image style by age (TRIOFSND-194)', () => {
     test('defaults to "dibujo" (today\'s only asset set) when no age band is available', () => {
       const question = buildQuestion();

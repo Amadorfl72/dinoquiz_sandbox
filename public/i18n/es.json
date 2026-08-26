@@ -140,6 +140,14 @@
     "scoreFormat": "{score}/{total}",
     "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
     "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
+    "levelFormat": "Nivel {level}",
+    "maxLevelUnlockedFormat": "Nivel máximo desbloqueado: {maxLevel}",
+    "levelOutcome": {
+      "levelUp": "¡Genial! Has desbloqueado el nivel {nextLevel}.",
+      "completedAllLevels": "¡Enhorabuena! Has completado todos los niveles de DinoQuiz.",
+      "insufficientScore": "¡Buen intento! Sigue jugando para desbloquear el siguiente nivel.",
+      "ageRestricted": "¡Partida terminada! Gracias por jugar con los dinosaurios."
+    },
     "playAgainButton": "Volver a jugar",
     "exitButton": "Salir",
     "messages": [
@@ -161,6 +169,8 @@
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
     "imageAltFormat": "Ilustración de un {dinosaur}",
+    "levelFormat": "Nivel {level}",
+    "progressFormat": "{current} de {total}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento!"

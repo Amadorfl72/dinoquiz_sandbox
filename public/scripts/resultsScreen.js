@@ -31,6 +31,18 @@
  * `src/i18n` loader under Node. It registers on
  * `window.DinoQuiz.screens.renderResultsScreen`; the canonical
  * `src/screens/ResultsScreen.js` re-exports this file.
+ *
+ * Level progress UI (TRIOFSND-206): three independent, optional pieces of
+ * level state render alongside the existing score/stars for the level just
+ * played -- `options.level` (which level this result is for),
+ * `options.levelOutcome` (the `gameFlow.js` `resolveLevelOutcome`/
+ * `completeLevel` shape, resolved into an always-positive message describing
+ * whether the next level unlocked or the game ended, and why), and
+ * `options.maxLevelUnlocked` (the highest level unlocked on this device so
+ * far). None of the three touch storage or expose the child's age band --
+ * this screen stays a pure, DOM-only component, same as `options.adsRemoved`
+ * above. Omitting all three renders exactly what this screen rendered before
+ * TRIOFSND-206.
  */
 
 (function () {
@@ -177,6 +189,34 @@
     }, template);
   }
 
+  // Level progression outcome (TRIOFSND-206): `options.levelOutcome` mirrors
+  // the shape `gameFlow.js`'s `resolveLevelOutcome`/`completeLevel` already
+  // return -- `{ gameOver, nextLevel, level, correctCount, reason }` -- so a
+  // caller can pass that result straight through. `reason` picks the
+  // always-positive copy to show: unlocking the next level, finishing at
+  // MAX_LEVEL, ending for insufficient score, or the age-restricted single
+  // level ending -- never the child's age band or the raw correctCount.
+  function resolveLevelOutcomeMessage(strings, levelOutcome) {
+    if (!levelOutcome || typeof levelOutcome !== 'object') {
+      return null;
+    }
+
+    var levelOutcomeStrings = (strings && strings.levelOutcome) || {};
+
+    switch (levelOutcome.reason) {
+      case 'level_up':
+        return formatTemplate(levelOutcomeStrings.levelUp || '', { nextLevel: levelOutcome.nextLevel });
+      case 'completed_all_levels':
+        return levelOutcomeStrings.completedAllLevels || '';
+      case 'insufficient_score':
+        return levelOutcomeStrings.insufficientScore || '';
+      case 'age_restricted':
+        return levelOutcomeStrings.ageRestricted || '';
+      default:
+        return null;
+    }
+  }
+
   function renderResultsScreen(container, options) {
     options = options || {};
     var strings = resolveStrings(options);
@@ -200,6 +240,15 @@
     heading.className = 'results-screen__heading';
     heading.textContent = strings.heading;
 
+    // TRIOFSND-206: identifies which level this result belongs to -- never
+    // the child's age band, which stays out of this screen entirely.
+    var levelEl = null;
+    if (typeof options.level === 'number') {
+      levelEl = document.createElement('p');
+      levelEl.className = 'results-screen__level';
+      levelEl.textContent = formatTemplate(strings.levelFormat, { level: options.level });
+    }
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'results-screen__score';
     scoreEl.textContent = formatTemplate(strings.scoreFormat, { score: score, total: total });
@@ -214,17 +263,51 @@
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
 
+    // TRIOFSND-206: whether the next level unlocked, or the game ended (at
+    // MAX_LEVEL or for insufficient score) -- see resolveLevelOutcomeMessage.
+    var levelOutcomeMessage = resolveLevelOutcomeMessage(strings, options.levelOutcome);
+    var levelOutcomeEl = null;
+    if (levelOutcomeMessage) {
+      levelOutcomeEl = document.createElement('p');
+      levelOutcomeEl.className = 'results-screen__level-outcome';
+      levelOutcomeEl.textContent = levelOutcomeMessage;
+    }
+
+    // TRIOFSND-206: the highest level unlocked on this device so far. Read
+    // from local storage by the caller (this screen stays a pure, DOM-only
+    // component, same as `options.adsRemoved` above).
+    var maxLevelUnlockedEl = null;
+    if (typeof options.maxLevelUnlocked === 'number') {
+      maxLevelUnlockedEl = document.createElement('p');
+      maxLevelUnlockedEl.className = 'results-screen__max-level-unlocked';
+      maxLevelUnlockedEl.textContent = formatTemplate(strings.maxLevelUnlockedFormat, {
+        maxLevel: options.maxLevelUnlocked,
+      });
+    }
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'results-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
     announcementEl.setAttribute('aria-live', 'polite');
-    announcementEl.textContent = formatTemplate(strings.summaryAnnouncement, {
-      score: score,
-      total: total,
-      stars: stars,
-      maxStars: MAX_STARS,
-      message: message,
-    });
+    var announcementParts = [
+      formatTemplate(strings.summaryAnnouncement, {
+        score: score,
+        total: total,
+        stars: stars,
+        maxStars: MAX_STARS,
+        message: message,
+      }),
+    ];
+    if (levelEl) {
+      announcementParts.push(levelEl.textContent);
+    }
+    if (levelOutcomeEl) {
+      announcementParts.push(levelOutcomeEl.textContent);
+    }
+    if (maxLevelUnlockedEl) {
+      announcementParts.push(maxLevelUnlockedEl.textContent);
+    }
+    announcementEl.textContent = announcementParts.join(' ');
 
     var actions = document.createElement('div');
     actions.className = 'results-screen__actions';
@@ -301,9 +384,18 @@
     }
 
     root.appendChild(heading);
+    if (levelEl) {
+      root.appendChild(levelEl);
+    }
     root.appendChild(scoreEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
+    if (levelOutcomeEl) {
+      root.appendChild(levelOutcomeEl);
+    }
+    if (maxLevelUnlockedEl) {
+      root.appendChild(maxLevelUnlockedEl);
+    }
     root.appendChild(announcementEl);
     root.appendChild(actions);
     if (adsSection) {
@@ -313,9 +405,12 @@
 
     return {
       root: root,
+      levelEl: levelEl,
       scoreEl: scoreEl,
       starsEl: starsEl,
       messageEl: messageEl,
+      levelOutcomeEl: levelOutcomeEl,
+      maxLevelUnlockedEl: maxLevelUnlockedEl,
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,
@@ -335,6 +430,7 @@
     calculateStars: calculateStars,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
+    resolveLevelOutcomeMessage: resolveLevelOutcomeMessage,
     renderResultsScreen: renderResultsScreen,
   };
 
