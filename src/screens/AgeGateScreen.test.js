@@ -20,22 +20,24 @@ describe('AgeGateScreen rendering', () => {
     container.remove();
   });
 
-  test('does not hardcode copy — title, instructions and all three options come from the es locale resource file', () => {
+  test('does not hardcode copy — title, instructions and both options come from the es locale resource file', () => {
     renderAgeGateScreen(container, { locale: 'es' });
 
     expect(getByText(container, strings.screenTitle)).toBeInTheDocument();
     expect(container.textContent).toContain(strings.instructions);
-    expect(container.textContent).toContain(strings.sixOption);
     expect(container.textContent).toContain(strings.sevenOption);
     expect(container.textContent).toContain(strings.eightPlusOption);
   });
 
-  test('renders exactly three large, clearly-labeled options (6, 7 and 8+ years)', () => {
-    const { sixButton, sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
+  test('renders exactly two large, clearly-labeled options ("7 años o menos" and "8 años o más"), never a 6-year-old option', () => {
+    const { sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
 
-    expect(getByRole(container, 'button', { name: strings.sixOption })).toBe(sixButton);
+    expect(strings.sevenOption).toBe('7 años o menos');
     expect(getByRole(container, 'button', { name: strings.sevenOption })).toBe(sevenButton);
     expect(getByRole(container, 'button', { name: strings.eightPlusOption })).toBe(eightPlusButton);
+    expect(container.querySelectorAll('.age-gate-screen__option').length).toBe(2);
+    expect(strings.sixOption).toBeUndefined();
+    expect(container.textContent).not.toContain('6 años');
   });
 
   test('re-rendering into the same container clears the previous render', () => {
@@ -60,17 +62,7 @@ describe('AgeGateScreen selection', () => {
     resetSelectedAgeBand();
   });
 
-  test('tapping "6 años" calls onSelect with AGE_BANDS.SIX', () => {
-    const onSelect = jest.fn();
-    const { sixButton } = renderAgeGateScreen(container, { strings, onSelect });
-
-    sixButton.click();
-
-    expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith(AGE_BANDS.SIX);
-  });
-
-  test('tapping "7 años" calls onSelect with AGE_BANDS.SEVEN', () => {
+  test('tapping "7 años o menos" calls onSelect with AGE_BANDS.SEVEN', () => {
     const onSelect = jest.fn();
     const { sevenButton } = renderAgeGateScreen(container, { strings, onSelect });
 
@@ -93,10 +85,10 @@ describe('AgeGateScreen selection', () => {
   test('a selection is tracked in memory via getSelectedAgeBand/setSelectedAgeBand', () => {
     expect(getSelectedAgeBand()).toBeNull();
 
-    const { sixButton } = renderAgeGateScreen(container, { strings });
-    sixButton.click();
+    const { sevenButton } = renderAgeGateScreen(container, { strings });
+    sevenButton.click();
 
-    expect(getSelectedAgeBand()).toBe(AGE_BANDS.SIX);
+    expect(getSelectedAgeBand()).toBe(AGE_BANDS.SEVEN);
   });
 
   test('setSelectedAgeBand rejects an unknown value, keeping the tracked selection null/valid', () => {
@@ -108,7 +100,7 @@ describe('AgeGateScreen selection', () => {
   });
 
   test('resetSelectedAgeBand clears any prior in-memory selection (never persisted across a reset/new session)', () => {
-    setSelectedAgeBand(AGE_BANDS.SIX);
+    setSelectedAgeBand(AGE_BANDS.SEVEN);
     resetSelectedAgeBand();
 
     expect(getSelectedAgeBand()).toBeNull();
@@ -116,6 +108,11 @@ describe('AgeGateScreen selection', () => {
 
   test('the safe default, used when the age cannot be determined, keeps the current (unrestricted) content', () => {
     expect(SAFE_DEFAULT_AGE_BAND).toBe(AGE_BANDS.EIGHT_PLUS);
+  });
+
+  test('AGE_BANDS no longer exposes a six-year-old band', () => {
+    expect(AGE_BANDS.SIX).toBeUndefined();
+    expect(Object.values(AGE_BANDS)).not.toContain('six');
   });
 });
 
@@ -140,7 +137,7 @@ describe('AgeGateScreen accessibility (roles/labels, focus)', () => {
     expect(title).toHaveAttribute('tabindex', '-1');
   });
 
-  test('the three options are grouped together and labelled by the screen title', () => {
+  test('the two options are grouped together and labelled by the screen title', () => {
     const { optionsGroup, title } = renderAgeGateScreen(container, { strings });
 
     expect(optionsGroup).toHaveAttribute('role', 'group');
@@ -148,20 +145,17 @@ describe('AgeGateScreen accessibility (roles/labels, focus)', () => {
   });
 
   test('each option button exposes an accessible name equal to its visible label', () => {
-    const { sixButton, sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
+    const { sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
 
-    expect(sixButton).toHaveAccessibleName(strings.sixOption);
     expect(sevenButton).toHaveAccessibleName(strings.sevenOption);
     expect(eightPlusButton).toHaveAccessibleName(strings.eightPlusOption);
   });
 
-  test('all three options are real buttons meeting the >=48x48dp minimum touch target', () => {
-    const { sixButton, sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
+  test('both options are real buttons meeting the >=48x48dp minimum touch target', () => {
+    const { sevenButton, eightPlusButton } = renderAgeGateScreen(container, { strings });
 
-    expect(sixButton.tagName).toBe('BUTTON');
     expect(sevenButton.tagName).toBe('BUTTON');
     expect(eightPlusButton.tagName).toBe('BUTTON');
-    expect(sixButton).toHaveClass('age-gate-screen__option');
     expect(sevenButton).toHaveClass('age-gate-screen__option');
     expect(eightPlusButton).toHaveClass('age-gate-screen__option');
   });

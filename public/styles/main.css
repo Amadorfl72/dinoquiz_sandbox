@@ -1175,25 +1175,6 @@ body {
   font-size: 2rem;
 }
 
-.age-gate-screen__option--six {
-  background-color: transparent;
-  color: var(--color-text);
-  border: 3px solid var(--color-text);
-}
-
-.age-gate-screen__option--six:hover {
-  background-color: var(--color-option-bg-hover);
-}
-
-.age-gate-screen__option--six:active {
-  background-color: var(--color-option-bg-pressed);
-}
-
-.age-gate-screen__option--six:focus-visible {
-  outline: 4px solid var(--color-focus-ring-on-light);
-  outline-offset: 3px;
-}
-
 .age-gate-screen__option--seven {
   background-color: var(--color-neutral-bg);
   color: var(--color-neutral-text);

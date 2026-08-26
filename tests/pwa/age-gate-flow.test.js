@@ -139,18 +139,20 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     await rendered;
   }
 
-  test('6 años ("6 años") ven la variante de dibujo, nunca la realista', async () => {
+  test('el age gate nunca ofrece una opción de "6 años": solo existen "7 años o menos" y "8 años o más"', async () => {
     await startFromHome(buildQuestionBank(10));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
 
-    expect(container.querySelector('.question-screen')).not.toBeNull();
-    expect(currentImageSrc(container)).toContain('dinosaurs/trex.png');
-    expect(currentImageSrc(container)).not.toContain('/realista/');
+    expect(ageGateStrings.sixOption).toBeUndefined();
+    expect(container.querySelector('.age-gate-screen__option--six')).toBeNull();
+    expect(container.textContent).not.toContain('6 años');
+    expect(container.querySelectorAll('.age-gate-screen__option').length).toBe(2);
+    expect(getByRole(container, 'button', { name: ageGateStrings.sevenOption })).not.toBeNull();
+    expect(getByRole(container, 'button', { name: ageGateStrings.eightPlusOption })).not.toBeNull();
   });
 
-  test('7 años ven la variante de imagen realista', async () => {
+  test('7 años o menos ven la variante de imagen realista', async () => {
     await startFromHome(buildQuestionBank(10));
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
@@ -175,8 +177,8 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     await startFromHome(questions);
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
-    expect(currentImageSrc(container)).not.toContain('/realista/');
+    getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
+    expect(currentImageSrc(container)).toContain('/realista/');
 
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: true });
@@ -188,10 +190,10 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
 
     getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
 
-    // No re-prompt: straight back to a question screen, same (dibujo) style.
+    // No re-prompt: straight back to a question screen, same (realista) style.
     expect(container.querySelector('.age-gate-screen')).toBeNull();
     expect(container.querySelector('.question-screen')).not.toBeNull();
-    expect(currentImageSrc(container)).not.toContain('/realista/');
+    expect(currentImageSrc(container)).toContain('/realista/');
   });
 
   test('una selección de "8 años o más" también persiste sin volver a preguntar tras "Volver a jugar"', async () => {
@@ -224,7 +226,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
   // would also match unrelated words like "image"/"storage"/"message") so a
   // future accidental `console.log(ageBand)`, a `fetch` payload embedding it,
   // or a storage write keyed by it, all get caught regardless of casing.
-  const FORBIDDEN_SUBSTRINGS = ['edad', 'ageband', 'age-band', 'age_band', 'six', 'seven', 'eight-plus'];
+  const FORBIDDEN_SUBSTRINGS = ['edad', 'ageband', 'age-band', 'age_band', 'seven', 'eight-plus'];
 
   function assertNoAgeLeak(callsArgs) {
     const serialized = JSON.stringify(callsArgs, (key, value) => (typeof value === 'function' ? '[fn]' : value)) || '';
@@ -311,7 +313,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
     await rendered;
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
-    getByRole(container, 'button', { name: ageGateStrings.sixOption }).click();
+    getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
 
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: i % 2 === 0 });
