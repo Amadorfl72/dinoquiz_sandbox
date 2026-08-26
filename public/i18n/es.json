@@ -154,6 +154,7 @@
       "ageRestricted": "¡Partida terminada! Gracias por jugar con los dinosaurios."
     },
     "playAgainButton": "Volver a jugar",
+    "nextLevelButtonFormat": "Ir al nivel {level}",
     "exitButton": "Salir",
     "messages": [
       "¡Lo has hecho genial! Sigue descubriendo datos curiosos de dinosaurios.",
