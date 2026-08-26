@@ -486,3 +486,74 @@ igual que cualquier otro test, sin necesitar un paso de CI dedicado a Playwright
 pipeline necesita para poder lanzar Chromium es el binario del navegador: el script
 `postinstall` (`npm run test:e2e:install`) lo instala automáticamente en cada `npm ci`/`npm
 install`, antes de que corra `jest`.
+
+## Auditoría de privacidad y tráfico de red (TRIOFSND-119)
+
+El PRD (G7) exige evitar cuentas, PII, publicidad, tracking individual y cualquier transmisión
+del progreso del niño fuera del dispositivo. DinoQuiz no tiene backend (ver arriba), así que esa
+garantía se reduce a tres afirmaciones concretas, cada una con su propia prueba automatizada:
+
+1. **Ninguna llamada de red sale del propio origen** (nada de dominios publicitarios/tracking).
+2. **No hay SDK publicitario ni identificador de dispositivo/publicidad (IDFA/GAID)** en el bundle.
+3. **Los eventos de analytics emitidos coinciden exactamente con una lista aprobada** y no
+   llevan campos no validados (PII).
+
+### Suite automatizada
+
+| Comprueba | Cómo | Fichero |
+|---|---|---|
+| (1) Dominios de red | Escaneo estático de todo `.js` de `public/`+`src/` en busca de dominios de una lista de bloqueo (Google/Meta Ads, Mixpanel, AppsFlyer, Unity Ads...) y de cualquier URL absoluta fuera de un allowlist mínimo; también verifica que `public/index.html` sólo carga recursos del propio origen y que `LogService.sendLogs` (el único punto que podría hacer POST fuera del dispositivo) nunca se invoca desde código shippeado | [`tests/privacy-audit/network-domains.test.js`](tests/privacy-audit/network-domains.test.js) |
+| (1) Dinámico, navegador real | Playwright juega una partida completa (Inicio -> edad -> 10 preguntas -> Resultados -> Volver a jugar) y registra *toda* petición de red del `page`; falla si alguna tiene un origen distinto al de la app | [`tests/e2e/privacy-network-audit.spec.js`](tests/e2e/privacy-network-audit.spec.js) |
+| (2) SDK publicitario / IDFA-GAID | Revisa `package.json` contra una lista de paquetes de ads/atribución conocidos, escanea el código en busca de identificadores tipo IDFA/GAID/AdMob/AppsFlyer/etc., y confirma que `rewardedAdService` (`public/scripts/adsService.js`) sigue usando únicamente el proveedor `unavailableProvider` | [`tests/privacy-audit/no-ad-tracking-sdk.test.js`](tests/privacy-audit/no-ad-tracking-sdk.test.js) |
+| (3) Lista aprobada de eventos + campos | Extrae de forma estática todo nombre de evento realmente emitido (`recordEvent`/`recordEventOnce`/`recordGameCompleted`/`logEvent`) y lo compara, en ambas direcciones, contra la lista aprobada; valida que el evento `pregunta_respondida` y cualquier `metadata` de `logEvent`/`recordEvent` sólo llevan campos permitidos (nunca nombre/edad/email/IP/IDFA/GAID/etc.) | [`tests/privacy-audit/analytics-events.test.js`](tests/privacy-audit/analytics-events.test.js) |
+
+La lista aprobada de eventos, los campos permitidos por evento y la lista de campos PII
+prohibidos viven en un único sitio, **fuente de verdad** que la suite de arriba usa como
+referencia: [`src/services/analytics/approvedEvents.js`](src/services/analytics/approvedEvents.js)
+(`APPROVED_ANALYTICS_EVENTS`, `QUESTION_ANSWERED_EVENT_FIELDS`, `APPROVED_LOG_EVENT_TYPES`,
+`PII_FIELD_DENYLIST`). Añadir un evento nuevo requiere declararlo ahí explícitamente -- si el
+código emite un nombre que no está en la lista (o dejar de emitir uno que sí lo está), la suite
+falla.
+
+Ejecución:
+
+```bash
+npm test -- tests/privacy-audit                 # auditoría estática (parte de `npm test`)
+npm run test:e2e:install && npm run test:e2e -- tests/e2e/privacy-network-audit.spec.js  # auditoría dinámica, navegador real
+```
+
+### Procedimiento de auditoría trimestral manual
+
+La suite automatizada detecta regresiones dentro de lo que ya sabe buscar (una lista de
+dominios/paquetes/eventos conocidos), pero no sustituye una revisión humana periódica. Cada
+trimestre, quien haga la auditoría debe:
+
+1. **Revisar dependencias nuevas**: `git diff` de `package.json`/`package-lock.json` desde la
+   última auditoría; para cualquier paquete nuevo, comprobar que no es un SDK de ads/analytics/
+   atribución (aunque su nombre no esté todavía en `AD_TRACKING_PACKAGES` de
+   [`tests/privacy-audit/no-ad-tracking-sdk.test.js`](tests/privacy-audit/no-ad-tracking-sdk.test.js) --
+   si lo es, añadirlo a esa lista aunque no se vaya a usar, para que la próxima vez la suite lo
+   detecte sola).
+2. **Revisar eventos nuevos**: `git log -p -- src/services/analytics/approvedEvents.js` desde la
+   última auditoría para ver qué eventos se añadieron y por qué; para cada uno, confirmar que su
+   justificación de producto sigue vigente y que ningún campo asociado es identificable
+   individualmente.
+3. **Ampliar las listas de bloqueo**: revisar si han aparecido nuevos dominios/SDKs de
+   publicidad o tracking relevantes para el ecosistema web/PWA infantil desde la última revisión,
+   y añadirlos a `AD_TRACKING_DOMAINS` ([`tests/privacy-audit/network-domains.test.js`](tests/privacy-audit/network-domains.test.js))
+   y `AD_TRACKING_PACKAGES`/`AD_TRACKING_IDENTIFIERS`
+   ([`tests/privacy-audit/no-ad-tracking-sdk.test.js`](tests/privacy-audit/no-ad-tracking-sdk.test.js))
+   antes de re-ejecutar la suite -- una lista de bloqueo desactualizada no detecta lo que no
+   conoce.
+4. **Ejecutar la auditoría dinámica con DevTools abierto**: además de
+   `npm run test:e2e -- tests/e2e/privacy-network-audit.spec.js`, abrir la app en un navegador
+   real con la pestaña Network de DevTools, jugar una partida completa (incluida la instalación
+   de la PWA) y confirmar visualmente que la columna "Domain" no muestra más origen que el de la
+   propia app -- esto detecta peticiones que el test automatizado no capturaría por
+   condición de carrera o por depender de una interacción no cubierta (p.ej. un flujo nuevo).
+5. **Releer `ageGateScreen.js` y la política de privacidad**: confirmar que la banda de edad
+   sigue siendo estrictamente en memoria (nunca pasa a `analyticsStorage`/`LogService`/
+   `localStorage`) y que el texto de `public/i18n/es.json` (claves `privacy.*`) describe con
+   precisión los datos que el dispositivo guarda localmente.
+6. **Dejar constancia**: registrar fecha, quién audita, hallazgos y qué listas se actualizaron
+   (idealmente en el PR que actualiza este README y las listas del punto 3).
