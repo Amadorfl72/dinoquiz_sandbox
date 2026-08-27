@@ -17,7 +17,31 @@ violencia gráfica.
 | ankylosaurus.jpg | Ankylosaurus | Emily Willoughby (Ferahgo the Assassin) | CC BY-SA 3.0 | [Ankylosaurus magniventris reconstruction.png](https://commons.wikimedia.org/wiki/File:Ankylosaurus_magniventris_reconstruction.png) |
 | pteranodon.jpg | Pteranodon | Nobu Tamura | CC BY-SA 3.0 | [Pteranodon NT.jpg](https://commons.wikimedia.org/wiki/File:Pteranodon_NT.jpg) |
 
-## Cómo se eligieron
+## Especies añadidas en los niveles 6-10
+
+Para `spinosaurus.svg`, `dilophosaurus.svg`, `pachycephalosaurus.svg`, `compsognathus.svg`,
+`diplodocus.svg`, `iguanodon.svg` y `parasaurolophus.svg` no se localizó, dentro del tiempo
+disponible para esta entrega, paleoarte de licencia libre en Wikimedia Commons con una fuente
+verificable para cada una de las siete especies. Para no bloquear la historia ni arriesgar una
+atribución incorrecta, estos siete ficheros son obra original creada para DinoQuiz: ilustraciones
+vectoriales con paleta de tonos tierra y sombreado, con un trazo más detallado que la ilustración
+"dibujo" de la misma especie, pensadas para leerse como la variante "realista" sin depender de una
+fuente externa. No contienen texto incrustado.
+
+| Fichero | Dinosaurio | Autor | Licencia |
+|---|---|---|---|
+| spinosaurus.svg | Spinosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| dilophosaurus.svg | Dilophosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| pachycephalosaurus.svg | Pachycephalosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| compsognathus.svg | Compsognathus | DinoQuiz | CC0 1.0 (dominio público) |
+| diplodocus.svg | Diplodocus | DinoQuiz | CC0 1.0 (dominio público) |
+| iguanodon.svg | Iguanodon | DinoQuiz | CC0 1.0 (dominio público) |
+| parasaurolophus.svg | Parasaurolophus | DinoQuiz | CC0 1.0 (dominio público) |
+
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/deed.es — uso, copia y modificación
+libres, sin atribución requerida.
+
+## Cómo se eligieron (las siete especies fotográficas originales)
 
 Banco admisible según la tarea: paleoarte de Wikimedia Commons con licencia
 CC0 / CC BY / CC BY-SA. Se ha priorizado un mismo autor (Nobu Tamura) para

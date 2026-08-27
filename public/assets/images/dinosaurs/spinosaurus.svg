@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="spinosaurusTitle">
+  <title id="spinosaurusTitle">Spinosaurus</title>
+  <!-- Tail -->
+  <path d="M80 300 q-40 -10 -46 -46" fill="none" stroke="#26A69A" stroke-width="30" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="175" cy="345" rx="26" ry="18" fill="#00897B" stroke="#004D40" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="26" ry="18" fill="#00897B" stroke="#004D40" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="215" cy="250" rx="105" ry="80" fill="#26A69A" stroke="#004D40" stroke-width="8"/>
+  <!-- Sail -->
+  <path d="M150 190 l6 -80 20 74 14 -90 18 88 16 -78 12 82 z" fill="#80CBC4" stroke="#004D40" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Belly -->
+  <ellipse cx="215" cy="270" rx="62" ry="46" fill="#FFF3E0"/>
+  <!-- Tiny arms -->
+  <path d="M155 245 q-18 12 -14 32" fill="none" stroke="#26A69A" stroke-width="14" stroke-linecap="round"/>
+  <path d="M275 245 q18 12 14 32" fill="none" stroke="#26A69A" stroke-width="14" stroke-linecap="round"/>
+  <!-- Long crocodile-like snout -->
+  <path d="M295 150 q60 -10 80 10 q-10 14 -30 14 q-30 4 -50 -8 z" fill="#26A69A" stroke="#004D40" stroke-width="7" stroke-linejoin="round"/>
+  <!-- Head -->
+  <ellipse cx="285" cy="140" rx="55" ry="42" fill="#26A69A" stroke="#004D40" stroke-width="8"/>
+  <!-- Teeth -->
+  <g fill="#FFFFFF" stroke="#004D40" stroke-width="2">
+    <path d="M320 162 l5 10 5 -10 z"/>
+    <path d="M345 160 l5 10 5 -10 z"/>
+    <path d="M365 156 l5 9 5 -9 z"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="278" cy="118" r="10" fill="#004D40"/>
+  <circle cx="281" cy="115" r="3.5" fill="#FFFFFF"/>
+</svg>

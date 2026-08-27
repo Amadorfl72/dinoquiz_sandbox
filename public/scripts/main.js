@@ -772,7 +772,7 @@
    * Multi-level orchestration (TRIOFSND-207): the real '¡Jugar!' entry point
    * (see `finishRender`'s click handler below) plays through gameFlow.js's
    * `startLevel`/`completeLevel`/`resolveLevelOutcome` (TRIOFSND-203) instead
-   * of the flat, single-level `startNewGame` above, chaining levels 1-5 as
+   * of the flat, single-level `startNewGame` above, chaining levels 1-10 as
    * each level's outcome dictates: continue automatically isn't offered here
    * -- a level always ends on Resultados first (with an always-positive
    * message about what happened, TRIOFSND-206) and 'Volver a jugar' is what
@@ -807,7 +807,7 @@
   /**
    * A `getQuestionsByLevel`-shaped resolver (see gameFlow.js's
    * `getLevelQuestionPool`) over an already-loaded flat question array --
-   * either the real bank (`loadQuestions()`, level-tagged 1-5 in
+   * either the real bank (`loadQuestions()`, level-tagged 1-10 in
    * /data/questions.json) or a test fixture. Passed explicitly so
    * `startLevel`/`completeLevel` never fall back to `src/data/questionBank`'s
    * own `require`/`fs`-based resolution, which only works under Node/Jest;

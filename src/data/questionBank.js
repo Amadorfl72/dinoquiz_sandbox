@@ -51,6 +51,13 @@ const DINOSAURS = Object.freeze({
   BRAQUIOSAURIO: 'braquiosaurio',
   ANKYLOSAURUS: 'ankylosaurus',
   PTERANODON: 'pteranodon',
+  SPINOSAURUS: 'spinosaurus',
+  DILOPHOSAURUS: 'dilophosaurus',
+  PACHYCEPHALOSAURUS: 'pachycephalosaurus',
+  COMPSOGNATHUS: 'compsognathus',
+  DIPLODOCUS: 'diplodocus',
+  IGUANODON: 'iguanodon',
+  PARASAUROLOPHUS: 'parasaurolophus',
 });
 
 const VALID_DINOSAURS = Object.values(DINOSAURS);
@@ -61,15 +68,13 @@ const MIN_LEVEL = 1;
 const MAX_LEVEL = 10;
 // VALID_LEVELS/EXPECTED_QUESTION_COUNT are NOT a mirror of MAX_LEVEL: they
 // describe the content-completeness contract for the levels actually shipped
-// in public/data/questions.json today (150 questions, 30 per level, levels
-// 1-5 — see the "TRIOFSND-202: contains exactly 150 valid questions, 30 per
-// level" test). MAX_LEVEL is the generic ceiling gameFlow.js's
-// resolveLevelOutcome/completeLevel progress toward (TRIOFSND-207+), raised
-// ahead of content so the game logic doesn't need reshaping again once levels
-// 6-10 ship; getQuestionsByLevel/startLevel already degrade a level with no
-// content to a graceful 'level_generation_failed' instead of crashing. Extend
-// this list only once real questions for that level exist in the bank.
-const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
+// in public/data/questions.json. MAX_LEVEL is the generic ceiling
+// gameFlow.js's resolveLevelOutcome/completeLevel progress toward
+// (TRIOFSND-207+), raised ahead of content so the game logic did not need
+// reshaping again once levels 6-10 shipped. They now coincide because the
+// content caught up: the bank carries 300 questions, 30 per level, levels
+// 1-10. Extend this list only once real questions for a level exist.
+const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const QUESTIONS_PER_LEVEL = 30;
 const EXPECTED_QUESTION_COUNT = VALID_LEVELS.length * QUESTIONS_PER_LEVEL;
 
@@ -233,7 +238,7 @@ function getDinosaurCoverageErrors(questions) {
 }
 
 // TRIOFSND-202: the bank must contain exactly QUESTIONS_PER_LEVEL (30)
-// questions for each of the 5 levels (150 total) once invalid entries have
+// questions for each of the 10 levels (300 total) once invalid entries have
 // been excluded.
 function getLevelCoverageErrors(questions) {
   const countsByLevel = VALID_LEVELS.reduce((counts, level) => {

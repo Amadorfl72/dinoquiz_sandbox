@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="iguanodonTitle">
+  <title id="iguanodonTitle">Iguanodon</title>
+  <!-- Tail -->
+  <path d="M90 300 q-40 -8 -46 -42" fill="none" stroke="#7CB342" stroke-width="26" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="180" cy="345" rx="26" ry="18" fill="#558B2F" stroke="#33691E" stroke-width="6"/>
+  <ellipse cx="255" cy="345" rx="26" ry="18" fill="#558B2F" stroke="#33691E" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="215" cy="255" rx="100" ry="72" fill="#7CB342" stroke="#33691E" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="215" cy="272" rx="58" ry="42" fill="#F9FBE7"/>
+  <!-- Arm with thumb spike -->
+  <path d="M170 235 q-18 14 -12 34" fill="none" stroke="#7CB342" stroke-width="14" stroke-linecap="round"/>
+  <path d="M158 268 l-14 -10" fill="none" stroke="#33691E" stroke-width="5" stroke-linecap="round"/>
+  <path d="M270 235 q18 14 12 34" fill="none" stroke="#7CB342" stroke-width="14" stroke-linecap="round"/>
+  <!-- Neck -->
+  <ellipse cx="305" cy="195" rx="34" ry="28" fill="#7CB342" stroke="#33691E" stroke-width="7"/>
+  <!-- Head with flat beak -->
+  <ellipse cx="335" cy="150" rx="44" ry="34" fill="#7CB342" stroke="#33691E" stroke-width="7"/>
+  <path d="M295 165 q40 24 78 0 q-8 16 -38 18 q-30 0 -40 -18 z" fill="#FFF9C4" stroke="#33691E" stroke-width="5"/>
+  <!-- Eye -->
+  <circle cx="340" cy="135" r="9" fill="#33691E"/>
+  <circle cx="343" cy="132" r="3" fill="#FFFFFF"/>
+</svg>
