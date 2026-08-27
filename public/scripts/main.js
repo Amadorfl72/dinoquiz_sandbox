@@ -274,6 +274,9 @@
         renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
+        renderModeChangeConfirmScreen:
+          fromWindow.renderModeChangeConfirmScreen ||
+          require('./modeChangeConfirmScreen').renderModeChangeConfirmScreen,
       };
     }
 
@@ -362,6 +365,128 @@
     if (modeStorage) {
       modeStorage.setLastMode(modeId, storageObj);
     }
+  }
+
+  /**
+   * Resolves src/services/gameSessionStorage.js's mode-scoped facade
+   * (`hasIncompleteGame`/`discardTransientState`, TRIOFSND-238/239) that
+   * `handleModeSelected` below drives to condition "cambiar de modo" on
+   * whether the mode being left still has an incomplete, resumable round.
+   * Same require-or-`window.DinoQuiz` fallback shape as `resolveModeStorage`/
+   * `resolveLogger` above -- unlike those, this service has no browser-global
+   * registration yet (its IndexedDB-backed adapters are Node/Jest-only for
+   * now), so it resolves to null in the real, bundler-less browser and the
+   * mode-change confirmation simply never triggers there, the same fail-open
+   * shape every other optional resolver in this file already follows (e.g.
+   * `resolveMazeGame` when its script fails to load).
+   */
+  function resolveGameSessionStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/gameSessionStorage');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.gameSessionStorage) || null;
+  }
+
+  /**
+   * Renders modeChangeConfirmScreen.js (TRIOFSND-237) with the `modeChange`
+   * i18n strings already resolved into `resources` (see `loadHomeResources`).
+   * Returns null (renders nothing) when the renderer failed to load, mirroring
+   * `renderAgeGate`'s degrade-gracefully shape -- but here the caller
+   * (`handleModeSelected`) only reaches this after already deciding
+   * confirmation is required, so a missing renderer must never silently
+   * discard the in-progress round; see that function's own fallback.
+   */
+  function renderModeChangeConfirm(container, renderers, resources, options) {
+    if (!renderers || typeof renderers.renderModeChangeConfirmScreen !== 'function') {
+      return null;
+    }
+
+    return renderers.renderModeChangeConfirmScreen(container, {
+      strings: resources && resources.modeChange,
+      onConfirm: options.onConfirm,
+      onCancel: options.onCancel,
+    });
+  }
+
+  /**
+   * Cambiar de modo fuera de una ronda (TRIOFSND-239, PRD "Contrato técnico
+   * ... común para los modos"): the handler behind every mode card tap on
+   * the illustrated selector (`renderModeSelector`'s `onSelectMode` below).
+   * The selector itself only ever renders between games -- never mid-round
+   * -- so this is exactly the "fuera de una ronda" mode-change gesture the
+   * PRD describes.
+   *
+   * If the mode the player was last playing (`dinoquiz:lastMode`, via
+   * modeStorage.js) still has an incomplete, resumable round saved
+   * (`gameSessionStorage.hasIncompleteGame`) and it isn't the very mode they
+   * just tapped, switching would silently lose that progress -- so this asks
+   * for confirmation first (modeChangeConfirmScreen.js) instead of starting
+   * the new mode straight away:
+   *
+   *   - Confirming ("Sí, cambiar de juego") discards exactly that abandoned
+   *     round (`discardTransientState`, never touching a different mode's
+   *     session or any durable per-mode key), tallies the aggregated,
+   *     local-only "partidas abandonadas por modo" counter (logging.js) and
+   *     lands back on the mode selector -- the tapped mode is not started
+   *     automatically, so the player picks again with nothing left to lose.
+   *   - Cancelling ("No, seguir jugando") leaves the saved round completely
+   *     untouched -- it stays parked on the same round it was on -- and
+   *     simply returns to the selector as well, without starting anything.
+   *
+   * When there is no previous mode, it's the same mode being tapped again,
+   * or gameSessionStorage isn't available (see `resolveGameSessionStorage`),
+   * the new mode starts immediately, exactly like before this feature
+   * existed.
+   *
+   * `currentModeId` must be resolved by the caller *before* the tap that
+   * triggers this handler, never re-read in here: modeSelectorScreen.js's
+   * own click handler already calls `modeStorage.setLastMode(modeId)` (the
+   * mode just tapped) before it ever invokes `onSelectMode` -- reading
+   * `dinoquiz:lastMode` at that point would always see the *new* mode, not
+   * the one being left, and this whole confirmation would never trigger.
+   * `renderModeSelector` below resolves it once, right before rendering the
+   * selector, exactly for this reason.
+   */
+  function handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId) {
+    function startMode() {
+      if (modeId === MAZE_MODE_ID) {
+        navigateToMaze();
+        return;
+      }
+      // Every other mode (Quiz included) still routes through the existing
+      // multi-level orchestrator until its own game engine ships.
+      startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+    }
+
+    var gameSessionStorage = resolveGameSessionStorage();
+
+    if (!gameSessionStorage || !currentModeId || currentModeId === modeId) {
+      startMode();
+      return;
+    }
+
+    Promise.resolve(gameSessionStorage.hasIncompleteGame(currentModeId)).then(function (hasIncomplete) {
+      if (!hasIncomplete) {
+        startMode();
+        return;
+      }
+
+      renderModeChangeConfirm(container, renderers, resources, {
+        onConfirm: function () {
+          Promise.resolve(gameSessionStorage.discardTransientState(currentModeId)).then(function () {
+            var logger = resolveLogger();
+            if (logger && typeof logger.logGameAbandonedByMode === 'function') {
+              logger.logGameAbandonedByMode(currentModeId);
+            }
+            renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
+          });
+        },
+        onCancel: function () {
+          renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
+        },
+      });
+    });
   }
 
   /**
@@ -1215,15 +1340,18 @@
    * Mode selector (TRIOFSND-232, PRD "Selector ilustrado de modos"): rendered
    * right after the age gate resolves and before any game starts, so the
    * player always picks a mode instead of always landing on Quiz. Selecting
-   * an available mode routes straight into that mode's own level selection/
-   * orchestrator; a blocked mode never reaches `onSelectMode` at all --
-   * public/scripts/modeSelectorScreen.js withholds it and only logs a local
-   * diagnostic instead (see that file's own doc comment). `resources` reuses
-   * the single i18n fetch `loadHomeResources` already made for Home, so
-   * opening the selector needs no extra network round trip. A missing
-   * renderer (e.g. modeSelectorScreen.js failed to load in some fallback
-   * browser) falls straight through to Quiz -- the only mode that existed
-   * before this selector did -- so a broken/missing script never blocks play.
+   * an available mode is handled by `handleModeSelected` (TRIOFSND-239),
+   * which routes straight into that mode's own level selection/orchestrator
+   * unless doing so would abandon an incomplete round in a different mode --
+   * see that function's own doc comment. A blocked mode never reaches
+   * `onSelectMode` at all -- public/scripts/modeSelectorScreen.js withholds
+   * it and only logs a local diagnostic instead (see that file's own doc
+   * comment). `resources` reuses the single i18n fetch `loadHomeResources`
+   * already made for Home, so opening the selector needs no extra network
+   * round trip. A missing renderer (e.g. modeSelectorScreen.js failed to load
+   * in some fallback browser) falls straight through to Quiz -- the only
+   * mode that existed before this selector did -- so a broken/missing script
+   * never blocks play.
    *
    * Laberinto (TRIOFSND-259) already has its own hash route (`MAZE_HASH`):
    * selecting it here only updates `location.hash`, the same way
@@ -1237,17 +1365,22 @@
       return startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
     }
 
+    // Resolved once, right here, before any card is tapped (TRIOFSND-239):
+    // modeSelectorScreen.js's own click handler overwrites `dinoquiz:lastMode`
+    // with the *newly* tapped mode before it calls `onSelectMode`, so reading
+    // it from inside that callback would always see the new mode instead of
+    // the one being left. See `handleModeSelected`'s own doc comment.
+    var modeStorage = resolveModeStorage();
+    var currentModeId =
+      modeStorage && typeof modeStorage.getLastMode === 'function'
+        ? modeStorage.getLastMode(ctx && ctx.storageObj)
+        : null;
+
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
       onSelectMode: function (modeId) {
-        if (modeId === MAZE_MODE_ID) {
-          navigateToMaze();
-          return;
-        }
-        // Every other mode (Quiz included) still routes through the existing
-        // multi-level orchestrator until its own game engine ships.
-        startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+        handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
       onBack: function () {
         var homeStorage = resolveHomeStorage();
@@ -1424,9 +1557,11 @@
    * (TRIOFSND-66) plus ageGate (TRIOFSND-193, resolved up front here so the
    * '¡Jugar!' click handler below can render the age gate synchronously,
    * with no extra fetch on the click itself) — all without a `require()` for
-   * `src/i18n`. Also resolves `modeSelector`/`modes` (TRIOFSND-232), so the
-   * mode selector rendered right after the age gate (see `renderModeSelector`
-   * below) reuses this same fetch instead of triggering a second one.
+   * `src/i18n`. Also resolves `modeSelector`/`modes` (TRIOFSND-232) and
+   * `modeChange` (TRIOFSND-239), so the mode selector rendered right after
+   * the age gate (see `renderModeSelector` below) and the confirmation
+   * dialog `handleModeSelected` shows on top of it both reuse this same
+   * fetch instead of triggering a second one.
    */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
@@ -1438,6 +1573,7 @@
             ageGate: data.ageGate,
             modeSelector: data.modeSelector,
             modes: data.modes,
+            modeChange: data.modeChange,
           }
         : null;
     });
@@ -2303,6 +2439,11 @@
       exitMazeToHomeSafely: exitMazeToHomeSafely,
       renderMazeRoute: renderMazeRoute,
       renderModeSelector: renderModeSelector,
+      QUIZ_MODE_ID: QUIZ_MODE_ID,
+      MAZE_MODE_ID: MAZE_MODE_ID,
+      resolveGameSessionStorage: resolveGameSessionStorage,
+      renderModeChangeConfirm: renderModeChangeConfirm,
+      handleModeSelected: handleModeSelected,
     };
   }
 })();
