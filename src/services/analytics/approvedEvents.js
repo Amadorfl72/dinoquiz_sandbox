@@ -28,6 +28,8 @@ const APPROVED_ANALYTICS_EVENTS = [
   'pregunta_respondida',
   'pregunta_respondida_fallo',
   'partida_completada',
+  'replay_pulsado',
+  'mute_toggled',
 ];
 
 // Fields allowed on the per-question analytics event (TRIOFSND-80,
