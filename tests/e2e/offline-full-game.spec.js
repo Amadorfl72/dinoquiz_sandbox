@@ -15,10 +15,17 @@ const { test, expect } = require('@playwright/test');
  */
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
+const AGE_GATE_OPTION = '.age-gate-screen__option--eight-plus';
+const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const NEXT_BUTTON = '.question-screen__next-button';
 const RESULTS_SCREEN = '.results-screen';
+// Class selector, not a role/text lookup (TRIOFSND-207): once a level is
+// unlocked this button's label becomes "Ir al nivel N" instead of the
+// generic "Volver a jugar" (see resultsScreen.js's resolvePlayAgainButtonLabel),
+// so matching by its stable class covers every level outcome.
+const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
 /** Waits until the service worker has finished precaching the local question bank. */
@@ -77,14 +84,18 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible();
     await page.locator(HOME_PLAY_BUTTON).click();
+    // TRIOFSND-232: the age gate hands off to the illustrated mode selector
+    // before any mode actually starts -- both must be navigated offline too.
+    await page.locator(AGE_GATE_OPTION).click();
+    await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
 
     await playFullGame(page);
 
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();
     await expect(page.getByRole('heading', { name: '¡Resultados!' })).toBeVisible();
 
-    // "Volver a jugar" (AC-9): a fresh game starts, still fully offline.
-    await page.getByRole('button', { name: 'Volver a jugar' }).click();
+    // "Volver a jugar" / "Ir al nivel N" (AC-9): a fresh round starts, still fully offline.
+    await page.locator(PLAY_AGAIN_BUTTON).click();
     await expect(page.locator(QUESTION_SCREEN)).toBeVisible();
     await expect(page.locator(RESULTS_SCREEN)).toHaveCount(0);
 
@@ -118,6 +129,10 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible({ timeout: 20_000 });
     await page.locator(HOME_PLAY_BUTTON).click();
+    await expect(page.locator(AGE_GATE_OPTION)).toBeVisible({ timeout: 20_000 });
+    await page.locator(AGE_GATE_OPTION).click();
+    await expect(page.locator(MODE_SELECTOR_QUIZ_CARD)).toBeVisible({ timeout: 20_000 });
+    await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
     await expect(page.locator(QUESTION_SCREEN)).toBeVisible({ timeout: 20_000 });
   });
 });
