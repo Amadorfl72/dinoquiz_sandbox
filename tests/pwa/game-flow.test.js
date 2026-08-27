@@ -1294,6 +1294,36 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(container.querySelector('.results-screen__max-level-unlocked')).toBeNull();
   });
 
+  test('TRIOFSND-209: "Volver a jugar" records the aggregated, non-PII replay_pulsado event, whether it continues into the next unlocked level or restarts a fresh level 1', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+    const analyticsStorage = { recordEvent: jest.fn().mockResolvedValue(1) };
+
+    function replayEventCount() {
+      return analyticsStorage.recordEvent.mock.calls.filter((call) => call[0] === 'replay_pulsado').length;
+    }
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      randomFn: () => 0,
+      analyticsStorage,
+    });
+
+    // 6/10 unlocks level 2 -- "Volver a jugar" continues straight into it.
+    await playLevelWithPattern('CCCCCCFFFF');
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+
+    expect(replayEventCount()).toBe(1);
+
+    // Finishing level 2 with an insufficient score ends the game --
+    // "Volver a jugar" here restarts fresh at level 1, still the same event.
+    await playLevelWithPattern('FFFFFFFFFF');
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+
+    expect(replayEventCount()).toBe(2);
+  });
+
   describe('salida segura a Inicio cuando gameFlow no puede generar un nivel (menos de 10 preguntas válidas)', () => {
     let consoleErrorSpy;
 

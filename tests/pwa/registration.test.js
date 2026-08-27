@@ -134,6 +134,27 @@ describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
     expect(storageObj.setItem).toHaveBeenCalledWith(MUTE_STORAGE_KEY, 'true');
   });
 
+  test('TRIOFSND-209: renderHome wires onToggleMute so a toggle records the aggregated, non-PII mute_toggled event', async () => {
+    const { renderHome } = require(MAIN_JS_PATH);
+    const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
+    const renderHomeScreen = jest.fn();
+    const fetchFn = jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: {} }) });
+    const storage = {
+      getItem: jest.fn().mockReturnValue(null),
+      setItem: jest.fn(),
+      hasSeenHomeTooltip: jest.fn().mockResolvedValue(true),
+      recordEventOnce: jest.fn(),
+      recordEvent: jest.fn().mockResolvedValue(1),
+    };
+
+    await renderHome(doc, renderHomeScreen, fetchFn, storage);
+
+    const { onToggleMute } = renderHomeScreen.mock.calls[0][1];
+    onToggleMute(true);
+
+    expect(storage.recordEvent).toHaveBeenCalledWith('mute_toggled');
+  });
+
   test('TRIOFSND-97: renderHome wires onPurchase so confirming persists the ads-removed flag to storage', async () => {
     const { renderHome, ADS_REMOVED_STORAGE_KEY } = require(MAIN_JS_PATH);
     const doc = { getElementById: jest.fn().mockReturnValue({ id: 'app' }) };
@@ -692,5 +713,27 @@ describe('TRIOFSND-66: mute preference persistence', () => {
     expect(() => persistMutedState(true, storageObj)).not.toThrow();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+
+  test('TRIOFSND-209: renderMuteToggle wires the app-shell mute button so tapping it records the aggregated, non-PII mute_toggled event', async () => {
+    const { renderMuteToggle } = require(MAIN_JS_PATH);
+    const { renderMuteToggleButton } = require('../../public/scripts/appShell');
+    const { getByRole, fireEvent } = require('@testing-library/dom');
+
+    const container = document.createElement('div');
+    container.id = 'mute-toggle';
+    document.body.appendChild(container);
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve(require('../../public/i18n/es.json')),
+    });
+    const analyticsStorage = { recordEvent: jest.fn().mockResolvedValue(1) };
+
+    await renderMuteToggle(document, renderMuteToggleButton, fetchFn, analyticsStorage);
+
+    fireEvent.click(getByRole(container, 'button'));
+
+    expect(analyticsStorage.recordEvent).toHaveBeenCalledWith('mute_toggled');
+
+    container.remove();
   });
 });

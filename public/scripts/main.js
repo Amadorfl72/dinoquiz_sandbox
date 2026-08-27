@@ -861,6 +861,13 @@
           // AC-20/AC-21: the banner/rewarded ad only render while this is false.
           adsRemoved: loadAdsRemovedState(ctx.storageObj),
           onPlayAgain: function () {
+            // TRIOFSND-209: record the aggregated, non-PII replay_pulsado
+            // event every time "Volver a jugar" is tapped, whether it
+            // continues into an already-unlocked next level or restarts a
+            // fresh level 1 -- both are the same "replay" gesture.
+            if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+              ctx.analyticsStorage.recordEvent('replay_pulsado');
+            }
             if (!outcome.gameOver && outcome.nextLevelGame) {
               playLevel(container, renderers, questions, doc, fetchFn, outcome.nextLevelGame, ctx);
             } else {
@@ -1594,6 +1601,12 @@
         renderOptions.muted = loadMutedState(resolvedMuteStorage);
         renderOptions.onToggleMute = function (muted) {
           persistMutedState(muted, resolvedMuteStorage);
+          // TRIOFSND-209: record the aggregated, non-PII mute_toggled event
+          // every time this button is tapped, the same way partida_iniciada
+          // is recorded above via the resolved storage backend.
+          if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
+            tooltipStorage.recordEvent('mute_toggled');
+          }
         };
       }
       // TRIOFSND-97: the single remove-ads purchase has no real payment SDK
@@ -1711,7 +1724,7 @@
     });
   }
 
-  function renderMuteToggle(doc, renderMuteToggleButton, fetchFn) {
+  function renderMuteToggle(doc, renderMuteToggleButton, fetchFn, analyticsStorage) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
     renderMuteToggleButton =
       renderMuteToggleButton ||
@@ -1729,9 +1742,23 @@
       return Promise.resolve(null);
     }
 
+    // TRIOFSND-209: this app-shell control (mounted outside #app, stays
+    // across every screen -- see the doc comment at the top of this file)
+    // is the other real place a player toggles mute, so it records the same
+    // aggregated, non-PII mute_toggled event as renderHome's own mute
+    // button, falling back to the same ambient storage `renderRoute` uses
+    // when no explicit backend is passed (the real, unbundled browser path).
+    var resolvedAnalyticsStorage = analyticsStorage || resolveHomeStorage(doc.defaultView);
+
     return fetchI18nResource(fetchFn).then(function (data) {
       var strings = data && data.muteButton;
-      return renderMuteToggleButton(container, strings ? { strings: strings } : {});
+      var options = strings ? { strings: strings } : {};
+      options.onToggle = function () {
+        if (resolvedAnalyticsStorage && typeof resolvedAnalyticsStorage.recordEvent === 'function') {
+          resolvedAnalyticsStorage.recordEvent('mute_toggled');
+        }
+      };
+      return renderMuteToggleButton(container, options);
     });
   }
 
