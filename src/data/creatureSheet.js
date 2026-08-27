@@ -95,7 +95,7 @@ const SHADOW_TRANSFORMS = Object.freeze({
 });
 
 // Every approved creature may be mirrored; only the flyer additionally
-// tolerates a partial rotation without becoming unrecognizable.
+// tolerates a partial/full rotation without becoming unrecognizable.
 const GROUND_TRANSFORMS = Object.freeze([SHADOW_TRANSFORMS.FLIP_HORIZONTAL]);
 const FLYER_TRANSFORMS = Object.freeze([
   SHADOW_TRANSFORMS.FLIP_HORIZONTAL,
@@ -280,6 +280,7 @@ function getApprovedShadowCreatures(sheets) {
 function isShadowModeUnlocked(catalog) {
   return getApprovedShadowCreatures(catalog).length >= SHADOW_MODE_MIN_APPROVED;
 }
+
 module.exports = {
   DIETS,
   VISUAL_FAMILIES,
