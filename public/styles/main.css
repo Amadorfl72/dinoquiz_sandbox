@@ -1773,3 +1773,53 @@ body {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
+
+/*
+ * Common accessible feedback component (TRIOFSND-243): shared by the eight
+ * game modes via public/scripts/feedbackComponent.js. Colors reuse the
+ * already WCAG-AA-verified pairs from `.question-screen__option--correct`/
+ * `--neutral` (see contrast.test.js's QUESTION_SCREEN_COLORS assertions) —
+ * the correct state is the only colored one, a miss stays neutral gray
+ * (never red), matching AC-7's no-negative-feedback rule everywhere the
+ * component is mounted. Color is always a redundant fourth cue on top of
+ * the icon + visible message + aria-live announcement the component always
+ * renders, never the only signal for the outcome.
+ */
+.feedback-component {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: 3px solid transparent;
+}
+
+.feedback-component__icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.feedback-component__message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+.feedback-component--correct {
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+}
+
+.feedback-component--correct .feedback-component__message {
+  color: var(--color-white);
+}
+
+.feedback-component--incorrect {
+  border-color: #607d8b;
+  background-color: var(--color-neutral-bg);
+}
+
+.feedback-component--incorrect .feedback-component__message {
+  color: var(--color-neutral-text);
+}
