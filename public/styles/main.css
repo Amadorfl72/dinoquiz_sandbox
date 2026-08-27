@@ -1232,3 +1232,274 @@ body {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
+
+/*
+ * Laberinto screen (TRIOFSND-258). The board is sized from
+ * `--maze-cols`/`--maze-rows` (set inline per round by mazeScreen.js from
+ * `round.maze.width/height`, 5..9 depending on level) and capped at
+ * `min(100%, 320px)`, so the hardest level's 9x9 grid shrinks its cells
+ * instead of growing past a 375px-wide viewport (PRD: no horizontal scroll
+ * at any level).
+ */
+.maze-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.maze-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.maze-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.maze-screen__level,
+.maze-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.maze-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.maze-screen__round {
+  background-color: var(--color-stars);
+}
+
+.maze-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.maze-screen__board {
+  display: grid;
+  grid-template-columns: repeat(var(--maze-cols), 1fr);
+  grid-template-rows: repeat(var(--maze-rows), 1fr);
+  width: min(100%, 320px);
+  aspect-ratio: var(--maze-cols) / var(--maze-rows);
+  box-sizing: border-box;
+  border: 3px solid var(--color-text);
+  border-radius: 8px;
+  background-color: var(--color-option-bg);
+  overflow: hidden;
+}
+
+.maze-screen__cell {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.65rem, 3.2vw, 1.1rem);
+  line-height: 1;
+}
+
+.maze-screen__cell--wall-top {
+  border-top: 2px solid var(--color-text);
+}
+
+.maze-screen__cell--wall-bottom {
+  border-bottom: 2px solid var(--color-text);
+}
+
+.maze-screen__cell--wall-left {
+  border-left: 2px solid var(--color-text);
+}
+
+.maze-screen__cell--wall-right {
+  border-right: 2px solid var(--color-text);
+}
+
+.maze-screen__cell--goal {
+  background-color: #fff9c4;
+}
+
+.maze-screen__cell--dinosaur {
+  background-color: #e8f5e9;
+}
+
+.maze-screen__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 20px;
+}
+
+.maze-screen__legend-item {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.maze-screen__blocked-message {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/*
+ * Directional controls: a "+"-shaped 3x3 grid (up/left/right/down) instead
+ * of a linear row, matching how a real d-pad reads at a glance without
+ * requiring the label text to be read (PRD G3: playable before a child
+ * reads fluently). Every button meets the shared --tap-target-min (48dp)
+ * floor.
+ */
+.maze-screen__controls {
+  display: grid;
+  grid-template-columns: repeat(3, var(--tap-target-min));
+  grid-template-rows: repeat(3, var(--tap-target-min));
+  gap: 8px;
+  justify-content: center;
+}
+
+.maze-screen__control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.maze-screen__control--up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.maze-screen__control--left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.maze-screen__control--right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.maze-screen__control--down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.maze-screen__control-button {
+  width: var(--tap-target-min);
+  height: var(--tap-target-min);
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.maze-screen__control-button:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.maze-screen__control-button:active:not(:disabled) {
+  background-color: var(--color-primary-pressed);
+}
+
+.maze-screen__control-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/* Disabled/unavailable direction (a wall blocks it): never signaled by
+   color alone -- `:disabled` also drops the cursor and, via mazeScreen.js,
+   the button's own text label and the sibling `.maze-screen__control-state`
+   caption both switch to the "no disponible" copy. */
+.maze-screen__control-button:disabled {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+  cursor: default;
+}
+
+.maze-screen__control-state {
+  font-size: 12px;
+  color: var(--color-neutral-text);
+}
+
+.maze-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.maze-screen__result-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.maze-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.maze-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.maze-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.maze-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.maze-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
