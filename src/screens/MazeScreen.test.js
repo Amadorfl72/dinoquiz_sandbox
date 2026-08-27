@@ -129,6 +129,21 @@ describe('MazeScreen', () => {
     expect(getMoves()).toBe(0);
   });
 
+  test('focuses an element inside the screen on render so a real arrow-key press (which always targets document.activeElement, not `root` directly) moves the dinosaur, mirroring the on-screen buttons (bug: arrow keys did nothing until a button was clicked first)', () => {
+    const round = buildRound();
+    const { getPosition } = renderMazeScreen(container, round);
+
+    expect(container.contains(document.activeElement)).toBe(true);
+
+    // Real keyboard input is dispatched on `document.activeElement`, never
+    // directly on `root` (only this test's helpers below target `root`
+    // explicitly, which is how every other keyboard test in this file
+    // masked the bug).
+    fireEvent.keyDown(document.activeElement, { key: 'ArrowRight' });
+
+    expect(getPosition()).toEqual({ row: 0, col: 1 });
+  });
+
   test('calls onMove with blocked:true for a wall and blocked:false with the new position for an open move', () => {
     const round = buildRound();
     const onMove = jest.fn();
