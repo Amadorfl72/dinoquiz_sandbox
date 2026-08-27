@@ -30,6 +30,40 @@
     "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
+  "modes": {
+    "quiz": {
+      "name": "Quiz",
+      "description": "Responde preguntas sobre criaturas prehistóricas eligiendo entre varias respuestas."
+    },
+    "laberinto": {
+      "name": "Laberinto",
+      "description": "Guía a una criatura prehistórica por un laberinto hasta llegar a la meta."
+    },
+    "sombra": {
+      "name": "Adivina la sombra",
+      "description": "Observa una silueta y adivina qué criatura prehistórica es."
+    },
+    "oidoJurasico": {
+      "name": "Oído Jurásico",
+      "description": "Escucha un sonido imaginado y adivina a qué criatura prehistórica pertenece."
+    },
+    "parejas": {
+      "name": "Parejas jurásicas",
+      "description": "Encuentra las parejas de criaturas prehistóricas iguales en el tablero."
+    },
+    "clasifica": {
+      "name": "Clasifica",
+      "description": "Clasifica cada criatura prehistórica según si es carnívora, herbívora u omnívora."
+    },
+    "ordenaPorTamano": {
+      "name": "Ordena por tamaño",
+      "description": "Ordena a las criaturas prehistóricas de la más pequeña a la más grande."
+    },
+    "lineaDelTiempo": {
+      "name": "Línea del tiempo",
+      "description": "Coloca a las criaturas prehistóricas en el orden en el que vivieron."
+    }
+  },
   "modeSelector": {
     "screenTitle": "Elige tu juego",
     "backButtonLabel": "Volver a la pantalla de inicio",
