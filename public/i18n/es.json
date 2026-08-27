@@ -302,6 +302,43 @@
       }
     }
   },
+  "maze": {
+    "screenTitle": "Laberinto",
+    "instructions": "Ayuda al dinosaurio a llegar hasta la comida moviéndote por el laberinto con las flechas.",
+    "boardLabel": "Laberinto",
+    "dinosaurAlt": "Dino, el dinosaurio que debes guiar por el laberinto",
+    "foodAlt": "Comida que debe alcanzar el dinosaurio",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Ayuda al dinosaurio a encontrar la comida.",
+    "controls": {
+      "groupLabel": "Controles de movimiento",
+      "up": "Arriba",
+      "down": "Abajo",
+      "left": "Izquierda",
+      "right": "Derecha",
+      "upAriaLabel": "Mover al dinosaurio hacia arriba",
+      "downAriaLabel": "Mover al dinosaurio hacia abajo",
+      "leftAriaLabel": "Mover al dinosaurio hacia la izquierda",
+      "rightAriaLabel": "Mover al dinosaurio hacia la derecha",
+      "unavailableState": "no disponible",
+      "unavailableAriaLabelFormat": "{direction}, no disponible: hay un muro"
+    },
+    "movementBlocked": {
+      "message": "Por ahí hay un muro, prueba con otra flecha.",
+      "announcement": "Movimiento bloqueado: por ahí hay un muro. Prueba con otra flecha."
+    },
+    "roundResult": {
+      "correctMessage": "¡Genial, acertaste! Le has llevado la comida al dinosaurio.",
+      "foodDeliveredAnnouncementFormat": "¡Genial! Le has llevado la comida al dinosaurio en {moves} movimientos.",
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Laberinto completado!",
+      "announcementFormat": "Has terminado el laberinto. Ayudaste al dinosaurio a encontrar la comida en {score} de {total} rondas.",
+      "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
+    }
+  },
   "dinosaurNames": {
     "trex": "Tyrannosaurus Rex",
     "triceratops": "Triceratops",
