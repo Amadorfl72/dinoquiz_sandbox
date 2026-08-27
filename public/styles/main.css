@@ -534,16 +534,40 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0 0 8px;
+  max-width: 100%;
 }
 
+/*
+ * Nivel/Progreso insignias (TRIOFSND-218): each badge gets its own pill so
+ * the two concepts read as visually distinct, never merged into one row of
+ * plain text. Colors mirror src/theme/questionScreenColors.js's
+ * `levelBadge`/`progressBadge` tokens (contrast.test.js guards both at
+ * WCAG AA) -- keep both in sync. Font-size and padding are deliberately
+ * smaller than `.question-screen__prompt` so the question stays the
+ * dominant element on screen; `flex-wrap` + `white-space: nowrap` on the
+ * row/badges keep both pills on screen at 375px wide without a horizontal
+ * scrollbar or pushing `.question-screen__options` off-screen.
+ */
 .question-screen__level,
 .question-screen__progress {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--color-text);
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.question-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.question-screen__progress {
+  background-color: var(--color-stars);
 }
 
 .question-screen__feedback {
