@@ -22,9 +22,28 @@
  * exports this file so tests and other `src/` modules keep a single source
  * of truth (mirrors how src/game/scoring.js re-exports
  * public/scripts/scoring.js).
+ *
+ * Gating (TRIOFSND-245, PRD constraint: "Los huecos publicitarios sólo
+ * pueden aparecer en puntos equivalentes del flujo común entre partidas,
+ * nunca dentro de una ronda ni sobre el tablero"): `request()` takes the
+ * caller's roundContract.js session as its only argument and only reaches
+ * the provider at the one point shared by every mode -- the game-over/
+ * before-next-game transition, i.e. `session.status === 'finished'`
+ * (roundContract's own end-of-game signal), and that field must be read off
+ * an actual session object. A missing/undefined session is *not* treated as
+ * "no game started yet" -- it is treated as "caller didn't tell us", so it
+ * is rejected exactly like any other non-transition state. This closes off
+ * a caller accidentally reaching the provider by simply forgetting to pass
+ * its roundContract session. Any in-progress session -- `'playing'`
+ * (mid-round, over the board/controls) or `'paused'` -- is likewise
+ * rejected without ever calling the provider.
  */
 
 (function () {
+  function isRoundTransition(session) {
+    return !!session && session.status === 'finished';
+  }
+
   function unavailableProvider() {
     return {
       isAvailable: function () {
@@ -48,8 +67,12 @@
     }
   };
 
-  RewardedAdService.prototype.request = function request() {
+  RewardedAdService.prototype.request = function request(session) {
     var self = this;
+
+    if (!isRoundTransition(session)) {
+      return Promise.resolve({ granted: false, reason: 'not-round-transition' });
+    }
 
     if (!this.isAvailable()) {
       return Promise.resolve({ granted: false, reason: 'unavailable' });
@@ -76,6 +99,7 @@
     RewardedAdService: RewardedAdService,
     unavailableProvider: unavailableProvider,
     rewardedAdService: rewardedAdService,
+    isRoundTransition: isRoundTransition,
   };
 
   if (typeof module !== 'undefined' && module.exports) {

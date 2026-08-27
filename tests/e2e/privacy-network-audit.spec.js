@@ -21,9 +21,10 @@ const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const NEXT_BUTTON = '.question-screen__next-button';
 const RESULTS_SCREEN = '.results-screen';
-// TRIOFSND-207: leveling up relabels this button "Ir al nivel N" instead of
-// "Volver a jugar" (see resultsScreen.js's resolvePlayAgainButtonLabel), so
-// it must be targeted by its stable class, not by accessible name.
+// Class selector, not a role/text lookup (TRIOFSND-207): once a level is
+// unlocked this button's label becomes "Ir al nivel N" instead of the
+// generic "Volver a jugar" (see resultsScreen.js's resolvePlayAgainButtonLabel),
+// so matching by its stable class covers every level outcome.
 const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 

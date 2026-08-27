@@ -32,6 +32,16 @@
  * logged by src/game/mazeGenerator.js/public/scripts/mazeGame.js, as a single
  * aggregated counter instead of the full per-event log).
  *
+ * Mode-change abandon diagnostics (TRIOFSND-239): `logGameAbandonedByMode(modeId)`/
+ * `getGamesAbandonedByMode()` tally, per mode id, how many times a player
+ * confirmed "cambiar de juego" (public/scripts/modeChangeConfirmScreen.js)
+ * while a round was still incomplete (public/scripts/main.js, driven by
+ * src/services/gameSessionStorage.js's `hasIncompleteGame`) -- the same
+ * aggregated, local-only, never-transmitted counter shape as the Laberinto
+ * per-level tallies above, but keyed by mode id instead of level, so it
+ * covers every mode (Laberinto keeps its own separate per-level counters
+ * for navigating away outright, which this never duplicates or replaces).
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -46,6 +56,7 @@
   var MAZE_GAMES_COMPLETED_KEY = 'dinoquiz:mazeGamesCompletedByLevel';
   var MAZE_GAMES_ABANDONED_KEY = 'dinoquiz:mazeGamesAbandonedByLevel';
   var MAZE_RESOLVABILITY_FAILURE_COUNT_KEY = 'dinoquiz:mazeResolvabilityFailureCount';
+  var GAMES_ABANDONED_BY_MODE_KEY = 'dinoquiz:gamesAbandonedByMode';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -132,6 +143,7 @@
     this.mazeGamesCompletedByLevel = this._loadLevelCounts(MAZE_GAMES_COMPLETED_KEY);
     this.mazeGamesAbandonedByLevel = this._loadLevelCounts(MAZE_GAMES_ABANDONED_KEY);
     this.mazeResolvabilityFailureCount = this._loadMazeResolvabilityFailureCount();
+    this.gamesAbandonedByMode = this._loadLevelCounts(GAMES_ABANDONED_BY_MODE_KEY);
   }
 
   LogService.prototype._loadLogs = function () {
@@ -315,6 +327,15 @@
     return this.mazeResolvabilityFailureCount;
   };
 
+  /** Tallies one more confirmed "cambiar de juego" (TRIOFSND-239) that discarded an incomplete round for `modeId`. */
+  LogService.prototype.logGameAbandonedByMode = function (modeId) {
+    return this._incrementLevelCount(GAMES_ABANDONED_BY_MODE_KEY, this.gamesAbandonedByMode, modeId);
+  };
+
+  LogService.prototype.getGamesAbandonedByMode = function () {
+    return Object.assign({}, this.gamesAbandonedByMode);
+  };
+
   LogService.prototype.logAppAccess = function (metadata) {
     this.logEvent('app_access', metadata);
   };
@@ -435,6 +456,7 @@
       MAZE_GAMES_COMPLETED_KEY: MAZE_GAMES_COMPLETED_KEY,
       MAZE_GAMES_ABANDONED_KEY: MAZE_GAMES_ABANDONED_KEY,
       MAZE_RESOLVABILITY_FAILURE_COUNT_KEY: MAZE_RESOLVABILITY_FAILURE_COUNT_KEY,
+      GAMES_ABANDONED_BY_MODE_KEY: GAMES_ABANDONED_BY_MODE_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };
