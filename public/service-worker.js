@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v10';
+const SW_VERSION = 'v11';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -47,6 +47,14 @@ const PRECACHE_URLS = [
   '/assets/images/dinosaurs/braquiosaurio.svg',
   '/assets/images/dinosaurs/ankylosaurus.svg',
   '/assets/images/dinosaurs/pteranodon.svg',
+  // Levels 6-10 (TRIOFSND-202): seven additional dinosaurs.
+  '/assets/images/dinosaurs/spinosaurus.svg',
+  '/assets/images/dinosaurs/dilophosaurus.svg',
+  '/assets/images/dinosaurs/pachycephalosaurus.svg',
+  '/assets/images/dinosaurs/compsognathus.svg',
+  '/assets/images/dinosaurs/diplodocus.svg',
+  '/assets/images/dinosaurs/iguanodon.svg',
+  '/assets/images/dinosaurs/parasaurolophus.svg',
   // Realistic photo-style variants (TRIOFSND-195): precached alongside the
   // cartoon drawings so a player can toggle between visual variants offline
   // after the first load, without waiting on a runtime fetch.
@@ -57,6 +65,15 @@ const PRECACHE_URLS = [
   '/assets/images/realistic/braquiosaurio.jpg',
   '/assets/images/realistic/ankylosaurus.jpg',
   '/assets/images/realistic/pteranodon.jpg',
+  // Levels 6-10 realistic variants (original DinoQuiz artwork, see
+  // public/assets/images/realistic/CREDITS.md) ship as .svg, not .jpg.
+  '/assets/images/realistic/spinosaurus.svg',
+  '/assets/images/realistic/dilophosaurus.svg',
+  '/assets/images/realistic/pachycephalosaurus.svg',
+  '/assets/images/realistic/compsognathus.svg',
+  '/assets/images/realistic/diplodocus.svg',
+  '/assets/images/realistic/iguanodon.svg',
+  '/assets/images/realistic/parasaurolophus.svg',
   // Fallback images shown when a realistic variant fails to load.
   '/assets/images/fallback/trex.svg',
   '/assets/images/fallback/triceratops.svg',
@@ -65,6 +82,13 @@ const PRECACHE_URLS = [
   '/assets/images/fallback/braquiosaurio.svg',
   '/assets/images/fallback/ankylosaurus.svg',
   '/assets/images/fallback/pteranodon.svg',
+  '/assets/images/fallback/spinosaurus.svg',
+  '/assets/images/fallback/dilophosaurus.svg',
+  '/assets/images/fallback/pachycephalosaurus.svg',
+  '/assets/images/fallback/compsognathus.svg',
+  '/assets/images/fallback/diplodocus.svg',
+  '/assets/images/fallback/iguanodon.svg',
+  '/assets/images/fallback/parasaurolophus.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms

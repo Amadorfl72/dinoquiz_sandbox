@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="parasaurolophusTitle">
+  <title id="parasaurolophusTitle">Parasaurolophus</title>
+  <!-- Tail -->
+  <path d="M90 300 q-40 -10 -46 -44" fill="none" stroke="#FFA726" stroke-width="26" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="180" cy="345" rx="25" ry="18" fill="#FB8C00" stroke="#E65100" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="25" ry="18" fill="#FB8C00" stroke="#E65100" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="215" cy="255" rx="98" ry="70" fill="#FFA726" stroke="#E65100" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="215" cy="272" rx="56" ry="40" fill="#FFF3E0"/>
+  <!-- Arms -->
+  <path d="M168 235 q-16 12 -12 30" fill="none" stroke="#FFA726" stroke-width="13" stroke-linecap="round"/>
+  <path d="M262 235 q16 12 12 30" fill="none" stroke="#FFA726" stroke-width="13" stroke-linecap="round"/>
+  <!-- Neck -->
+  <ellipse cx="300" cy="195" rx="32" ry="28" fill="#FFA726" stroke="#E65100" stroke-width="7"/>
+  <!-- Head with duck bill -->
+  <ellipse cx="335" cy="160" rx="40" ry="30" fill="#FFA726" stroke="#E65100" stroke-width="7"/>
+  <path d="M300 175 q34 20 66 0 q-6 14 -32 16 q-26 0 -34 -16 z" fill="#FFF3E0" stroke="#E65100" stroke-width="5"/>
+  <!-- Backward-curving crest -->
+  <path d="M330 140 q10 -60 -40 -80 q-10 40 10 66 q14 16 30 14 z" fill="#FFCC80" stroke="#E65100" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Eye -->
+  <circle cx="340" cy="148" r="8" fill="#E65100"/>
+  <circle cx="343" cy="145" r="3" fill="#FFFFFF"/>
+</svg>

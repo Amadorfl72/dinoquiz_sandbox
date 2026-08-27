@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="compsognathusRealisticTitle">
+  <title id="compsognathusRealisticTitle">Ilustración realista de un Compsognathus</title>
+  <defs>
+    <linearGradient id="compsognathusBodyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8E9636"/>
+      <stop offset="100%" stop-color="#575E1E"/>
+    </linearGradient>
+  </defs>
+  <path d="M110 290 q-60 -10 -70 -70" fill="none" stroke="#575E1E" stroke-width="16" stroke-linecap="round"/>
+  <ellipse cx="195" cy="330" rx="16" ry="12" fill="#575E1E" stroke="#2D3110" stroke-width="5"/>
+  <ellipse cx="240" cy="330" rx="16" ry="12" fill="#575E1E" stroke="#2D3110" stroke-width="5"/>
+  <ellipse cx="220" cy="285" rx="55" ry="42" fill="url(#compsognathusBodyGradient)" stroke="#2D3110" stroke-width="5"/>
+  <g stroke="#2D3110" stroke-width="1.5" opacity="0.5">
+    <path d="M180 288 q40 16 80 0"/>
+  </g>
+  <path d="M188 270 q-12 8 -8 20" fill="none" stroke="#575E1E" stroke-width="8" stroke-linecap="round"/>
+  <path d="M252 270 q12 8 8 20" fill="none" stroke="#575E1E" stroke-width="8" stroke-linecap="round"/>
+  <path d="M255 260 q30 -50 30 -80" fill="none" stroke="#575E1E" stroke-width="20" stroke-linecap="round"/>
+  <ellipse cx="290" cy="165" rx="26" ry="20" fill="#575E1E" stroke="#2D3110" stroke-width="5"/>
+  <path d="M300 178 q22 6 34 -4 q-6 10 -18 12 q-10 2 -16 -8 z" fill="#EDE7D6" stroke="#2D3110" stroke-width="3"/>
+  <circle cx="298" cy="158" r="5" fill="#2D3110"/>
+</svg>
