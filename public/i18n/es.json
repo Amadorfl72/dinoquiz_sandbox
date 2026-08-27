@@ -73,7 +73,7 @@
         "accessibleLabel": "Modo Quiz: responde preguntas sobre criaturas prehistóricas eligiendo la respuesta correcta"
       },
       "laberinto": {
-        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto prehistórico hasta la salida"
+        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto hasta encontrar la comida"
       },
       "sombra": {
         "accessibleLabel": "Modo Adivina la sombra: reconoce qué criatura prehistórica se esconde detrás de su silueta"

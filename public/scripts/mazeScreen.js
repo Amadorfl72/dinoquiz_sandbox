@@ -138,6 +138,7 @@
     var title = document.createElement('h2');
     title.className = 'maze-screen__title';
     title.textContent = strings.screenTitle;
+    title.tabIndex = -1;
 
     var progressRow = document.createElement('div');
     progressRow.className = 'maze-screen__progress-row';
@@ -414,6 +415,16 @@
       current: roundNumber,
       total: totalRounds,
     });
+
+    // A real arrow-key press always targets `document.activeElement`, which
+    // is `<body>` by default -- outside `root`'s subtree, so its `keydown`
+    // listener above would never fire. Focusing `title` (same
+    // tabIndex=-1 + .focus() pattern as modeSelectorScreen.js/
+    // ageGateScreen.js's own screen-mount focus) puts an element inside
+    // `root` in focus, giving keyboard parity with the on-screen buttons.
+    if (typeof title.focus === 'function') {
+      title.focus();
+    }
 
     return {
       root: root,

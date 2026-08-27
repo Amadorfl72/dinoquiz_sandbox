@@ -90,6 +90,8 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
     await page.reload();
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible();
+    // TRIOFSND-232: the age gate hands off to the illustrated mode selector
+    // before any mode actually starts -- both must be navigated offline too.
     await startQuizFromHome(page);
 
     await playFullGame(page);
