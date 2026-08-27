@@ -21,6 +21,10 @@ const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const NEXT_BUTTON = '.question-screen__next-button';
 const RESULTS_SCREEN = '.results-screen';
+// TRIOFSND-207: leveling up relabels this button "Ir al nivel N" instead of
+// "Volver a jugar" (see resultsScreen.js's resolvePlayAgainButtonLabel), so
+// it must be targeted by its stable class, not by accessible name.
+const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
 async function playFullGame(page) {
@@ -53,7 +57,7 @@ test.describe('TRIOFSND-119: auditoría de red -- ninguna llamada sale del propi
     await playFullGame(page);
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();
 
-    await page.getByRole('button', { name: 'Volver a jugar' }).click();
+    await page.locator(PLAY_AGAIN_BUTTON).click();
     await playFullGame(page);
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();
 
