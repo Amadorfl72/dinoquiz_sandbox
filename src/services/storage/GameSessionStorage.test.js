@@ -1,5 +1,20 @@
-const { GameSessionStorage, SESSION_SCHEMA_VERSION, SESSION_STORAGE_KEY } = require('./GameSessionStorage');
+const {
+  GameSessionStorage,
+  SESSION_SCHEMA_VERSION,
+  SESSION_STORAGE_KEY,
+  SESSION_DISCARD_INCOMPATIBLE_CODE,
+} = require('./GameSessionStorage');
 const { startGame, evaluateAnswer, advanceRound, ROUNDS_PER_GAME } = require('../../game/roundContract');
+
+function createFakeLogService() {
+  return {
+    stateDiscardedCalls: [],
+    logStateDiscarded(modeId, code) {
+      this.stateDiscardedCalls.push({ modeId, code });
+    },
+    logEvent() {},
+  };
+}
 
 function createFakeAdapter(overrides = {}) {
   const store = new Map();
@@ -244,6 +259,75 @@ describe('GameSessionStorage', () => {
     it('is a no-op when nothing is stored', async () => {
       const storage = new GameSessionStorage([createFakeAdapter()]);
       await expect(storage.discardModeSession('quiz')).resolves.toBeUndefined();
+    });
+  });
+
+  describe('state-discard diagnostics (TRIOFSND-246)', () => {
+    it('logs the stable discard code for the requested modeId when corrupted JSON is discarded', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService);
+      await adapter.setItem(SESSION_STORAGE_KEY, '{not-json');
+
+      await storage.restoreSession('quiz');
+
+      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+    });
+
+    it('logs the discard code for a schema-version mismatch', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService);
+      await storage.saveSession('quiz', playingSession());
+      const envelope = JSON.parse(await adapter.getItem(SESSION_STORAGE_KEY));
+      envelope.schemaVersion = SESSION_SCHEMA_VERSION + 1;
+      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+
+      await storage.restoreSession('quiz');
+
+      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+    });
+
+    it('logs the discard code, tagged with the requested modeId, for a wrong-mode restore', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService);
+      await storage.saveSession('quiz', playingSession());
+
+      await storage.restoreSession('laberinto');
+
+      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'laberinto', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+    });
+
+    it('never logs when nothing was ever saved', async () => {
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([createFakeAdapter()], logService);
+
+      await storage.restoreSession('quiz');
+
+      expect(logService.stateDiscardedCalls).toEqual([]);
+    });
+
+    it('never logs a successful restore', async () => {
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([createFakeAdapter()], logService);
+      await storage.saveSession('quiz', playingSession());
+
+      await storage.restoreSession('quiz');
+
+      expect(logService.stateDiscardedCalls).toEqual([]);
+    });
+
+    it('never logs the deliberate discardModeSession/discardSession flows (already tracked by logGameAbandonedByMode)', async () => {
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([createFakeAdapter()], logService);
+      await storage.saveSession('quiz', playingSession());
+
+      await storage.discardModeSession('quiz');
+      await storage.saveSession('laberinto', playingSession());
+      await storage.discardSession('quiz');
+
+      expect(logService.stateDiscardedCalls).toEqual([]);
     });
   });
 

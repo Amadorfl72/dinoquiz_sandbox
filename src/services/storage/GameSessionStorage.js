@@ -26,6 +26,14 @@ const RESUMABLE_STATUSES = ['playing', 'paused'];
 // so it never leaks round content, only that a write degraded to in-memory.
 const SESSION_PERSIST_ERROR_CODE = 'storage_session_persist_error';
 
+// Stable technical code for restoreSession() discarding a persisted session as
+// incompatible (corrupted JSON, mismatched schema version, wrong mode, invalid
+// shape, or already-finished status -- see restoreSession's own doc comment for
+// the full list) -- carries no round content, only that the affected mode's
+// transient state had to be discarded (TRIOFSND-246, PRD "Diagnóstico ...
+// almacenados únicamente en el dispositivo").
+const SESSION_DISCARD_INCOMPATIBLE_CODE = 'storage_session_discard_incompatible';
+
 /**
  * Strips a live roundContract.js session down to its serializable fields
  * (`hooks` and `generateRound` are closures/functions and can never survive
@@ -298,7 +306,10 @@ class GameSessionStorage {
    * progreso y resultados completados") -- this only ever removes the
    * `dinoquiz:session` key, never bestScore/maxStreak/scoreMetrics/
    * maxUnlockedLevel/etc., which live under their own keys in
-   * StorageClient.js and are untouched here.
+   * StorageClient.js and are untouched here. Every such discard also tallies
+   * `modeId`'s aggregated, local-only `SESSION_DISCARD_INCOMPATIBLE_CODE`
+   * counter (LogService#logStateDiscarded, TRIOFSND-246) -- the stable code
+   * alone, never the discarded session's own content.
    */
   async restoreSession(modeId) {
     const raw = await this.#readRaw();
@@ -315,6 +326,7 @@ class GameSessionStorage {
 
     if (!isValidEnvelope(envelope) || envelope.modeId !== modeId || !RESUMABLE_STATUSES.includes(envelope.session.status)) {
       await this.#clear();
+      this.#logService.logStateDiscarded(modeId, SESSION_DISCARD_INCOMPATIBLE_CODE);
       return null;
     }
 
@@ -395,4 +407,5 @@ module.exports = {
   GameSessionStorage,
   SESSION_SCHEMA_VERSION,
   SESSION_STORAGE_KEY: SESSION_KEY,
+  SESSION_DISCARD_INCOMPATIBLE_CODE,
 };

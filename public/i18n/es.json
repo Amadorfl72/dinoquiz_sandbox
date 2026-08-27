@@ -102,7 +102,9 @@
       "insufficient_questions": "Necesitamos más preguntas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
       "insufficient_creatures": "Necesitamos más criaturas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
       "insufficient_creature_sounds": "Necesitamos más sonidos imaginados de criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
-      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!"
+      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "round_generation_failed": "No hemos podido preparar una ronda nueva para este modo. ¡Vuelve a intentarlo más adelante!",
+      "state_discarded": "Hemos tenido que reiniciar esta partida por un problema técnico, pero tu progreso y resultados guardados siguen a salvo. ¡Vuelve a intentarlo más adelante!"
     }
   },
   "ageGate": {
