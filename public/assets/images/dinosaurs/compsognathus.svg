@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="compsognathusTitle">
+  <title id="compsognathusTitle">Compsognathus</title>
+  <!-- Tail -->
+  <path d="M70 300 q-40 -10 -46 -46" fill="none" stroke="#C9A227" stroke-width="30" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="170" cy="345" rx="26" ry="18" fill="#8A6A12" />
+  <ellipse cx="250" cy="345" rx="26" ry="18" fill="#8A6A12" />
+  <!-- Body -->
+  <ellipse cx="210" cy="250" rx="115" ry="90" fill="#C9A227" stroke="#8A6A12" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="210" cy="270" rx="65" ry="50" fill="#FFF6D8"/>
+  
+  <!-- Neck -->
+  
+  <!-- Head -->
+  <ellipse cx="300" cy="140" rx="70" ry="56" fill="#C9A227" stroke="#8A6A12" stroke-width="8"/>
+  <!-- Eye -->
+  <circle cx="312" cy="122" r="10" fill="#8A6A12"/>
+  <circle cx="315" cy="118" r="3.5" fill="#FFFFFF"/>
+</svg>

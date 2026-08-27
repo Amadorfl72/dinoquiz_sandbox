@@ -1,11 +1,13 @@
 # Créditos y licencia — ilustraciones realistas
 
-Las ilustraciones de esta carpeta **no** están dibujadas por DinoQuiz: son
-paleoarte real tomado de Wikimedia Commons, con licencia libre verificable en
-la página de cada fichero. Se han redimensionado (máx. 700 px de ancho) y
-recomprimido a JPEG para mantener un peso razonable en la PWA; no se ha
-alterado su contenido artístico. Ninguna contiene texto incrustado ni
-violencia gráfica.
+Las ilustraciones de los siete dinosaurios originales (niveles 1-5) **no**
+están dibujadas por DinoQuiz: son paleoarte real tomado de Wikimedia Commons,
+con licencia libre verificable en la página de cada fichero. Se han
+redimensionado (máx. 700 px de ancho) y recomprimido a JPEG para mantener un
+peso razonable en la PWA; no se ha alterado su contenido artístico. Ninguna
+contiene texto incrustado ni violencia gráfica. Los siete dinosaurios
+añadidos en los niveles 6-10 sí son obra original de DinoQuiz — ver sección
+"Niveles 6-10" más abajo.
 
 | Fichero | Dinosaurio | Autor | Licencia | Fuente / obra original |
 |---|---|---|---|---|
@@ -37,7 +39,28 @@ y la de Willoughby refleja una reconstrucción anatómica más moderna (la
 - CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/deed.es — se
   requiere atribución y compartir igual.
 
-Todas las imágenes originales están publicadas en Wikimedia Commons, cuyos
-términos exigen conservar la atribución del autor cuando se redistribuye la
-obra (incluida esta versión redimensionada/recomprimida); dicha atribución se
-mantiene en esta tabla.
+Todas las imágenes de la tabla anterior están publicadas en Wikimedia
+Commons, cuyos términos exigen conservar la atribución del autor cuando se
+redistribuye la obra (incluida esta versión redimensionada/recomprimida);
+dicha atribución se mantiene en esta tabla.
+
+## Niveles 6-10 (dinosaurios nuevos)
+
+Para los siete dinosaurios incorporados en los niveles 6-10 (Spinosaurus,
+Dilophosaurus, Pachycephalosaurus, Compsognathus, Diplodocus, Iguanodon,
+Parasaurolophus) se ha optado por ilustración de estilo pintado creada
+íntegramente para DinoQuiz, en lugar de paleoarte externo, para no depender
+de una verificación manual de licencia por dinosaurio en este lote. No
+sustituyen al criterio de "paleoarte real" de la tabla anterior; son un
+estilo propio (sombreado suave y textura de piel) que mantiene la
+diferenciación visual con la variante "dibujo" (`dinosaurs/`).
+
+| Fichero | Dinosaurio | Autor | Licencia |
+|---|---|---|---|
+| spinosaurus.jpg | Spinosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| dilophosaurus.jpg | Dilophosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| pachycephalosaurus.jpg | Pachycephalosaurus | DinoQuiz | CC0 1.0 (dominio público) |
+| compsognathus.jpg | Compsognathus | DinoQuiz | CC0 1.0 (dominio público) |
+| diplodocus.jpg | Diplodocus | DinoQuiz | CC0 1.0 (dominio público) |
+| iguanodon.jpg | Iguanodon | DinoQuiz | CC0 1.0 (dominio público) |
+| parasaurolophus.jpg | Parasaurolophus | DinoQuiz | CC0 1.0 (dominio público) |

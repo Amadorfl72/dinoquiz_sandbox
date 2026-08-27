@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="parasaurolophusTitle">
+  <title id="parasaurolophusTitle">Parasaurolophus</title>
+  <!-- Tail -->
+  <path d="M70 300 q-40 -10 -46 -46" fill="none" stroke="#D98E5B" stroke-width="30" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="170" cy="345" rx="26" ry="18" fill="#8C4E27" />
+  <ellipse cx="250" cy="345" rx="26" ry="18" fill="#8C4E27" />
+  <!-- Body -->
+  <ellipse cx="210" cy="250" rx="115" ry="90" fill="#D98E5B" stroke="#8C4E27" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="210" cy="270" rx="65" ry="50" fill="#FBE9D3"/>
+  <path d="M275 90 q40 -20 46 -60 q14 8 10 34 q-8 30 -40 44 z" fill="#5E8C6A" stroke="#8C4E27" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Neck -->
+  
+  <!-- Head -->
+  <ellipse cx="300" cy="140" rx="70" ry="56" fill="#D98E5B" stroke="#8C4E27" stroke-width="8"/>
+  <!-- Eye -->
+  <circle cx="312" cy="122" r="10" fill="#8C4E27"/>
+  <circle cx="315" cy="118" r="3.5" fill="#FFFFFF"/>
+</svg>
