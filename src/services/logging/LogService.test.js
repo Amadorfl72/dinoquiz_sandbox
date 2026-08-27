@@ -226,6 +226,84 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('Laberinto diagnostics counters (TRIOFSND-259)', () => {
+    it('tallies games started per level independently', () => {
+      expect(service.logMazeGameStarted(1)).toBe(1);
+      expect(service.logMazeGameStarted(1)).toBe(2);
+      expect(service.logMazeGameStarted(2)).toBe(1);
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 2, 2: 1 });
+    });
+
+    it('tallies games completed per level independently of games started', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 2 });
+      expect(service.getMazeGamesCompletedByLevel()).toEqual({ 1: 1 });
+    });
+
+    it('tallies games abandoned per level independently', () => {
+      service.logMazeGameStarted(3);
+      service.logMazeGameAbandoned(3);
+      expect(service.getMazeGamesAbandonedByLevel()).toEqual({ 3: 1 });
+      expect(service.getMazeGamesCompletedByLevel()).toEqual({});
+    });
+
+    it('persists each per-level counter under its own dinoquiz: key', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      service.logMazeGameAbandoned(2);
+      expect(storage.getItem('dinoquiz:mazeGamesStartedByLevel')).toBe('{"1":1}');
+      expect(storage.getItem('dinoquiz:mazeGamesCompletedByLevel')).toBe('{"1":1}');
+      expect(storage.getItem('dinoquiz:mazeGamesAbandonedByLevel')).toBe('{"2":1}');
+    });
+
+    it('round-trips all three per-level counters through storage into a fresh instance', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      service.logMazeGameAbandoned(2);
+      const reloaded = new LogService(storage);
+      expect(reloaded.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+      expect(reloaded.getMazeGamesCompletedByLevel()).toEqual({ 1: 1 });
+      expect(reloaded.getMazeGamesAbandonedByLevel()).toEqual({ 2: 1 });
+    });
+
+    it('are unaffected by clearLogs', () => {
+      service.logMazeGameStarted(1);
+      service.clearLogs();
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+    });
+
+    it('tallies resolvability failures as a single aggregated counter', () => {
+      expect(service.getMazeResolvabilityFailureCount()).toBe(0);
+      expect(service.logMazeResolvabilityFailure()).toBe(1);
+      expect(service.logMazeResolvabilityFailure()).toBe(2);
+      expect(service.getMazeResolvabilityFailureCount()).toBe(2);
+      expect(storage.getItem('dinoquiz:mazeResolvabilityFailureCount')).toBe('2');
+    });
+
+    it('are never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logMazeGameStarted(1);
+        service.logMazeGameCompleted(1);
+        service.logMazeGameAbandoned(1);
+        service.logMazeResolvabilityFailure();
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs).toHaveLength(0);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});

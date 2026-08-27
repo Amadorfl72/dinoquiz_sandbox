@@ -42,6 +42,10 @@
 const LOGS_STORAGE_KEY = 'dinoquiz:logs';
 const SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
 const MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
+const MAZE_GAMES_STARTED_KEY = 'dinoquiz:mazeGamesStartedByLevel';
+const MAZE_GAMES_COMPLETED_KEY = 'dinoquiz:mazeGamesCompletedByLevel';
+const MAZE_GAMES_ABANDONED_KEY = 'dinoquiz:mazeGamesAbandonedByLevel';
+const MAZE_RESOLVABILITY_FAILURE_COUNT_KEY = 'dinoquiz:mazeResolvabilityFailureCount';
 const MAX_LOGS = 1000; // Prevent unbounded growth
 const LOG_VERSION = '1.0';
 
@@ -104,6 +108,10 @@ function LogService(storageAdapter) {
   this.logs = this._loadLogs();
   this.selectorOpenCount = this._loadSelectorOpenCount();
   this.modeBlockedLogs = this._loadModeBlockedLogs();
+  this.mazeGamesStartedByLevel = this._loadLevelCounts(MAZE_GAMES_STARTED_KEY);
+  this.mazeGamesCompletedByLevel = this._loadLevelCounts(MAZE_GAMES_COMPLETED_KEY);
+  this.mazeGamesAbandonedByLevel = this._loadLevelCounts(MAZE_GAMES_ABANDONED_KEY);
+  this.mazeResolvabilityFailureCount = this._loadMazeResolvabilityFailureCount();
 }
 
 LogService.prototype._loadLogs = function () {
@@ -290,6 +298,132 @@ LogService.prototype.getModeBlockedLogs = function () {
 };
 
 /**
+ * Reads a `{ [level]: count }` map from storage, defaulting to `{}` for anything missing/corrupted.
+ * @param {string} key - Storage key
+ * @returns {object} Per-level counts
+ */
+LogService.prototype._loadLevelCounts = function (key) {
+  try {
+    var stored = this.storageAdapter.getItem(key);
+    var counts = stored ? JSON.parse(stored) : {};
+    return counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+  } catch (error) {
+    console.warn('DinoQuiz: failed to load ' + key + ' from storage', error);
+    return {};
+  }
+};
+
+LogService.prototype._saveLevelCounts = function (key, counts) {
+  try {
+    this.storageAdapter.setItem(key, JSON.stringify(counts));
+  } catch (error) {
+    console.error('DinoQuiz: failed to save ' + key + ' to storage', error);
+  }
+};
+
+/**
+ * Increments `counts[level]` by one, persists it under `key`, and returns the new count.
+ * @param {string} key - Storage key
+ * @param {object} counts - Current per-level counts (mutated in place)
+ * @param {number} level - The Laberinto difficulty level
+ * @returns {number} The updated count for `level`
+ */
+LogService.prototype._incrementLevelCount = function (key, counts, level) {
+  var levelKey = String(level);
+  counts[levelKey] = (counts[levelKey] || 0) + 1;
+  this._saveLevelCounts(key, counts);
+  return counts[levelKey];
+};
+
+/**
+ * Tallies one more Laberinto game started at `level` (TRIOFSND-259, PRD
+ * "Diagnóstico y métricas agregadas almacenadas únicamente en el dispositivo").
+ * @param {number} level - The Laberinto difficulty level
+ * @returns {number} The updated count for `level`
+ */
+LogService.prototype.logMazeGameStarted = function (level) {
+  return this._incrementLevelCount(MAZE_GAMES_STARTED_KEY, this.mazeGamesStartedByLevel, level);
+};
+
+/**
+ * @returns {object} Defensive copy of the per-level Laberinto games-started counts
+ */
+LogService.prototype.getMazeGamesStartedByLevel = function () {
+  return Object.assign({}, this.mazeGamesStartedByLevel);
+};
+
+/**
+ * Tallies one more Laberinto game completed (all rounds reached their goal) at `level`.
+ * @param {number} level - The Laberinto difficulty level
+ * @returns {number} The updated count for `level`
+ */
+LogService.prototype.logMazeGameCompleted = function (level) {
+  return this._incrementLevelCount(MAZE_GAMES_COMPLETED_KEY, this.mazeGamesCompletedByLevel, level);
+};
+
+/**
+ * @returns {object} Defensive copy of the per-level Laberinto games-completed counts
+ */
+LogService.prototype.getMazeGamesCompletedByLevel = function () {
+  return Object.assign({}, this.mazeGamesCompletedByLevel);
+};
+
+/**
+ * Tallies one more Laberinto game left before it was completed (e.g.
+ * navigating back to Inicio mid-game) at `level`.
+ * @param {number} level - The Laberinto difficulty level
+ * @returns {number} The updated count for `level`
+ */
+LogService.prototype.logMazeGameAbandoned = function (level) {
+  return this._incrementLevelCount(MAZE_GAMES_ABANDONED_KEY, this.mazeGamesAbandonedByLevel, level);
+};
+
+/**
+ * @returns {object} Defensive copy of the per-level Laberinto games-abandoned counts
+ */
+LogService.prototype.getMazeGamesAbandonedByLevel = function () {
+  return Object.assign({}, this.mazeGamesAbandonedByLevel);
+};
+
+LogService.prototype._loadMazeResolvabilityFailureCount = function () {
+  try {
+    var stored = this.storageAdapter.getItem(MAZE_RESOLVABILITY_FAILURE_COUNT_KEY);
+    var count = stored ? JSON.parse(stored) : 0;
+    return Number.isInteger(count) && count >= 0 ? count : 0;
+  } catch (error) {
+    console.warn('DinoQuiz: failed to load maze resolvability failure count from storage', error);
+    return 0;
+  }
+};
+
+LogService.prototype._saveMazeResolvabilityFailureCount = function () {
+  try {
+    this.storageAdapter.setItem(MAZE_RESOLVABILITY_FAILURE_COUNT_KEY, JSON.stringify(this.mazeResolvabilityFailureCount));
+  } catch (error) {
+    console.error('DinoQuiz: failed to save maze resolvability failure count to storage', error);
+  }
+};
+
+/**
+ * Tallies one more maze/round that could not be generated as solvable
+ * (mirrors the raw maze_generation_failed/maze_round_generation_failed
+ * events already logged via logEvent).
+ * @returns {number} The updated count
+ */
+LogService.prototype.logMazeResolvabilityFailure = function () {
+  this.mazeResolvabilityFailureCount += 1;
+  this._saveMazeResolvabilityFailureCount();
+  return this.mazeResolvabilityFailureCount;
+};
+
+/**
+ * @returns {number} How many maze/round generations failed to produce a solvable maze
+ */
+LogService.prototype.getMazeResolvabilityFailureCount = function () {
+  return this.mazeResolvabilityFailureCount;
+};
+
+/**
  * Retrieves all logged events
  * @returns {array} Array of log entries
  */
@@ -453,6 +587,10 @@ if (typeof module !== 'undefined' && module.exports) {
     LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
     SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
     MODE_BLOCKED_LOGS_STORAGE_KEY: MODE_BLOCKED_LOGS_STORAGE_KEY,
+    MAZE_GAMES_STARTED_KEY: MAZE_GAMES_STARTED_KEY,
+    MAZE_GAMES_COMPLETED_KEY: MAZE_GAMES_COMPLETED_KEY,
+    MAZE_GAMES_ABANDONED_KEY: MAZE_GAMES_ABANDONED_KEY,
+    MAZE_RESOLVABILITY_FAILURE_COUNT_KEY: MAZE_RESOLVABILITY_FAILURE_COUNT_KEY,
     MAX_LOGS: MAX_LOGS,
     LOG_VERSION: LOG_VERSION,
   };
