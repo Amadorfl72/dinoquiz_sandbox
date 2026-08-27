@@ -31,7 +31,7 @@
  * Browser bridge (TRIOFSND-231): follows the same dual CommonJS/
  * `window.DinoQuiz` pattern as public/scripts/homeScreen.js so the mode
  * selector can load it as a plain `<script>` (see public/index.html) with no
- * bundler. The canonical `src/services/lastModeService.js` re-exports this
+ * bundler. The canonical `src/services/modeStorage.js` re-exports this
  * file so Node/Jest keep a single source of truth.
  */
 
@@ -161,6 +161,6 @@
   if (typeof window !== 'undefined') {
     window.DinoQuiz = window.DinoQuiz || {};
     window.DinoQuiz.services = window.DinoQuiz.services || {};
-    window.DinoQuiz.services.lastMode = api;
+    window.DinoQuiz.services.modeStorage = api;
   }
 })();

@@ -1,6 +1,6 @@
 'use strict';
 
-const { getLastMode, setLastMode, LAST_MODE_STORAGE_KEY } = require('./lastModeService');
+const { getLastMode, setLastMode, LAST_MODE_STORAGE_KEY } = require('./modeStorage');
 
 function makeStorage() {
   const store = {};
@@ -13,7 +13,7 @@ function makeStorage() {
   };
 }
 
-describe('lastModeService — last-selected mode persistence', () => {
+describe('modeStorage — last-selected mode persistence', () => {
   it('returns null when nothing was ever recorded', () => {
     const storage = makeStorage();
     expect(getLastMode(storage)).toBeNull();
