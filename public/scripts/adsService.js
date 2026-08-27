@@ -28,17 +28,20 @@
  * nunca dentro de una ronda ni sobre el tablero"): `request()` takes the
  * caller's roundContract.js session as its only argument and only reaches
  * the provider at the one point shared by every mode -- the game-over/
- * before-next-game transition. That is `session` being absent (no game
- * started yet, e.g. the results screen before "jugar otra vez" is tapped)
- * or `session.status === 'finished'` (roundContract's own end-of-game
- * signal). Any in-progress session -- `'playing'` (mid-round, over the
- * board/controls) or `'paused'` -- is rejected without ever calling the
- * provider, so a caller cannot show an ad mid-round by mistake.
+ * before-next-game transition, i.e. `session.status === 'finished'`
+ * (roundContract's own end-of-game signal), and that field must be read off
+ * an actual session object. A missing/undefined session is *not* treated as
+ * "no game started yet" -- it is treated as "caller didn't tell us", so it
+ * is rejected exactly like any other non-transition state. This closes off
+ * a caller accidentally reaching the provider by simply forgetting to pass
+ * its roundContract session. Any in-progress session -- `'playing'`
+ * (mid-round, over the board/controls) or `'paused'` -- is likewise
+ * rejected without ever calling the provider.
  */
 
 (function () {
   function isRoundTransition(session) {
-    return !session || session.status === 'finished';
+    return !!session && session.status === 'finished';
   }
 
   function unavailableProvider() {

@@ -28,7 +28,7 @@ describe('RewardedAdService', () => {
     const show = jest.fn();
     const service = new RewardedAdService({ isAvailable: () => false, show });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: false, reason: 'unavailable' });
     expect(show).not.toHaveBeenCalled();
@@ -40,7 +40,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.resolve({ granted: true }),
     });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: true, reason: null });
   });
@@ -51,7 +51,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.resolve({ granted: false }),
     });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: false, reason: 'not-completed' });
   });
@@ -62,7 +62,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.reject(new Error('ad network timeout')),
     });
 
-    await expect(service.request()).resolves.toEqual({ granted: false, reason: 'error' });
+    await expect(service.request({ status: 'finished' })).resolves.toEqual({ granted: false, reason: 'error' });
   });
 
   test('isAvailable() degrades to false instead of throwing when the provider itself throws', () => {
@@ -77,8 +77,8 @@ describe('RewardedAdService', () => {
 });
 
 describe('round-transition gating (TRIOFSND-245: ads only between games, never mid-round/over the board)', () => {
-  test('isRoundTransition() is true with no session (no game started yet, e.g. before "jugar otra vez")', () => {
-    expect(isRoundTransition(undefined)).toBe(true);
+  test('isRoundTransition() is false with no session — a caller must pass the roundContract session explicitly', () => {
+    expect(isRoundTransition(undefined)).toBe(false);
   });
 
   test('isRoundTransition() is true once roundContract has flipped the session to "finished"', () => {
@@ -124,14 +124,13 @@ describe('round-transition gating (TRIOFSND-245: ads only between games, never m
     expect(result).toEqual({ granted: true, reason: null });
   });
 
-  test('request() still proceeds to the provider with no session at all (legacy callers keep working)', async () => {
-    const service = new RewardedAdService({
-      isAvailable: () => true,
-      show: () => Promise.resolve({ granted: true }),
-    });
+  test('request() rejects a missing session without ever calling the provider\'s show()', async () => {
+    const show = jest.fn(() => Promise.resolve({ granted: true }));
+    const service = new RewardedAdService({ isAvailable: () => true, show });
 
     const result = await service.request();
 
-    expect(result).toEqual({ granted: true, reason: null });
+    expect(result).toEqual({ granted: false, reason: 'not-round-transition' });
+    expect(show).not.toHaveBeenCalled();
   });
 });
