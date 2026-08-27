@@ -100,6 +100,7 @@ const GROUND_TRANSFORMS = Object.freeze([SHADOW_TRANSFORMS.FLIP_HORIZONTAL]);
 const FLYER_TRANSFORMS = Object.freeze([
   SHADOW_TRANSFORMS.FLIP_HORIZONTAL,
   SHADOW_TRANSFORMS.ROTATE_90,
+  SHADOW_TRANSFORMS.ROTATE_180,
 ]);
 
 function approvedShadow(compatibilityGroup, allowedTransforms) {

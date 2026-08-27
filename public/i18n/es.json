@@ -253,6 +253,15 @@
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
     }
   },
+  "feedback": {
+    "correct": {
+      "message": "¡Genial, acertaste!"
+    },
+    "incorrect": {
+      "message": "¡Buen intento!"
+    },
+    "scoreAnnouncementFormat": "Puntos: {score}"
+  },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
     "imageAltFormat": "Ilustración de un {dinosaur}",
