@@ -53,6 +53,7 @@ const APPROVED_LOG_EVENT_TYPES = [
   'level_generation_failed',
   'maze_generation_failed',
   'maze_round_generation_failed',
+  'classify_round_blocked',
   'content_validation_failed',
   'storage_max_unlocked_level_persist_error',
   'mode_blocked',
