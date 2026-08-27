@@ -88,13 +88,9 @@ const PRECACHE_URLS = [
   '/assets/images/fallback/braquiosaurio.svg',
   '/assets/images/fallback/ankylosaurus.svg',
   '/assets/images/fallback/pteranodon.svg',
-  '/assets/images/fallback/spinosaurus.svg',
-  '/assets/images/fallback/dilophosaurus.svg',
-  '/assets/images/fallback/pachycephalosaurus.svg',
-  '/assets/images/fallback/compsognathus.svg',
-  '/assets/images/fallback/diplodocus.svg',
-  '/assets/images/fallback/iguanodon.svg',
-  '/assets/images/fallback/parasaurolophus.svg',
+  // Levels 6-10 dinosaurs reuse this single generic fallback instead of a
+  // new per-dinosaur asset (see public/assets/images/fallback/CREDITS.md).
+  '/assets/images/fallback/generic.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms

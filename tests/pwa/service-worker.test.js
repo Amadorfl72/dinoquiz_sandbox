@@ -58,7 +58,7 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
-  test('precaches both the drawn and realistic/fallback variant for every dinosaur (TRIOFSND-195)', () => {
+  test('precaches both the drawn and realistic variant for every dinosaur (TRIOFSND-195)', () => {
     // eslint-disable-next-line global-require
     const { PRECACHE_URLS } = require(SW_PATH);
     const dinosaursWithJpgRealistic = [
@@ -82,7 +82,43 @@ describe('TRIOFSND-110: service worker source', () => {
     dinosaursWithJpgRealistic.forEach((dinosaur) => {
       expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
       expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.jpg`);
+    });
+  });
+
+  test('the seven original dinosaurs precache their own fallback SVG (TRIOFSND-195)', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const dinosaursWithOwnFallback = [
+      'trex',
+      'triceratops',
+      'velociraptor',
+      'estegosaurio',
+      'braquiosaurio',
+      'ankylosaurus',
+      'pteranodon',
+    ];
+
+    dinosaursWithOwnFallback.forEach((dinosaur) => {
       expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
+    });
+  });
+
+  test('the levels 6-10 dinosaurs reuse the generic fallback instead of a per-dinosaur SVG', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const newDinosaurs = [
+      'spinosaurus',
+      'dilophosaurus',
+      'pachycephalosaurus',
+      'compsognathus',
+      'diplodocus',
+      'iguanodon',
+      'parasaurolophus',
+    ];
+
+    expect(PRECACHE_URLS).toContain('/assets/images/fallback/generic.svg');
+    newDinosaurs.forEach((dinosaur) => {
+      expect(PRECACHE_URLS).not.toContain(`/assets/images/fallback/${dinosaur}.svg`);
     });
   });
 

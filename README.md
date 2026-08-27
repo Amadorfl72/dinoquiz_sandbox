@@ -147,9 +147,12 @@ iguanodon, parasaurolophus), en el mismo estilo que la mascota. Las variantes `i
 viven en [`public/assets/images/realistic/`](public/assets/images/realistic) — paleoarte con
 licencia libre de Wikimedia Commons para las 14 especies (ver ese `CREDITS.md` para el detalle
 de autor/licencia/fuente por fichero) — y las `imageFallback` en
-[`public/assets/images/fallback/`](public/assets/images/fallback) (siluetas de un solo color,
-un fichero por dinosaurio). Cada una de esas dos carpetas documenta la licencia de sus SVG en
-su propio `CREDITS.md`. Todas son ligeras y no requieren red, por lo que quedan cubiertas por
+[`public/assets/images/fallback/`](public/assets/images/fallback) (siluetas de un solo color).
+Los siete dinosaurios originales tienen cada uno su propio fichero de fallback; los siete
+añadidos en los niveles 6-10 no incorporan uno nuevo por especie y reutilizan en su lugar
+`fallback/generic.svg`, la silueta genérica ya existente. Cada una de esas dos carpetas
+documenta la licencia de sus SVG en su propio `CREDITS.md`. Todas son ligeras y no requieren
+red, por lo que quedan cubiertas por
 el runtime-cache del service worker bajo `/assets/images/` (ver
 [`public/service-worker.js`](public/service-worker.js)) y disponibles offline tras el primer
 uso; `src/data/questionBank.test.js` verifica que `image`, `imageRealistic` e `imageFallback`
