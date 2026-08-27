@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v10';
+const SW_VERSION = 'v11';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -36,6 +36,7 @@ const PRECACHE_URLS = [
   '/scripts/ageGateScreen.js',
   '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
+  '/scripts/mazeScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/main.js',
   '/icons/icon.svg',
