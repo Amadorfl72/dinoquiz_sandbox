@@ -1397,3 +1397,111 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     });
   });
 });
+
+// Content-integrity regression for the real 300-question bank (30 questions
+// per level, levels 1-10, see src/data/questionBank.test.js for the
+// per-question checks): the level-unlock chain must behave the same way on
+// levels 5-10 as it already does on levels 1-2 above -- completing level 5
+// unlocks level 6, and completing level 10 (MAX_LEVEL) always ends the game
+// without ever asking gameFlow.js to generate a nonexistent level 11.
+describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () => {
+  let container;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    container.remove();
+  });
+
+  // Unlike buildQuestion's synthetic fixture (correctAnswerIndex always 0),
+  // the real bank's correctAnswerIndex varies per question, and options
+  // render in their original, unshuffled order (questionScreen.js) -- so the
+  // right button is found by matching the rendered prompt back to its
+  // question in the loaded bank instead of assuming a fixed index.
+  async function answerRealQuestion(container, questions, { correct }) {
+    const promptText = container.querySelector('.question-screen__prompt').textContent;
+    const question = questions.find((candidate) => candidate.question === promptText);
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    const index = correct ? question.correctAnswerIndex : (question.correctAnswerIndex + 1) % buttons.length;
+    buttons[index].click();
+    await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
+    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+  }
+
+  /** Plays every question of the currently rendered level following a hit/miss pattern (C/F), then lets the async level-completion work settle. */
+  async function playLevelWithPattern(questions, pattern) {
+    for (const mark of pattern.split('')) {
+      await answerRealQuestion(container, questions, { correct: mark === 'C' });
+    }
+    await jest.advanceTimersByTimeAsync(0);
+  }
+
+  test('completar el nivel 5 con >=6 aciertos desbloquea el nivel 6 y persiste el nivel máximo desbloqueado', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { loadQuestionBank } = require('../../src/data/questionBank');
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = loadQuestionBank();
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      level: 5,
+      randomFn: () => 0,
+      storage,
+    });
+
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('5');
+
+    // 6/10 is exactly the level-up threshold (LEVEL_UP_MIN_CORRECT).
+    await playLevelWithPattern(questions, 'CCCCCCFFFF');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '6'));
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('6');
+    expect(await storage.getMaxUnlockedLevel()).toBe(6);
+
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '6') }).click();
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('6');
+  });
+
+  test('completar el nivel 10 siempre termina la partida sin intentar generar un nivel 11 inexistente', async () => {
+    const { loadQuestionBank } = require('../../src/data/questionBank');
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = loadQuestionBank();
+    const getQuestionsByLevelSpy = jest.fn((level, options) => require('../../src/data/questionBank').getQuestionsByLevel(level, { ...options, questions }));
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      level: 10,
+      randomFn: () => 0,
+      getQuestionsByLevel: getQuestionsByLevelSpy,
+    });
+
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('10');
+    getQuestionsByLevelSpy.mockClear();
+
+    await playLevelWithPattern(questions, 'CCCCCCCCCC');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.completedAllLevels);
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toBeNull();
+    // completeLevel() short-circuits on MAX_LEVEL (gameFlow.js's
+    // resolveLevelOutcome) before ever calling startLevel(11, ...) -- so the
+    // question pool resolver is never asked for a level-11 pool that doesn't exist.
+    expect(getQuestionsByLevelSpy).not.toHaveBeenCalled();
+  });
+});
