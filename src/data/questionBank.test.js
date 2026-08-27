@@ -185,6 +185,26 @@ describe('real question bank (public/data/questions.json)', () => {
     });
   });
 
+  // Mandatory content-integrity gate: fails this suite (and CI) if the real
+  // bank breaks any of level-count/total-count, duplicate ids,
+  // correctAnswerIndex range, dato_curioso i18n resolution, or an
+  // image/imageRealistic/imageFallback reference that doesn't exist on disk.
+  // Composed from the same building blocks as the more granular tests above
+  // (kept separately for a precise failure message) so a broken content
+  // update can never slip through with only some of them updated.
+  test('integrity gate: exact level counts, unique ids, in-range correctAnswerIndex, resolvable dato_curioso keys and existing image assets', () => {
+    expect(questions).toHaveLength(EXPECTED_QUESTION_COUNT);
+    expect(getLevelCoverageErrors(questions)).toEqual([]);
+    expect(validateQuestionBank(questions)).toEqual([]);
+    expect(getDatoCuriosoTranslationErrors(questions, getStrings('es'))).toEqual([]);
+
+    questions.forEach((question) => {
+      expectResolvesToRealImageFile(question.image);
+      expectResolvesToRealImageFile(question.imageRealistic);
+      expectResolvesToRealImageFile(question.imageFallback);
+    });
+  });
+
   // TRIOFSND-202: getQuestionsByLevel() against the real bank on disk.
   test('TRIOFSND-202: getQuestionsByLevel returns exactly 30 valid questions for every level, none logged as invalid', () => {
     const logService = buildMemoryLogService();
