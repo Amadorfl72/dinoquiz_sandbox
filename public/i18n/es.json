@@ -394,6 +394,39 @@
       "message": "¡Bien hecho ordenando a las criaturas! Sigue jugando para descubrir más tamaños."
     }
   },
+  "shadowGuess": {
+    "screenTitle": "Adivina la sombra",
+    "instructions": "Mira la silueta y toca la criatura prehistórica que crees que se esconde detrás.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Mira la silueta y adivina qué criatura prehistórica es.",
+    "shadowImageAlt": "Silueta misteriosa de una criatura prehistórica",
+    "optionsGroupLabel": "Opciones de respuesta",
+    "optionAriaLabelFormat": "¿Es la silueta de un {dinosaur}?",
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {dinosaur}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {dinosaur}",
+    "feedback": {
+      "correct": {
+        "message": "¡Genial, acertaste! Era un {dinosaur}.",
+        "announcementFormat": "¡Genial, acertaste! La silueta era de un {dinosaur}."
+      },
+      "incorrect": {
+        "message": "¡Buen intento! Era un {dinosaur}.",
+        "announcementFormat": "¡Buen intento! La silueta era de un {dinosaur}."
+      }
+    },
+    "nextButton": "Siguiente",
+    "blocked": {
+      "heading": "Adivina la sombra bloqueado",
+      "message": "Necesitamos más criaturas verificadas y distinguibles entre sí para activar Adivina la sombra. ¡Vuelve a intentarlo más adelante!",
+      "announcement": "Adivina la sombra está bloqueado: necesitamos más criaturas verificadas y distinguibles entre sí. Vuelve a intentarlo más adelante."
+    },
+    "gameOver": {
+      "heading": "¡Adivina la sombra completado!",
+      "announcementFormat": "Has terminado Adivina la sombra. Acertaste {score} de {total} siluetas.",
+      "message": "¡Bien hecho reconociendo siluetas! Sigue jugando para afinar tu vista de explorador."
+    }
+  },
   "dinosaurNames": {
     "trex": "Tyrannosaurus Rex",
     "triceratops": "Triceratops",
