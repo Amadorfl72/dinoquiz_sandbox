@@ -58,9 +58,15 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
-  test('precaches both the drawn and realistic variant for every dinosaur (TRIOFSND-195)', () => {
+  test('precaches both the drawn and realistic variant for the original seven dinosaurs (TRIOFSND-195)', () => {
     // eslint-disable-next-line global-require
     const { PRECACHE_URLS } = require(SW_PATH);
+    // Scoped to the fixed levels 1-5 roster only. Levels 6-10 asset coverage
+    // is data-driven and must not be hardcoded here: it's asserted
+    // authoritatively against the published question bank fields in the
+    // "TRIOFSND-266" describe block below, which is the only place allowed
+    // to decide what shape (extension, per-dinosaur vs. shared fallback,
+    // etc.) those assets take.
     const dinosaursWithJpgRealistic = [
       'trex',
       'triceratops',
@@ -69,14 +75,6 @@ describe('TRIOFSND-110: service worker source', () => {
       'braquiosaurio',
       'ankylosaurus',
       'pteranodon',
-      // Levels 6-10 (TRIOFSND-202): seven more dinosaurs, same jpg realistic variant.
-      'spinosaurus',
-      'dilophosaurus',
-      'pachycephalosaurus',
-      'compsognathus',
-      'diplodocus',
-      'iguanodon',
-      'parasaurolophus',
     ];
 
     dinosaursWithJpgRealistic.forEach((dinosaur) => {
@@ -103,25 +101,6 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
-  test('the levels 6-10 dinosaurs reuse the generic fallback instead of a per-dinosaur SVG', () => {
-    // eslint-disable-next-line global-require
-    const { PRECACHE_URLS } = require(SW_PATH);
-    const newDinosaurs = [
-      'spinosaurus',
-      'dilophosaurus',
-      'pachycephalosaurus',
-      'compsognathus',
-      'diplodocus',
-      'iguanodon',
-      'parasaurolophus',
-    ];
-
-    expect(PRECACHE_URLS).toContain('/assets/images/fallback/generic.svg');
-    newDinosaurs.forEach((dinosaur) => {
-      expect(PRECACHE_URLS).not.toContain(`/assets/images/fallback/${dinosaur}.svg`);
-    });
-  });
-
   test('drops old caches and claims clients on activate', () => {
     expect(swContent).toMatch(/caches\s*\.\s*keys/);
     expect(swContent).toMatch(/caches\.delete/);
@@ -132,6 +111,61 @@ describe('TRIOFSND-110: service worker source', () => {
     expect(swContent).toMatch(/caches\.match/);
     expect(swContent).toContain("'/offline.html'");
     expect(swContent).toMatch(/request\.mode\s*===\s*['"]navigate['"]/);
+  });
+});
+
+describe('TRIOFSND-266: precache covers every level 6-10 asset actually referenced by the question bank', () => {
+  // eslint-disable-next-line global-require
+  const { PRECACHE_URLS } = require(SW_PATH);
+  const QUESTIONS_PATH = path.resolve(__dirname, '../../public/data/questions.json');
+  const IMAGE_BASE_PATH = '/assets/images/';
+  const IMAGE_FIELDS = ['image', 'imageRealistic', 'imageFallback'];
+
+  let questions;
+  let level6To10Questions;
+
+  beforeAll(() => {
+    expect(fs.existsSync(QUESTIONS_PATH)).toBe(true);
+    // eslint-disable-next-line global-require
+    questions = require(QUESTIONS_PATH);
+    level6To10Questions = questions.filter((question) => question.level >= 6 && question.level <= 10);
+  });
+
+  test('the published question bank and i18n strings are precached', () => {
+    expect(PRECACHE_URLS).toContain('/data/questions.json');
+    expect(PRECACHE_URLS).toContain('/i18n/es.json');
+  });
+
+  test('levels 6-10 carry exactly 150 questions (30 per level, guards against a partial bank)', () => {
+    expect(level6To10Questions).toHaveLength(150);
+  });
+
+  test('every unique image/imageRealistic/imageFallback URL referenced by levels 6-10 is precached', () => {
+    const referencedUrls = new Set();
+    level6To10Questions.forEach((question) => {
+      IMAGE_FIELDS.forEach((field) => {
+        if (typeof question[field] === 'string' && question[field] !== '') {
+          referencedUrls.add(IMAGE_BASE_PATH + question[field]);
+        }
+      });
+    });
+
+    expect(referencedUrls.size).toBeGreaterThan(0);
+    referencedUrls.forEach((url) => {
+      expect(PRECACHE_URLS).toContain(url);
+    });
+  });
+
+  test('every URL referenced by levels 6-10 maps to a file actually shipped under public/', () => {
+    const publicDir = path.resolve(__dirname, '../../public');
+    level6To10Questions.forEach((question) => {
+      IMAGE_FIELDS.forEach((field) => {
+        const value = question[field];
+        expect(typeof value === 'string' && value !== '').toBe(true);
+        const relativePath = path.join('assets/images', value);
+        expect(fs.existsSync(path.join(publicDir, relativePath))).toBe(true);
+      });
+    });
   });
 });
 
