@@ -232,50 +232,6 @@
     }
   }
 
-  // Last-selected mode persistence (TRIOFSND-230, wired up here by
-  // TRIOFSND-259): same namespaced key `src/services/modeStorage.js`
-  // itself writes (`dinoquiz:lastMode`), same rationale as MUTE_STORAGE_KEY
-  // above -- that service is plain CommonJS and cannot be loaded as a
-  // `<script>` in this no-bundler browser, so this reads/writes localStorage
-  // directly under the same key so both paths agree. Remembers which mode
-  // (see src/game/modesCatalog.js MODE_IDS) was last played; a future mode
-  // selector can default back to it instead of the catalog's first entry.
-  var LAST_MODE_STORAGE_KEY = 'dinoquiz:lastMode';
-
-  function loadLastMode(storageObj) {
-    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
-    if (!storageObj) {
-      return null;
-    }
-
-    try {
-      var raw = storageObj.getItem(LAST_MODE_STORAGE_KEY);
-      if (raw === null) {
-        return null;
-      }
-      var modeId = JSON.parse(raw);
-      return typeof modeId === 'string' && modeId.length > 0 ? modeId : null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  function persistLastMode(modeId, storageObj) {
-    if (typeof modeId !== 'string' || modeId.length === 0) {
-      return;
-    }
-    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
-    if (!storageObj) {
-      return;
-    }
-
-    try {
-      storageObj.setItem(LAST_MODE_STORAGE_KEY, JSON.stringify(modeId));
-    } catch (error) {
-      console.error('DinoQuiz: failed to persist the last-selected mode', error);
-    }
-  }
-
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
   // Laberinto route (TRIOFSND-259): mirrors the privacy-policy hash route
@@ -287,6 +243,7 @@
   // Home/Privacy already do.
   var MAZE_HASH = '#/laberinto';
   var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
+  var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -377,6 +334,34 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.maze) || null;
+  }
+
+  /**
+   * Resolves public/scripts/modeStorage.js (TRIOFSND-230/234), the
+   * last-selected-mode persistence service -- same require-or-`window.DinoQuiz`
+   * pattern as `resolveGameFlow`/`resolveMazeGame` above. `startLevelGame`
+   * (Quiz) and `startMazeGame` (Laberinto) both call its `setLastMode` the
+   * moment their mode actually starts (PRD main_workflow paso 1), so
+   * `dinoquiz:lastMode` always reflects whichever mode is currently being
+   * played, whether reached through the mode selector or a direct hash
+   * navigation/replay that never goes through it.
+   */
+  function resolveModeStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./modeStorage');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.modeStorage) || null;
+  }
+
+  /** Persists `modeId` as the last-selected mode via modeStorage.js, tolerating a missing service (never blocks the game from starting). */
+  function persistLastMode(modeId, storageObj) {
+    var modeStorage = resolveModeStorage();
+    if (modeStorage) {
+      modeStorage.setLastMode(modeId, storageObj);
+    }
   }
 
   /**
@@ -1014,7 +999,9 @@
    * `resolveCurrentAgeBand()` so a first call from Inicio always captures the
    * age just selected; every subsequent level in the same game chain reuses
    * that same frozen value (see `playLevel`/`finishLevel` above), never
-   * re-reading it.
+   * re-reading it. Persists the last-selected mode (TRIOFSND-235
+   * `dinoquiz:lastMode`, mirrors `startMazeGame`'s own call) every time it
+   * runs, whether that's a fresh Quiz game or a same-mode replay/next level.
    */
   function startLevelGame(container, renderers, questions, doc, fetchFn, ctx) {
     ctx = ctx || {};
@@ -1032,6 +1019,8 @@
       storage: ctx.storage,
       getQuestionsByLevel: getQuestionsByLevel,
     };
+
+    persistLastMode(QUIZ_MODE_ID, ctx.storageObj);
 
     var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
       getQuestionsByLevel: getQuestionsByLevel,
@@ -2303,9 +2292,8 @@
       MAX_UNLOCKED_LEVEL_KEY: MAX_UNLOCKED_LEVEL_KEY,
       renderMuteToggle: renderMuteToggle,
       resolveMazeGame: resolveMazeGame,
-      loadLastMode: loadLastMode,
+      resolveModeStorage: resolveModeStorage,
       persistLastMode: persistLastMode,
-      LAST_MODE_STORAGE_KEY: LAST_MODE_STORAGE_KEY,
       MAZE_HASH: MAZE_HASH,
       isMazeRoute: isMazeRoute,
       navigateToMaze: navigateToMaze,
