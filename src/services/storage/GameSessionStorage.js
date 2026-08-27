@@ -348,6 +348,39 @@ class GameSessionStorage {
     await this.#clear();
   }
 
+  /**
+   * Read-only check for `modeId` (TRIOFSND-238, "descartar sólo el estado
+   * transitorio al confirmar cambio de modo"): true only if the persisted
+   * session belongs to `modeId` and is still resumable ('playing' or
+   * 'paused'), i.e. exactly the case where leaving `modeId` would lose
+   * progress and the mode-change confirmation dialog
+   * (public/scripts/modeChangeConfirmScreen.js) must be shown. Unlike
+   * `restoreSession`, this never writes anything -- asking the question can
+   * never itself discard a session, including one belonging to a different
+   * mode.
+   */
+  async hasIncompleteSession(modeId) {
+    const envelope = await this.#readEnvelope();
+    return isValidEnvelope(envelope) && envelope.modeId === modeId && RESUMABLE_STATUSES.includes(envelope.session.status);
+  }
+
+  /**
+   * Discards the in-progress round for `modeId` specifically (TRIOFSND-238),
+   * once the player has confirmed the mode change. A no-op whenever the
+   * persisted session doesn't belong to `modeId` (nothing stored, a
+   * different mode's session, or a corrupted/invalid envelope) -- so this
+   * can only ever clear the single `dinoquiz:session` key, and only when it
+   * is actually `modeId`'s own transient round, never the durable per-mode
+   * keys (bestScore/maxStreak/scoreMetrics/maxUnlockedLevel/...) this class
+   * never reads or writes.
+   */
+  async discardModeSession(modeId) {
+    const envelope = await this.#readEnvelope();
+    if (isValidEnvelope(envelope) && envelope.modeId === modeId) {
+      await this.#clear();
+    }
+  }
+
   getDiagnostics() {
     return {
       backend: this.#activeAdapter?.name ?? 'memory',

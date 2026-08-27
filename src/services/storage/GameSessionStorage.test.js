@@ -191,6 +191,62 @@ describe('GameSessionStorage', () => {
     });
   });
 
+  describe('hasIncompleteSession', () => {
+    it('is false when nothing was ever saved', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      expect(await storage.hasIncompleteSession('quiz')).toBe(false);
+    });
+
+    it('is true for a playing/paused session belonging to that mode', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      await storage.saveSession('quiz', playingSession());
+
+      expect(await storage.hasIncompleteSession('quiz')).toBe(true);
+    });
+
+    it('is false, and leaves the session untouched, when checked against a different mode', async () => {
+      const adapter = createFakeAdapter();
+      const storage = new GameSessionStorage([adapter]);
+      await storage.saveSession('quiz', playingSession());
+
+      expect(await storage.hasIncompleteSession('laberinto')).toBe(false);
+      expect(await adapter.getItem(SESSION_STORAGE_KEY)).not.toBeNull();
+      expect(await storage.hasIncompleteSession('quiz')).toBe(true);
+    });
+
+    it('is false once the session has finished', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      await storage.saveSession('quiz', finishedSession());
+
+      expect(await storage.hasIncompleteSession('quiz')).toBe(false);
+    });
+  });
+
+  describe('discardModeSession', () => {
+    it('clears the stored session when it belongs to that mode', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      await storage.saveSession('quiz', playingSession());
+
+      await storage.discardModeSession('quiz');
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+    });
+
+    it('leaves a different mode\'s session untouched', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      await storage.saveSession('laberinto', playingSession());
+
+      await storage.discardModeSession('quiz');
+
+      expect(await storage.restoreSession('laberinto')).not.toBeNull();
+    });
+
+    it('is a no-op when nothing is stored', async () => {
+      const storage = new GameSessionStorage([createFakeAdapter()]);
+      await expect(storage.discardModeSession('quiz')).resolves.toBeUndefined();
+    });
+  });
+
   describe('backend fallback', () => {
     it('falls back to the next adapter when the first one is unavailable', async () => {
       const unavailable = createFakeAdapter({
