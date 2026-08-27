@@ -144,11 +144,9 @@ Las ilustraciones referenciadas por `image` viven en
 especie (las 14: trex, triceratops, velociraptor, estegosaurio, braquiosaurio, ankylosaurus,
 pteranodon, spinosaurus, dilophosaurus, pachycephalosaurus, compsognathus, diplodocus,
 iguanodon, parasaurolophus), en el mismo estilo que la mascota. Las variantes `imageRealistic`
-viven en [`public/assets/images/realistic/`](public/assets/images/realistic) — fotografías de
-paleoarte con licencia libre de Wikimedia Commons para las 7 especies originales, y SVG
-originales de DinoQuiz (más detalle y paleta naturalista que el cartoon, sin texto incrustado)
-para las 7 especies de los niveles 6-10, ver ese `CREDITS.md` para el detalle por fichero — y
-las `imageFallback` en
+viven en [`public/assets/images/realistic/`](public/assets/images/realistic) — paleoarte con
+licencia libre de Wikimedia Commons para las 14 especies (ver ese `CREDITS.md` para el detalle
+de autor/licencia/fuente por fichero) — y las `imageFallback` en
 [`public/assets/images/fallback/`](public/assets/images/fallback) (siluetas de un solo color,
 un fichero por dinosaurio). Cada una de esas dos carpetas documenta la licencia de sus SVG en
 su propio `CREDITS.md`. Todas son ligeras y no requieren red, por lo que quedan cubiertas por

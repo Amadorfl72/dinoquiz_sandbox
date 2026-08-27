@@ -19,42 +19,40 @@ violencia gráfica.
 
 ## Especies añadidas en los niveles 6-10
 
-Para `spinosaurus.svg`, `dilophosaurus.svg`, `pachycephalosaurus.svg`, `compsognathus.svg`,
-`diplodocus.svg`, `iguanodon.svg` y `parasaurolophus.svg` no se localizó, dentro del tiempo
-disponible para esta entrega, paleoarte de licencia libre en Wikimedia Commons con una fuente
-verificable para cada una de las siete especies. Para no bloquear la historia ni arriesgar una
-atribución incorrecta, estos siete ficheros son obra original creada para DinoQuiz: ilustraciones
-vectoriales con paleta de tonos tierra y sombreado, con un trazo más detallado que la ilustración
-"dibujo" de la misma especie, pensadas para leerse como la variante "realista" sin depender de una
-fuente externa. No contienen texto incrustado.
+Igual que las siete especies originales, estas siete son paleoarte real de
+Wikimedia Commons con licencia libre y fuente verificable por fichero. Se ha
+priorizado de nuevo a Nobu Tamura por consistencia de estilo con el resto de
+la carpeta; para Parasaurolophus se ha usado una reconstrucción de Steveoc 86
+porque no se localizó paleoarte de Tamura de esta especie en Commons.
 
-| Fichero | Dinosaurio | Autor | Licencia |
-|---|---|---|---|
-| spinosaurus.svg | Spinosaurus | DinoQuiz | CC0 1.0 (dominio público) |
-| dilophosaurus.svg | Dilophosaurus | DinoQuiz | CC0 1.0 (dominio público) |
-| pachycephalosaurus.svg | Pachycephalosaurus | DinoQuiz | CC0 1.0 (dominio público) |
-| compsognathus.svg | Compsognathus | DinoQuiz | CC0 1.0 (dominio público) |
-| diplodocus.svg | Diplodocus | DinoQuiz | CC0 1.0 (dominio público) |
-| iguanodon.svg | Iguanodon | DinoQuiz | CC0 1.0 (dominio público) |
-| parasaurolophus.svg | Parasaurolophus | DinoQuiz | CC0 1.0 (dominio público) |
+| Fichero | Dinosaurio | Autor | Licencia | Fuente / obra original |
+|---|---|---|---|---|
+| spinosaurus.jpg | Spinosaurus | Nobu Tamura (obra original); retoque menor: Dinoguy2 | CC BY 2.5 | [Spinosaurus BW2.png](https://commons.wikimedia.org/wiki/File:Spinosaurus_BW2.png) |
+| dilophosaurus.jpg | Dilophosaurus | Nobu Tamura | CC BY-SA 4.0 | [Dilophosaurus NT.jpg](https://commons.wikimedia.org/wiki/File:Dilophosaurus_NT.jpg) |
+| pachycephalosaurus.jpg | Pachycephalosaurus | Nobu Tamura | CC BY 2.5 | [Pachycephalosaurus.jpg](https://commons.wikimedia.org/wiki/File:Pachycephalosaurus.jpg) |
+| compsognathus.jpg | Compsognathus | Nobu Tamura | CC BY-SA 3.0 | [Compsognathus BW.jpg](https://commons.wikimedia.org/wiki/File:Compsognathus_BW.jpg) |
+| diplodocus.jpg | Diplodocus | Nobu Tamura | CC BY 3.0 | [Diplodocus BW.jpg](https://commons.wikimedia.org/wiki/File:Diplodocus_BW.jpg) |
+| iguanodon.jpg | Iguanodon | Nobu Tamura | CC BY-SA 3.0 | [Iguanodon NT.jpg](https://commons.wikimedia.org/wiki/File:Iguanodon_NT.jpg) |
+| parasaurolophus.jpg | Parasaurolophus | Steveoc 86 | CC BY-SA 3.0 | [Parasaurolophuspic steveoc.jpg](https://commons.wikimedia.org/wiki/File:Parasaurolophuspic_steveoc.jpg) |
 
-CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/deed.es — uso, copia y modificación
-libres, sin atribución requerida.
-
-## Cómo se eligieron (las siete especies fotográficas originales)
+## Cómo se eligieron
 
 Banco admisible según la tarea: paleoarte de Wikimedia Commons con licencia
 CC0 / CC BY / CC BY-SA. Se ha priorizado un mismo autor (Nobu Tamura) para
-seis de los siete dinosaurios por consistencia de estilo visual; para
-Ankylosaurus se ha usado una reconstrucción alternativa de Emily Willoughby
-porque las versiones de Tamura disponibles en Commons no cubren esta especie
-y la de Willoughby refleja una reconstrucción anatómica más moderna (la
-única otra alternativa en dominio público en Commons está catalogada como
-"Inaccurate Ornithischia restorations").
+la mayoría de los catorce dinosaurios por consistencia de estilo visual;
+para Ankylosaurus se ha usado una reconstrucción alternativa de Emily
+Willoughby porque las versiones de Tamura disponibles en Commons no cubren
+esta especie y la de Willoughby refleja una reconstrucción anatómica más
+moderna (la única otra alternativa en dominio público en Commons está
+catalogada como "Inaccurate Ornithischia restorations"); para Parasaurolophus
+se ha usado una reconstrucción de Steveoc 86 por el mismo motivo (sin
+paleoarte de Tamura disponible para esta especie en Commons).
 
 ## Licencias
 
 - CC BY 2.5: https://creativecommons.org/licenses/by/2.5/deed.es — se requiere
+  atribución al autor, ver tabla.
+- CC BY 3.0: https://creativecommons.org/licenses/by/3.0/deed.es — se requiere
   atribución al autor, ver tabla.
 - CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/deed.es — se
   requiere atribución y compartir igual.
