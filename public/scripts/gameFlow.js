@@ -44,7 +44,7 @@
  * tally) and the child's age band:
  *   - Ages 6-7 are restricted to level 1 and the game always ends after
  *     those 10 questions, whatever the score.
- *   - Age 8+: completing level 5 (MAX_LEVEL) always ends the game; below
+ *   - Age 8+: completing level 10 (MAX_LEVEL) always ends the game; below
  *     that, >=6 aciertos unlocks and starts the next level, <=5 ends it.
  * `completeLevel` composes the two: it resolves the outcome and, when a next
  * level unlocks, also starts it via `startLevel` in the same call.
@@ -62,9 +62,9 @@
   var QUESTIONS_PER_GAME = 10;
 
   // Mirrors src/data/questionBank.js's MIN_LEVEL/MAX_LEVEL (TRIOFSND-202):
-  // 5 difficulty levels, numbered 1-5.
+  // 10 difficulty levels, numbered 1-10.
   var MIN_LEVEL = 1;
-  var MAX_LEVEL = 5;
+  var MAX_LEVEL = 10;
 
   // TRIOFSND-203 AC: >=6 aciertos (out of the level's 10 questions) unlocks
   // the next level for an 8+ year old; <=5 ends the game.
