@@ -232,7 +232,74 @@
     }
   }
 
+  // Last-selected mode persistence (TRIOFSND-230, wired up here by
+  // TRIOFSND-259): same namespaced key `src/services/lastModeService.js`
+  // itself writes (`dinoquiz:lastMode`), same rationale as MUTE_STORAGE_KEY
+  // above -- that service is plain CommonJS and cannot be loaded as a
+  // `<script>` in this no-bundler browser, so this reads/writes localStorage
+  // directly under the same key so both paths agree. Remembers which mode
+  // (see src/game/modesCatalog.js MODE_IDS) was last played; a future mode
+  // selector can default back to it instead of the catalog's first entry.
+  var LAST_MODE_STORAGE_KEY = 'dinoquiz:lastMode';
+
+  function loadLastMode(storageObj) {
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return null;
+    }
+
+    try {
+      var raw = storageObj.getItem(LAST_MODE_STORAGE_KEY);
+      if (raw === null) {
+        return null;
+      }
+      var modeId = JSON.parse(raw);
+      return typeof modeId === 'string' && modeId.length > 0 ? modeId : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function persistLastMode(modeId, storageObj) {
+    if (typeof modeId !== 'string' || modeId.length === 0) {
+      return;
+    }
+    storageObj = storageObj || (typeof localStorage !== 'undefined' ? localStorage : undefined);
+    if (!storageObj) {
+      return;
+    }
+
+    try {
+      storageObj.setItem(LAST_MODE_STORAGE_KEY, JSON.stringify(modeId));
+    } catch (error) {
+      console.error('DinoQuiz: failed to persist the last-selected mode', error);
+    }
+  }
+
   var PRIVACY_POLICY_HASH = '#/privacidad';
+
+  // Laberinto route (TRIOFSND-259): mirrors the privacy-policy hash route
+  // below (isPrivacyPolicyRoute/navigateToPrivacyPolicy) -- the app shell's
+  // own mode-selection mechanism until a future ticket adds the PRD's
+  // illustrated mode selector screen. Navigating here (or loading the app
+  // with this hash already set) starts a fresh Laberinto game; every call
+  // to renderRoute() while on this route renders from scratch, exactly like
+  // Home/Privacy already do.
+  var MAZE_HASH = '#/laberinto';
+  var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
+  var MAZE_MIN_LEVEL = 1;
+
+  function isMazeRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === MAZE_HASH;
+  }
+
+  function navigateToMaze(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = MAZE_HASH;
+    }
+  }
 
   function resolveScreenRenderers(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -247,6 +314,7 @@
           fromWindow.renderQuestionScreen || require('../../src/screens/QuestionScreen').renderQuestionScreen,
         renderResultsScreen:
           fromWindow.renderResultsScreen || require('../../src/screens/ResultsScreen').renderResultsScreen,
+        renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
       };
     }
 
@@ -290,6 +358,23 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game) || null;
+  }
+
+  /**
+   * Resolves public/scripts/mazeGame.js (TRIOFSND-259), the browser-runnable
+   * Laberinto round/game orchestrator -- same require-or-`window.DinoQuiz`
+   * pattern as `resolveGameFlow` above. Registered nested under
+   * `window.DinoQuiz.game.maze` (not the flat `window.DinoQuiz.game` gameFlow
+   * itself owns) so loading it never clobbers gameFlow's own properties.
+   */
+  function resolveMazeGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./mazeGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.maze) || null;
   }
 
   /**
@@ -772,6 +857,35 @@
   }
 
   /**
+   * Same safe-exit rationale as `exitToHomeSafely` above (a broken
+   * maze/round can never be recovered from where it failed, so the only
+   * sane destination is Inicio), but for Laberinto's own failure shape
+   * (`{ error, level, seed, roundIndex }`, see public/scripts/mazeGame.js)
+   * instead of gameFlow's `{ level, validQuestionCount }`.
+   */
+  function exitMazeToHomeSafely(container, renderers, doc, fetchFn, failure) {
+    console.error(
+      'DinoQuiz: maze generation failed (level=' +
+        (failure && failure.level) +
+        ', roundIndex=' +
+        (failure && failure.roundIndex) +
+        '), exiting safely to Inicio'
+    );
+
+    var homeStorage = resolveHomeStorage();
+    return renderHome(
+      doc,
+      renderers.renderHomeScreen,
+      fetchFn,
+      homeStorage,
+      function () {
+        navigateToPrivacyPolicy();
+      },
+      homeStorage
+    );
+  }
+
+  /**
    * Plays one already-started level (`levelGame`, as returned by
    * `gameFlow.startLevel`/attached as `completeLevel`'s `nextLevelGame`) end
    * to end, then resolves what happens next via `gameFlow.completeLevel` and
@@ -927,6 +1041,183 @@
     }
 
     return playLevel(container, renderers, questions, doc, fetchFn, levelGame, resolvedCtx);
+  }
+
+  /**
+   * Laberinto mode integration (TRIOFSND-259): a Laberinto game is a single,
+   * fixed ROUNDS_PER_GAME-round "partida" at one difficulty level (no
+   * cross-game level-unlock chain like the Quiz's startLevelGame/playLevel/
+   * finishLevel above) -- so its own start/round/finish loop is simpler,
+   * mirroring the *shape* of that Quiz loop (renderQuestionAt's `advance`,
+   * playLevel/finishLevel) but driving public/scripts/mazeGame.js's
+   * startGame/completeRound instead of gameFlow.js's startLevel/completeLevel.
+   *
+   * `activeMazeGame` tracks whether a game is currently in progress (and at
+   * which level) so `renderRoute` below can tell an in-progress game apart
+   * from a finished one when the player navigates away, and log the
+   * aggregated, local-only `partida abandonada` counter (TRIOFSND-259
+   * logging.js) exactly once per abandoned game.
+   */
+  var activeMazeGame = null;
+
+  /** Renders `round` and drives it to completion (or the next round, or Resultados once the game is over). */
+  function playMazeRound(container, renderers, doc, fetchFn, mazeGameApi, roundState, ctx) {
+    var totalRounds = mazeGameApi.ROUNDS_PER_GAME;
+    // mazeScreen.js tracks the creature's position/moves/reached-goal status
+    // in its own internal closure and never hands the updated round back --
+    // it only reports each attempted move via `onMove` and the final score
+    // via onNext/onGameOver. `currentRound` mirrors that same state here (via
+    // the identical `mazeGameApi.applyMove`) so it is at `status:
+    // 'reached_goal'` by the time `advance()` calls `completeRound`, exactly
+    // in sync with what the player just saw on screen.
+    var currentRound = roundState.round;
+
+    function advance() {
+      var result = mazeGameApi.completeRound({
+        round: currentRound,
+        gameState: roundState.state,
+        level: ctx.level,
+        seed: ctx.seed,
+        dinosaurPool: ctx.dinosaurPool,
+        randomFn: ctx.randomFn,
+        logService: ctx.logService,
+      });
+
+      if (result.nextRound && result.nextRound.error) {
+        activeMazeGame = null;
+        if (ctx.logger) {
+          ctx.logger.logMazeResolvabilityFailure();
+        }
+        exitMazeToHomeSafely(container, renderers, doc, fetchFn, result.nextRound);
+        return;
+      }
+
+      if (result.gameOver) {
+        activeMazeGame = null;
+        if (ctx.logger) {
+          ctx.logger.logMazeGameCompleted(ctx.level);
+        }
+        finishMazeGame(container, renderers, doc, fetchFn, result.state, ctx);
+      } else {
+        playMazeRound(container, renderers, doc, fetchFn, mazeGameApi, { round: result.nextRound, state: result.state }, ctx);
+      }
+    }
+
+    return renderers.renderMazeScreen(container, roundState.round, {
+      score: roundState.state.score,
+      roundNumber: roundState.round.roundIndex + 1,
+      totalRounds: totalRounds,
+      onMove: function (moveResult) {
+        if (!moveResult.blocked) {
+          currentRound = mazeGameApi.applyMove(currentRound, moveResult.direction);
+        }
+      },
+      onNext: function () {
+        advance();
+      },
+      onGameOver: function () {
+        advance();
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Laberinto game; 'Volver a jugar' starts a fresh one at the same level, 'Salir' goes to Inicio. */
+  function finishMazeGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startMazeGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        navigateHome();
+      },
+    });
+  }
+
+  /**
+   * Starts a fresh Laberinto game at `ctx.level` (defaults to
+   * MAZE_MIN_LEVEL). Persists the last-selected mode (TRIOFSND-230/259
+   * `dinoquiz:lastMode`) and tallies the aggregated, local-only
+   * `partida_iniciada` counter for Laberinto before the first round renders.
+   */
+  function startMazeGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var mazeGameApi = resolveMazeGame();
+    if (!mazeGameApi || !renderers || typeof renderers.renderMazeScreen !== 'function') {
+      return null;
+    }
+
+    var level = ctx.level || MAZE_MIN_LEVEL;
+    var resolvedCtx = {
+      level: level,
+      seed: ctx.seed,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      logger: ctx.logger,
+      logService: ctx.logger,
+    };
+
+    persistLastMode(MAZE_MODE_ID, ctx.storageObj);
+    if (ctx.logger) {
+      ctx.logger.logMazeGameStarted(level);
+    }
+
+    var game = mazeGameApi.startGame({
+      level: level,
+      seed: ctx.seed,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      logService: ctx.logger,
+    });
+
+    if (game.round && game.round.error) {
+      if (ctx.logger) {
+        ctx.logger.logMazeResolvabilityFailure();
+      }
+      return exitMazeToHomeSafely(container, renderers, doc, fetchFn, game.round);
+    }
+
+    activeMazeGame = { level: level };
+    return playMazeRound(container, renderers, doc, fetchFn, mazeGameApi, { round: game.round, state: game.state }, resolvedCtx);
+  }
+
+  /** Renders the Laberinto route (#/laberinto): starts a fresh game every time it's entered, mirroring Home/Privacy's full re-render. */
+  function renderMazeRoute(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      return null;
+    }
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    return startMazeGame(container, renderers, doc, fetchFn, {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      logger: resolveLogger(),
+    });
   }
 
   /**
@@ -1790,6 +2081,23 @@
   }
 
   function renderRoute(doc, fetchFn, loc) {
+    // TRIOFSND-259: navigating away from an in-progress Laberinto game
+    // (whichever route this render is actually for) means it was left
+    // unfinished -- tally the aggregated, local-only "abandonada" counter
+    // for that level exactly once, before it's cleared, and before deciding
+    // what to render below.
+    if (activeMazeGame && !isMazeRoute(loc)) {
+      var logger = resolveLogger();
+      if (logger) {
+        logger.logMazeGameAbandoned(activeMazeGame.level);
+      }
+      activeMazeGame = null;
+    }
+
+    if (isMazeRoute(loc)) {
+      return renderMazeRoute(doc, fetchFn);
+    }
+
     if (isPrivacyPolicyRoute(loc)) {
       return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
         navigateHome(loc);
@@ -1926,6 +2234,18 @@
       ADS_REMOVED_STORAGE_KEY: ADS_REMOVED_STORAGE_KEY,
       MAX_UNLOCKED_LEVEL_KEY: MAX_UNLOCKED_LEVEL_KEY,
       renderMuteToggle: renderMuteToggle,
+      resolveMazeGame: resolveMazeGame,
+      loadLastMode: loadLastMode,
+      persistLastMode: persistLastMode,
+      LAST_MODE_STORAGE_KEY: LAST_MODE_STORAGE_KEY,
+      MAZE_HASH: MAZE_HASH,
+      isMazeRoute: isMazeRoute,
+      navigateToMaze: navigateToMaze,
+      startMazeGame: startMazeGame,
+      playMazeRound: playMazeRound,
+      finishMazeGame: finishMazeGame,
+      exitMazeToHomeSafely: exitMazeToHomeSafely,
+      renderMazeRoute: renderMazeRoute,
     };
   }
 })();
