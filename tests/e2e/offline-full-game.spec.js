@@ -28,6 +28,13 @@ const RESULTS_SCREEN = '.results-screen';
 const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
+/** Inicio -> edad -> selector de modos -> Quiz (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game starts. */
+async function startQuizFromHome(page) {
+  await page.locator(HOME_PLAY_BUTTON).click();
+  await page.locator(AGE_GATE_OPTION).click();
+  await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
+}
+
 /** Waits until the service worker has finished precaching the local question bank. */
 async function waitForPrecache(page) {
   await page.waitForFunction(() => Boolean(navigator.serviceWorker));
@@ -83,11 +90,9 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
     await page.reload();
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible();
-    await page.locator(HOME_PLAY_BUTTON).click();
     // TRIOFSND-232: the age gate hands off to the illustrated mode selector
     // before any mode actually starts -- both must be navigated offline too.
-    await page.locator(AGE_GATE_OPTION).click();
-    await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
+    await startQuizFromHome(page);
 
     await playFullGame(page);
 

@@ -6,7 +6,7 @@
  * each showing a decorative illustration, the mode's localized name, an
  * accessible label, and its current availability -- wired to the real
  * availability evaluator (public/scripts/modesCatalog.js, TRIOFSND-228) and
- * the last-selected-mode service (public/scripts/lastModeService.js,
+ * the last-selected-mode service (public/scripts/modeStorage.js,
  * TRIOFSND-230).
  *
  * Layout (AC "sin scroll horizontal a 375px"): the eight cards sit in a
@@ -81,11 +81,11 @@
 
   function resolveLastModeService(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
-    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.lastMode) {
-      return win.DinoQuiz.services.lastMode;
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.modeStorage) {
+      return win.DinoQuiz.services.modeStorage;
     }
     if (typeof require === 'function') {
-      return require('./lastModeService');
+      return require('./modeStorage');
     }
     return null;
   }
@@ -244,7 +244,19 @@
       availabilityByModeId[verdict.modeId] = verdict;
     });
 
-    var lastMode = lastModeService ? lastModeService.getLastMode() : null;
+    // Read fresh on every build (per the render call, never cached across
+    // shows) and fail closed: a throwing service, and any value that isn't
+    // a non-empty string, both collapse to "no last mode" instead of
+    // crashing the selector or being coerced into a false match below.
+    var lastMode = null;
+    if (lastModeService) {
+      try {
+        var rawLastMode = lastModeService.getLastMode();
+        lastMode = typeof rawLastMode === 'string' && rawLastMode.length > 0 ? rawLastMode : null;
+      } catch (error) {
+        lastMode = null;
+      }
+    }
 
     container.innerHTML = '';
 
@@ -314,7 +326,10 @@
 
     modes.forEach(function (mode) {
       var verdict = availabilityByModeId[mode.id] || { modeId: mode.id, available: false, cause: null };
-      var built = buildCard(doc, mode, verdict, strings, mode.id === lastMode, {
+      // Exact id match is not enough: a stale/blocked mode never gets
+      // marked, and there is no fallback to another card when it isn't.
+      var isLastUsed = mode.id === lastMode && !!verdict.available;
+      var built = buildCard(doc, mode, verdict, strings, isLastUsed, {
         onSelect: handleSelect,
         onBlocked: handleBlocked,
       });

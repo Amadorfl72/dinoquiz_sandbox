@@ -5,7 +5,7 @@ The LogService provides a `sendLogs()` method to transmit accumulated logs to a 
 ## Basic Usage
 
 ```javascript
-const LogService = require('./LogService').LogService;
+const LogService = require('./index').LogService;
 const logger = new LogService();
 
 // Log some events

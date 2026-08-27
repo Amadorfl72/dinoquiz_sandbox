@@ -1,6 +1,11 @@
 'use strict';
 
-const { RewardedAdService, unavailableProvider, rewardedAdService } = require('./rewardedAdService');
+const {
+  RewardedAdService,
+  unavailableProvider,
+  rewardedAdService,
+  isRoundTransition,
+} = require('./rewardedAdService');
 
 describe('RewardedAdService', () => {
   test('the default provider always reports the ad as unavailable (no ad SDK wired into v1)', () => {
@@ -23,7 +28,7 @@ describe('RewardedAdService', () => {
     const show = jest.fn();
     const service = new RewardedAdService({ isAvailable: () => false, show });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: false, reason: 'unavailable' });
     expect(show).not.toHaveBeenCalled();
@@ -35,7 +40,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.resolve({ granted: true }),
     });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: true, reason: null });
   });
@@ -46,7 +51,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.resolve({ granted: false }),
     });
 
-    const result = await service.request();
+    const result = await service.request({ status: 'finished' });
 
     expect(result).toEqual({ granted: false, reason: 'not-completed' });
   });
@@ -57,7 +62,7 @@ describe('RewardedAdService', () => {
       show: () => Promise.reject(new Error('ad network timeout')),
     });
 
-    await expect(service.request()).resolves.toEqual({ granted: false, reason: 'error' });
+    await expect(service.request({ status: 'finished' })).resolves.toEqual({ granted: false, reason: 'error' });
   });
 
   test('isAvailable() degrades to false instead of throwing when the provider itself throws', () => {
@@ -68,5 +73,64 @@ describe('RewardedAdService', () => {
     });
 
     expect(service.isAvailable()).toBe(false);
+  });
+});
+
+describe('round-transition gating (TRIOFSND-245: ads only between games, never mid-round/over the board)', () => {
+  test('isRoundTransition() is false with no session — a caller must pass the roundContract session explicitly', () => {
+    expect(isRoundTransition(undefined)).toBe(false);
+  });
+
+  test('isRoundTransition() is true once roundContract has flipped the session to "finished"', () => {
+    expect(isRoundTransition({ status: 'finished' })).toBe(true);
+  });
+
+  test('isRoundTransition() is false while the roundContract session is "playing" (mid-round, over the board/controls)', () => {
+    expect(isRoundTransition({ status: 'playing' })).toBe(false);
+  });
+
+  test('isRoundTransition() is false while the roundContract session is "paused"', () => {
+    expect(isRoundTransition({ status: 'paused' })).toBe(false);
+  });
+
+  test('request() rejects a "playing" session without ever calling the provider\'s show()', async () => {
+    const show = jest.fn(() => Promise.resolve({ granted: true }));
+    const service = new RewardedAdService({ isAvailable: () => true, show });
+
+    const result = await service.request({ status: 'playing' });
+
+    expect(result).toEqual({ granted: false, reason: 'not-round-transition' });
+    expect(show).not.toHaveBeenCalled();
+  });
+
+  test('request() rejects a "paused" session without ever calling the provider\'s show()', async () => {
+    const show = jest.fn(() => Promise.resolve({ granted: true }));
+    const service = new RewardedAdService({ isAvailable: () => true, show });
+
+    const result = await service.request({ status: 'paused' });
+
+    expect(result).toEqual({ granted: false, reason: 'not-round-transition' });
+    expect(show).not.toHaveBeenCalled();
+  });
+
+  test('request() still proceeds to the provider for a "finished" session', async () => {
+    const service = new RewardedAdService({
+      isAvailable: () => true,
+      show: () => Promise.resolve({ granted: true }),
+    });
+
+    const result = await service.request({ status: 'finished' });
+
+    expect(result).toEqual({ granted: true, reason: null });
+  });
+
+  test('request() rejects a missing session without ever calling the provider\'s show()', async () => {
+    const show = jest.fn(() => Promise.resolve({ granted: true }));
+    const service = new RewardedAdService({ isAvailable: () => true, show });
+
+    const result = await service.request();
+
+    expect(result).toEqual({ granted: false, reason: 'not-round-transition' });
+    expect(show).not.toHaveBeenCalled();
   });
 });

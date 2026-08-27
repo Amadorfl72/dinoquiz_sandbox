@@ -272,6 +272,55 @@ describe('ModeSelectorScreen last-used mode marking', () => {
     });
   });
 
+  test('marks exactly one card and exposes it as the only aria-current element', () => {
+    const lastModeService = createLastModeServiceStub(MODE_IDS.QUIZ);
+    const { cards } = renderWithFixture(container, { lastModeService });
+
+    const currentCards = Object.values(cards).filter((card) => card.getAttribute('aria-current') === 'true');
+    expect(currentCards).toEqual([cards[MODE_IDS.QUIZ]]);
+  });
+
+  test.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['empty string', ''],
+    ['unexpected type (number)', 42],
+    ['unexpected type (object)', { id: MODE_IDS.QUIZ }],
+    ['unknown id', 'not-a-real-mode'],
+    ['wrong capitalization of a real id', MODE_IDS.QUIZ.toUpperCase()],
+    ['partial match of a real id', MODE_IDS.QUIZ.slice(0, 2)],
+  ])('no card is marked when getLastMode() returns %s', (_label, value) => {
+    const lastModeService = createLastModeServiceStub(value);
+    const { cards } = renderWithFixture(container, { lastModeService });
+
+    Object.values(cards).forEach((card) => expect(card).not.toHaveAttribute('aria-current'));
+  });
+
+  test('a known but currently unavailable (blocked) mode id is never marked, and no other card is marked instead', () => {
+    const lastModeService = createLastModeServiceStub(MODE_IDS.SOMBRA);
+    const { cards } = renderWithFixture(container, { lastModeService });
+
+    Object.values(cards).forEach((card) => expect(card).not.toHaveAttribute('aria-current'));
+    expect(cards[MODE_IDS.SOMBRA]).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('a getLastMode() that throws is swallowed: selector renders normally with no card marked', () => {
+    const lastModeService = {
+      getLastMode: jest.fn(() => {
+        throw new Error('storage unavailable');
+      }),
+      setLastMode: jest.fn(),
+    };
+
+    let result;
+    expect(() => {
+      result = renderWithFixture(container, { lastModeService });
+    }).not.toThrow();
+
+    Object.values(result.cards).forEach((card) => expect(card).not.toHaveAttribute('aria-current'));
+    expect(Object.keys(result.cards)).toHaveLength(8);
+  });
+
   test('no last-played mode recorded yet: no card is marked, every card stays interactive', () => {
     const lastModeService = createLastModeServiceStub(null);
     const { cards } = renderWithFixture(container, { lastModeService });
@@ -279,6 +328,26 @@ describe('ModeSelectorScreen last-used mode marking', () => {
     MODES_CATALOG.forEach((mode) => {
       expect(cards[mode.id]).not.toHaveAttribute('aria-current');
     });
+  });
+
+  test('re-rendering fresh after the persisted value changed moves the mark and never leaves two cards marked', () => {
+    renderWithFixture(container, { lastModeService: createLastModeServiceStub(MODE_IDS.QUIZ) });
+    const { cards } = renderWithFixture(container, { lastModeService: createLastModeServiceStub(MODE_IDS.LABERINTO) });
+
+    expect(cards[MODE_IDS.LABERINTO]).toHaveAttribute('aria-current', 'true');
+    expect(cards[MODE_IDS.QUIZ]).not.toHaveAttribute('aria-current');
+    const currentCards = Object.values(cards).filter((card) => card.getAttribute('aria-current') === 'true');
+    expect(currentCards).toHaveLength(1);
+  });
+
+  test('the mark does not change focus, selection, persisted mode, or availability of any card', () => {
+    const lastModeService = createLastModeServiceStub(MODE_IDS.QUIZ);
+    const { title, cards } = renderWithFixture(container, { lastModeService });
+
+    expect(title).toHaveFocus();
+    expect(lastModeService.setLastMode).not.toHaveBeenCalled();
+    expect(cards[MODE_IDS.QUIZ]).not.toHaveAttribute('aria-disabled');
+    expect(cards[MODE_IDS.SOMBRA]).toHaveAttribute('aria-disabled', 'true');
   });
 
   test('selecting a new available mode moves the last-used marker to it immediately', () => {

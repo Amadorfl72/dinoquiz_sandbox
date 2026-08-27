@@ -1,6 +1,6 @@
 'use strict';
 
-const logging = require('./LogService.js');
+const logging = require('./index');
 const LogService = logging.LogService || logging;
 
 function makeStorage() {
@@ -290,6 +290,115 @@ describe('LogService — structured access & PWA install logging', () => {
         service.logMazeGameCompleted(1);
         service.logMazeGameAbandoned(1);
         service.logMazeResolvabilityFailure();
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs).toHaveLength(0);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
+  describe('round-contract diagnostics counters (TRIOFSND-246)', () => {
+    it('tallies games started per mode+level independently', () => {
+      expect(service.logRoundGameStarted('ordenaPorTamano', 1)).toBe(1);
+      expect(service.logRoundGameStarted('ordenaPorTamano', 1)).toBe(2);
+      expect(service.logRoundGameStarted('ordenaPorTamano', 2)).toBe(1);
+      expect(service.logRoundGameStarted('lineaDelTiempo', 1)).toBe(1);
+      expect(service.getRoundGamesStartedByModeLevel()).toEqual({
+        'ordenaPorTamano:1': 2,
+        'ordenaPorTamano:2': 1,
+        'lineaDelTiempo:1': 1,
+      });
+    });
+
+    it('tallies games completed and abandoned per mode+level independently of games started', () => {
+      service.logRoundGameStarted('parejas', 1);
+      service.logRoundGameStarted('parejas', 1);
+      service.logRoundGameCompleted('parejas', 1);
+      service.logRoundGameAbandoned('parejas', 1);
+      expect(service.getRoundGamesStartedByModeLevel()).toEqual({ 'parejas:1': 2 });
+      expect(service.getRoundGamesCompletedByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(service.getRoundGamesAbandonedByModeLevel()).toEqual({ 'parejas:1': 1 });
+    });
+
+    it('accepts a null level for modes without a difficulty level', () => {
+      expect(service.logRoundGameStarted('clasifica', null)).toBe(1);
+      expect(service.getRoundGamesStartedByModeLevel()).toEqual({ 'clasifica:null': 1 });
+    });
+
+    it('persists each per-"modeId:level" counter under its own dinoquiz: key', () => {
+      service.logRoundGameStarted('parejas', 1);
+      service.logRoundGameCompleted('parejas', 1);
+      service.logRoundGameAbandoned('sombra', 2);
+      expect(storage.getItem('dinoquiz:roundGamesStartedByModeLevel')).toBe('{"parejas:1":1}');
+      expect(storage.getItem('dinoquiz:roundGamesCompletedByModeLevel')).toBe('{"parejas:1":1}');
+      expect(storage.getItem('dinoquiz:roundGamesAbandonedByModeLevel')).toBe('{"sombra:2":1}');
+    });
+
+    it('round-trips all three per-"modeId:level" counters through storage into a fresh instance', () => {
+      service.logRoundGameStarted('parejas', 1);
+      service.logRoundGameCompleted('parejas', 1);
+      service.logRoundGameAbandoned('sombra', 2);
+      const reloaded = new LogService(storage);
+      expect(reloaded.getRoundGamesStartedByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(reloaded.getRoundGamesCompletedByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(reloaded.getRoundGamesAbandonedByModeLevel()).toEqual({ 'sombra:2': 1 });
+    });
+
+    it('tallies round-generation failures per "modeId:code"', () => {
+      expect(service.logRoundGenerationFailure('ordenaPorTamano', 'size_order_round_generation_failed')).toBe(1);
+      expect(service.logRoundGenerationFailure('ordenaPorTamano', 'size_order_round_generation_failed')).toBe(2);
+      expect(service.logRoundGenerationFailure('laberinto', 'maze_round_generation_failed')).toBe(1);
+      expect(service.getRoundGenerationFailureCounts()).toEqual({
+        'ordenaPorTamano:size_order_round_generation_failed': 2,
+        'laberinto:maze_round_generation_failed': 1,
+      });
+    });
+
+    it('ignores a round-generation-failure call without a valid code', () => {
+      expect(service.logRoundGenerationFailure('quiz', '')).toBe(0);
+      expect(service.logRoundGenerationFailure('quiz', undefined)).toBe(0);
+      expect(service.getRoundGenerationFailureCounts()).toEqual({});
+    });
+
+    it('tallies state-discard codes per "modeId:code"', () => {
+      expect(service.logStateDiscarded('quiz', 'storage_session_discard_incompatible')).toBe(1);
+      expect(service.logStateDiscarded('quiz', 'storage_session_discard_incompatible')).toBe(2);
+      expect(service.getStateDiscardCounts()).toEqual({
+        'quiz:storage_session_discard_incompatible': 2,
+      });
+    });
+
+    it('ignores a state-discard call without a valid code', () => {
+      expect(service.logStateDiscarded('quiz', '')).toBe(0);
+      expect(service.getStateDiscardCounts()).toEqual({});
+    });
+
+    it('are unaffected by clearLogs', () => {
+      service.logRoundGameStarted('parejas', 1);
+      service.logRoundGenerationFailure('parejas', 'some_failure_code');
+      service.logStateDiscarded('parejas', 'storage_session_discard_incompatible');
+      service.clearLogs();
+      expect(service.getRoundGamesStartedByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(service.getRoundGenerationFailureCounts()).toEqual({ 'parejas:some_failure_code': 1 });
+      expect(service.getStateDiscardCounts()).toEqual({ 'parejas:storage_session_discard_incompatible': 1 });
+    });
+
+    it('are never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logRoundGameStarted('parejas', 1);
+        service.logRoundGameCompleted('parejas', 1);
+        service.logRoundGameAbandoned('parejas', 1);
+        service.logRoundGenerationFailure('parejas', 'some_failure_code');
+        service.logStateDiscarded('parejas', 'storage_session_discard_incompatible');
 
         const payload = service.getLogsPayload();
         expect(payload.logs).toHaveLength(0);
