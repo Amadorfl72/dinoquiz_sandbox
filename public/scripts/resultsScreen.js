@@ -65,12 +65,15 @@
   var MAX_SCORE = 10;
   var MAX_STARS = 3;
 
-  // Star tiers per the PRD: 0-3 -> 1 star, 4-6 -> 2 stars, 7-10 -> 3 stars.
-  var STAR_TIERS = Object.freeze([
-    { maxScore: 3, stars: 1 },
-    { maxScore: 6, stars: 2 },
-    { maxScore: MAX_SCORE, stars: 3 },
-  ]);
+  // Resolves scoring.js the same way resolveContentGuide (below) resolves
+  // the content guide: `require` under Node/Jest, `window.DinoQuiz.scoring`
+  // for the `<script>`-loaded PWA.
+  function resolveScoring() {
+    if (typeof require === 'function') {
+      return require('../../src/game/scoring');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
 
   // Content-guide guard: words that would read as negative/discouraging to a
   // 6-8 year old. Motivational messages must never contain any of these
@@ -150,15 +153,21 @@
     return bundle ? bundle.results : null;
   }
 
+  // Quiz's own score is always an integer out of MAX_SCORE (10); the actual
+  // percentage/tier math is the shared, mode-agnostic scoring.js helper
+  // (TRIOFSND-251) so every mode's results map onto the same visual scale
+  // instead of this screen keeping its own separate tier table.
   function calculateStars(score) {
     if (!Number.isInteger(score) || score < MIN_SCORE || score > MAX_SCORE) {
       throw new Error('score must be an integer between ' + MIN_SCORE + ' and ' + MAX_SCORE + ', got ' + score);
     }
 
-    var tier = STAR_TIERS.find(function (candidate) {
-      return score <= candidate.maxScore;
-    });
-    return tier.stars;
+    var scoring = resolveScoring();
+    if (!scoring || typeof scoring.normalizeOutcome !== 'function') {
+      throw new Error('calculateStars requires scoring.js to be available');
+    }
+
+    return scoring.normalizeOutcome(score, MAX_SCORE).stars;
   }
 
   function validateMotivationalMessages(messages) {
@@ -503,7 +512,6 @@
     MIN_SCORE: MIN_SCORE,
     MAX_SCORE: MAX_SCORE,
     MAX_STARS: MAX_STARS,
-    STAR_TIERS: STAR_TIERS,
     BANNED_WORDS: BANNED_WORDS,
     normalizeToWords: normalizeToWords,
     calculateStars: calculateStars,
