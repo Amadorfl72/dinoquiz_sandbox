@@ -15,7 +15,10 @@
  * Diagnostics counters (TRIOFSND-230): `logSelectorOpen()`/
  * `getSelectorOpenCount()` track an aggregated, local-only tally of mode
  * selector opens (never sent via sendLogs), and `logModeBlocked(modeId,
- * cause)` records a structured `mode_blocked` entry when a mode is blocked.
+ * cause)`/`getModeBlockedLogs()` record a structured `mode_blocked` entry
+ * when a mode is blocked, stored under its own local-only key -- never
+ * pushed into the transmittable log array, so it is never sent via
+ * sendLogs either.
  *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
@@ -26,6 +29,7 @@
 (function () {
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
   var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
+  var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -107,6 +111,7 @@
     this.storageAdapter = storageAdapter || createLocalStorageAdapter();
     this.logs = this._loadLogs();
     this.selectorOpenCount = this._loadSelectorOpenCount();
+    this.modeBlockedLogs = this._loadModeBlockedLogs();
   }
 
   LogService.prototype._loadLogs = function () {
@@ -170,12 +175,39 @@
     return this.selectorOpenCount;
   };
 
+  LogService.prototype._loadModeBlockedLogs = function () {
+    try {
+      var stored = this.storageAdapter.getItem(MODE_BLOCKED_LOGS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load mode-blocked logs from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveModeBlockedLogs = function () {
+    try {
+      if (this.modeBlockedLogs.length > MAX_LOGS) {
+        this.modeBlockedLogs = this.modeBlockedLogs.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(MODE_BLOCKED_LOGS_STORAGE_KEY, JSON.stringify(this.modeBlockedLogs));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save mode-blocked logs to storage', error);
+    }
+  };
+
   LogService.prototype.logModeBlocked = function (modeId, cause) {
     if (typeof modeId !== 'string' || modeId.length === 0) {
       console.warn('DinoQuiz: logModeBlocked requires a valid modeId');
       return;
     }
-    this.logEvent('mode_blocked', { modeId: modeId, cause: cause || null });
+    var entry = createLogEntry('mode_blocked', { modeId: modeId, cause: cause || null });
+    this.modeBlockedLogs.push(entry);
+    this._saveModeBlockedLogs();
+  };
+
+  LogService.prototype.getModeBlockedLogs = function () {
+    return this.modeBlockedLogs.slice();
   };
 
   LogService.prototype.logAppAccess = function (metadata) {
@@ -293,6 +325,7 @@
       createMemoryAdapter: createMemoryAdapter,
       LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
       SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
+      MODE_BLOCKED_LOGS_STORAGE_KEY: MODE_BLOCKED_LOGS_STORAGE_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };

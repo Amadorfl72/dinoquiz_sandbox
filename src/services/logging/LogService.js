@@ -16,10 +16,6 @@
  * - 'pwa_install_attempt': user initiated PWA installation
  * - 'pwa_install_success': PWA installation completed
  * - 'pwa_install_failure': PWA installation failed
- * - 'mode_blocked': mode selector attempt blocked by an unmet availability
- *   requirement (see src/game/modesCatalog.js's AVAILABILITY_CAUSES) --
- *   metadata carries { modeId, cause }, both machine-readable ids, never
- *   free text.
  *
  * Diagnostics counters (TRIOFSND-230): unlike the per-occurrence log entries
  * above, `logSelectorOpen()`/`getSelectorOpenCount()` track a single
@@ -27,6 +23,14 @@
  * opened) so repeated opens across sessions stay O(1) in storage instead of
  * growing the log array. Local-only per the PRD's privacy constraint --
  * never included in `sendLogs`' payload.
+ *
+ * `logModeBlocked(modeId, cause)`/`getModeBlockedLogs()` record mode
+ * selector attempts blocked by an unmet availability requirement (see
+ * src/game/modesCatalog.js's AVAILABILITY_CAUSES) -- each entry carries
+ * { modeId, cause }, both machine-readable ids, never free text. These
+ * entries are stored under their own local-only storage key, entirely
+ * separate from the transmittable `this.logs` array, so they can never be
+ * included in `getLogsPayload()`/`sendLogs()`'s payload.
  *
  * Endpoint transmission:
  * - `sendLogs(endpointUrl, options)` sends accumulated logs to a backend
@@ -37,6 +41,7 @@
 
 const LOGS_STORAGE_KEY = 'dinoquiz:logs';
 const SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
+const MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
 const MAX_LOGS = 1000; // Prevent unbounded growth
 const LOG_VERSION = '1.0';
 
@@ -98,6 +103,7 @@ function LogService(storageAdapter) {
   this.storageAdapter = storageAdapter || createLocalStorageAdapter();
   this.logs = this._loadLogs();
   this.selectorOpenCount = this._loadSelectorOpenCount();
+  this.modeBlockedLogs = this._loadModeBlockedLogs();
 }
 
 LogService.prototype._loadLogs = function () {
@@ -138,6 +144,28 @@ LogService.prototype._saveSelectorOpenCount = function () {
     this.storageAdapter.setItem(SELECTOR_OPEN_COUNT_KEY, JSON.stringify(this.selectorOpenCount));
   } catch (error) {
     console.error('DinoQuiz: failed to save selector open count to storage', error);
+  }
+};
+
+LogService.prototype._loadModeBlockedLogs = function () {
+  try {
+    var stored = this.storageAdapter.getItem(MODE_BLOCKED_LOGS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.warn('DinoQuiz: failed to load mode-blocked logs from storage', error);
+    return [];
+  }
+};
+
+LogService.prototype._saveModeBlockedLogs = function () {
+  try {
+    // Keep only the most recent MAX_LOGS entries to prevent unbounded storage growth
+    if (this.modeBlockedLogs.length > MAX_LOGS) {
+      this.modeBlockedLogs = this.modeBlockedLogs.slice(-MAX_LOGS);
+    }
+    this.storageAdapter.setItem(MODE_BLOCKED_LOGS_STORAGE_KEY, JSON.stringify(this.modeBlockedLogs));
+  } catch (error) {
+    console.error('DinoQuiz: failed to save mode-blocked logs to storage', error);
   }
 };
 
@@ -235,7 +263,10 @@ LogService.prototype.getSelectorOpenCount = function () {
 };
 
 /**
- * Records a blocked mode-selection attempt.
+ * Records a blocked mode-selection attempt. Stored under its own local-only
+ * key (dinoquiz:modeBlockedLogs), entirely separate from `this.logs` --
+ * never pushed into the transmittable log array, so it can never be sent by
+ * `sendLogs()` (PRD privacy constraint: local-only diagnostics).
  * @param {string} modeId - The mode's id (see src/game/modesCatalog.js MODE_IDS)
  * @param {string} cause - Machine-readable block cause (see modesCatalog.js AVAILABILITY_CAUSES)
  */
@@ -244,7 +275,18 @@ LogService.prototype.logModeBlocked = function (modeId, cause) {
     console.warn('DinoQuiz: logModeBlocked requires a valid modeId');
     return;
   }
-  this.logEvent('mode_blocked', { modeId: modeId, cause: cause || null });
+  var entry = createLogEntry('mode_blocked', { modeId: modeId, cause: cause || null });
+  this.modeBlockedLogs.push(entry);
+  this._saveModeBlockedLogs();
+};
+
+/**
+ * Retrieves all locally-recorded mode-blocked entries. Local-only diagnostic
+ * data -- never included in `getLogsPayload()`/`sendLogs()`.
+ * @returns {array} Defensive copy of the mode-blocked log entries
+ */
+LogService.prototype.getModeBlockedLogs = function () {
+  return this.modeBlockedLogs.slice();
 };
 
 /**
@@ -410,6 +452,7 @@ if (typeof module !== 'undefined' && module.exports) {
     createMemoryAdapter: createMemoryAdapter,
     LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
     SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
+    MODE_BLOCKED_LOGS_STORAGE_KEY: MODE_BLOCKED_LOGS_STORAGE_KEY,
     MAX_LOGS: MAX_LOGS,
     LOG_VERSION: LOG_VERSION,
   };

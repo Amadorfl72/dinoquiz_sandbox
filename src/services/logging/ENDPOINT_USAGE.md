@@ -134,10 +134,11 @@ Logged events include:
 - `pwa_install_attempt`: User initiated PWA install
 - `pwa_install_success`: PWA installed successfully
 - `pwa_install_failure`: PWA installation failed
-- `mode_blocked`: A mode selection attempt was blocked; metadata carries `{ modeId, cause }` (both machine-readable ids, see `src/game/modesCatalog.js`)
 
 Each event captures: timestamp, requestId (for tracing), userAgent, detected platform, and custom metadata.
 
-## Diagnostics counters (local-only, never sent by `sendLogs`)
+## Diagnostics counters & entries (local-only, never sent by `sendLogs`)
 
 `logSelectorOpen()` / `getSelectorOpenCount()` track a single aggregated tally of how many times the mode selector was opened, separate from the per-occurrence log entries above. This counter is local-only per the product's privacy constraints and is not included in `getLogsPayload()`/`sendLogs()`.
+
+`logModeBlocked(modeId, cause)` / `getModeBlockedLogs()` record a mode-selection attempt blocked by an unmet availability requirement; each entry carries `{ modeId, cause }` (both machine-readable ids, see `src/game/modesCatalog.js`). These entries are stored under their own storage key (`dinoquiz:modeBlockedLogs`), entirely separate from the transmittable log array, so they are never included in `getLogsPayload()`/`sendLogs()`.

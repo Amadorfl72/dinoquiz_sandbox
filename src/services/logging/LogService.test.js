@@ -155,14 +155,15 @@ describe('LogService — structured access & PWA install logging', () => {
   describe('mode-blocked log entry (TRIOFSND-230)', () => {
     it('records a mode_blocked entry with modeId and cause in metadata', () => {
       service.logModeBlocked('sombra', 'insufficient_creatures');
-      const logs = service.getLogsByType('mode_blocked');
+      const logs = service.getModeBlockedLogs();
       expect(logs).toHaveLength(1);
+      expect(logs[0].eventType).toBe('mode_blocked');
       expect(logs[0].metadata).toEqual({ modeId: 'sombra', cause: 'insufficient_creatures' });
     });
 
     it('defaults cause to null when omitted', () => {
       service.logModeBlocked('parejas');
-      expect(service.getLogsByType('mode_blocked')[0].metadata).toEqual({
+      expect(service.getModeBlockedLogs()[0].metadata).toEqual({
         modeId: 'parejas',
         cause: null,
       });
@@ -172,7 +173,56 @@ describe('LogService — structured access & PWA install logging', () => {
       expect(() => service.logModeBlocked('', 'x')).not.toThrow();
       expect(() => service.logModeBlocked(null, 'x')).not.toThrow();
       expect(() => service.logModeBlocked(42, 'x')).not.toThrow();
+      expect(service.getModeBlockedLogs()).toHaveLength(0);
+    });
+
+    it('is stored separately from the regular log array, never via getLogsByType', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      expect(service.getLogs()).toHaveLength(0);
       expect(service.getLogsByType('mode_blocked')).toHaveLength(0);
+    });
+
+    it('persists under its own key, separate from dinoquiz:logs', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      expect(storage.getItem('dinoquiz:modeBlockedLogs')).not.toBeNull();
+      expect(storage.getItem('dinoquiz:logs')).toBeNull();
+    });
+
+    it('round-trips through storage into a fresh instance', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      const reloaded = new LogService(storage);
+      expect(reloaded.getModeBlockedLogs()).toHaveLength(1);
+      expect(reloaded.getModeBlockedLogs()[0].metadata).toEqual({
+        modeId: 'sombra',
+        cause: 'insufficient_creatures',
+      });
+    });
+
+    it('is unaffected by clearLogs', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      service.clearLogs();
+      expect(service.getModeBlockedLogs()).toHaveLength(1);
+    });
+
+    it('is never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logModeBlocked('sombra', 'insufficient_creatures');
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs.some((entry) => entry.eventType === 'mode_blocked')).toBe(false);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs.some((entry) => entry.eventType === 'mode_blocked')).toBe(false);
+
+        // still locally retrievable after transmission
+        expect(service.getModeBlockedLogs()).toHaveLength(1);
+      } finally {
+        global.fetch = originalFetch;
+      }
     });
   });
 
