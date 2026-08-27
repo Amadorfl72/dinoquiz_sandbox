@@ -77,6 +77,14 @@ function mockHomeFetch() {
   return jest.fn().mockResolvedValue({ json: () => Promise.resolve({ home: homeStrings }) });
 }
 
+// TRIOFSND-232: the age gate now hands off to the illustrated mode selector
+// instead of starting Quiz directly -- every scenario below that reaches the
+// real question screen via the Home play button must also pick the Quiz
+// card there.
+function selectQuizMode(container) {
+  container.querySelector('[data-mode-id="quiz"]').click();
+}
+
 describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image style + session persistence)', () => {
   let container;
   let addEventListenerSpy;
@@ -157,6 +165,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
+    selectQuizMode(container);
 
     expect(container.querySelector('.question-screen')).not.toBeNull();
     expect(currentImageSrc(container)).toContain('dinosaurs/realista/trex.png');
@@ -167,6 +176,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
+    selectQuizMode(container);
 
     expect(container.querySelector('.question-screen')).not.toBeNull();
     expect(currentImageSrc(container)).toContain('dinosaurs/realista/trex.png');
@@ -178,6 +188,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
+    selectQuizMode(container);
     expect(currentImageSrc(container)).toContain('/realista/');
 
     for (let i = 0; i < 10; i += 1) {
@@ -205,6 +216,7 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
+    selectQuizMode(container);
     expect(currentImageSrc(container)).toContain('/realista/');
 
     for (let i = 0; i < 10; i += 1) {
@@ -316,6 +328,7 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
     getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
+    selectQuizMode(container);
 
     for (let i = 0; i < 10; i += 1) {
       await answerCurrentQuestion(container, { correct: i % 2 === 0 });

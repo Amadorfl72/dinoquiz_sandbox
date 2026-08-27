@@ -315,6 +315,8 @@
         renderResultsScreen:
           fromWindow.renderResultsScreen || require('../../src/screens/ResultsScreen').renderResultsScreen,
         renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
+        renderModeSelectorScreen:
+          fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
       };
     }
 
@@ -1221,6 +1223,60 @@
   }
 
   /**
+   * Mode selector (TRIOFSND-232, PRD "Selector ilustrado de modos"): rendered
+   * right after the age gate resolves and before any game starts, so the
+   * player always picks a mode instead of always landing on Quiz. Selecting
+   * an available mode routes straight into that mode's own level selection/
+   * orchestrator; a blocked mode never reaches `onSelectMode` at all --
+   * public/scripts/modeSelectorScreen.js withholds it and only logs a local
+   * diagnostic instead (see that file's own doc comment). `resources` reuses
+   * the single i18n fetch `loadHomeResources` already made for Home, so
+   * opening the selector needs no extra network round trip. A missing
+   * renderer (e.g. modeSelectorScreen.js failed to load in some fallback
+   * browser) falls straight through to Quiz -- the only mode that existed
+   * before this selector did -- so a broken/missing script never blocks play.
+   *
+   * Laberinto (TRIOFSND-259) already has its own hash route (`MAZE_HASH`):
+   * selecting it here only updates `location.hash`, the same way
+   * `onOpenPrivacyPolicy` does for the privacy policy elsewhere in this file
+   * -- the `hashchange` listener wired at bootstrap is what actually renders
+   * it (via `renderRoute` -> `renderMazeRoute`), so this never double-renders
+   * by also calling it directly.
+   */
+  function renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx) {
+    if (!renderers || typeof renderers.renderModeSelectorScreen !== 'function') {
+      return startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+    }
+
+    return renderers.renderModeSelectorScreen(container, {
+      strings: resources && resources.modeSelector,
+      modesStrings: resources && resources.modes,
+      onSelectMode: function (modeId) {
+        if (modeId === MAZE_MODE_ID) {
+          navigateToMaze();
+          return;
+        }
+        // Every other mode (Quiz included) still routes through the existing
+        // multi-level orchestrator until its own game engine ships.
+        startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+      },
+      onBack: function () {
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          homeStorage,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage
+        );
+      },
+    });
+  }
+
+  /**
    * Resolves and installs `appShell.js`'s `installExternalLinkGuard`
    * (TRIOFSND-121), the same way `resolveScreenRenderers`/`resolveGameFlow`
    * resolve their browser-global vs. `require`d counterparts. A missing
@@ -1379,11 +1435,22 @@
    * (TRIOFSND-66) plus ageGate (TRIOFSND-193, resolved up front here so the
    * '¡Jugar!' click handler below can render the age gate synchronously,
    * with no extra fetch on the click itself) — all without a `require()` for
-   * `src/i18n`.
+   * `src/i18n`. Also resolves `modeSelector`/`modes` (TRIOFSND-232), so the
+   * mode selector rendered right after the age gate (see `renderModeSelector`
+   * below) reuses this same fetch instead of triggering a second one.
    */
   function loadHomeResources(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
-      return data ? { home: data.home, privacy: data.privacy, purchase: data.purchase, ageGate: data.ageGate } : null;
+      return data
+        ? {
+            home: data.home,
+            privacy: data.privacy,
+            purchase: data.purchase,
+            ageGate: data.ageGate,
+            modeSelector: data.modeSelector,
+            modes: data.modes,
+          }
+        : null;
     });
   }
 
@@ -1955,10 +2022,11 @@
                 tooltipStorage.recordEvent('partida_iniciada');
               }
               // TRIOFSND-193/207: the age gate is shown right here -- after
-              // '¡Jugar!', before the game is prepared -- and only once it
-              // resolves does `startLevelGame` retrieve that selection
-              // (`resolveCurrentAgeBand`) and start the multi-level game at
-              // level 1.
+              // '¡Jugar!', before the game is prepared. TRIOFSND-232: once it
+              // resolves, the illustrated mode selector is shown next instead
+              // of starting Quiz straight away -- selecting a mode there is
+              // what actually starts its game, retrieving the age band
+              // (`resolveCurrentAgeBand`) for Quiz's multi-level orchestrator.
               //
               // The mute/ads-removed flags (TRIOFSND-66/TRIOFSND-97) are read
               // and written through `resolvedMuteStorage` above (onToggleMute/
@@ -1966,7 +2034,7 @@
               // same backend, or a purchase confirmed here would still show
               // ads on this very game's Resultados screen.
               renderAgeGate(container, renderers, resources && resources.ageGate, function () {
-                startLevelGame(container, renderers, questions, doc, fetchFn, {
+                renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
                   storageObj: resolvedMuteStorage,
                   analyticsStorage: storage,
                   storage: storage,
@@ -2246,6 +2314,7 @@
       finishMazeGame: finishMazeGame,
       exitMazeToHomeSafely: exitMazeToHomeSafely,
       renderMazeRoute: renderMazeRoute,
+      renderModeSelector: renderModeSelector,
     };
   }
 })();

@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v12';
+const SW_VERSION = 'v13';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -71,6 +71,17 @@ const PRECACHE_URLS = [
   '/assets/images/fallback/braquiosaurio.svg',
   '/assets/images/fallback/ankylosaurus.svg',
   '/assets/images/fallback/pteranodon.svg',
+  // Mode selector card illustrations (TRIOFSND-232): precached so the
+  // selector renders fully offline right after install, before any of these
+  // would otherwise be fetched at runtime.
+  '/assets/images/modes/quiz.svg',
+  '/assets/images/modes/laberinto.svg',
+  '/assets/images/modes/sombra.svg',
+  '/assets/images/modes/oidoJurasico.svg',
+  '/assets/images/modes/parejas.svg',
+  '/assets/images/modes/clasifica.svg',
+  '/assets/images/modes/ordenaPorTamano.svg',
+  '/assets/images/modes/lineaDelTiempo.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms
