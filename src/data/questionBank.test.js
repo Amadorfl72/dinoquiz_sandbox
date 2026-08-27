@@ -197,6 +197,30 @@ describe('real question bank (public/data/questions.json)', () => {
 
     expect(logService.events).toEqual([]);
   });
+
+  function normalizeQuestionText(text) {
+    return text
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  test('levels 6-10 do not reuse ids or normalized question text from levels 1-5', () => {
+    const legacyQuestions = questions.filter((question) => question.level <= 5);
+    const newQuestions = questions.filter((question) => question.level >= 6);
+
+    expect(legacyQuestions).toHaveLength(150);
+    expect(newQuestions).toHaveLength(150);
+
+    const legacyIds = new Set(legacyQuestions.map((question) => question.id));
+    const legacyTexts = new Set(legacyQuestions.map((question) => normalizeQuestionText(question.question)));
+
+    newQuestions.forEach((question) => {
+      expect(legacyIds.has(question.id)).toBe(false);
+      expect(legacyTexts.has(normalizeQuestionText(question.question))).toBe(false);
+    });
+  });
 });
 
 describe('validateQuestion', () => {
