@@ -413,6 +413,102 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('Parejas jurásicas diagnostics counters (TRIOFSND-277)', () => {
+    it('tallies correct answers ("aciertos") per "modeId:level"', () => {
+      expect(service.logRoundCorrectAnswer('parejas', 1)).toBe(1);
+      expect(service.logRoundCorrectAnswer('parejas', 1)).toBe(2);
+      expect(service.logRoundCorrectAnswer('parejas', 2)).toBe(1);
+      expect(service.logRoundCorrectAnswer('laberinto', 1)).toBe(1);
+      expect(service.getRoundCorrectAnswersByModeLevel()).toEqual({
+        'parejas:1': 2,
+        'parejas:2': 1,
+        'laberinto:1': 1,
+      });
+    });
+
+    it('accumulates stars earned per "modeId:level" instead of always +1', () => {
+      expect(service.logRoundStarsEarned('parejas', 1, 3)).toBe(3);
+      expect(service.logRoundStarsEarned('parejas', 1, 2)).toBe(5);
+      expect(service.logRoundStarsEarned('parejas', 2, 1)).toBe(1);
+      expect(service.getRoundStarsEarnedByModeLevel()).toEqual({
+        'parejas:1': 5,
+        'parejas:2': 1,
+      });
+    });
+
+    it('ignores a stars-earned call without a non-negative integer stars count', () => {
+      expect(service.logRoundStarsEarned('parejas', 1, -1)).toBe(0);
+      expect(service.logRoundStarsEarned('parejas', 1, 1.5)).toBe(0);
+      expect(service.logRoundStarsEarned('parejas', 1, undefined)).toBe(0);
+      expect(service.getRoundStarsEarnedByModeLevel()).toEqual({});
+    });
+
+    it('tallies grid-limit-violation codes per "modeId:code"', () => {
+      expect(service.logRoundGridLimitViolation('parejas', 'max_visible_unmatched_exceeded')).toBe(1);
+      expect(service.logRoundGridLimitViolation('parejas', 'max_visible_unmatched_exceeded')).toBe(2);
+      expect(service.getRoundGridLimitViolationCounts()).toEqual({
+        'parejas:max_visible_unmatched_exceeded': 2,
+      });
+    });
+
+    it('ignores a grid-limit-violation call without a valid code', () => {
+      expect(service.logRoundGridLimitViolation('parejas', '')).toBe(0);
+      expect(service.logRoundGridLimitViolation('parejas', undefined)).toBe(0);
+      expect(service.getRoundGridLimitViolationCounts()).toEqual({});
+    });
+
+    it('board-generation-failure codes reuse the existing generic round-generation-failure counter (no duplicate concept)', () => {
+      expect(service.logRoundGenerationFailure('parejas', 'parejas_board_generation_failed')).toBe(1);
+      expect(service.getRoundGenerationFailureCounts()).toEqual({
+        'parejas:parejas_board_generation_failed': 1,
+      });
+    });
+
+    it('persists each new counter under its own dinoquiz: key and round-trips through storage into a fresh instance', () => {
+      service.logRoundCorrectAnswer('parejas', 1);
+      service.logRoundStarsEarned('parejas', 1, 3);
+      service.logRoundGridLimitViolation('parejas', 'max_visible_unmatched_exceeded');
+      expect(storage.getItem('dinoquiz:roundCorrectAnswersByModeLevel')).toBe('{"parejas:1":1}');
+      expect(storage.getItem('dinoquiz:roundStarsEarnedByModeLevel')).toBe('{"parejas:1":3}');
+      expect(storage.getItem('dinoquiz:roundGridLimitViolationCodes')).toBe('{"parejas:max_visible_unmatched_exceeded":1}');
+
+      const reloaded = new LogService(storage);
+      expect(reloaded.getRoundCorrectAnswersByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(reloaded.getRoundStarsEarnedByModeLevel()).toEqual({ 'parejas:1': 3 });
+      expect(reloaded.getRoundGridLimitViolationCounts()).toEqual({ 'parejas:max_visible_unmatched_exceeded': 1 });
+    });
+
+    it('are unaffected by clearLogs', () => {
+      service.logRoundCorrectAnswer('parejas', 1);
+      service.logRoundStarsEarned('parejas', 1, 3);
+      service.logRoundGridLimitViolation('parejas', 'max_visible_unmatched_exceeded');
+      service.clearLogs();
+      expect(service.getRoundCorrectAnswersByModeLevel()).toEqual({ 'parejas:1': 1 });
+      expect(service.getRoundStarsEarnedByModeLevel()).toEqual({ 'parejas:1': 3 });
+      expect(service.getRoundGridLimitViolationCounts()).toEqual({ 'parejas:max_visible_unmatched_exceeded': 1 });
+    });
+
+    it('are never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logRoundCorrectAnswer('parejas', 1);
+        service.logRoundStarsEarned('parejas', 1, 3);
+        service.logRoundGridLimitViolation('parejas', 'max_visible_unmatched_exceeded');
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs).toHaveLength(0);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});
