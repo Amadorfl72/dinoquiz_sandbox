@@ -16,14 +16,12 @@
  * screen's own padding -- unlike a 1-row horizontal layout, it never needs
  * to scroll.
  *
- * Card illustrations are a single decorative emoji glyph per mode (see
- * MODE_ILLUSTRATIONS below) rather than a new bitmap/vector asset: DinoQuiz's
- * per-mode artwork doesn't exist yet (PRD foundation "Ficha única y
- * verificable para todas las criaturas jugables" isn't done), and shipping a
- * placeholder image would need its own license/attribution in CREDITS.md for
- * art that's going to be replaced. Each glyph is `aria-hidden="true"` -- it
- * is never the only way a mode is identified, since the visible name and the
- * button's accessible label both come from i18n text regardless.
+ * Card illustrations (TRIOFSND-232) are a decorative SVG icon per mode, one
+ * per file under public/assets/images/modes/ (see MODE_ILLUSTRATION_SRCS
+ * below), original artwork licensed and attributed in that folder's own
+ * CREDITS.md. Each is rendered as `<img alt="" aria-hidden="true">` -- never
+ * the only way a mode is identified, since the visible name and the button's
+ * accessible label both come from i18n text regardless.
  *
  * Availability (blocked cards): a blocked card is never a native `disabled`
  * `<button>` -- disabled elements are pulled out of the tab order and most
@@ -51,15 +49,15 @@
  */
 
 (function () {
-  var MODE_ILLUSTRATIONS = {
-    quiz: '❓',
-    laberinto: '🌀',
-    sombra: '🌑',
-    oidoJurasico: '👂',
-    parejas: '🃏',
-    clasifica: '🗂️',
-    ordenaPorTamano: '📏',
-    lineaDelTiempo: '⏳',
+  var MODE_ILLUSTRATION_SRCS = {
+    quiz: '/assets/images/modes/quiz.svg',
+    laberinto: '/assets/images/modes/laberinto.svg',
+    sombra: '/assets/images/modes/sombra.svg',
+    oidoJurasico: '/assets/images/modes/oidoJurasico.svg',
+    parejas: '/assets/images/modes/parejas.svg',
+    clasifica: '/assets/images/modes/clasifica.svg',
+    ordenaPorTamano: '/assets/images/modes/ordenaPorTamano.svg',
+    lineaDelTiempo: '/assets/images/modes/lineaDelTiempo.svg',
   };
 
   function resolveDefaultLocaleStrings(locale, section) {
@@ -188,10 +186,11 @@
       button.setAttribute('aria-current', 'true');
     }
 
-    var illustration = doc.createElement('span');
+    var illustration = doc.createElement('img');
     illustration.className = 'mode-selector-screen__card-illustration';
     illustration.setAttribute('aria-hidden', 'true');
-    illustration.textContent = MODE_ILLUSTRATIONS[mode.id] || '🦕';
+    illustration.setAttribute('alt', '');
+    illustration.setAttribute('src', MODE_ILLUSTRATION_SRCS[mode.id] || '/icons/icon.svg');
 
     var name = doc.createElement('span');
     name.className = 'mode-selector-screen__card-name';
@@ -349,7 +348,7 @@
   }
 
   var api = {
-    MODE_ILLUSTRATIONS: MODE_ILLUSTRATIONS,
+    MODE_ILLUSTRATION_SRCS: MODE_ILLUSTRATION_SRCS,
     renderModeSelectorScreen: renderModeSelectorScreen,
   };
 

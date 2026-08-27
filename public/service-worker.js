@@ -91,6 +91,17 @@ const PRECACHE_URLS = [
   // Levels 6-10 dinosaurs reuse this single generic fallback instead of a
   // new per-dinosaur asset (see public/assets/images/fallback/CREDITS.md).
   '/assets/images/fallback/generic.svg',
+  // Mode selector card illustrations (TRIOFSND-232): precached so the
+  // selector renders fully offline right after install, before any of these
+  // would otherwise be fetched at runtime.
+  '/assets/images/modes/quiz.svg',
+  '/assets/images/modes/laberinto.svg',
+  '/assets/images/modes/sombra.svg',
+  '/assets/images/modes/oidoJurasico.svg',
+  '/assets/images/modes/parejas.svg',
+  '/assets/images/modes/clasifica.svg',
+  '/assets/images/modes/ordenaPorTamano.svg',
+  '/assets/images/modes/lineaDelTiempo.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms
