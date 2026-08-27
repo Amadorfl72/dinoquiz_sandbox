@@ -30,6 +30,52 @@
     "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
+  "modeSelector": {
+    "screenTitle": "Elige tu juego",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "modes": {
+      "quiz": {
+        "name": "Quiz",
+        "accessibleLabel": "Modo Quiz: responde preguntas sobre dinosaurios eligiendo la respuesta correcta"
+      },
+      "maze": {
+        "name": "Laberinto",
+        "accessibleLabel": "Modo Laberinto: guía a Dino por un laberinto prehistórico hasta la salida"
+      },
+      "shadow": {
+        "name": "Adivina la sombra",
+        "accessibleLabel": "Modo Adivina la sombra: reconoce qué dinosaurio se esconde detrás de su silueta"
+      },
+      "hearing": {
+        "name": "Oído Jurásico",
+        "accessibleLabel": "Modo Oído Jurásico: escucha un sonido imaginado y adivina de qué dinosaurio se trata"
+      },
+      "pairs": {
+        "name": "Parejas jurásicas",
+        "accessibleLabel": "Modo Parejas jurásicas: encuentra las cartas de dinosaurios que forman pareja"
+      },
+      "classify": {
+        "name": "Clasifica",
+        "accessibleLabel": "Modo Clasifica: decide si cada dinosaurio es carnívoro, herbívoro u omnívoro"
+      },
+      "sizeOrder": {
+        "name": "Ordena por tamaño",
+        "accessibleLabel": "Modo Ordena por tamaño: coloca a los dinosaurios del más pequeño al más grande"
+      },
+      "timeline": {
+        "name": "Línea del tiempo",
+        "accessibleLabel": "Modo Línea del tiempo: ordena a los dinosaurios según cuándo vivieron"
+      }
+    },
+    "status": {
+      "available": "Disponible",
+      "blocked": "Bloqueado"
+    },
+    "blockedReasons": {
+      "comingSoon": "Muy pronto podrás jugar a este modo",
+      "ageRestricted": "Disponible a partir de 8 años"
+    }
+  },
   "ageGate": {
     "screenTitle": "¿Cuántos años tienes?",
     "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
