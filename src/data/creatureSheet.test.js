@@ -11,6 +11,7 @@ const {
   CREATURE_SHEETS,
   getCreatureSheet,
   getCreatureDiet,
+  getCreatureLengthMeters,
   getCreatureVisualFamily,
   getApprovedShadowCreatures,
   isShadowModeUnlocked,
@@ -27,9 +28,23 @@ describe('creatureSheet', () => {
     });
   });
 
+  test('every shipped dinosaur has a positive, finite verified lengthMeters', () => {
+    VALID_DINOSAURS.forEach((dinosaurId) => {
+      const sheet = getCreatureSheet(dinosaurId);
+      expect(typeof sheet.lengthMeters).toBe('number');
+      expect(Number.isFinite(sheet.lengthMeters)).toBe(true);
+      expect(sheet.lengthMeters).toBeGreaterThan(0);
+    });
+  });
+
   test('getCreatureDiet mirrors getCreatureSheet(id).diet', () => {
     expect(getCreatureDiet(DINOSAURS.TREX)).toBe(DIETS.CARNIVORO);
     expect(getCreatureDiet(DINOSAURS.TRICERATOPS)).toBe(DIETS.HERBIVORO);
+  });
+
+  test('getCreatureLengthMeters mirrors getCreatureSheet(id).lengthMeters', () => {
+    expect(getCreatureLengthMeters(DINOSAURS.TREX)).toBe(12);
+    expect(getCreatureLengthMeters(DINOSAURS.COMPSOGNATHUS)).toBe(1);
   });
 
   test('getCreatureVisualFamily mirrors getCreatureSheet(id).visualFamily', () => {
@@ -37,9 +52,10 @@ describe('creatureSheet', () => {
     expect(getCreatureVisualFamily(DINOSAURS.TRICERATOPS)).toBe(VISUAL_FAMILIES.ARMORED_QUADRUPED);
   });
 
-  test('returns undefined for an unknown id instead of guessing a diet or visual family', () => {
+  test('returns undefined for an unknown id instead of guessing a diet, length, or visual family', () => {
     expect(getCreatureSheet('unknown-creature')).toBeUndefined();
     expect(getCreatureDiet('unknown-creature')).toBeUndefined();
+    expect(getCreatureLengthMeters('unknown-creature')).toBeUndefined();
     expect(getCreatureVisualFamily('unknown-creature')).toBeUndefined();
   });
 

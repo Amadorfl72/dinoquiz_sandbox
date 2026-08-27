@@ -29,6 +29,7 @@ const PRECACHE_URLS = [
   '/scripts/gameFlow.js',
   '/scripts/roundContract.js',
   '/scripts/audio.js',
+  '/scripts/feedbackComponent.js',
   '/scripts/network.js',
   '/scripts/logging.js',
   '/scripts/appShell.js',

@@ -253,6 +253,15 @@
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
     }
   },
+  "feedback": {
+    "correct": {
+      "message": "¡Genial, acertaste!"
+    },
+    "incorrect": {
+      "message": "¡Buen intento!"
+    },
+    "scoreAnnouncementFormat": "Puntos: {score}"
+  },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
     "imageAltFormat": "Ilustración de un {dinosaur}",
@@ -345,6 +354,42 @@
       "heading": "¡Laberinto completado!",
       "announcementFormat": "Has terminado el laberinto. Ayudaste al dinosaurio a encontrar la comida en {score} de {total} rondas.",
       "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
+    }
+  },
+  "sizeOrder": {
+    "screenTitle": "Ordena por tamaño",
+    "instructions": "Toca dos criaturas para intercambiarlas de sitio hasta ordenarlas de la más pequeña a la más grande.",
+    "boardLabel": "Criaturas para ordenar por tamaño",
+    "creatureAltFormat": "Ilustración de un {dinosaur}",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Ordena a las criaturas de la más pequeña a la más grande.",
+    "selection": {
+      "selectAriaLabelFormat": "{dinosaur}, posición {position} de {total}. Toca para seleccionarla e intercambiarla de sitio.",
+      "selectedAriaLabelFormat": "{dinosaur}, posición {position} de {total}, seleccionada. Toca otra criatura para intercambiarla con esta.",
+      "selectedAnnouncementFormat": "Has seleccionado a {dinosaur}. Toca otra criatura para intercambiarla con esta.",
+      "swapAnnouncementFormat": "Has intercambiado {firstDinosaur} y {secondDinosaur}.",
+      "deselectAnnouncementFormat": "Has quitado la selección de {dinosaur}."
+    },
+    "feedback": {
+      "correct": "¡Genial, las has ordenado correctamente!",
+      "incorrect": "Todavía no están en el orden correcto, ¡sigue intentándolo!"
+    },
+    "roundResult": {
+      "correctAnnouncementFormat": "¡Genial, acertaste! El orden correcto, de la más pequeña a la más grande, es: {order}.",
+      "incorrectAnnouncementFormat": "Todavía no es el orden correcto. Intercambia dos criaturas y vuelve a intentarlo.",
+      "orderLabel": "Orden correcto, de la más pequeña a la más grande",
+      "creatureLengthFormat": "{dinosaur}: {lengthMeters} metros",
+      "nextButton": "Siguiente"
+    },
+    "generationError": {
+      "message": "No hemos podido preparar esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. ¡Vamos con otra ronda!",
+      "announcement": "No se ha podido crear esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. Vamos a intentarlo con otra ronda."
+    },
+    "gameOver": {
+      "heading": "¡Ordena por tamaño completado!",
+      "announcementFormat": "Has terminado Ordena por tamaño. Ordenaste correctamente {score} de {total} rondas.",
+      "message": "¡Bien hecho ordenando a las criaturas! Sigue jugando para descubrir más tamaños."
     }
   },
   "dinosaurNames": {
