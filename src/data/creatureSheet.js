@@ -1,13 +1,14 @@
 'use strict';
 
 /**
- * Per-creature verified diet, visual family, and shadow-mode (silhouette)
- * compatibility metadata, keyed by `DINOSAURS` (src/data/questionBank.js).
+ * Per-creature verified diet, body length, visual family, and shadow-mode
+ * (silhouette) compatibility metadata, keyed by `DINOSAURS`
+ * (src/data/questionBank.js).
  *
  * This is a slice of the PRD foundation "Ficha única y verificable para
  * todas las criaturas jugables": a single source of truth other modes read
  * instead of each re-deriving/duplicating a fact per creature. Modes needing
- * more fields (size, era, sounds, etc. -- see src/game/modesCatalog.js's
+ * more fields (era, sounds, etc. -- see src/game/modesCatalog.js's
  * `buildCurrentResourceCatalog`) should extend `CREATURE_SHEETS` in place
  * rather than adding a second per-creature data source.
  *
@@ -16,6 +17,15 @@
  * carnívoro", "estegosaurio-21": "El Estegosaurio era herbívoro...") so the
  * Laberinto goal food never contradicts what Quiz/dato curioso teaches about
  * the same creature (PRD G4: no false scientific claims).
+ *
+ * `lengthMeters` (nose-to-tail body length, used by the Ordena por tamaño
+ * generator -- src/game/sizeOrderRoundGenerator.js) mirrors the same
+ * `funFacts` whenever they state one (e.g. "trex-08": "...unos 12 metros de
+ * largo", "diplodocus-06": "...hasta unos 25 metros de largo"); for a
+ * creature whose facts only give a range or a different measurement
+ * (Braquiosaurio's facts state neck *height*, Pteranodon's state wingspan),
+ * the midpoint of the widely-documented body length is used instead so no
+ * mode ever contradicts the dato curioso shown for the same creature.
  *
  * `visualFamily` groups creatures by real body-plan/silhouette (biped
  * carnivore, biped herbivore, armored quadruped, long-necked quadruped,
@@ -52,6 +62,107 @@ const VISUAL_FAMILIES = Object.freeze({
   ARMORED_QUADRUPED: 'armored_quadruped',
   LONG_NECK_QUADRUPED: 'long_neck_quadruped',
   FLYING_REPTILE: 'flying_reptile',
+});
+
+const CREATURE_SHEETS = Object.freeze({
+  [DINOSAURS.TREX]: Object.freeze({
+    id: DINOSAURS.TREX,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 12,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.TRICERATOPS]: Object.freeze({
+    id: DINOSAURS.TRICERATOPS,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 9,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.VELOCIRAPTOR]: Object.freeze({
+    id: DINOSAURS.VELOCIRAPTOR,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 2,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.ESTEGOSAURIO]: Object.freeze({
+    id: DINOSAURS.ESTEGOSAURIO,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 9,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.BRAQUIOSAURIO]: Object.freeze({
+    id: DINOSAURS.BRAQUIOSAURIO,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 21,
+    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.ANKYLOSAURUS]: Object.freeze({
+    id: DINOSAURS.ANKYLOSAURUS,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 7,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.PTERANODON]: Object.freeze({
+    id: DINOSAURS.PTERANODON,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 1.8,
+    visualFamily: VISUAL_FAMILIES.FLYING_REPTILE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.SPINOSAURUS]: Object.freeze({
+    id: DINOSAURS.SPINOSAURUS,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 15,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.DILOPHOSAURUS]: Object.freeze({
+    id: DINOSAURS.DILOPHOSAURUS,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 6.5,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({
+    id: DINOSAURS.PACHYCEPHALOSAURUS,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 4.5,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.COMPSOGNATHUS]: Object.freeze({
+    id: DINOSAURS.COMPSOGNATHUS,
+    diet: DIETS.CARNIVORO,
+    lengthMeters: 1,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.DIPLODOCUS]: Object.freeze({
+    id: DINOSAURS.DIPLODOCUS,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 25,
+    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.IGUANODON]: Object.freeze({
+    id: DINOSAURS.IGUANODON,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 10,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
+  [DINOSAURS.PARASAUROLOPHUS]: Object.freeze({
+    id: DINOSAURS.PARASAUROLOPHUS,
+    diet: DIETS.HERBIVORO,
+    lengthMeters: 10,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
+    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
+  }),
 });
 
 // Body-plan buckets used to judge silhouette similarity: two approved
@@ -257,6 +368,12 @@ function getCreatureDiet(dinosaurId) {
   return sheet ? sheet.diet : undefined;
 }
 
+/** Convenience accessor for just the `lengthMeters` field of `getCreatureSheet(dinosaurId)`. */
+function getCreatureLengthMeters(dinosaurId) {
+  const sheet = getCreatureSheet(dinosaurId);
+  return sheet ? sheet.lengthMeters : undefined;
+}
+
 /** Convenience accessor for just the `visualFamily` field of `getCreatureSheet(dinosaurId)`. */
 function getCreatureVisualFamily(dinosaurId) {
   const sheet = getCreatureSheet(dinosaurId);
@@ -296,6 +413,7 @@ module.exports = {
   CREATURE_SHEETS,
   getCreatureSheet,
   getCreatureDiet,
+  getCreatureLengthMeters,
   getCreatureVisualFamily,
   getApprovedShadowCreatures,
   isShadowModeUnlocked,
