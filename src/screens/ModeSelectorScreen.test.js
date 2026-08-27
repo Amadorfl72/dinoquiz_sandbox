@@ -110,6 +110,36 @@ describe('ModeSelectorScreen rendering', () => {
     expect(getAllByRole(container, 'button').length).toBe(9); // 8 cards + back button
   });
 
+  test('renders without throwing (no ReferenceError from an undefined `doc`) and creates exactly eight cards', () => {
+    let result;
+
+    expect(() => {
+      result = renderWithFixture(container);
+    }).not.toThrow();
+
+    expect(container.querySelectorAll('.mode-selector-screen__card')).toHaveLength(8);
+    expect(Object.keys(result.cards)).toHaveLength(8);
+  });
+
+  test('derives its document from the container instead of relying on an ambient global `doc`/`document`', () => {
+    // A container that belongs to a *different* document than the global
+    // one Jest's jsdom environment installs. If any element-creation helper
+    // fell back to a free/global `document` (or an undefined `doc`) instead
+    // of the render context's own document, the created nodes would belong
+    // to the wrong document (or the call would throw).
+    const foreignDocument = document.implementation.createHTMLDocument('mode-selector');
+    const foreignContainer = foreignDocument.createElement('div');
+    foreignDocument.body.appendChild(foreignContainer);
+
+    const { root, cards } = renderWithFixture(foreignContainer);
+
+    expect(root.ownerDocument).toBe(foreignDocument);
+    expect(Object.keys(cards)).toHaveLength(8);
+    Object.values(cards).forEach((card) => {
+      expect(card.ownerDocument).toBe(foreignDocument);
+    });
+  });
+
   test('re-rendering into the same container clears the previous render', () => {
     renderWithFixture(container);
     renderWithFixture(container);

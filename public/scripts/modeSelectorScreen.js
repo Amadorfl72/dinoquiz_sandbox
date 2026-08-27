@@ -133,12 +133,17 @@
   // screens in this file's family -- homeScreen.js/ageGateScreen.js only
   // ever nest `<span>`s inside a button), so this and its children are all
   // `<span>`, never `<div>`/`<p>`.
-  function buildCardMeta(idPrefix, mode, verdict, strings, isLastUsed) {
-    var meta = document.createElement('span');
+  //
+  // `doc` is always an explicit parameter here (the render context's
+  // document, e.g. `container.ownerDocument`) -- never a free/global `doc`
+  // or `document` reference. That keeps this helper usable from any render
+  // context without an implicit, possibly-undefined binding.
+  function buildCardMeta(doc, idPrefix, mode, verdict, strings, isLastUsed) {
+    var meta = doc.createElement('span');
     meta.className = 'mode-selector-screen__card-meta';
     meta.id = idPrefix + '-meta';
 
-    var status = document.createElement('span');
+    var status = doc.createElement('span');
     status.className = verdict.available
       ? 'mode-selector-screen__card-status mode-selector-screen__card-status--available'
       : 'mode-selector-screen__card-status mode-selector-screen__card-status--blocked';
@@ -146,14 +151,14 @@
     meta.appendChild(status);
 
     if (!verdict.available) {
-      var reason = document.createElement('span');
+      var reason = doc.createElement('span');
       reason.className = 'mode-selector-screen__card-reason';
       reason.textContent = strings.blockedReasons[verdict.cause] || strings.status.blocked;
       meta.appendChild(reason);
     }
 
     if (isLastUsed) {
-      var badge = document.createElement('span');
+      var badge = doc.createElement('span');
       badge.className = 'mode-selector-screen__card-badge';
       badge.textContent = strings.lastPlayedBadge;
       meta.appendChild(badge);
@@ -162,14 +167,14 @@
     return meta;
   }
 
-  function buildCard(mode, verdict, selectorStrings, isLastUsed, handlers) {
+  function buildCard(doc, mode, verdict, selectorStrings, isLastUsed, handlers) {
     var idPrefix = 'mode-selector-card-' + mode.id;
     var modeSelectorEntry = selectorStrings.modes[mode.id];
 
-    var cell = document.createElement('li');
+    var cell = doc.createElement('li');
     cell.className = 'mode-selector-screen__cell';
 
-    var button = document.createElement('button');
+    var button = doc.createElement('button');
     button.type = 'button';
     button.className = verdict.available
       ? 'mode-selector-screen__card mode-selector-screen__card--available'
@@ -183,16 +188,16 @@
       button.setAttribute('aria-current', 'true');
     }
 
-    var illustration = document.createElement('span');
+    var illustration = doc.createElement('span');
     illustration.className = 'mode-selector-screen__card-illustration';
     illustration.setAttribute('aria-hidden', 'true');
     illustration.textContent = MODE_ILLUSTRATIONS[mode.id] || '🦕';
 
-    var name = document.createElement('span');
+    var name = doc.createElement('span');
     name.className = 'mode-selector-screen__card-name';
     name.textContent = (selectorStrings.modesNames && selectorStrings.modesNames[mode.id]) || mode.id;
 
-    var meta = buildCardMeta(idPrefix, mode, verdict, selectorStrings, isLastUsed);
+    var meta = buildCardMeta(doc, idPrefix, mode, verdict, selectorStrings, isLastUsed);
     button.setAttribute('aria-describedby', meta.id);
 
     button.appendChild(illustration);
@@ -213,6 +218,11 @@
 
   function renderModeSelectorScreen(container, options) {
     options = options || {};
+    // The document is always derived explicitly from the render context
+    // (the container passed in) rather than read off a free/global `doc` or
+    // `document` binding, so every element-creation helper below receives a
+    // valid reference regardless of which document/window rendered it.
+    var doc = container.ownerDocument || (typeof document !== 'undefined' ? document : undefined);
     var selectorStrings = options.strings || resolveDefaultLocaleStrings(options.locale, 'modeSelector');
     var modesStrings = options.modesStrings || resolveDefaultLocaleStrings(options.locale, 'modes');
     // buildCard only needs each mode's display name, keyed by mode id --
@@ -239,10 +249,10 @@
 
     container.innerHTML = '';
 
-    var root = document.createElement('div');
+    var root = doc.createElement('div');
     root.className = 'mode-selector-screen';
 
-    var backButton = document.createElement('button');
+    var backButton = doc.createElement('button');
     backButton.type = 'button';
     backButton.className = 'mode-selector-screen__back-button';
     backButton.textContent = strings.backButtonLabel;
@@ -251,13 +261,13 @@
       backButton.addEventListener('click', options.onBack);
     }
 
-    var title = document.createElement('h1');
+    var title = doc.createElement('h1');
     title.id = 'mode-selector-screen-title';
     title.className = 'mode-selector-screen__title';
     title.textContent = strings.screenTitle;
     title.tabIndex = -1;
 
-    var grid = document.createElement('ul');
+    var grid = doc.createElement('ul');
     grid.className = 'mode-selector-screen__grid';
     grid.setAttribute('aria-labelledby', title.id);
 
@@ -274,7 +284,7 @@
         }
         var existingBadge = card.meta.querySelector('.mode-selector-screen__card-badge');
         if (isLastUsed && !existingBadge) {
-          var badge = document.createElement('span');
+          var badge = doc.createElement('span');
           badge.className = 'mode-selector-screen__card-badge';
           badge.textContent = strings.lastPlayedBadge;
           card.meta.appendChild(badge);
@@ -305,7 +315,7 @@
 
     modes.forEach(function (mode) {
       var verdict = availabilityByModeId[mode.id] || { modeId: mode.id, available: false, cause: null };
-      var built = buildCard(mode, verdict, strings, mode.id === lastMode, {
+      var built = buildCard(doc, mode, verdict, strings, mode.id === lastMode, {
         onSelect: handleSelect,
         onBlocked: handleBlocked,
       });
