@@ -12,6 +12,14 @@
  * which POSTs accumulated logs as JSON. Logs are cleared after successful
  * transmission unless `clearOnSuccess: false` is passed in options.
  *
+ * Diagnostics counters (TRIOFSND-230): `logSelectorOpen()`/
+ * `getSelectorOpenCount()` track an aggregated, local-only tally of mode
+ * selector opens (never sent via sendLogs), and `logModeBlocked(modeId,
+ * cause)`/`getModeBlockedLogs()` record a structured `mode_blocked` entry
+ * when a mode is blocked, stored under its own local-only key -- never
+ * pushed into the transmittable log array, so it is never sent via
+ * sendLogs either.
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -20,6 +28,8 @@
 
 (function () {
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
+  var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
+  var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -100,6 +110,8 @@
   function LogService(storageAdapter) {
     this.storageAdapter = storageAdapter || createLocalStorageAdapter();
     this.logs = this._loadLogs();
+    this.selectorOpenCount = this._loadSelectorOpenCount();
+    this.modeBlockedLogs = this._loadModeBlockedLogs();
   }
 
   LogService.prototype._loadLogs = function () {
@@ -132,6 +144,70 @@
     var entry = createLogEntry(eventType, metadata);
     this.logs.push(entry);
     this._saveLogs();
+  };
+
+  LogService.prototype._loadSelectorOpenCount = function () {
+    try {
+      var stored = this.storageAdapter.getItem(SELECTOR_OPEN_COUNT_KEY);
+      var count = stored ? JSON.parse(stored) : 0;
+      return Number.isInteger(count) && count >= 0 ? count : 0;
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load selector open count from storage', error);
+      return 0;
+    }
+  };
+
+  LogService.prototype._saveSelectorOpenCount = function () {
+    try {
+      this.storageAdapter.setItem(SELECTOR_OPEN_COUNT_KEY, JSON.stringify(this.selectorOpenCount));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save selector open count to storage', error);
+    }
+  };
+
+  LogService.prototype.logSelectorOpen = function () {
+    this.selectorOpenCount += 1;
+    this._saveSelectorOpenCount();
+    return this.selectorOpenCount;
+  };
+
+  LogService.prototype.getSelectorOpenCount = function () {
+    return this.selectorOpenCount;
+  };
+
+  LogService.prototype._loadModeBlockedLogs = function () {
+    try {
+      var stored = this.storageAdapter.getItem(MODE_BLOCKED_LOGS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load mode-blocked logs from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveModeBlockedLogs = function () {
+    try {
+      if (this.modeBlockedLogs.length > MAX_LOGS) {
+        this.modeBlockedLogs = this.modeBlockedLogs.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(MODE_BLOCKED_LOGS_STORAGE_KEY, JSON.stringify(this.modeBlockedLogs));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save mode-blocked logs to storage', error);
+    }
+  };
+
+  LogService.prototype.logModeBlocked = function (modeId, cause) {
+    if (typeof modeId !== 'string' || modeId.length === 0) {
+      console.warn('DinoQuiz: logModeBlocked requires a valid modeId');
+      return;
+    }
+    var entry = createLogEntry('mode_blocked', { modeId: modeId, cause: cause || null });
+    this.modeBlockedLogs.push(entry);
+    this._saveModeBlockedLogs();
+  };
+
+  LogService.prototype.getModeBlockedLogs = function () {
+    return this.modeBlockedLogs.slice();
   };
 
   LogService.prototype.logAppAccess = function (metadata) {
@@ -248,6 +324,8 @@
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
       LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
+      SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
+      MODE_BLOCKED_LOGS_STORAGE_KEY: MODE_BLOCKED_LOGS_STORAGE_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };

@@ -54,6 +54,7 @@ const APPROVED_LOG_EVENT_TYPES = [
   'maze_generation_failed',
   'content_validation_failed',
   'storage_max_unlocked_level_persist_error',
+  'mode_blocked',
 ];
 
 // Exact object-key names (lowercased, no separators) that must never appear
