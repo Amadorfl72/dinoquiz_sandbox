@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v13';
+const SW_VERSION = 'v14';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -71,15 +71,15 @@ const PRECACHE_URLS = [
   '/assets/images/realistic/braquiosaurio.jpg',
   '/assets/images/realistic/ankylosaurus.jpg',
   '/assets/images/realistic/pteranodon.jpg',
-  // Levels 6-10 realistic variants (original DinoQuiz artwork, see
-  // public/assets/images/realistic/CREDITS.md) ship as .svg, not .jpg.
-  '/assets/images/realistic/spinosaurus.svg',
-  '/assets/images/realistic/dilophosaurus.svg',
-  '/assets/images/realistic/pachycephalosaurus.svg',
-  '/assets/images/realistic/compsognathus.svg',
-  '/assets/images/realistic/diplodocus.svg',
-  '/assets/images/realistic/iguanodon.svg',
-  '/assets/images/realistic/parasaurolophus.svg',
+  // Levels 6-10 realistic variants (licensed paleoart, see
+  // public/assets/images/realistic/CREDITS.md).
+  '/assets/images/realistic/spinosaurus.jpg',
+  '/assets/images/realistic/dilophosaurus.jpg',
+  '/assets/images/realistic/pachycephalosaurus.jpg',
+  '/assets/images/realistic/compsognathus.jpg',
+  '/assets/images/realistic/diplodocus.jpg',
+  '/assets/images/realistic/iguanodon.jpg',
+  '/assets/images/realistic/parasaurolophus.jpg',
   // Fallback images shown when a realistic variant fails to load.
   '/assets/images/fallback/trex.svg',
   '/assets/images/fallback/triceratops.svg',
@@ -88,13 +88,9 @@ const PRECACHE_URLS = [
   '/assets/images/fallback/braquiosaurio.svg',
   '/assets/images/fallback/ankylosaurus.svg',
   '/assets/images/fallback/pteranodon.svg',
-  '/assets/images/fallback/spinosaurus.svg',
-  '/assets/images/fallback/dilophosaurus.svg',
-  '/assets/images/fallback/pachycephalosaurus.svg',
-  '/assets/images/fallback/compsognathus.svg',
-  '/assets/images/fallback/diplodocus.svg',
-  '/assets/images/fallback/iguanodon.svg',
-  '/assets/images/fallback/parasaurolophus.svg',
+  // Levels 6-10 dinosaurs reuse this single generic fallback instead of a
+  // new per-dinosaur asset (see public/assets/images/fallback/CREDITS.md).
+  '/assets/images/fallback/generic.svg',
   // Mode selector card illustrations (TRIOFSND-232): precached so the
   // selector renders fully offline right after install, before any of these
   // would otherwise be fetched at runtime.
