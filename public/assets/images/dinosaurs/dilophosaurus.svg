@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="dilophosaurusTitle">
+  <title id="dilophosaurusTitle">Dilophosaurus</title>
+  <!-- Tail -->
+  <path d="M90 300 q-40 -14 -44 -50" fill="none" stroke="#7E57C2" stroke-width="26" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="180" cy="345" rx="22" ry="17" fill="#5E35B1" stroke="#311B92" stroke-width="6"/>
+  <ellipse cx="245" cy="345" rx="22" ry="17" fill="#5E35B1" stroke="#311B92" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="210" cy="255" rx="90" ry="65" fill="#7E57C2" stroke="#311B92" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="210" cy="270" rx="52" ry="36" fill="#EDE7F6"/>
+  <!-- Arms -->
+  <path d="M160 235 q-16 12 -12 30" fill="none" stroke="#7E57C2" stroke-width="12" stroke-linecap="round"/>
+  <path d="M260 235 q16 12 12 30" fill="none" stroke="#7E57C2" stroke-width="12" stroke-linecap="round"/>
+  <!-- Neck and head -->
+  <path d="M280 220 q30 -70 30 -110" fill="none" stroke="#7E57C2" stroke-width="30" stroke-linecap="round"/>
+  <ellipse cx="315" cy="95" rx="42" ry="34" fill="#7E57C2" stroke="#311B92" stroke-width="7"/>
+  <!-- Twin head crests -->
+  <path d="M290 70 q-6 -34 12 -46 q10 20 6 44 z" fill="#B39DDB" stroke="#311B92" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M320 66 q0 -36 18 -46 q6 22 -2 44 z" fill="#B39DDB" stroke="#311B92" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Jaw -->
+  <path d="M280 108 q40 20 68 -2 q-8 16 -34 18 q-24 2 -34 -16 z" fill="#FFFFFF" stroke="#311B92" stroke-width="5"/>
+  <!-- Eye -->
+  <circle cx="330" cy="88" r="8" fill="#311B92"/>
+  <circle cx="333" cy="85" r="3" fill="#FFFFFF"/>
+</svg>

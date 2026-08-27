@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="parasaurolophusRealisticTitle">
+  <title id="parasaurolophusRealisticTitle">Ilustración realista de un Parasaurolophus</title>
+  <defs>
+    <linearGradient id="parasaurolophusBodyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C08A45"/>
+      <stop offset="100%" stop-color="#7A5324"/>
+    </linearGradient>
+  </defs>
+  <path d="M90 300 q-40 -10 -46 -44" fill="none" stroke="#7A5324" stroke-width="26" stroke-linecap="round"/>
+  <ellipse cx="180" cy="345" rx="25" ry="18" fill="#7A5324" stroke="#3F2A12" stroke-width="6"/>
+  <ellipse cx="250" cy="345" rx="25" ry="18" fill="#7A5324" stroke="#3F2A12" stroke-width="6"/>
+  <ellipse cx="215" cy="255" rx="98" ry="70" fill="url(#parasaurolophusBodyGradient)" stroke="#3F2A12" stroke-width="6"/>
+  <g stroke="#3F2A12" stroke-width="2" opacity="0.5">
+    <path d="M145 255 q70 26 140 0"/>
+    <path d="M155 278 q60 18 120 0"/>
+  </g>
+  <path d="M168 235 q-16 12 -12 30" fill="none" stroke="#7A5324" stroke-width="13" stroke-linecap="round"/>
+  <path d="M262 235 q16 12 12 30" fill="none" stroke="#7A5324" stroke-width="13" stroke-linecap="round"/>
+  <ellipse cx="300" cy="195" rx="32" ry="28" fill="#7A5324" stroke="#3F2A12" stroke-width="6"/>
+  <ellipse cx="335" cy="160" rx="40" ry="30" fill="#8C6530" stroke="#3F2A12" stroke-width="6"/>
+  <path d="M300 175 q34 20 66 0 q-6 14 -32 16 q-26 0 -34 -16 z" fill="#EDE0C8" stroke="#3F2A12" stroke-width="4"/>
+  <path d="M330 140 q10 -60 -40 -80 q-10 40 10 66 q14 16 30 14 z" fill="#A87A3D" stroke="#3F2A12" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="340" cy="148" r="7" fill="#3F2A12"/>
+</svg>

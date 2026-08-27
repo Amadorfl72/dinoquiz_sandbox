@@ -52,6 +52,13 @@
     braquiosaurio: 'herbivoro',
     ankylosaurus: 'herbivoro',
     pteranodon: 'carnivoro',
+    spinosaurus: 'carnivoro',
+    dilophosaurus: 'carnivoro',
+    pachycephalosaurus: 'herbivoro',
+    compsognathus: 'carnivoro',
+    diplodocus: 'herbivoro',
+    iguanodon: 'herbivoro',
+    parasaurolophus: 'herbivoro',
   });
   var DEFAULT_DINOSAUR_POOL = Object.freeze(Object.keys(DINOSAUR_DIETS));
 

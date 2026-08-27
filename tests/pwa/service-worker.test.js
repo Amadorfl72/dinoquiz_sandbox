@@ -61,7 +61,7 @@ describe('TRIOFSND-110: service worker source', () => {
   test('precaches both the drawn and realistic/fallback variant for every dinosaur (TRIOFSND-195)', () => {
     // eslint-disable-next-line global-require
     const { PRECACHE_URLS } = require(SW_PATH);
-    const dinosaurs = [
+    const dinosaursWithJpgRealistic = [
       'trex',
       'triceratops',
       'velociraptor',
@@ -71,9 +71,31 @@ describe('TRIOFSND-110: service worker source', () => {
       'pteranodon',
     ];
 
-    dinosaurs.forEach((dinosaur) => {
+    dinosaursWithJpgRealistic.forEach((dinosaur) => {
       expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
       expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.jpg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
+    });
+  });
+
+  // TRIOFSND-202: levels 6-10 added seven more dinosaurs; their realistic
+  // variant ships as .svg (original DinoQuiz artwork), not .jpg.
+  test('precaches both the drawn and realistic/fallback variant for every level 6-10 dinosaur', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const dinosaursWithSvgRealistic = [
+      'spinosaurus',
+      'dilophosaurus',
+      'pachycephalosaurus',
+      'compsognathus',
+      'diplodocus',
+      'iguanodon',
+      'parasaurolophus',
+    ];
+
+    dinosaursWithSvgRealistic.forEach((dinosaur) => {
+      expect(PRECACHE_URLS).toContain(`/assets/images/dinosaurs/${dinosaur}.svg`);
+      expect(PRECACHE_URLS).toContain(`/assets/images/realistic/${dinosaur}.svg`);
       expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
     });
   });

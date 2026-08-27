@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-labelledby="diplodocusTitle">
+  <title id="diplodocusTitle">Diplodocus</title>
+  <!-- Long tail -->
+  <path d="M110 280 q-70 10 -95 -30" fill="none" stroke="#66BB6A" stroke-width="22" stroke-linecap="round"/>
+  <!-- Legs -->
+  <ellipse cx="185" cy="345" rx="24" ry="18" fill="#388E3C" stroke="#1B5E20" stroke-width="6"/>
+  <ellipse cx="255" cy="345" rx="24" ry="18" fill="#388E3C" stroke="#1B5E20" stroke-width="6"/>
+  <!-- Body -->
+  <ellipse cx="220" cy="270" rx="105" ry="62" fill="#66BB6A" stroke="#1B5E20" stroke-width="8"/>
+  <!-- Belly -->
+  <ellipse cx="220" cy="285" rx="65" ry="34" fill="#F1F8E9"/>
+  <!-- Long low neck -->
+  <path d="M310 250 q80 -30 95 -80" fill="none" stroke="#66BB6A" stroke-width="34" stroke-linecap="round"/>
+  <!-- Head -->
+  <ellipse cx="400" cy="150" rx="26" ry="18" fill="#66BB6A" stroke="#1B5E20" stroke-width="6"/>
+  <!-- Smile -->
+  <path d="M395 158 q10 6 18 2" fill="none" stroke="#1B5E20" stroke-width="4" stroke-linecap="round"/>
+  <!-- Eye -->
+  <circle cx="398" cy="142" r="6" fill="#1B5E20"/>
+  <circle cx="400" cy="140" r="2" fill="#FFFFFF"/>
+</svg>

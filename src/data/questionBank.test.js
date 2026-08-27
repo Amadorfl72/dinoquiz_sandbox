@@ -91,9 +91,9 @@ describe('real question bank (public/data/questions.json)', () => {
   });
 
   // TRIOFSND-202: build-time content check — the bank must contain exactly
-  // 150 valid questions, 30 per level (1-5).
-  test('TRIOFSND-202: contains exactly 150 valid questions, 30 per level', () => {
-    expect(questions).toHaveLength(150);
+  // 300 valid questions, 30 per level (1-10).
+  test('TRIOFSND-202: contains exactly 300 valid questions, 30 per level', () => {
+    expect(questions).toHaveLength(300);
     expect(getLevelCoverageErrors(questions)).toEqual([]);
 
     VALID_LEVELS.forEach((level) => {
@@ -172,7 +172,7 @@ describe('real question bank (public/data/questions.json)', () => {
     expect(getDatoCuriosoTranslationErrors(questions, strings)).toEqual([]);
   });
 
-  test('every one of the 7 covered species has a dato curioso on each of its questions', () => {
+  test('every one of the 14 covered species has a dato curioso on each of its questions', () => {
     const strings = getStrings('es');
     VALID_DINOSAURS.forEach((dinosaur) => {
       const dinosaurQuestions = getQuestionsByDinosaur(questions, dinosaur);
@@ -196,6 +196,30 @@ describe('real question bank (public/data/questions.json)', () => {
     });
 
     expect(logService.events).toEqual([]);
+  });
+
+  function normalizeQuestionText(text) {
+    return text
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  test('levels 6-10 do not reuse ids or normalized question text from levels 1-5', () => {
+    const legacyQuestions = questions.filter((question) => question.level <= 5);
+    const newQuestions = questions.filter((question) => question.level >= 6);
+
+    expect(legacyQuestions).toHaveLength(150);
+    expect(newQuestions).toHaveLength(150);
+
+    const legacyIds = new Set(legacyQuestions.map((question) => question.id));
+    const legacyTexts = new Set(legacyQuestions.map((question) => normalizeQuestionText(question.question)));
+
+    newQuestions.forEach((question) => {
+      expect(legacyIds.has(question.id)).toBe(false);
+      expect(legacyTexts.has(normalizeQuestionText(question.question))).toBe(false);
+    });
   });
 });
 
