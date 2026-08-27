@@ -130,6 +130,20 @@ describe('GameSessionStorage', () => {
       expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
     });
 
+    it('discards and returns null when session.roundIndex and session.round.roundIndex disagree', async () => {
+      const adapter = createFakeAdapter();
+      const storage = new GameSessionStorage([adapter]);
+      await storage.saveSession('quiz', playingSession());
+
+      const envelope = JSON.parse(await adapter.getItem(SESSION_STORAGE_KEY));
+      envelope.session.roundIndex = 0;
+      envelope.session.round.roundIndex = 9;
+      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+    });
+
     it('discards a finished session instead of restoring it, without touching other persisted keys', async () => {
       const adapter = createFakeAdapter();
       const storage = new GameSessionStorage([adapter]);

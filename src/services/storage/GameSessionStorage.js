@@ -74,7 +74,9 @@ function serializeSession(modeId, session) {
  * cryptographic checksum -- there is no backend to sign against (PRD: "Sin
  * backend"), so "integrity" here means every field roundContract.js needs to
  * resume is present and internally consistent (e.g. `roundIndex` inside
- * `[0, roundCount)`), not tamper-detection.
+ * `[0, roundCount)`, and `session.roundIndex` matching `session.round.roundIndex`
+ * so restoration can never resume a round other than the one the common
+ * contract considers current), not tamper-detection.
  */
 function isValidEnvelope(envelope) {
   if (!envelope || typeof envelope !== 'object') {
@@ -103,6 +105,9 @@ function isValidEnvelope(envelope) {
 
   const round = session.round;
   if (!round || typeof round !== 'object' || !Number.isInteger(round.roundIndex) || typeof round.answered !== 'boolean') {
+    return false;
+  }
+  if (round.roundIndex !== session.roundIndex) {
     return false;
   }
 
