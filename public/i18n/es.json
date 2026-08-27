@@ -111,6 +111,12 @@
     "sevenOption": "7 años o menos",
     "eightPlusOption": "8 años o más"
   },
+  "modeChange": {
+    "title": "¿Cambiar de juego?",
+    "message": "Todavía no has terminado esta partida. Si cambias de juego ahora, perderás lo que llevas jugado.",
+    "confirmButtonLabel": "Sí, cambiar de juego",
+    "cancelButtonLabel": "No, seguir jugando"
+  },
   "privacyPolicy": {
     "screenTitle": "Política de privacidad",
     "backButtonLabel": "Volver a la pantalla de inicio",
