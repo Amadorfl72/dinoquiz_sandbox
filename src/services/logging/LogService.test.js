@@ -121,6 +121,61 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('selector-open counter (TRIOFSND-230)', () => {
+    it('starts at zero and increments on each logSelectorOpen call', () => {
+      expect(service.getSelectorOpenCount()).toBe(0);
+      expect(service.logSelectorOpen()).toBe(1);
+      expect(service.logSelectorOpen()).toBe(2);
+      expect(service.getSelectorOpenCount()).toBe(2);
+    });
+
+    it('persists the count under its own key, separate from the logs array', () => {
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      expect(storage.getItem('dinoquiz:selectorOpenCount')).toBe('2');
+      expect(service.getLogs()).toHaveLength(0);
+    });
+
+    it('round-trips the count through storage into a fresh instance', () => {
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      const reloaded = new LogService(storage);
+      expect(reloaded.getSelectorOpenCount()).toBe(3);
+    });
+
+    it('is unaffected by clearLogs', () => {
+      service.logSelectorOpen();
+      service.logAppAccess({});
+      service.clearLogs();
+      expect(service.getSelectorOpenCount()).toBe(1);
+    });
+  });
+
+  describe('mode-blocked log entry (TRIOFSND-230)', () => {
+    it('records a mode_blocked entry with modeId and cause in metadata', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      const logs = service.getLogsByType('mode_blocked');
+      expect(logs).toHaveLength(1);
+      expect(logs[0].metadata).toEqual({ modeId: 'sombra', cause: 'insufficient_creatures' });
+    });
+
+    it('defaults cause to null when omitted', () => {
+      service.logModeBlocked('parejas');
+      expect(service.getLogsByType('mode_blocked')[0].metadata).toEqual({
+        modeId: 'parejas',
+        cause: null,
+      });
+    });
+
+    it('ignores an invalid modeId without throwing or persisting anything', () => {
+      expect(() => service.logModeBlocked('', 'x')).not.toThrow();
+      expect(() => service.logModeBlocked(null, 'x')).not.toThrow();
+      expect(() => service.logModeBlocked(42, 'x')).not.toThrow();
+      expect(service.getLogsByType('mode_blocked')).toHaveLength(0);
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});

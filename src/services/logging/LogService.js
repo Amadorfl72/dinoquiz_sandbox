@@ -16,6 +16,17 @@
  * - 'pwa_install_attempt': user initiated PWA installation
  * - 'pwa_install_success': PWA installation completed
  * - 'pwa_install_failure': PWA installation failed
+ * - 'mode_blocked': mode selector attempt blocked by an unmet availability
+ *   requirement (see src/game/modesCatalog.js's AVAILABILITY_CAUSES) --
+ *   metadata carries { modeId, cause }, both machine-readable ids, never
+ *   free text.
+ *
+ * Diagnostics counters (TRIOFSND-230): unlike the per-occurrence log entries
+ * above, `logSelectorOpen()`/`getSelectorOpenCount()` track a single
+ * aggregated, local-only tally (how many times the mode selector was
+ * opened) so repeated opens across sessions stay O(1) in storage instead of
+ * growing the log array. Local-only per the PRD's privacy constraint --
+ * never included in `sendLogs`' payload.
  *
  * Endpoint transmission:
  * - `sendLogs(endpointUrl, options)` sends accumulated logs to a backend
@@ -25,6 +36,7 @@
  */
 
 const LOGS_STORAGE_KEY = 'dinoquiz:logs';
+const SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
 const MAX_LOGS = 1000; // Prevent unbounded growth
 const LOG_VERSION = '1.0';
 
@@ -85,6 +97,7 @@ function detectPlatform() {
 function LogService(storageAdapter) {
   this.storageAdapter = storageAdapter || createLocalStorageAdapter();
   this.logs = this._loadLogs();
+  this.selectorOpenCount = this._loadSelectorOpenCount();
 }
 
 LogService.prototype._loadLogs = function () {
@@ -106,6 +119,25 @@ LogService.prototype._saveLogs = function () {
     this.storageAdapter.setItem(LOGS_STORAGE_KEY, JSON.stringify(this.logs));
   } catch (error) {
     console.error('DinoQuiz: failed to save logs to storage', error);
+  }
+};
+
+LogService.prototype._loadSelectorOpenCount = function () {
+  try {
+    var stored = this.storageAdapter.getItem(SELECTOR_OPEN_COUNT_KEY);
+    var count = stored ? JSON.parse(stored) : 0;
+    return Number.isInteger(count) && count >= 0 ? count : 0;
+  } catch (error) {
+    console.warn('DinoQuiz: failed to load selector open count from storage', error);
+    return 0;
+  }
+};
+
+LogService.prototype._saveSelectorOpenCount = function () {
+  try {
+    this.storageAdapter.setItem(SELECTOR_OPEN_COUNT_KEY, JSON.stringify(this.selectorOpenCount));
+  } catch (error) {
+    console.error('DinoQuiz: failed to save selector open count to storage', error);
   }
 };
 
@@ -179,6 +211,40 @@ LogService.prototype.logPwaInstallSuccess = function (metadata) {
  */
 LogService.prototype.logPwaInstallFailure = function (metadata) {
   this.logEvent('pwa_install_failure', metadata);
+};
+
+/**
+ * Records that the mode selector was opened. An aggregated, non-PII local
+ * counter (TRIOFSND-230, PRD logging_observability) -- increments a single
+ * persisted number rather than pushing a new log entry, so opening the
+ * selector repeatedly never grows the log array.
+ * @returns {number} The updated count
+ */
+LogService.prototype.logSelectorOpen = function () {
+  this.selectorOpenCount += 1;
+  this._saveSelectorOpenCount();
+  return this.selectorOpenCount;
+};
+
+/**
+ * Retrieves the aggregated selector-open count
+ * @returns {number} Number of times the mode selector was opened
+ */
+LogService.prototype.getSelectorOpenCount = function () {
+  return this.selectorOpenCount;
+};
+
+/**
+ * Records a blocked mode-selection attempt.
+ * @param {string} modeId - The mode's id (see src/game/modesCatalog.js MODE_IDS)
+ * @param {string} cause - Machine-readable block cause (see modesCatalog.js AVAILABILITY_CAUSES)
+ */
+LogService.prototype.logModeBlocked = function (modeId, cause) {
+  if (typeof modeId !== 'string' || modeId.length === 0) {
+    console.warn('DinoQuiz: logModeBlocked requires a valid modeId');
+    return;
+  }
+  this.logEvent('mode_blocked', { modeId: modeId, cause: cause || null });
 };
 
 /**
@@ -343,6 +409,7 @@ if (typeof module !== 'undefined' && module.exports) {
     createLocalStorageAdapter: createLocalStorageAdapter,
     createMemoryAdapter: createMemoryAdapter,
     LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
+    SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
     MAX_LOGS: MAX_LOGS,
     LOG_VERSION: LOG_VERSION,
   };
