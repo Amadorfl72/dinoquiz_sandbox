@@ -36,6 +36,7 @@ const PRECACHE_URLS = [
   '/scripts/ageGateScreen.js',
   '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
+  '/scripts/mazeScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/modesCatalog.js',
   '/scripts/lastModeService.js',
