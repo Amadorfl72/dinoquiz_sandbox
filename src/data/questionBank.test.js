@@ -282,7 +282,7 @@ describe('validateQuestion', () => {
     expect(errors.some((error) => error.includes('image'))).toBe(true);
   });
 
-  test.each([undefined, null, 0, 11, 1.5, '1'])('rejects an invalid "level" (%p)', (level) => {
+  test.each([undefined, null, 0, MAX_LEVEL + 1, 1.5, '1'])('rejects an invalid "level" (%p)', (level) => {
     const errors = validateQuestion(buildValidQuestion({ level }), 0);
     expect(errors.some((error) => error.includes('"level"'))).toBe(true);
   });

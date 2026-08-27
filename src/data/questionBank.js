@@ -66,6 +66,14 @@ const MAX_OPTIONS = 4;
 const MIN_QUESTIONS_PER_DINOSAUR = 3;
 const MIN_LEVEL = 1;
 const MAX_LEVEL = 10;
+// VALID_LEVELS/EXPECTED_QUESTION_COUNT are NOT a mirror of MAX_LEVEL: they
+// describe the content-completeness contract for the levels actually shipped
+// in public/data/questions.json. MAX_LEVEL is the generic ceiling
+// gameFlow.js's resolveLevelOutcome/completeLevel progress toward
+// (TRIOFSND-207+), raised ahead of content so the game logic did not need
+// reshaping again once levels 6-10 shipped. They now coincide because the
+// content caught up: the bank carries 300 questions, 30 per level, levels
+// 1-10. Extend this list only once real questions for a level exist.
 const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const QUESTIONS_PER_LEVEL = 30;
 const EXPECTED_QUESTION_COUNT = VALID_LEVELS.length * QUESTIONS_PER_LEVEL;

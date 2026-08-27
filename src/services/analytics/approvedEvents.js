@@ -51,8 +51,11 @@ const APPROVED_LOG_EVENT_TYPES = [
   'pwa_install_success',
   'pwa_install_failure',
   'level_generation_failed',
+  'maze_generation_failed',
+  'maze_round_generation_failed',
   'content_validation_failed',
   'storage_max_unlocked_level_persist_error',
+  'mode_blocked',
 ];
 
 // Exact object-key names (lowercased, no separators) that must never appear

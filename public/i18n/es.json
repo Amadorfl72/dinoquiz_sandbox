@@ -30,6 +30,81 @@
     "privacyPolicyIconLabel": "Política de privacidad completa",
     "privacyPolicyIconHint": "Toca aquí para leer, en familia, qué hacemos con la información de la app"
   },
+  "modes": {
+    "quiz": {
+      "name": "Quiz",
+      "description": "Responde preguntas sobre criaturas prehistóricas eligiendo entre varias respuestas."
+    },
+    "laberinto": {
+      "name": "Laberinto",
+      "description": "Guía a una criatura prehistórica por un laberinto hasta llegar a la meta."
+    },
+    "sombra": {
+      "name": "Adivina la sombra",
+      "description": "Observa una silueta y adivina qué criatura prehistórica es."
+    },
+    "oidoJurasico": {
+      "name": "Oído Jurásico",
+      "description": "Escucha un sonido imaginado y adivina a qué criatura prehistórica pertenece."
+    },
+    "parejas": {
+      "name": "Parejas jurásicas",
+      "description": "Encuentra las parejas de criaturas prehistóricas iguales en el tablero."
+    },
+    "clasifica": {
+      "name": "Clasifica",
+      "description": "Clasifica cada criatura prehistórica según si es carnívora, herbívora u omnívora."
+    },
+    "ordenaPorTamano": {
+      "name": "Ordena por tamaño",
+      "description": "Ordena a las criaturas prehistóricas de la más pequeña a la más grande."
+    },
+    "lineaDelTiempo": {
+      "name": "Línea del tiempo",
+      "description": "Coloca a las criaturas prehistóricas en el orden en el que vivieron."
+    }
+  },
+  "modeSelector": {
+    "screenTitle": "Elige tu juego",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "lastPlayedBadge": "Último jugado",
+    "modes": {
+      "quiz": {
+        "accessibleLabel": "Modo Quiz: responde preguntas sobre criaturas prehistóricas eligiendo la respuesta correcta"
+      },
+      "laberinto": {
+        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto prehistórico hasta la salida"
+      },
+      "sombra": {
+        "accessibleLabel": "Modo Adivina la sombra: reconoce qué criatura prehistórica se esconde detrás de su silueta"
+      },
+      "oidoJurasico": {
+        "accessibleLabel": "Modo Oído Jurásico: escucha un sonido imaginado y adivina de qué criatura prehistórica se trata"
+      },
+      "parejas": {
+        "accessibleLabel": "Modo Parejas jurásicas: encuentra las cartas de criaturas prehistóricas que forman pareja"
+      },
+      "clasifica": {
+        "accessibleLabel": "Modo Clasifica: decide si cada criatura prehistórica es carnívora, herbívora u omnívora"
+      },
+      "ordenaPorTamano": {
+        "accessibleLabel": "Modo Ordena por tamaño: coloca a las criaturas prehistóricas de la más pequeña a la más grande"
+      },
+      "lineaDelTiempo": {
+        "accessibleLabel": "Modo Línea del tiempo: ordena a las criaturas prehistóricas según cuándo vivieron"
+      }
+    },
+    "status": {
+      "available": "Disponible",
+      "blocked": "Bloqueado"
+    },
+    "blockedReasons": {
+      "insufficient_questions": "Necesitamos más preguntas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "insufficient_creatures": "Necesitamos más criaturas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "insufficient_creature_sounds": "Necesitamos más sonidos imaginados de criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!"
+    }
+  },
   "ageGate": {
     "screenTitle": "¿Cuántos años tienes?",
     "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
@@ -227,6 +302,43 @@
         "ankylosaurus": "El Ankylosaurus tenía el cuerpo tan ancho como una furgoneta pequeña.",
         "pteranodon": "El Pteranodon podía llegar a medir más de 6 metros de una punta de ala a la otra."
       }
+    }
+  },
+  "maze": {
+    "screenTitle": "Laberinto",
+    "instructions": "Ayuda al dinosaurio a llegar hasta la comida moviéndote por el laberinto con las flechas.",
+    "boardLabel": "Laberinto",
+    "dinosaurAlt": "Dino, el dinosaurio que debes guiar por el laberinto",
+    "foodAlt": "Comida que debe alcanzar el dinosaurio",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Ayuda al dinosaurio a encontrar la comida.",
+    "controls": {
+      "groupLabel": "Controles de movimiento",
+      "up": "Arriba",
+      "down": "Abajo",
+      "left": "Izquierda",
+      "right": "Derecha",
+      "upAriaLabel": "Mover al dinosaurio hacia arriba",
+      "downAriaLabel": "Mover al dinosaurio hacia abajo",
+      "leftAriaLabel": "Mover al dinosaurio hacia la izquierda",
+      "rightAriaLabel": "Mover al dinosaurio hacia la derecha",
+      "unavailableState": "no disponible",
+      "unavailableAriaLabelFormat": "{direction}, no disponible: hay un muro"
+    },
+    "movementBlocked": {
+      "message": "Por ahí hay un muro, prueba con otra flecha.",
+      "announcement": "Movimiento bloqueado: por ahí hay un muro. Prueba con otra flecha."
+    },
+    "roundResult": {
+      "correctMessage": "¡Genial, acertaste! Le has llevado la comida al dinosaurio.",
+      "foodDeliveredAnnouncementFormat": "¡Genial! Le has llevado la comida al dinosaurio en {moves} movimientos.",
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Laberinto completado!",
+      "announcementFormat": "Has terminado el laberinto. Ayudaste al dinosaurio a encontrar la comida en {score} de {total} rondas.",
+      "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
     }
   },
   "dinosaurNames": {

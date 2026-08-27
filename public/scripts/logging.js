@@ -12,6 +12,26 @@
  * which POSTs accumulated logs as JSON. Logs are cleared after successful
  * transmission unless `clearOnSuccess: false` is passed in options.
  *
+ * Diagnostics counters (TRIOFSND-230): `logSelectorOpen()`/
+ * `getSelectorOpenCount()` track an aggregated, local-only tally of mode
+ * selector opens (never sent via sendLogs), and `logModeBlocked(modeId,
+ * cause)`/`getModeBlockedLogs()` record a structured `mode_blocked` entry
+ * when a mode is blocked, stored under its own local-only key -- never
+ * pushed into the transmittable log array, so it is never sent via
+ * sendLogs either.
+ *
+ * Laberinto diagnostics (TRIOFSND-259): the same aggregated, local-only,
+ * never-transmitted pattern extended to the Laberinto mode -- `logMazeGameStarted`/
+ * `logMazeGameCompleted`/`logMazeGameAbandoned` each tally a per-level count
+ * (keyed by the maze difficulty level, `dinoquiz:mazeGamesStartedByLevel` and
+ * friends) so a parent/dev can see how many Laberinto games were started vs.
+ * actually finished vs. left mid-game at each level, and
+ * `logMazeResolvabilityFailure`/`getMazeResolvabilityFailureCount` tally how
+ * many times a maze/round could not be generated as solvable (mirrors the
+ * raw `maze_generation_failed`/`maze_round_generation_failed` events already
+ * logged by src/game/mazeGenerator.js/public/scripts/mazeGame.js, as a single
+ * aggregated counter instead of the full per-event log).
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -20,6 +40,12 @@
 
 (function () {
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
+  var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
+  var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
+  var MAZE_GAMES_STARTED_KEY = 'dinoquiz:mazeGamesStartedByLevel';
+  var MAZE_GAMES_COMPLETED_KEY = 'dinoquiz:mazeGamesCompletedByLevel';
+  var MAZE_GAMES_ABANDONED_KEY = 'dinoquiz:mazeGamesAbandonedByLevel';
+  var MAZE_RESOLVABILITY_FAILURE_COUNT_KEY = 'dinoquiz:mazeResolvabilityFailureCount';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -100,6 +126,12 @@
   function LogService(storageAdapter) {
     this.storageAdapter = storageAdapter || createLocalStorageAdapter();
     this.logs = this._loadLogs();
+    this.selectorOpenCount = this._loadSelectorOpenCount();
+    this.modeBlockedLogs = this._loadModeBlockedLogs();
+    this.mazeGamesStartedByLevel = this._loadLevelCounts(MAZE_GAMES_STARTED_KEY);
+    this.mazeGamesCompletedByLevel = this._loadLevelCounts(MAZE_GAMES_COMPLETED_KEY);
+    this.mazeGamesAbandonedByLevel = this._loadLevelCounts(MAZE_GAMES_ABANDONED_KEY);
+    this.mazeResolvabilityFailureCount = this._loadMazeResolvabilityFailureCount();
   }
 
   LogService.prototype._loadLogs = function () {
@@ -132,6 +164,155 @@
     var entry = createLogEntry(eventType, metadata);
     this.logs.push(entry);
     this._saveLogs();
+  };
+
+  LogService.prototype._loadSelectorOpenCount = function () {
+    try {
+      var stored = this.storageAdapter.getItem(SELECTOR_OPEN_COUNT_KEY);
+      var count = stored ? JSON.parse(stored) : 0;
+      return Number.isInteger(count) && count >= 0 ? count : 0;
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load selector open count from storage', error);
+      return 0;
+    }
+  };
+
+  LogService.prototype._saveSelectorOpenCount = function () {
+    try {
+      this.storageAdapter.setItem(SELECTOR_OPEN_COUNT_KEY, JSON.stringify(this.selectorOpenCount));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save selector open count to storage', error);
+    }
+  };
+
+  LogService.prototype.logSelectorOpen = function () {
+    this.selectorOpenCount += 1;
+    this._saveSelectorOpenCount();
+    return this.selectorOpenCount;
+  };
+
+  LogService.prototype.getSelectorOpenCount = function () {
+    return this.selectorOpenCount;
+  };
+
+  LogService.prototype._loadModeBlockedLogs = function () {
+    try {
+      var stored = this.storageAdapter.getItem(MODE_BLOCKED_LOGS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load mode-blocked logs from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveModeBlockedLogs = function () {
+    try {
+      if (this.modeBlockedLogs.length > MAX_LOGS) {
+        this.modeBlockedLogs = this.modeBlockedLogs.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(MODE_BLOCKED_LOGS_STORAGE_KEY, JSON.stringify(this.modeBlockedLogs));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save mode-blocked logs to storage', error);
+    }
+  };
+
+  LogService.prototype.logModeBlocked = function (modeId, cause) {
+    if (typeof modeId !== 'string' || modeId.length === 0) {
+      console.warn('DinoQuiz: logModeBlocked requires a valid modeId');
+      return;
+    }
+    var entry = createLogEntry('mode_blocked', { modeId: modeId, cause: cause || null });
+    this.modeBlockedLogs.push(entry);
+    this._saveModeBlockedLogs();
+  };
+
+  LogService.prototype.getModeBlockedLogs = function () {
+    return this.modeBlockedLogs.slice();
+  };
+
+  /** Reads a `{ [level]: count }` map from storage, defaulting to `{}` for anything missing/corrupted. */
+  LogService.prototype._loadLevelCounts = function (key) {
+    try {
+      var stored = this.storageAdapter.getItem(key);
+      var counts = stored ? JSON.parse(stored) : {};
+      return counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load ' + key + ' from storage', error);
+      return {};
+    }
+  };
+
+  LogService.prototype._saveLevelCounts = function (key, counts) {
+    try {
+      this.storageAdapter.setItem(key, JSON.stringify(counts));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save ' + key + ' to storage', error);
+    }
+  };
+
+  /** Increments `counts[level]` by one, persists it under `key`, and returns the new count. */
+  LogService.prototype._incrementLevelCount = function (key, counts, level) {
+    var levelKey = String(level);
+    counts[levelKey] = (counts[levelKey] || 0) + 1;
+    this._saveLevelCounts(key, counts);
+    return counts[levelKey];
+  };
+
+  /** Tallies one more Laberinto game started at `level` (PRD "Diagnóstico ... almacenado únicamente en el dispositivo"). */
+  LogService.prototype.logMazeGameStarted = function (level) {
+    return this._incrementLevelCount(MAZE_GAMES_STARTED_KEY, this.mazeGamesStartedByLevel, level);
+  };
+
+  LogService.prototype.getMazeGamesStartedByLevel = function () {
+    return Object.assign({}, this.mazeGamesStartedByLevel);
+  };
+
+  /** Tallies one more Laberinto game completed (all ROUNDS_PER_GAME rounds reached their goal) at `level`. */
+  LogService.prototype.logMazeGameCompleted = function (level) {
+    return this._incrementLevelCount(MAZE_GAMES_COMPLETED_KEY, this.mazeGamesCompletedByLevel, level);
+  };
+
+  LogService.prototype.getMazeGamesCompletedByLevel = function () {
+    return Object.assign({}, this.mazeGamesCompletedByLevel);
+  };
+
+  /** Tallies one more Laberinto game left before it was completed (e.g. navigating back to Inicio mid-game) at `level`. */
+  LogService.prototype.logMazeGameAbandoned = function (level) {
+    return this._incrementLevelCount(MAZE_GAMES_ABANDONED_KEY, this.mazeGamesAbandonedByLevel, level);
+  };
+
+  LogService.prototype.getMazeGamesAbandonedByLevel = function () {
+    return Object.assign({}, this.mazeGamesAbandonedByLevel);
+  };
+
+  LogService.prototype._loadMazeResolvabilityFailureCount = function () {
+    try {
+      var stored = this.storageAdapter.getItem(MAZE_RESOLVABILITY_FAILURE_COUNT_KEY);
+      var count = stored ? JSON.parse(stored) : 0;
+      return Number.isInteger(count) && count >= 0 ? count : 0;
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load maze resolvability failure count from storage', error);
+      return 0;
+    }
+  };
+
+  LogService.prototype._saveMazeResolvabilityFailureCount = function () {
+    try {
+      this.storageAdapter.setItem(MAZE_RESOLVABILITY_FAILURE_COUNT_KEY, JSON.stringify(this.mazeResolvabilityFailureCount));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save maze resolvability failure count to storage', error);
+    }
+  };
+
+  /** Tallies one more maze/round that could not be generated as solvable (mirrors the raw maze_generation_failed/maze_round_generation_failed events). */
+  LogService.prototype.logMazeResolvabilityFailure = function () {
+    this.mazeResolvabilityFailureCount += 1;
+    this._saveMazeResolvabilityFailureCount();
+    return this.mazeResolvabilityFailureCount;
+  };
+
+  LogService.prototype.getMazeResolvabilityFailureCount = function () {
+    return this.mazeResolvabilityFailureCount;
   };
 
   LogService.prototype.logAppAccess = function (metadata) {
@@ -248,6 +429,12 @@
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
       LOGS_STORAGE_KEY: LOGS_STORAGE_KEY,
+      SELECTOR_OPEN_COUNT_KEY: SELECTOR_OPEN_COUNT_KEY,
+      MODE_BLOCKED_LOGS_STORAGE_KEY: MODE_BLOCKED_LOGS_STORAGE_KEY,
+      MAZE_GAMES_STARTED_KEY: MAZE_GAMES_STARTED_KEY,
+      MAZE_GAMES_COMPLETED_KEY: MAZE_GAMES_COMPLETED_KEY,
+      MAZE_GAMES_ABANDONED_KEY: MAZE_GAMES_ABANDONED_KEY,
+      MAZE_RESOLVABILITY_FAILURE_COUNT_KEY: MAZE_RESOLVABILITY_FAILURE_COUNT_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };

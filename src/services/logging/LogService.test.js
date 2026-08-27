@@ -121,6 +121,189 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('selector-open counter (TRIOFSND-230)', () => {
+    it('starts at zero and increments on each logSelectorOpen call', () => {
+      expect(service.getSelectorOpenCount()).toBe(0);
+      expect(service.logSelectorOpen()).toBe(1);
+      expect(service.logSelectorOpen()).toBe(2);
+      expect(service.getSelectorOpenCount()).toBe(2);
+    });
+
+    it('persists the count under its own key, separate from the logs array', () => {
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      expect(storage.getItem('dinoquiz:selectorOpenCount')).toBe('2');
+      expect(service.getLogs()).toHaveLength(0);
+    });
+
+    it('round-trips the count through storage into a fresh instance', () => {
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      service.logSelectorOpen();
+      const reloaded = new LogService(storage);
+      expect(reloaded.getSelectorOpenCount()).toBe(3);
+    });
+
+    it('is unaffected by clearLogs', () => {
+      service.logSelectorOpen();
+      service.logAppAccess({});
+      service.clearLogs();
+      expect(service.getSelectorOpenCount()).toBe(1);
+    });
+  });
+
+  describe('mode-blocked log entry (TRIOFSND-230)', () => {
+    it('records a mode_blocked entry with modeId and cause in metadata', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      const logs = service.getModeBlockedLogs();
+      expect(logs).toHaveLength(1);
+      expect(logs[0].eventType).toBe('mode_blocked');
+      expect(logs[0].metadata).toEqual({ modeId: 'sombra', cause: 'insufficient_creatures' });
+    });
+
+    it('defaults cause to null when omitted', () => {
+      service.logModeBlocked('parejas');
+      expect(service.getModeBlockedLogs()[0].metadata).toEqual({
+        modeId: 'parejas',
+        cause: null,
+      });
+    });
+
+    it('ignores an invalid modeId without throwing or persisting anything', () => {
+      expect(() => service.logModeBlocked('', 'x')).not.toThrow();
+      expect(() => service.logModeBlocked(null, 'x')).not.toThrow();
+      expect(() => service.logModeBlocked(42, 'x')).not.toThrow();
+      expect(service.getModeBlockedLogs()).toHaveLength(0);
+    });
+
+    it('is stored separately from the regular log array, never via getLogsByType', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      expect(service.getLogs()).toHaveLength(0);
+      expect(service.getLogsByType('mode_blocked')).toHaveLength(0);
+    });
+
+    it('persists under its own key, separate from dinoquiz:logs', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      expect(storage.getItem('dinoquiz:modeBlockedLogs')).not.toBeNull();
+      expect(storage.getItem('dinoquiz:logs')).toBeNull();
+    });
+
+    it('round-trips through storage into a fresh instance', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      const reloaded = new LogService(storage);
+      expect(reloaded.getModeBlockedLogs()).toHaveLength(1);
+      expect(reloaded.getModeBlockedLogs()[0].metadata).toEqual({
+        modeId: 'sombra',
+        cause: 'insufficient_creatures',
+      });
+    });
+
+    it('is unaffected by clearLogs', () => {
+      service.logModeBlocked('sombra', 'insufficient_creatures');
+      service.clearLogs();
+      expect(service.getModeBlockedLogs()).toHaveLength(1);
+    });
+
+    it('is never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logModeBlocked('sombra', 'insufficient_creatures');
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs.some((entry) => entry.eventType === 'mode_blocked')).toBe(false);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs.some((entry) => entry.eventType === 'mode_blocked')).toBe(false);
+
+        // still locally retrievable after transmission
+        expect(service.getModeBlockedLogs()).toHaveLength(1);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
+  describe('Laberinto diagnostics counters (TRIOFSND-259)', () => {
+    it('tallies games started per level independently', () => {
+      expect(service.logMazeGameStarted(1)).toBe(1);
+      expect(service.logMazeGameStarted(1)).toBe(2);
+      expect(service.logMazeGameStarted(2)).toBe(1);
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 2, 2: 1 });
+    });
+
+    it('tallies games completed per level independently of games started', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 2 });
+      expect(service.getMazeGamesCompletedByLevel()).toEqual({ 1: 1 });
+    });
+
+    it('tallies games abandoned per level independently', () => {
+      service.logMazeGameStarted(3);
+      service.logMazeGameAbandoned(3);
+      expect(service.getMazeGamesAbandonedByLevel()).toEqual({ 3: 1 });
+      expect(service.getMazeGamesCompletedByLevel()).toEqual({});
+    });
+
+    it('persists each per-level counter under its own dinoquiz: key', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      service.logMazeGameAbandoned(2);
+      expect(storage.getItem('dinoquiz:mazeGamesStartedByLevel')).toBe('{"1":1}');
+      expect(storage.getItem('dinoquiz:mazeGamesCompletedByLevel')).toBe('{"1":1}');
+      expect(storage.getItem('dinoquiz:mazeGamesAbandonedByLevel')).toBe('{"2":1}');
+    });
+
+    it('round-trips all three per-level counters through storage into a fresh instance', () => {
+      service.logMazeGameStarted(1);
+      service.logMazeGameCompleted(1);
+      service.logMazeGameAbandoned(2);
+      const reloaded = new LogService(storage);
+      expect(reloaded.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+      expect(reloaded.getMazeGamesCompletedByLevel()).toEqual({ 1: 1 });
+      expect(reloaded.getMazeGamesAbandonedByLevel()).toEqual({ 2: 1 });
+    });
+
+    it('are unaffected by clearLogs', () => {
+      service.logMazeGameStarted(1);
+      service.clearLogs();
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+    });
+
+    it('tallies resolvability failures as a single aggregated counter', () => {
+      expect(service.getMazeResolvabilityFailureCount()).toBe(0);
+      expect(service.logMazeResolvabilityFailure()).toBe(1);
+      expect(service.logMazeResolvabilityFailure()).toBe(2);
+      expect(service.getMazeResolvabilityFailureCount()).toBe(2);
+      expect(storage.getItem('dinoquiz:mazeResolvabilityFailureCount')).toBe('2');
+    });
+
+    it('are never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logMazeGameStarted(1);
+        service.logMazeGameCompleted(1);
+        service.logMazeGameAbandoned(1);
+        service.logMazeResolvabilityFailure();
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs).toHaveLength(0);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});
