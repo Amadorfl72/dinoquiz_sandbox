@@ -58,9 +58,15 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
-  test('precaches both the drawn and realistic variant for every dinosaur (TRIOFSND-195)', () => {
+  test('precaches both the drawn and realistic variant for the original seven dinosaurs (TRIOFSND-195)', () => {
     // eslint-disable-next-line global-require
     const { PRECACHE_URLS } = require(SW_PATH);
+    // Scoped to the fixed levels 1-5 roster only. Levels 6-10 asset coverage
+    // is data-driven and must not be hardcoded here: it's asserted
+    // authoritatively against the published question bank fields in the
+    // "TRIOFSND-266" describe block below, which is the only place allowed
+    // to decide what shape (extension, per-dinosaur vs. shared fallback,
+    // etc.) those assets take.
     const dinosaursWithJpgRealistic = [
       'trex',
       'triceratops',
@@ -69,14 +75,6 @@ describe('TRIOFSND-110: service worker source', () => {
       'braquiosaurio',
       'ankylosaurus',
       'pteranodon',
-      // Levels 6-10 (TRIOFSND-202): seven more dinosaurs, same jpg realistic variant.
-      'spinosaurus',
-      'dilophosaurus',
-      'pachycephalosaurus',
-      'compsognathus',
-      'diplodocus',
-      'iguanodon',
-      'parasaurolophus',
     ];
 
     dinosaursWithJpgRealistic.forEach((dinosaur) => {
@@ -100,25 +98,6 @@ describe('TRIOFSND-110: service worker source', () => {
 
     dinosaursWithOwnFallback.forEach((dinosaur) => {
       expect(PRECACHE_URLS).toContain(`/assets/images/fallback/${dinosaur}.svg`);
-    });
-  });
-
-  test('the levels 6-10 dinosaurs reuse the generic fallback instead of a per-dinosaur SVG', () => {
-    // eslint-disable-next-line global-require
-    const { PRECACHE_URLS } = require(SW_PATH);
-    const newDinosaurs = [
-      'spinosaurus',
-      'dilophosaurus',
-      'pachycephalosaurus',
-      'compsognathus',
-      'diplodocus',
-      'iguanodon',
-      'parasaurolophus',
-    ];
-
-    expect(PRECACHE_URLS).toContain('/assets/images/fallback/generic.svg');
-    newDinosaurs.forEach((dinosaur) => {
-      expect(PRECACHE_URLS).not.toContain(`/assets/images/fallback/${dinosaur}.svg`);
     });
   });
 
