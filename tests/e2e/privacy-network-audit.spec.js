@@ -16,6 +16,7 @@ const { test, expect } = require('@playwright/test');
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option--eight-plus';
+const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const NEXT_BUTTON = '.question-screen__next-button';
@@ -46,6 +47,8 @@ test.describe('TRIOFSND-119: auditoría de red -- ninguna llamada sale del propi
 
     await page.locator(HOME_PLAY_BUTTON).click();
     await page.locator(AGE_GATE_OPTION).click();
+    // TRIOFSND-232: the age gate hands off to the illustrated mode selector.
+    await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
 
     await playFullGame(page);
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();

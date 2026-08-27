@@ -39,6 +39,7 @@ const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option';
+const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const QUESTION_NEXT_BUTTON = '.question-screen__next-button';
@@ -59,11 +60,20 @@ async function auditScreen(page, screenName) {
   expect(summary, `${screenName}: axe violations (wcag2a/wcag2aa/wcag21a/wcag21aa)`).toEqual([]);
 }
 
-/** Picks any age band so the flow reaches the question screen (age gate is not one of the 4 audited screens). */
+/**
+ * Picks any age band, then the Quiz card on the mode selector that follows it
+ * (TRIOFSND-232), so the flow reaches the question screen -- neither the age
+ * gate nor the mode selector is one of the 4 audited screens here.
+ */
 async function skipAgeGateIfPresent(page) {
   const ageGateOption = page.locator(AGE_GATE_OPTION).first();
   if (await ageGateOption.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await ageGateOption.click();
+  }
+
+  const quizModeCard = page.locator(MODE_SELECTOR_QUIZ_CARD);
+  if (await quizModeCard.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await quizModeCard.click();
   }
 }
 

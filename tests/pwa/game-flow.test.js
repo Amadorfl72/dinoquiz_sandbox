@@ -10,10 +10,14 @@ const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings, ageGate: ageGateStrings } = require('../../public/i18n/es.json');
 
 // TRIOFSND-193: '¡Jugar!' now opens the age gate before the first question.
-// Every test below that clicks the real Home play button (as opposed to
-// calling startNewGame directly) must pick an option here to reach the game.
+// TRIOFSND-232: the age gate is followed by the illustrated mode selector,
+// so reaching the game now also needs a tap on the Quiz card there. Every
+// test below that clicks the real Home play button (as opposed to calling
+// startNewGame/startLevelGame directly) must go through both to reach the
+// game.
 function selectAgeGateOption(container) {
   getByRole(container, 'button', { name: ageGateStrings.eightPlusOption }).click();
+  container.querySelector('[data-mode-id="quiz"]').click();
 }
 
 // `level` defaults to 1 so every existing caller that doesn't care about
@@ -449,7 +453,12 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
         expect(ageGateStrings.sixOption).toBeUndefined();
         getByRole(container, 'button', { name: ageGateStrings.sevenOption }).click();
 
+        // TRIOFSND-232: the age gate hands off to the illustrated mode
+        // selector next, not straight into the game.
         expect(container.querySelector('.age-gate-screen')).toBeNull();
+        expect(container.querySelector('.mode-selector-screen')).not.toBeNull();
+
+        container.querySelector('[data-mode-id="quiz"]').click();
         expect(container.querySelector('.question-screen')).not.toBeNull();
       });
       jest.advanceTimersByTime(0);
