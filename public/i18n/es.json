@@ -341,6 +341,29 @@
       "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
     }
   },
+  "oidoJurasico": {
+    "screenTitle": "Oído Jurásico",
+    "imaginedSoundNotice": {
+      "heading": "Un sonido imaginado",
+      "message": "Nadie sabe con certeza cómo sonaban los dinosaurios de verdad: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
+    },
+    "playButton": "Reproducir sonido",
+    "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",
+    "replayButton": "Escuchar de nuevo",
+    "replayButtonAriaLabel": "Volver a escuchar el sonido imaginado de esta ronda",
+    "mutedNotice": {
+      "heading": "El sonido está silenciado",
+      "message": "Oído Jurásico necesita el sonido activado para poder jugar. Actívalo para escuchar la pista de esta ronda.",
+      "unmuteButton": "Activar sonido",
+      "backButton": "Volver"
+    },
+    "playbackError": {
+      "message": "No hemos podido reproducir el sonido. Comprueba el volumen de tu dispositivo y vuelve a intentarlo."
+    },
+    "answerReinforcement": {
+      "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    }
+  },
   "dinosaurNames": {
     "trex": "Tyrannosaurus Rex",
     "triceratops": "Triceratops",
