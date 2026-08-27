@@ -1823,3 +1823,214 @@ body {
 .feedback-component--incorrect .feedback-component__message {
   color: var(--color-neutral-text);
 }
+
+/*
+ * Parejas jurásicas screen (TRIOFSND-274). The board is sized from
+ * `--parejas-cols`/`--parejas-rows` (set inline per round by
+ * parejasScreen.js from `round.columns`/`round.rows`, always <=4 columns x
+ * <=4 rows) and capped at `min(100%, 320px)`, the same recipe
+ * `.maze-screen__board` already uses -- so the hardest level's 16-card board
+ * shrinks its cells instead of growing past a 375px-wide viewport (PRD: no
+ * horizontal scroll at any level). Every card still clears the shared
+ * --tap-target-min (48dp) floor even at 4x4.
+ *
+ * Every color pair below reuses the already WCAG-AA-verified design tokens
+ * (`:root` above, mirrored/tested in src/theme/designTokens.js) instead of
+ * introducing new ones -- no card state is carried by color alone: hidden
+ * vs. revealed also swaps the card's image (back.svg vs. the creature
+ * illustration) and its `aria-label`/`aria-pressed`, and matched additionally
+ * gets a visible "✓ Pareja" text badge and becomes `disabled`.
+ */
+.parejas-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.parejas-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.parejas-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.parejas-screen__level,
+.parejas-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.parejas-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.parejas-screen__round {
+  background-color: var(--color-stars);
+}
+
+.parejas-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.parejas-screen__match-progress {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.parejas-screen__board {
+  display: grid;
+  grid-template-columns: repeat(var(--parejas-cols), 1fr);
+  grid-template-rows: repeat(var(--parejas-rows), 1fr);
+  gap: 8px;
+  width: min(100%, 320px);
+  aspect-ratio: var(--parejas-cols) / var(--parejas-rows);
+  box-sizing: border-box;
+}
+
+.parejas-screen__card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 4px;
+  border: 3px solid var(--color-text);
+  border-radius: 12px;
+  background-color: var(--color-option-bg);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.parejas-screen__card:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.parejas-screen__card--revealed {
+  border-color: var(--color-focus-ring-on-light);
+  background-color: var(--color-option-bg-hover);
+}
+
+.parejas-screen__card--matched {
+  border-color: var(--color-stars);
+  background-color: var(--color-option-bg-pressed);
+  cursor: default;
+}
+
+.parejas-screen__card:disabled {
+  cursor: default;
+}
+
+.parejas-screen__card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.parejas-screen__card-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.parejas-screen__match-message,
+.parejas-screen__hint-message {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.parejas-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.parejas-screen__result-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.parejas-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.parejas-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.parejas-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.parejas-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.parejas-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
