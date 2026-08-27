@@ -233,7 +233,7 @@
   }
 
   // Last-selected mode persistence (TRIOFSND-230, wired up here by
-  // TRIOFSND-259): same namespaced key `src/services/lastModeService.js`
+  // TRIOFSND-259): same namespaced key `src/services/modeStorage.js`
   // itself writes (`dinoquiz:lastMode`), same rationale as MUTE_STORAGE_KEY
   // above -- that service is plain CommonJS and cannot be loaded as a
   // `<script>` in this no-bundler browser, so this reads/writes localStorage
