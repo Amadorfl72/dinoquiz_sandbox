@@ -1681,3 +1681,95 @@ body {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
+
+/*
+ * Mode-change confirmation dialog (TRIOFSND-237) -- shown over whatever
+ * screen requested a mode change while a game is still in progress. The
+ * safe "seguir jugando" (cancel) choice gets the prominent primary button
+ * (same treatment as the eight-plus/default age-gate option below), the
+ * destructive "cambiar de juego" (confirm) choice stays a plain neutral
+ * button -- distinguished by more than color: it is also never the
+ * button focused on mount (see modeChangeConfirmScreen.js).
+ */
+.mode-change-confirm-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: rgba(27, 94, 32, 0.6);
+}
+
+.mode-change-confirm-screen__dialog {
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+  padding: 24px;
+  text-align: center;
+  background-color: var(--color-white);
+  color: var(--color-text);
+  border-radius: 24px;
+}
+
+.mode-change-confirm-screen__title {
+  margin-top: 0;
+  font-size: var(--font-size-heading-sm);
+}
+
+.mode-change-confirm-screen__message {
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+}
+
+.mode-change-confirm-screen__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mode-change-confirm-screen__cancel-button,
+.mode-change-confirm-screen__confirm-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 24px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.mode-change-confirm-screen__cancel-button {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+}
+
+.mode-change-confirm-screen__cancel-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.mode-change-confirm-screen__cancel-button:active {
+  background-color: var(--color-primary-pressed);
+}
+
+.mode-change-confirm-screen__cancel-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.mode-change-confirm-screen__confirm-button {
+  color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  border: none;
+}
+
+.mode-change-confirm-screen__confirm-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}

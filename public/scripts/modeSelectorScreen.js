@@ -6,7 +6,7 @@
  * each showing a decorative illustration, the mode's localized name, an
  * accessible label, and its current availability -- wired to the real
  * availability evaluator (public/scripts/modesCatalog.js, TRIOFSND-228) and
- * the last-selected-mode service (public/scripts/lastModeService.js,
+ * the last-selected-mode service (public/scripts/modeStorage.js,
  * TRIOFSND-230).
  *
  * Layout (AC "sin scroll horizontal a 375px"): the eight cards sit in a
@@ -81,11 +81,11 @@
 
   function resolveLastModeService(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
-    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.lastMode) {
-      return win.DinoQuiz.services.lastMode;
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.modeStorage) {
+      return win.DinoQuiz.services.modeStorage;
     }
     if (typeof require === 'function') {
-      return require('./lastModeService');
+      return require('./modeStorage');
     }
     return null;
   }
