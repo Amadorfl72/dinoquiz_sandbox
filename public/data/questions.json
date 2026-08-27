@@ -2698,5 +2698,2705 @@
     "imageFallback": "fallback/pteranodon.svg",
     "imageAlt": "Ilustración educativa de un Pteranodon, un reptil volador (pterosaurio) del período Cretácico.",
     "level": 5
+  },
+  {
+    "id": "spinosaurus-01",
+    "dinosaur": "spinosaurus",
+    "question": "¿De qué se alimentaba principalmente el Spinosaurus?",
+    "options": [
+      "Solo de plantas",
+      "Principalmente de peces y otros animales acuáticos",
+      "Solo de insectos",
+      "Solo de huevos de otros dinosaurios"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-01",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "spinosaurus-02",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué tenía el Spinosaurus en el lomo que lo hace tan reconocible?",
+    "options": [
+      "Una gran vela formada por espinas de hueso",
+      "Un caparazón como una tortuga",
+      "Alas pequeñas",
+      "Un cuerno en la frente"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-02",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "spinosaurus-03",
+    "dinosaur": "spinosaurus",
+    "question": "¿Cómo era el hocico del Spinosaurus comparado con el de otros dinosaurios carnívoros?",
+    "options": [
+      "Muy corto y ancho",
+      "Largo y estrecho, parecido al de un cocodrilo",
+      "Con forma de pico de pato",
+      "No tenía hocico, solo boca"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-03",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "spinosaurus-04",
+    "dinosaur": "spinosaurus",
+    "question": "¿En qué período de la Tierra vivió el Spinosaurus?",
+    "options": [
+      "Triásico",
+      "Jurásico",
+      "Cretácico",
+      "Pérmico"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.spinosaurus-04",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "spinosaurus-05",
+    "dinosaur": "spinosaurus",
+    "question": "¿Dónde se han encontrado los fósiles del Spinosaurus?",
+    "options": [
+      "En el norte de África",
+      "En la Antártida",
+      "En Australia",
+      "En el fondo del océano Pacífico"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-05",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "spinosaurus-06",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué tamaño podía alcanzar el Spinosaurus?",
+    "options": [
+      "Era más pequeño que un perro",
+      "Podía medir unos 15 metros de largo",
+      "Medía como una pelota de baloncesto",
+      "Solo medía un metro"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-06",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "spinosaurus-07",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué significa el nombre \"Spinosaurus\"?",
+    "options": [
+      "\"Lagarto veloz\"",
+      "\"Lagarto espinoso\"",
+      "\"Lagarto con cuernos\"",
+      "\"Lagarto nadador\""
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-07",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "spinosaurus-08",
+    "dinosaur": "spinosaurus",
+    "question": "¿Cómo se movía el Spinosaurus, según creen los científicos hoy?",
+    "options": [
+      "Solo caminaba sobre dos patas en tierra firme",
+      "Pasaba mucho tiempo dentro y cerca del agua",
+      "Volaba de árbol en árbol",
+      "Se arrastraba como una serpiente"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-08",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "spinosaurus-09",
+    "dinosaur": "spinosaurus",
+    "question": "¿Cómo eran los dientes del Spinosaurus comparados con los del Tyrannosaurus Rex?",
+    "options": [
+      "Lisos y sin dentado, mejores para sujetar peces resbaladizos",
+      "Idénticos a los del T-Rex",
+      "No tenía dientes",
+      "Solo tenía dos dientes enormes"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-09",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "spinosaurus-10",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué grupo de animales fueron probablemente una parte importante de la dieta del Spinosaurus?",
+    "options": [
+      "Grandes mamíferos",
+      "Peces, incluidos algunos muy grandes",
+      "Otros dinosaurios gigantes",
+      "Plantas con flores"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-10",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "spinosaurus-11",
+    "dinosaur": "spinosaurus",
+    "question": "¿Cómo era la cola del Spinosaurus, según un estudio de 2020?",
+    "options": [
+      "Muy corta y rígida",
+      "Alta y flexible, como un remo para nadar",
+      "No tenía cola",
+      "Con púas venenosas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-11",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "spinosaurus-12",
+    "dinosaur": "spinosaurus",
+    "question": "¿Quién descubrió los primeros fósiles de Spinosaurus y en qué país?",
+    "options": [
+      "Un paleontólogo alemán, en Egipto",
+      "Un paleontólogo español, en México",
+      "Un paleontólogo japonés, en China",
+      "Un paleontólogo inglés, en la India"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-12",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "spinosaurus-13",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué ocurrió con los primeros fósiles de Spinosaurus que se encontraron?",
+    "options": [
+      "Se conservan intactos en un museo egipcio",
+      "Se destruyeron en un incendio en el museo donde se guardaban",
+      "Se perdieron en un naufragio",
+      "Nunca se llegaron a estudiar"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-13",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "spinosaurus-14",
+    "dinosaur": "spinosaurus",
+    "question": "Comparado con el Tyrannosaurus Rex, ¿cómo era el tamaño del Spinosaurus?",
+    "options": [
+      "Mucho más pequeño",
+      "Más largo, aunque probablemente menos pesado",
+      "Exactamente igual",
+      "El doble de pesado"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-14",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "spinosaurus-15",
+    "dinosaur": "spinosaurus",
+    "question": "¿Para qué creen algunos científicos que podía servir la vela del Spinosaurus, además de para nadar o regular la temperatura?",
+    "options": [
+      "Para atraer a otros Spinosaurus o intimidar rivales",
+      "Para volar cortas distancias",
+      "Para respirar bajo el agua",
+      "Para camuflarse totalmente en la arena"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-15",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "spinosaurus-16",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué tipo de huesos tenía el Spinosaurus que ayudan a pensar que pasaba mucho tiempo en el agua?",
+    "options": [
+      "Huesos huecos como los de las aves",
+      "Huesos densos y pesados, parecidos a los de animales acuáticos actuales",
+      "No tenía huesos, solo cartílago",
+      "Huesos con forma de escamas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-16",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "spinosaurus-17",
+    "dinosaur": "spinosaurus",
+    "question": "¿Qué otro gran dinosaurio carnívoro vivía en la misma zona y época que el Spinosaurus, y con el que probablemente no competía por la misma comida?",
+    "options": [
+      "El Tyrannosaurus Rex",
+      "El Carcharodontosaurus",
+      "El Velociraptor",
+      "El Compsognathus"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-17",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "spinosaurus-18",
+    "dinosaur": "spinosaurus",
+    "question": "¿Cómo eran las fosas nasales del Spinosaurus, comparadas con las de otros dinosaurios carnívoros?",
+    "options": [
+      "Estaban colocadas más atrás en el cráneo, para poder respirar con el hocico parcialmente sumergido",
+      "Estaban en la punta del hocico",
+      "No tenía fosas nasales",
+      "Estaban en la parte trasera de la cabeza"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-18",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "spinosaurus-19",
+    "dinosaur": "spinosaurus",
+    "question": "El Spinosaurus fue, durante mucho tiempo, un dinosaurio muy misterioso. ¿Por qué resultó tan difícil de estudiar durante décadas?",
+    "options": [
+      "Porque nunca se han hallado fósiles suyos",
+      "Porque sus primeros fósiles se perdieron y durante años solo hubo dibujos y notas del descubridor",
+      "Porque vivía bajo tierra",
+      "Porque solo existió en leyendas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-19",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "spinosaurus-20",
+    "dinosaur": "spinosaurus",
+    "question": "Según los estudios más recientes, ¿qué papel juega la vela del Spinosaurus en cómo nadaba?",
+    "options": [
+      "Le ayudaba a flotar mejor sin hundirse nunca",
+      "No afectaba nada a la natación",
+      "Los científicos aún debaten su función exacta al nadar",
+      "Le impedía completamente entrar en el agua"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.spinosaurus-20",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "spinosaurus-21",
+    "dinosaur": "spinosaurus",
+    "question": "¿A qué grupo de dinosaurios carnívoros, con hocicos alargados parecidos al de un cocodrilo, pertenecía el Spinosaurus?",
+    "options": [
+      "A los espinosáuridos",
+      "A los tiranosáuridos",
+      "A los anquilosáuridos",
+      "A los estegosáuridos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.spinosaurus-21",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "spinosaurus-22",
+    "dinosaur": "spinosaurus",
+    "question": "Comparando cráneos, ¿cómo describirían los científicos el cráneo del Spinosaurus frente al de un T-Rex?",
+    "options": [
+      "Más alto y robusto que el del T-Rex",
+      "Más bajo y alargado que el del T-Rex, mejor adaptado a atrapar peces",
+      "Idéntico al del T-Rex",
+      "Sin ningún hueso craneal"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.spinosaurus-22",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/spinosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Spinosaurus, un gran dinosaurio carnívoro con una vela en el lomo del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "parasaurolophus-01",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué tenía el Parasaurolophus en la cabeza que lo hace tan especial?",
+    "options": [
+      "Una larga cresta curvada hacia atrás",
+      "Un cuerno en la nariz",
+      "Tres cuernos como el Triceratops",
+      "Placas óseas en el lomo"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-01",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "parasaurolophus-02",
+    "dinosaur": "parasaurolophus",
+    "question": "¿De qué se alimentaba el Parasaurolophus?",
+    "options": [
+      "De carne de otros dinosaurios",
+      "De plantas, como hojas y ramas",
+      "Solo de peces",
+      "De insectos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-02",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "parasaurolophus-03",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Cómo se movía el Parasaurolophus?",
+    "options": [
+      "Solo reptando por el suelo",
+      "Podía caminar tanto en dos patas como en cuatro",
+      "Solo nadando",
+      "Solo volando"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-03",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "parasaurolophus-04",
+    "dinosaur": "parasaurolophus",
+    "question": "¿En qué período vivió el Parasaurolophus?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-04",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "parasaurolophus-05",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Para qué servía probablemente la cresta hueca del Parasaurolophus?",
+    "options": [
+      "Para respirar bajo el agua",
+      "Para producir sonidos, como una especie de trompeta natural",
+      "Para volar",
+      "Para cortar plantas duras"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-05",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "parasaurolophus-06",
+    "dinosaur": "parasaurolophus",
+    "question": "¿A qué grupo de dinosaurios pertenecía el Parasaurolophus?",
+    "options": [
+      "A los hadrosaurios, o \"dinosaurios pico de pato\"",
+      "A los tiranosáuridos",
+      "A los anquilosáuridos",
+      "A los pterosaurios"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-06",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "parasaurolophus-07",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Cómo eran los dientes del Parasaurolophus?",
+    "options": [
+      "No tenía dientes",
+      "Tenía cientos de dientes pequeños agrupados para moler plantas",
+      "Solo tenía dos dientes gigantes",
+      "Tenía dientes afilados como los de un tiburón"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-07",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "parasaurolophus-08",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Dónde vivió principalmente el Parasaurolophus?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "En el fondo del mar"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-08",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "parasaurolophus-09",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué significa el nombre \"Parasaurolophus\"?",
+    "options": [
+      "\"Casi lagarto crestado\"",
+      "\"Lagarto con espinas\"",
+      "\"Lagarto gigante\"",
+      "\"Lagarto sin dientes\""
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-09",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "parasaurolophus-10",
+    "dinosaur": "parasaurolophus",
+    "question": "Si un Parasaurolophus se sentía en peligro, ¿qué es probable que hiciera?",
+    "options": [
+      "Atacar siempre con sus cuernos",
+      "Huir corriendo sobre sus dos patas traseras o avisar a la manada con sonidos",
+      "Esconderse bajo tierra",
+      "Volar lejos del peligro"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-10",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "parasaurolophus-11",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Cómo eran probablemente las crías de Parasaurolophus al nacer?",
+    "options": [
+      "Nacían del tamaño de un adulto",
+      "Salían de huevos y eran mucho más pequeñas que sus padres",
+      "Nacían nadando en el mar",
+      "Nacían ya con la cresta completa"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-11",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "parasaurolophus-12",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué tamaño podía alcanzar un Parasaurolophus adulto?",
+    "options": [
+      "Un metro de largo, como un perro grande",
+      "Unos 10 metros de largo",
+      "Más de 30 metros de largo",
+      "Medio metro de alto"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-12",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "parasaurolophus-13",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué grupo de dinosaurios herbívoros con dientes agrupados en baterías dentales incluye también al Triceratops?",
+    "options": [
+      "Ninguno, son técnicas distintas",
+      "El Triceratops también tenía baterías dentales, aunque pertenecía a otro grupo",
+      "Solo los hadrosaurios tenían dientes",
+      "Solo los saurópodos tenían dientes"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-13",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "parasaurolophus-14",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Cómo variaba la longitud de la cresta entre distintos Parasaurolophus?",
+    "options": [
+      "Todas medían exactamente lo mismo",
+      "Podía variar según la edad y quizás el sexo del animal",
+      "Solo los machos tenían cresta",
+      "Solo las crías tenían cresta"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-14",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "parasaurolophus-15",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué método han usado los científicos para intentar recrear el sonido que hacía el Parasaurolophus?",
+    "options": [
+      "Adivinarlo sin ninguna prueba",
+      "Estudiar la forma hueca de la cresta con modelos por ordenador",
+      "Preguntar a testigos antiguos",
+      "Es imposible saberlo, nadie lo ha intentado"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-15",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "parasaurolophus-16",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué ventaja pudo tener vivir en manada para el Parasaurolophus?",
+    "options": [
+      "Ninguna, vivía siempre solo",
+      "Más protección frente a los depredadores y mejor cuidado de las crías",
+      "Le permitía volar más alto",
+      "Le ayudaba a respirar bajo el agua"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-16",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "parasaurolophus-17",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Con qué gran depredador de su época pudo haber convivido el Parasaurolophus?",
+    "options": [
+      "Con el Tyrannosaurus Rex",
+      "Con el Spinosaurus",
+      "Con el Compsognathus",
+      "Con el Dilophosaurus"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-17",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "parasaurolophus-18",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué parte del cráneo formaba la cresta hueca del Parasaurolophus?",
+    "options": [
+      "Una prolongación de los huesos de la nariz",
+      "Una prolongación de la mandíbula inferior",
+      "No formaba parte del cráneo",
+      "Era un hueso separado sin conexión"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.parasaurolophus-18",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "parasaurolophus-19",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Por qué los científicos piensan que la cresta del Parasaurolophus tenía más de una función?",
+    "options": [
+      "Porque solo servía para nadar",
+      "Porque parece combinar sonido, visión para reconocerse entre especies y quizá regulación de temperatura",
+      "Porque solo era decorativa y no tenía ninguna utilidad",
+      "Porque era un error evolutivo sin sentido"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-19",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "parasaurolophus-20",
+    "dinosaur": "parasaurolophus",
+    "question": "¿Qué diferencia principal hay entre el cráneo del Parasaurolophus y el de otros hadrosaurios sin cresta hueca?",
+    "options": [
+      "Ninguna, todos los hadrosaurios tenían la misma cresta",
+      "El Parasaurolophus tenía una cámara nasal alargada y hueca dentro de la cresta",
+      "El Parasaurolophus no tenía fosas nasales",
+      "El Parasaurolophus tenía el doble de dientes"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-20",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "parasaurolophus-21",
+    "dinosaur": "parasaurolophus",
+    "question": "¿En qué se diferenciaba la dieta del Parasaurolophus de la de un dinosaurio carnívoro como el Spinosaurus?",
+    "options": [
+      "En nada, comían exactamente lo mismo",
+      "El Parasaurolophus comía plantas, mientras que el Spinosaurus comía sobre todo peces y otros animales",
+      "El Parasaurolophus comía solo peces",
+      "El Spinosaurus comía solo plantas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-21",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "parasaurolophus-22",
+    "dinosaur": "parasaurolophus",
+    "question": "Los hadrosaurios como el Parasaurolophus formaban grandes grupos. ¿Qué evidencia fósil apoya esta idea?",
+    "options": [
+      "Nunca se han encontrado varios fósiles juntos",
+      "Se han hallado yacimientos con muchos individuos de distintas edades juntos",
+      "Solo se ha encontrado un único fósil en el mundo",
+      "Los huevos siempre aparecen solos, sin nidos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.parasaurolophus-22",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/parasaurolophus.svg",
+    "imageAlt": "Ilustración educativa de un Parasaurolophus, un dinosaurio herbívoro con una cresta larga y curva del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "diplodocus-01",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué parte del cuerpo del Diplodocus era extremadamente larga, además del cuello?",
+    "options": [
+      "Las patas delanteras",
+      "La cola",
+      "Las orejas",
+      "El pico"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-01",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "diplodocus-02",
+    "dinosaur": "diplodocus",
+    "question": "¿De qué se alimentaba el Diplodocus?",
+    "options": [
+      "De carne de otros dinosaurios",
+      "De hojas y plantas",
+      "Solo de peces",
+      "De insectos"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-02",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "diplodocus-03",
+    "dinosaur": "diplodocus",
+    "question": "¿Cómo era el cuello del Diplodocus?",
+    "options": [
+      "Muy corto",
+      "Extremadamente largo",
+      "No tenía cuello",
+      "Con forma de espiral"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-03",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "diplodocus-04",
+    "dinosaur": "diplodocus",
+    "question": "¿Cuántas patas usaba el Diplodocus para caminar?",
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ninguna, se arrastraba"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-04",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "diplodocus-05",
+    "dinosaur": "diplodocus",
+    "question": "¿En qué período vivió el Diplodocus?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-05",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "diplodocus-06",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué tamaño podía alcanzar el Diplodocus?",
+    "options": [
+      "Unos 3 metros de largo",
+      "Hasta unos 25 metros de largo",
+      "Medio metro de largo",
+      "100 metros de largo"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-06",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "diplodocus-07",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué significa el nombre \"Diplodocus\"?",
+    "options": [
+      "\"Doble viga\", por unos huesos especiales de su cola",
+      "\"Lagarto veloz\"",
+      "\"Lagarto con cuernos\"",
+      "\"Comedor de carne\""
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-07",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "diplodocus-08",
+    "dinosaur": "diplodocus",
+    "question": "¿Cómo eran los dientes del Diplodocus?",
+    "options": [
+      "Enormes y afilados, como los de un tiburón",
+      "Pequeños y en forma de clavija, solo en la parte delantera de la boca",
+      "No tenía dientes",
+      "Solo tenía dos dientes gigantes"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-08",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "diplodocus-09",
+    "dinosaur": "diplodocus",
+    "question": "¿Dónde se han encontrado la mayoría de los fósiles de Diplodocus?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "En el fondo del océano"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-09",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "diplodocus-10",
+    "dinosaur": "diplodocus",
+    "question": "Como el Diplodocus no masticaba bien la comida, ¿qué usaba para ayudar a digerirla?",
+    "options": [
+      "Piedras que tragaba, llamadas gastrolitos",
+      "Un segundo estómago con dientes",
+      "Nada, no necesitaba digerir",
+      "Bacterias voladoras"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-10",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "diplodocus-11",
+    "dinosaur": "diplodocus",
+    "question": "¿Para qué pudo servir la larga y fina cola del Diplodocus, además de para equilibrar el cuerpo?",
+    "options": [
+      "Para nadar rápido",
+      "Como posible defensa, moviéndola como un látigo",
+      "Para volar",
+      "Para cavar madrigueras"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-11",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "diplodocus-12",
+    "dinosaur": "diplodocus",
+    "question": "¿Cómo se cree que el Diplodocus mantenía habitualmente el cuello?",
+    "options": [
+      "Siempre totalmente vertical, como una jirafa",
+      "De forma más bien horizontal, cerca del suelo o a media altura",
+      "Siempre enroscado",
+      "No podía mover el cuello"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-12",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "diplodocus-13",
+    "dinosaur": "diplodocus",
+    "question": "¿Cuánto podía llegar a pesar un Diplodocus adulto?",
+    "options": [
+      "Como un perro pequeño",
+      "Varias toneladas, como varios elefantes juntos",
+      "Menos de un kilo",
+      "Como una persona adulta"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-13",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "diplodocus-14",
+    "dinosaur": "diplodocus",
+    "question": "¿A qué grupo de dinosaurios pertenecía el Diplodocus, junto al Braquiosaurio?",
+    "options": [
+      "A los saurópodos, herbívoros de cuello largo y cuatro patas",
+      "A los terópodos carnívoros",
+      "A los anquilosáuridos acorazados",
+      "A los pterosaurios voladores"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-14",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "diplodocus-15",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué diferencia había entre el cuello del Diplodocus y el del Braquiosaurio?",
+    "options": [
+      "Ninguna, eran idénticos",
+      "El del Diplodocus era más horizontal y el del Braquiosaurio se alzaba más en vertical",
+      "El Diplodocus no tenía cuello",
+      "El Braquiosaurio no tenía cuello"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-15",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "diplodocus-16",
+    "dinosaur": "diplodocus",
+    "question": "¿Por qué es difícil saber con certeza el color de la piel del Diplodocus?",
+    "options": [
+      "Porque los fósiles no conservan normalmente el color original de la piel",
+      "Porque nunca se han hallado fósiles de su piel",
+      "Porque todos los dinosaurios eran del mismo color",
+      "Porque el color no interesa a los científicos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-16",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "diplodocus-17",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué proponen algunos estudios sobre cómo podía usar el Diplodocus su cola a gran velocidad?",
+    "options": [
+      "Como si fuera un boomerang",
+      "Podía chasquearla y producir un sonido parecido a un latigazo",
+      "Para excavar el suelo",
+      "Para atrapar peces"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-17",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "diplodocus-18",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué evidencia han usado los científicos para debatir si el Diplodocus podía levantar el cuello en vertical más de lo que se pensaba?",
+    "options": [
+      "Estudios de las vértebras del cuello y comparaciones con animales actuales",
+      "Ninguna, es pura imaginación",
+      "Grabaciones antiguas",
+      "No existe ningún debate sobre esto"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-18",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "diplodocus-19",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué yacimiento famoso de Estados Unidos ha aportado muchos fósiles de Diplodocus y otros saurópodos del Jurásico?",
+    "options": [
+      "La Cantera Dinosaur National Monument",
+      "Las Pirámides de Egipto",
+      "El desierto de Gobi",
+      "La Gran Barrera de Coral"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-19",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "diplodocus-20",
+    "dinosaur": "diplodocus",
+    "question": "¿Por qué un cuerpo tan grande como el del Diplodocus necesitaba comer casi todo el día?",
+    "options": [
+      "Porque las plantas que comía aportaban poca energía por bocado y necesitaba mucha cantidad",
+      "Porque le gustaba mucho comer",
+      "Porque no tenía estómago",
+      "Porque solo comía de noche"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-20",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "diplodocus-21",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué relación de parentesco tiene el Diplodocus con otro famoso saurópodo llamado Apatosaurus?",
+    "options": [
+      "Ninguna relación, pertenecen a familias completamente distintas",
+      "Ambos pertenecen a la misma familia de saurópodos, los diplodócidos",
+      "Son el mismo animal con dos nombres",
+      "El Apatosaurus es un ave, no un dinosaurio"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.diplodocus-21",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "diplodocus-22",
+    "dinosaur": "diplodocus",
+    "question": "¿Qué limitación tenían los pequeños dientes delanteros del Diplodocus a la hora de comer?",
+    "options": [
+      "No podía masticar bien la comida, solo arrancar hojas que luego tragaba casi enteras",
+      "Le impedían comer del todo",
+      "Solo podía comer carne blanda",
+      "No tenía ninguna limitación"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.diplodocus-22",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/diplodocus.svg",
+    "imageAlt": "Ilustración educativa de un Diplodocus, un dinosaurio herbívoro de cuello y cola muy largos del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "iguanodon-01",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué tenía el Iguanodon en el pulgar que lo hacía especial?",
+    "options": [
+      "Un afilado pincho óseo",
+      "Una uña de colores",
+      "Un cuerno curvo",
+      "Una ventosa"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-01",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "iguanodon-02",
+    "dinosaur": "iguanodon",
+    "question": "¿De qué se alimentaba el Iguanodon?",
+    "options": [
+      "De carne de otros dinosaurios",
+      "De plantas",
+      "Solo de peces",
+      "De rocas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-02",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "iguanodon-03",
+    "dinosaur": "iguanodon",
+    "question": "¿Cómo se podía mover el Iguanodon?",
+    "options": [
+      "Solo sobre dos patas",
+      "Solo sobre cuatro patas",
+      "Podía caminar en dos o en cuatro patas",
+      "No podía moverse"
+    ],
+    "correctAnswerIndex": 2,
+    "dato_curioso": "funFacts.iguanodon-03",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "iguanodon-04",
+    "dinosaur": "iguanodon",
+    "question": "¿En qué período vivió el Iguanodon?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-04",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "iguanodon-05",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué significa el nombre \"Iguanodon\"?",
+    "options": [
+      "\"Diente de iguana\"",
+      "\"Lagarto veloz\"",
+      "\"Lagarto con vela\"",
+      "\"Comedor de peces\""
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-05",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "iguanodon-06",
+    "dinosaur": "iguanodon",
+    "question": "¿Dónde se han encontrado fósiles importantes de Iguanodon?",
+    "options": [
+      "En Europa",
+      "En la Antártida",
+      "Solo en el fondo del mar",
+      "En la Luna"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-06",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "iguanodon-07",
+    "dinosaur": "iguanodon",
+    "question": "¿Cómo era la cara del Iguanodon?",
+    "options": [
+      "Con un hocico alargado, algo parecido al de un caballo",
+      "Redonda como una pelota",
+      "Con forma de pico de loro",
+      "Sin ojos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-07",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "iguanodon-08",
+    "dinosaur": "iguanodon",
+    "question": "¿Cuántas patas tenía el Iguanodon?",
+    "options": [
+      "Dos",
+      "Cuatro",
+      "Seis",
+      "Ocho"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-08",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "iguanodon-09",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué tamaño podía tener un Iguanodon adulto?",
+    "options": [
+      "Como un ratón",
+      "Unos 10 metros de largo",
+      "100 metros de largo",
+      "Medio metro de largo"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-09",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "iguanodon-10",
+    "dinosaur": "iguanodon",
+    "question": "¿Quién describió por primera vez al Iguanodon y en qué siglo?",
+    "options": [
+      "Gideon Mantell, en el siglo XIX",
+      "Charles Darwin, en el siglo XX",
+      "Un científico romano, en la Antigüedad",
+      "Nadie lo ha descrito todavía"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-10",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "iguanodon-11",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué famoso yacimiento belga aportó decenas de esqueletos completos de Iguanodon en 1878?",
+    "options": [
+      "Una mina de carbón en Bernissart",
+      "Una playa en Portugal",
+      "Una cueva en Grecia",
+      "Un desierto en Marruecos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-11",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "iguanodon-12",
+    "dinosaur": "iguanodon",
+    "question": "Al principio, ¿dónde colocaron por error los científicos el pincho del pulgar del Iguanodon?",
+    "options": [
+      "En la punta de la nariz, como un cuerno",
+      "En la cola",
+      "En la oreja",
+      "En la rodilla"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-12",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "iguanodon-13",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué tipo de dientes tenía el Iguanodon para comer plantas duras?",
+    "options": [
+      "Dientes afilados como cuchillas",
+      "Dientes anchos y con crestas, ideales para triturar",
+      "No tenía dientes",
+      "Solo un pico sin dientes"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-13",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "iguanodon-14",
+    "dinosaur": "iguanodon",
+    "question": "¿En qué grupos solían encontrarse fósiles de Iguanodon, según el hallazgo de Bernissart?",
+    "options": [
+      "Siempre completamente solos",
+      "En grupos numerosos, lo que sugiere que vivían en manadas",
+      "Solo parejas de dos",
+      "Nunca se han encontrado más de uno junto a otro"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-14",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "iguanodon-15",
+    "dinosaur": "iguanodon",
+    "question": "¿Para qué pudo usar el Iguanodon el pincho de su pulgar, según distintas hipótesis científicas?",
+    "options": [
+      "Solo para nadar",
+      "Para defenderse de depredadores o para abrir frutos y semillas duras",
+      "Para volar",
+      "Para excavar túneles bajo tierra"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-15",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "iguanodon-16",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué papel jugó el Iguanodon en la historia de la paleontología?",
+    "options": [
+      "Ninguno importante",
+      "Fue uno de los primeros dinosaurios identificados como tal, ayudando a crear la propia palabra \"dinosaurio\"",
+      "Fue el último dinosaurio descubierto",
+      "Nunca se le consideró un dinosaurio"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-16",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "iguanodon-17",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué uso daba el Iguanodon a sus dedos centrales al caminar en cuatro patas?",
+    "options": [
+      "Servían de apoyo, como pezuñas, para soportar el peso del cuerpo",
+      "No tocaban el suelo nunca",
+      "Servían para nadar",
+      "No tenía dedos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-17",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "iguanodon-18",
+    "dinosaur": "iguanodon",
+    "question": "¿Cómo cambiaron las reconstrucciones científicas del Iguanodon a lo largo del tiempo?",
+    "options": [
+      "Nunca cambiaron desde su descubrimiento",
+      "Pasaron de imaginarlo como un cuadrúpedo pesado con cuerno nasal a un animal más ágil que también caminaba en dos patas",
+      "Se ha dejado de estudiar por completo",
+      "Siempre se representó igual que un T-Rex"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-18",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "iguanodon-19",
+    "dinosaur": "iguanodon",
+    "question": "¿Por qué el caso del Iguanodon se usa a menudo como ejemplo de cómo avanza la ciencia?",
+    "options": [
+      "Porque la ciencia nunca corrige sus errores",
+      "Porque muestra cómo, con más fósiles y estudios, los científicos corrigen y mejoran sus ideas anteriores",
+      "Porque fue un invento sin ninguna base",
+      "Porque nunca hubo debate científico sobre él"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-19",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "iguanodon-20",
+    "dinosaur": "iguanodon",
+    "question": "¿A qué grupo de dinosaurios ornitópodos pertenecía el Iguanodon, relacionado más tarde con los hadrosaurios como el Parasaurolophus?",
+    "options": [
+      "A los iguanodontes",
+      "A los tiranosáuridos",
+      "A los anquilosáuridos",
+      "A los estegosáuridos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.iguanodon-20",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "iguanodon-21",
+    "dinosaur": "iguanodon",
+    "question": "¿Qué aporta el estudio de las huellas fósiles (icnitas) atribuidas al Iguanodon?",
+    "options": [
+      "Nada, las huellas no sirven para estudiar dinosaurios",
+      "Información sobre cómo caminaba y a qué velocidad se movía",
+      "Solo sirven para saber el color de su piel",
+      "Permiten saber exactamente qué soñaba el animal"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.iguanodon-21",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/iguanodon.svg",
+    "imageAlt": "Ilustración educativa de un Iguanodon, un dinosaurio herbívoro con un pincho en el pulgar del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "dilophosaurus-01",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué tenía el Dilophosaurus en la cabeza que le da su nombre?",
+    "options": [
+      "Dos crestas óseas",
+      "Un solo cuerno",
+      "Placas en el lomo",
+      "Una vela grande"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-01",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "dilophosaurus-02",
+    "dinosaur": "dilophosaurus",
+    "question": "¿De qué se alimentaba el Dilophosaurus?",
+    "options": [
+      "Solo de plantas",
+      "De carne, era un cazador",
+      "Solo de algas",
+      "Solo de semillas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-02",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "dilophosaurus-03",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Cómo se movía el Dilophosaurus?",
+    "options": [
+      "Sobre sus dos patas traseras",
+      "Arrastrándose por el suelo",
+      "Volando",
+      "Nadando siempre"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-03",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "dilophosaurus-04",
+    "dinosaur": "dilophosaurus",
+    "question": "¿En qué período vivió el Dilophosaurus?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-04",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "dilophosaurus-05",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Para qué se cree que servían las dos crestas del Dilophosaurus?",
+    "options": [
+      "Para volar",
+      "Probablemente para mostrarse ante otros de su especie",
+      "Para nadar más rápido",
+      "Para masticar mejor"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-05",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "dilophosaurus-06",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué tamaño podía alcanzar el Dilophosaurus?",
+    "options": [
+      "Como un ratón",
+      "Unos 6-7 metros de largo",
+      "50 metros de largo",
+      "Medio metro de largo"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-06",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "dilophosaurus-07",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Dónde se han encontrado fósiles de Dilophosaurus?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "Solo bajo el mar"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-07",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "dilophosaurus-08",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Cómo era el cuerpo del Dilophosaurus, comparado con otros grandes carnívoros como el T-Rex?",
+    "options": [
+      "Mucho más robusto y pesado",
+      "Más ligero y esbelto",
+      "Sin patas",
+      "Sin cabeza"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-08",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "dilophosaurus-09",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Es cierto que el Dilophosaurus escupía veneno, como aparece en algunas películas?",
+    "options": [
+      "Sí, está totalmente comprobado por los fósiles",
+      "No, no hay ninguna prueba científica de eso; es una idea inventada para el cine",
+      "Sí, pero solo cuando era joven",
+      "Solo lo hacían las hembras"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-09",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "dilophosaurus-10",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Cómo eran las mandíbulas del Dilophosaurus cerca del hocico?",
+    "options": [
+      "Tenían una especie de muesca o hendidura, como una pequeña separación",
+      "Eran completamente rectas, sin ninguna forma especial",
+      "No tenía mandíbula inferior",
+      "Estaban fusionadas y no se abrían"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-10",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "dilophosaurus-11",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué tipo de presas pudo cazar el Dilophosaurus, siendo uno de los mayores carnívoros de su tiempo?",
+    "options": [
+      "Solo insectos diminutos",
+      "Otros dinosaurios y animales de tamaño mediano a grande",
+      "Solo plantas",
+      "Solo peces"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-11",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "dilophosaurus-12",
+    "dinosaur": "dilophosaurus",
+    "question": "¿A qué grupo de dinosaurios carnívoros pertenecía el Dilophosaurus?",
+    "options": [
+      "A los terópodos",
+      "A los saurópodos",
+      "A los anquilosáuridos",
+      "A los pterosaurios"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-12",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "dilophosaurus-13",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué tan frágiles eran las crestas del Dilophosaurus?",
+    "options": [
+      "Extremadamente duras, como el hierro",
+      "Delgadas y probablemente frágiles, poco útiles para pelear",
+      "No existían realmente",
+      "Estaban hechas de escamas de piel"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-13",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "dilophosaurus-14",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué representación errónea del Dilophosaurus se hizo popular gracias al cine, alejada de lo que muestran los fósiles?",
+    "options": [
+      "Que tenía un volante alrededor del cuello y escupía veneno",
+      "Que tenía plumas de colores",
+      "Que vivía en el hielo",
+      "Que era herbívoro"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-14",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "dilophosaurus-15",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué evidencia han usado los paleontólogos para descartar que el Dilophosaurus tuviera veneno?",
+    "options": [
+      "No existe ninguna estructura fósil, como glándulas o dientes huecos, que apoye esa idea",
+      "Han encontrado glándulas venenosas fosilizadas",
+      "Han visto vídeos antiguos del animal",
+      "Los primeros descubridores lo confirmaron"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-15",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "dilophosaurus-16",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué tamaño relativo tenía el cráneo del Dilophosaurus comparado con su cuerpo?",
+    "options": [
+      "Un cráneo grande pero relativamente ligero, con huesos delgados",
+      "Un cráneo diminuto en comparación con el cuerpo",
+      "No tenía cráneo",
+      "Un cráneo tan pesado como el resto del cuerpo"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-16",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "dilophosaurus-17",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué relación evolutiva existe entre el Dilophosaurus y dinosaurios carnívoros posteriores como el T-Rex?",
+    "options": [
+      "Ninguna relación",
+      "El Dilophosaurus es uno de los terópodos más antiguos y ayuda a entender la evolución de carnívoros posteriores",
+      "Son la misma especie",
+      "El T-Rex es anterior al Dilophosaurus"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-17",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "dilophosaurus-18",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Por qué el caso del Dilophosaurus es un buen ejemplo de cómo el cine puede distorsionar la ciencia?",
+    "options": [
+      "Porque los fósiles confirmaron después todo lo que mostraba la película",
+      "Porque se le dieron características (veneno, volante) sin respaldo fósil que muchas personas creen reales",
+      "Porque nunca se hizo ninguna película sobre él",
+      "Porque los científicos inventaron el cine basándose en él"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-18",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "dilophosaurus-19",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué papel juega el estudio de los huesos de las crestas del Dilophosaurus para conocer su función?",
+    "options": [
+      "Ninguno, no se puede saber nada por los huesos",
+      "Analizando su grosor y forma, los científicos deducen que no soportarían bien un golpe fuerte",
+      "Los huesos demuestran que eran extremadamente resistentes",
+      "No se han encontrado restos de las crestas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-19",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "dilophosaurus-20",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué antigüedad aproximada tienen los fósiles de Dilophosaurus comparados con los del Tyrannosaurus Rex?",
+    "options": [
+      "Son mucho más antiguos, de más de 190 millones de años frente a los 68 millones del T-Rex",
+      "Tienen exactamente la misma antigüedad",
+      "Los fósiles de Dilophosaurus son más recientes que los del T-Rex",
+      "No se puede comparar la antigüedad de fósiles distintos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.dilophosaurus-20",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "dilophosaurus-21",
+    "dinosaur": "dilophosaurus",
+    "question": "¿Qué aporta el yacimiento de Arizona donde se hallaron los primeros fósiles de Dilophosaurus al estudio de los primeros dinosaurios grandes?",
+    "options": [
+      "Nada relevante",
+      "Ayuda a entender cómo eran los primeros grandes depredadores terópodos del Jurásico temprano",
+      "Solo aporta datos sobre plantas",
+      "Demuestra que los dinosaurios no existían en América"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.dilophosaurus-21",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/dilophosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Dilophosaurus, un dinosaurio carnívoro con dos crestas en la cabeza del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "pachycephalosaurus-01",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué tenía el Pachycephalosaurus muy especial en la cabeza?",
+    "options": [
+      "Un cráneo muy grueso y abombado",
+      "Un pico de pato",
+      "Tres cuernos",
+      "Una vela alta"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-01",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "pachycephalosaurus-02",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿De qué se alimentaba principalmente el Pachycephalosaurus?",
+    "options": [
+      "Solo de carne",
+      "Sobre todo de plantas",
+      "Solo de peces",
+      "Solo de rocas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-02",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "pachycephalosaurus-03",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Cómo se movía el Pachycephalosaurus?",
+    "options": [
+      "Sobre sus dos patas traseras",
+      "Solo nadando",
+      "Solo volando",
+      "Arrastrándose"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-03",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "pachycephalosaurus-04",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿En qué período vivió el Pachycephalosaurus?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-04",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 6
+  },
+  {
+    "id": "pachycephalosaurus-05",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué significa el nombre \"Pachycephalosaurus\"?",
+    "options": [
+      "\"Lagarto de cabeza gruesa\"",
+      "\"Lagarto veloz\"",
+      "\"Lagarto con vela\"",
+      "\"Lagarto acorazado\""
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-05",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "pachycephalosaurus-06",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué tenía el Pachycephalosaurus alrededor de la cúpula y en el hocico?",
+    "options": [
+      "Nada más",
+      "Pequeños pinchos y protuberancias óseas",
+      "Plumas de colores",
+      "Escamas venenosas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-06",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "pachycephalosaurus-07",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Dónde se han encontrado fósiles de Pachycephalosaurus?",
+    "options": [
+      "En América del Norte",
+      "En la Antártida",
+      "En Australia",
+      "Solo en el fondo del mar"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-07",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "pachycephalosaurus-08",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué tamaño podía alcanzar el Pachycephalosaurus?",
+    "options": [
+      "Como un ratón",
+      "Unos 4-5 metros de largo",
+      "50 metros de largo",
+      "Medio metro de largo"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-08",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 7
+  },
+  {
+    "id": "pachycephalosaurus-09",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Para qué creen algunos científicos que servía la gruesa cúpula del Pachycephalosaurus?",
+    "options": [
+      "Para volar",
+      "Posiblemente para dar cabezazos entre rivales o para reconocerse entre ellos",
+      "Para respirar bajo el agua",
+      "Para masticar mejor las plantas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-09",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "pachycephalosaurus-10",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué debate existe hoy entre los científicos sobre el uso de la cúpula del Pachycephalosaurus?",
+    "options": [
+      "No hay ningún debate, está todo resuelto",
+      "Algunos creen que se golpeaban de frente y otros piensan que solo era para exhibirse",
+      "Todos coinciden en que nunca la usaban",
+      "Se sabe con certeza que no tenía ninguna función"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-10",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "pachycephalosaurus-11",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Cómo era el cuerpo del Pachycephalosaurus comparado con su cabeza?",
+    "options": [
+      "Un cuerpo relativamente delgado bajo una cabeza muy gruesa",
+      "Un cuerpo enorme con una cabeza diminuta",
+      "No tenía cuerpo",
+      "Un cuerpo acorazado como el Ankylosaurus"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-11",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "pachycephalosaurus-12",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿En qué época de la historia de los dinosaurios vivió el Pachycephalosaurus?",
+    "options": [
+      "Al principio de la era de los dinosaurios",
+      "Muy cerca del final de la era de los dinosaurios",
+      "A mitad del Jurásico",
+      "Antes de que existieran los dinosaurios"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-12",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 8
+  },
+  {
+    "id": "pachycephalosaurus-13",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué han sugerido algunos estudios recientes sobre si los Pachycephalosaurus realmente chocaban las cabezas de frente?",
+    "options": [
+      "Que la forma de la cúpula podría no ser tan buena para absorber golpes frontales fuertes como antes se pensaba",
+      "Que definitivamente sí, sin ninguna duda",
+      "Que nunca tuvieron cúpula",
+      "Que solo las hembras tenían cúpula"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-13",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "pachycephalosaurus-14",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué relación existe entre el Pachycephalosaurus y otros dinosaurios de cabeza dura más pequeños, como el Stegoceras?",
+    "options": [
+      "Ninguna relación",
+      "Pertenecen al mismo grupo de dinosaurios paquicefalosaurios",
+      "Son exactamente la misma especie",
+      "El Stegoceras es un ave, no un dinosaurio"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-14",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "pachycephalosaurus-15",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué edad se cree que podían tener los Pachycephalosaurus jóvenes, con cráneos más planos que los adultos?",
+    "options": [
+      "Los cráneos jóvenes ya eran idénticos a los adultos desde el nacimiento",
+      "Los cráneos se iban engrosando con la edad, siendo más planos en los jóvenes",
+      "Los jóvenes tenían la cúpula más grande que los adultos",
+      "No existían crías de Pachycephalosaurus"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-15",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "pachycephalosaurus-16",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué tipo de dientes tenía el Pachycephalosaurus, que sugieren una dieta variada?",
+    "options": [
+      "Dientes pequeños y de forma variada, propios de un animal que comía tanto plantas como quizá algo de carne o insectos",
+      "Solo dientes gigantes de carnívoro",
+      "No tenía dientes",
+      "Solo tenía un pico sin dientes"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-16",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "pachycephalosaurus-17",
+    "dinosaur": "pachycephalosaurus",
+    "question": "Algunos paleontólogos han propuesto que ciertos fósiles considerados especies distintas en realidad podrían ser...",
+    "options": [
+      "Pachycephalosaurus jóvenes con cráneos aún no desarrollados del todo",
+      "Animales de otro planeta",
+      "Dinosaurios acuáticos",
+      "Aves modernas"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-17",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 9
+  },
+  {
+    "id": "pachycephalosaurus-18",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué importancia tiene el Pachycephalosaurus para entender el final de la era de los dinosaurios?",
+    "options": [
+      "Ninguna, vivió mucho antes del final",
+      "Al ser uno de los últimos dinosaurios, ayuda a conocer cómo era la fauna justo antes de la extinción masiva",
+      "Sobrevivió a la extinción de los dinosaurios",
+      "Vivió después de la extinción"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-18",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "pachycephalosaurus-19",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué desafío tienen los paleontólogos al estudiar comportamientos, como el posible choque de cabezas, que no dejan huellas fósiles directas?",
+    "options": [
+      "No hay ningún desafío, se puede saber todo con certeza",
+      "Deben basarse en comparaciones con animales actuales y en el análisis de la estructura ósea, sin poder observarlo directamente",
+      "Pueden viajar en el tiempo para comprobarlo",
+      "Ese tipo de comportamiento nunca se estudia"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-19",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "pachycephalosaurus-20",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué papel juegan los pinchos y protuberancias óseas alrededor de la cúpula del Pachycephalosaurus, según algunas hipótesis?",
+    "options": [
+      "Ninguno, no tenían ninguna función",
+      "Podrían haber servido para intimidar a rivales o depredadores, además de la propia cúpula",
+      "Servían para nadar mejor",
+      "Servían para volar"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.pachycephalosaurus-20",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "pachycephalosaurus-21",
+    "dinosaur": "pachycephalosaurus",
+    "question": "¿Qué demuestra el hecho de que los científicos hayan cambiado de opinión varias veces sobre la función de la cúpula del Pachycephalosaurus?",
+    "options": [
+      "Que la paleontología es una ciencia que revisa sus ideas a medida que aparecen nuevas pruebas",
+      "Que los científicos no saben lo que hacen",
+      "Que el Pachycephalosaurus no existió realmente",
+      "Que ya no hay nada más que investigar sobre él"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.pachycephalosaurus-21",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/pachycephalosaurus.svg",
+    "imageAlt": "Ilustración educativa de un Pachycephalosaurus, un dinosaurio con la cabeza abombada y muy dura del período Cretácico.",
+    "level": 10
+  },
+  {
+    "id": "compsognathus-01",
+    "dinosaur": "compsognathus",
+    "question": "¿Cómo era de grande el Compsognathus comparado con otros dinosaurios?",
+    "options": [
+      "Uno de los dinosaurios más pequeños conocidos, del tamaño de una gallina",
+      "Tan grande como un T-Rex",
+      "Más grande que un Braquiosaurio",
+      "Del tamaño de una ballena"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-01",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "compsognathus-02",
+    "dinosaur": "compsognathus",
+    "question": "¿De qué se alimentaba el Compsognathus?",
+    "options": [
+      "Solo de plantas",
+      "De pequeños animales, como lagartijas e insectos",
+      "Solo de algas",
+      "De rocas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-02",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "compsognathus-03",
+    "dinosaur": "compsognathus",
+    "question": "¿Cómo se movía el Compsognathus?",
+    "options": [
+      "Muy despacio, arrastrándose",
+      "Corriendo rápido sobre sus dos patas traseras",
+      "Volando",
+      "Nadando siempre"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-03",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "compsognathus-04",
+    "dinosaur": "compsognathus",
+    "question": "¿En qué período vivió el Compsognathus?",
+    "options": [
+      "Cretácico",
+      "Jurásico",
+      "Triásico",
+      "Cámbrico"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-04",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 6
+  },
+  {
+    "id": "compsognathus-05",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué significa el nombre \"Compsognathus\"?",
+    "options": [
+      "\"Mandíbula elegante\"",
+      "\"Lagarto gigante\"",
+      "\"Comedor de plantas\"",
+      "\"Lagarto con vela\""
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-05",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "compsognathus-06",
+    "dinosaur": "compsognathus",
+    "question": "¿Dónde se han encontrado fósiles de Compsognathus?",
+    "options": [
+      "En Europa, como Alemania y Francia",
+      "En la Antártida",
+      "En Australia",
+      "Solo bajo el mar"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-06",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "compsognathus-07",
+    "dinosaur": "compsognathus",
+    "question": "¿Cómo era el cuerpo del Compsognathus?",
+    "options": [
+      "Pequeño y ligero, adaptado para correr rápido",
+      "Enorme y muy pesado",
+      "Sin patas",
+      "Con caparazón como una tortuga"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-07",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "compsognathus-08",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué longitud aproximada tenía un Compsognathus adulto?",
+    "options": [
+      "Unos 30 metros",
+      "Alrededor de 1 metro, incluyendo la cola",
+      "100 metros",
+      "Medio kilómetro"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-08",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 7
+  },
+  {
+    "id": "compsognathus-09",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué famoso fósil de Compsognathus ayudó a los científicos a saber qué comía?",
+    "options": [
+      "Uno que se conservó con los restos de una pequeña lagartija dentro del estómago",
+      "Uno hallado con plantas en el estómago",
+      "Ninguno, no se sabe qué comía",
+      "Uno hallado con huesos de dinosaurios gigantes en el estómago"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-09",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "compsognathus-10",
+    "dinosaur": "compsognathus",
+    "question": "¿A qué grupo de dinosaurios carnívoros pertenecía el Compsognathus?",
+    "options": [
+      "A los terópodos",
+      "A los saurópodos",
+      "A los anquilosáuridos",
+      "A los pterosaurios"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-10",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "compsognathus-11",
+    "dinosaur": "compsognathus",
+    "question": "¿Por qué se dice que el Compsognathus está emparentado, de forma lejana, con las aves actuales?",
+    "options": [
+      "Porque comparte varias características anatómicas con otros terópodos emplumados",
+      "Porque tenía plumas de colores brillantes visibles en todos los fósiles",
+      "Porque podía volar largas distancias",
+      "No tiene ninguna relación con las aves"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-11",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "compsognathus-12",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué ventaja le daba al Compsognathus su pequeño tamaño y cuerpo ligero?",
+    "options": [
+      "Ninguna ventaja",
+      "Le permitía moverse rápido y esconderse fácilmente de grandes depredadores",
+      "Le hacía más lento que los demás dinosaurios",
+      "Le impedía cazar"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-12",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 8
+  },
+  {
+    "id": "compsognathus-13",
+    "dinosaur": "compsognathus",
+    "question": "Durante un tiempo, algunos científicos pensaron que el Compsognathus podía tener plumas simples. ¿Por qué?",
+    "options": [
+      "Por comparación con parientes cercanos, algunos terópodos pequeños con plumas descubiertos después",
+      "Porque encontraron plumas fosilizadas junto a todos sus esqueletos",
+      "Porque lo vieron en dibujos antiguos",
+      "No existe ese debate científico"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-13",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "compsognathus-14",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué papel jugó el Compsognathus en el ecosistema donde vivía?",
+    "options": [
+      "Era el mayor depredador de su hábitat",
+      "Era un pequeño cazador que controlaba poblaciones de animales diminutos como lagartijas e insectos",
+      "Era el único herbívoro de la zona",
+      "No cazaba, solo comía plantas"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-14",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "compsognathus-15",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué error histórico se cometió al principio con el tamaño estimado de algunos fósiles de Compsognathus?",
+    "options": [
+      "Se pensó que uno de los especímenes hallados podía tratarse de una cría más que de un adulto pequeño de otra especie",
+      "Se pensó que era tan grande como un T-Rex",
+      "Se pensó que no tenía patas",
+      "Se pensó que era una planta fosilizada"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-15",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "compsognathus-16",
+    "dinosaur": "compsognathus",
+    "question": "¿Por qué el pequeño tamaño del Compsognathus lo convierte en un caso interesante para estudiar la diversidad de los dinosaurios?",
+    "options": [
+      "Porque demuestra que no todos los dinosaurios eran gigantes, sino que también los había del tamaño de aves actuales",
+      "Porque todos los dinosaurios medían lo mismo",
+      "Porque solo existió un dinosaurio pequeño en toda la historia",
+      "Porque su tamaño no aporta ninguna información"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-16",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 9
+  },
+  {
+    "id": "compsognathus-17",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué importancia tiene el Compsognathus para entender la evolución temprana de los terópodos pequeños?",
+    "options": [
+      "Ninguna, es un caso aislado sin relación con otros dinosaurios",
+      "Ayuda a los científicos a estudiar cómo eran los terópodos pequeños y ágiles del Jurásico",
+      "Solo sirve para saber cómo era Europa hace millones de años",
+      "Demuestra que todos los terópodos eran gigantes"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-17",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "compsognathus-18",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué diferencia principal separa al Compsognathus del Velociraptor, otro pequeño terópodo carnívoro?",
+    "options": [
+      "Vivieron en periodos y continentes distintos, y el Velociraptor tenía una gran garra curva en el pie que el Compsognathus no tenía",
+      "No hay ninguna diferencia entre ambos",
+      "El Compsognathus era mucho más grande que el Velociraptor",
+      "El Velociraptor era herbívoro"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-18",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "compsognathus-19",
+    "dinosaur": "compsognathus",
+    "question": "¿Por qué es especialmente valioso el yacimiento de calizas de Solnhofen (Alemania) para fósiles como el del Compsognathus?",
+    "options": [
+      "Porque nunca se ha encontrado nada allí",
+      "Porque conserva detalles finísimos de los fósiles, gracias a un tipo de roca muy especial",
+      "Porque solo contiene fósiles de plantas",
+      "Porque está bajo el océano Pacífico"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-19",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "compsognathus-20",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué relación cronológica tiene el Compsognathus con el Archaeopteryx, la famosa ave primitiva hallada en las mismas rocas de Solnhofen?",
+    "options": [
+      "Vivieron aproximadamente en la misma época y zona geográfica",
+      "El Compsognathus es mucho más moderno que el Archaeopteryx",
+      "El Archaeopteryx vivió millones de años antes",
+      "No existe ninguna relación temporal entre ambos"
+    ],
+    "correctAnswerIndex": 0,
+    "dato_curioso": "funFacts.compsognathus-20",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 10
+  },
+  {
+    "id": "compsognathus-21",
+    "dinosaur": "compsognathus",
+    "question": "¿Qué reto tienen los científicos al estimar el peso exacto de un animal tan pequeño y ligero como el Compsognathus?",
+    "options": [
+      "Ninguno, el peso de fósiles pequeños es siempre fácil de calcular con exactitud",
+      "Los huesos delicados y ligeros se conservan peor, lo que dificulta calcular medidas precisas",
+      "El peso no se puede estimar nunca en ningún dinosaurio",
+      "El Compsognathus no tiene huesos, solo piel"
+    ],
+    "correctAnswerIndex": 1,
+    "dato_curioso": "funFacts.compsognathus-21",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/compsognathus.svg",
+    "imageAlt": "Ilustración educativa de un Compsognathus, un pequeño dinosaurio carnívoro del tamaño de una gallina del período Jurásico.",
+    "level": 10
   }
 ]

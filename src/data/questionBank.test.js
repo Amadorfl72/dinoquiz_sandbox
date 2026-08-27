@@ -91,9 +91,9 @@ describe('real question bank (public/data/questions.json)', () => {
   });
 
   // TRIOFSND-202: build-time content check — the bank must contain exactly
-  // 150 valid questions, 30 per level (1-5).
-  test('TRIOFSND-202: contains exactly 150 valid questions, 30 per level', () => {
-    expect(questions).toHaveLength(150);
+  // 300 valid questions, 30 per level (1-10).
+  test('TRIOFSND-202: contains exactly 300 valid questions, 30 per level', () => {
+    expect(questions).toHaveLength(300);
     expect(getLevelCoverageErrors(questions)).toEqual([]);
 
     VALID_LEVELS.forEach((level) => {
@@ -172,7 +172,7 @@ describe('real question bank (public/data/questions.json)', () => {
     expect(getDatoCuriosoTranslationErrors(questions, strings)).toEqual([]);
   });
 
-  test('every one of the 7 covered species has a dato curioso on each of its questions', () => {
+  test('every one of the 14 covered species has a dato curioso on each of its questions', () => {
     const strings = getStrings('es');
     VALID_DINOSAURS.forEach((dinosaur) => {
       const dinosaurQuestions = getQuestionsByDinosaur(questions, dinosaur);
@@ -258,7 +258,7 @@ describe('validateQuestion', () => {
     expect(errors.some((error) => error.includes('image'))).toBe(true);
   });
 
-  test.each([undefined, null, 0, 6, 1.5, '1'])('rejects an invalid "level" (%p)', (level) => {
+  test.each([undefined, null, 0, 11, 1.5, '1'])('rejects an invalid "level" (%p)', (level) => {
     const errors = validateQuestion(buildValidQuestion({ level }), 0);
     expect(errors.some((error) => error.includes('"level"'))).toBe(true);
   });

@@ -51,6 +51,13 @@ const DINOSAURS = Object.freeze({
   BRAQUIOSAURIO: 'braquiosaurio',
   ANKYLOSAURUS: 'ankylosaurus',
   PTERANODON: 'pteranodon',
+  SPINOSAURUS: 'spinosaurus',
+  DILOPHOSAURUS: 'dilophosaurus',
+  PACHYCEPHALOSAURUS: 'pachycephalosaurus',
+  COMPSOGNATHUS: 'compsognathus',
+  DIPLODOCUS: 'diplodocus',
+  IGUANODON: 'iguanodon',
+  PARASAUROLOPHUS: 'parasaurolophus',
 });
 
 const VALID_DINOSAURS = Object.values(DINOSAURS);
@@ -58,8 +65,8 @@ const MIN_OPTIONS = 3;
 const MAX_OPTIONS = 4;
 const MIN_QUESTIONS_PER_DINOSAUR = 3;
 const MIN_LEVEL = 1;
-const MAX_LEVEL = 5;
-const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5]);
+const MAX_LEVEL = 10;
+const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const QUESTIONS_PER_LEVEL = 30;
 const EXPECTED_QUESTION_COUNT = VALID_LEVELS.length * QUESTIONS_PER_LEVEL;
 
@@ -223,7 +230,7 @@ function getDinosaurCoverageErrors(questions) {
 }
 
 // TRIOFSND-202: the bank must contain exactly QUESTIONS_PER_LEVEL (30)
-// questions for each of the 5 levels (150 total) once invalid entries have
+// questions for each of the 10 levels (300 total) once invalid entries have
 // been excluded.
 function getLevelCoverageErrors(questions) {
   const countsByLevel = VALID_LEVELS.reduce((counts, level) => {
