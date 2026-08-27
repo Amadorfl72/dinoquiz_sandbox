@@ -358,6 +358,53 @@
       "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
     }
   },
+  "parejas": {
+    "screenTitle": "Parejas jurásicas",
+    "instructions": "Da la vuelta a dos cartas para encontrar la pareja de cada criatura.",
+    "boardLabel": "Tablero de cartas de Parejas jurásicas",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Encuentra las parejas de criaturas.",
+    "progressFormat": "Parejas encontradas: {matched} de {total}",
+    "card": {
+      "hiddenAriaLabelFormat": "Carta boca abajo, posición {position}",
+      "revealedAriaLabelFormat": "Carta boca arriba, posición {position}: {creature}",
+      "matchedAriaLabelFormat": "Pareja encontrada, posición {position}: {creature}",
+      "matchedBadge": "Pareja"
+    },
+    "feedback": {
+      "blockedMessage": "Espera: ya tienes dos cartas boca arriba.",
+      "blockedAnnouncement": "Ya tienes dos cartas boca arriba. Espera a ver si son pareja antes de girar otra.",
+      "matchMessageFormat": "¡Genial, pareja encontrada! Las dos cartas eran {creature}.",
+      "mismatchMessageFormat": "No es pareja: {first} y {second}. Inténtalo de nuevo.",
+      "softLimitHint": "Consejo: fíjate bien en cada carta antes de girar la siguiente."
+    },
+    "roundResult": {
+      "correctMessageFormat": "¡Genial, encontraste las {total} parejas en {attempts} intentos!",
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Parejas jurásicas completado!",
+      "announcementFormat": "Has terminado Parejas jurásicas. Completaste {score} de {total} rondas.",
+      "message": "¡Bien hecho recordando dónde estaba cada criatura! Sigue jugando para mejorar tu memoria."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
   "sizeOrder": {
     "screenTitle": "Ordena por tamaño",
     "instructions": "Toca dos criaturas para intercambiarlas de sitio hasta ordenarlas de la más pequeña a la más grande.",

@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v18';
+const SW_VERSION = 'v19';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -43,6 +43,7 @@ const PRECACHE_URLS = [
   '/scripts/mazeGenerator.js',
   '/scripts/mazeGame.js',
   '/scripts/mazeScreen.js',
+  '/scripts/parejasScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/modesCatalog.js',
   '/scripts/modeStorage.js',
@@ -96,6 +97,10 @@ const PRECACHE_URLS = [
   // Levels 6-10 dinosaurs reuse this single generic fallback instead of a
   // new per-dinosaur asset (see public/assets/images/fallback/CREDITS.md).
   '/assets/images/fallback/generic.svg',
+  // Parejas jurásicas card art (TRIOFSND-274): the shared card back plus
+  // the fourteen dinosaur fronts already precached above under
+  // /assets/images/dinosaurs/.
+  '/assets/images/cards/back.svg',
   // Mode selector card illustrations (TRIOFSND-232): precached so the
   // selector renders fully offline right after install, before any of these
   // would otherwise be fetched at runtime.
