@@ -194,6 +194,56 @@ describe('QuestionScreen', () => {
 
       expect(progressRow.textContent).not.toMatch(/años|age|eight-plus/i);
     });
+
+    describe('nivel y progreso como nodos DOM separados (TRIOFSND-219)', () => {
+      test('level and progress are two distinct DOM nodes, selectable independently, each holding only its own content', () => {
+        renderQuestionScreen(container, buildQuestion(), { questionNumber: 1, level: 3 });
+
+        const levelNode = container.querySelector('.question-screen__level');
+        const progressNode = container.querySelector('.question-screen__progress');
+
+        expect(levelNode).toBeInTheDocument();
+        expect(progressNode).toBeInTheDocument();
+        expect(levelNode).not.toBe(progressNode);
+
+        // Each node carries only its own piece of copy -- neither one is a
+        // single run-together string mixing both ("Nivel 1  1 de 10").
+        expect(levelNode.textContent).not.toContain('de 10');
+        expect(progressNode.textContent).not.toMatch(/^Nivel/);
+      });
+
+      test('the progress row has exactly two child elements (level, progress) when a level is provided', () => {
+        const { progressRow } = renderQuestionScreen(container, buildQuestion(), { questionNumber: 1, level: 3 });
+
+        expect(progressRow.children).toHaveLength(2);
+        expect(progressRow.children[0]).toHaveClass('question-screen__level');
+        expect(progressRow.children[1]).toHaveClass('question-screen__progress');
+      });
+
+      test('the progress row has a single child element (progress only) when no level is provided', () => {
+        const { progressRow } = renderQuestionScreen(container, buildQuestion(), { questionNumber: 1 });
+
+        expect(progressRow.children).toHaveLength(1);
+        expect(progressRow.children[0]).toHaveClass('question-screen__progress');
+      });
+
+      test('regression: the level and progress text/numbering shown are unchanged, just split across two nodes instead of one combined string', () => {
+        const { levelEl, progressEl } = renderQuestionScreen(container, buildQuestion(), {
+          questionNumber: 4,
+          level: 3,
+          totalQuestions: 10,
+        });
+
+        const expectedLevelText = strings.levelFormat.replace('{level}', '3');
+        const expectedProgressText = strings.progressFormat.replace('{current}', '4').replace('{total}', '10');
+
+        // Same wording/numbers a single combined string would have shown
+        // before ("Nivel 3" + "4 de 10"), now split into their own nodes.
+        expect(levelEl.textContent).toBe(expectedLevelText);
+        expect(progressEl.textContent).toBe(expectedProgressText);
+        expect(`${levelEl.textContent} ${progressEl.textContent}`).toBe('Nivel 3 4 de 10');
+      });
+    });
   });
 
   describe('image style by age (TRIOFSND-194)', () => {
