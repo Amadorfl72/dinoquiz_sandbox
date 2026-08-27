@@ -67,38 +67,31 @@
   "modeSelector": {
     "screenTitle": "Elige tu juego",
     "backButtonLabel": "Volver a la pantalla de inicio",
+    "lastPlayedBadge": "Último jugado",
     "modes": {
       "quiz": {
-        "name": "Quiz",
-        "accessibleLabel": "Modo Quiz: responde preguntas sobre dinosaurios eligiendo la respuesta correcta"
+        "accessibleLabel": "Modo Quiz: responde preguntas sobre criaturas prehistóricas eligiendo la respuesta correcta"
       },
-      "maze": {
-        "name": "Laberinto",
-        "accessibleLabel": "Modo Laberinto: guía a Dino por un laberinto prehistórico hasta la salida"
+      "laberinto": {
+        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto prehistórico hasta la salida"
       },
-      "shadow": {
-        "name": "Adivina la sombra",
-        "accessibleLabel": "Modo Adivina la sombra: reconoce qué dinosaurio se esconde detrás de su silueta"
+      "sombra": {
+        "accessibleLabel": "Modo Adivina la sombra: reconoce qué criatura prehistórica se esconde detrás de su silueta"
       },
-      "hearing": {
-        "name": "Oído Jurásico",
-        "accessibleLabel": "Modo Oído Jurásico: escucha un sonido imaginado y adivina de qué dinosaurio se trata"
+      "oidoJurasico": {
+        "accessibleLabel": "Modo Oído Jurásico: escucha un sonido imaginado y adivina de qué criatura prehistórica se trata"
       },
-      "pairs": {
-        "name": "Parejas jurásicas",
-        "accessibleLabel": "Modo Parejas jurásicas: encuentra las cartas de dinosaurios que forman pareja"
+      "parejas": {
+        "accessibleLabel": "Modo Parejas jurásicas: encuentra las cartas de criaturas prehistóricas que forman pareja"
       },
-      "classify": {
-        "name": "Clasifica",
-        "accessibleLabel": "Modo Clasifica: decide si cada dinosaurio es carnívoro, herbívoro u omnívoro"
+      "clasifica": {
+        "accessibleLabel": "Modo Clasifica: decide si cada criatura prehistórica es carnívora, herbívora u omnívora"
       },
-      "sizeOrder": {
-        "name": "Ordena por tamaño",
-        "accessibleLabel": "Modo Ordena por tamaño: coloca a los dinosaurios del más pequeño al más grande"
+      "ordenaPorTamano": {
+        "accessibleLabel": "Modo Ordena por tamaño: coloca a las criaturas prehistóricas de la más pequeña a la más grande"
       },
-      "timeline": {
-        "name": "Línea del tiempo",
-        "accessibleLabel": "Modo Línea del tiempo: ordena a los dinosaurios según cuándo vivieron"
+      "lineaDelTiempo": {
+        "accessibleLabel": "Modo Línea del tiempo: ordena a las criaturas prehistóricas según cuándo vivieron"
       }
     },
     "status": {
@@ -106,8 +99,10 @@
       "blocked": "Bloqueado"
     },
     "blockedReasons": {
-      "comingSoon": "Muy pronto podrás jugar a este modo",
-      "ageRestricted": "Disponible a partir de 8 años"
+      "insufficient_questions": "Necesitamos más preguntas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "insufficient_creatures": "Necesitamos más criaturas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "insufficient_creature_sounds": "Necesitamos más sonidos imaginados de criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!"
     }
   },
   "ageGate": {

@@ -23,7 +23,18 @@ describe('i18n resource loader', () => {
   });
 
   describe('modeSelector strings', () => {
-    const MODE_IDS = ['quiz', 'maze', 'shadow', 'hearing', 'pairs', 'classify', 'sizeOrder', 'timeline'];
+    // Mirrors src/game/modesCatalog.js MODE_IDS exactly, so the illustrated
+    // selector and the availability evaluator always agree on which modes exist.
+    const MODE_IDS = [
+      'quiz',
+      'laberinto',
+      'sombra',
+      'oidoJurasico',
+      'parejas',
+      'clasifica',
+      'ordenaPorTamano',
+      'lineaDelTiempo',
+    ];
 
     test('exposes a screen title and back button label', () => {
       const { modeSelector } = getStrings('es');
@@ -33,14 +44,14 @@ describe('i18n resource loader', () => {
       expect(modeSelector.backButtonLabel.length).toBeGreaterThan(0);
     });
 
-    test.each(MODE_IDS)('mode "%s" has a name and an accessible label', (modeId) => {
-      const { modeSelector } = getStrings('es');
+    test.each(MODE_IDS)('mode "%s" has an accessible label, and its display name comes from modes.%s.name', (modeId) => {
+      const { modeSelector, modes } = getStrings('es');
       const mode = modeSelector.modes[modeId];
       expect(mode).toBeDefined();
-      expect(typeof mode.name).toBe('string');
-      expect(mode.name.length).toBeGreaterThan(0);
       expect(typeof mode.accessibleLabel).toBe('string');
       expect(mode.accessibleLabel.length).toBeGreaterThan(0);
+      expect(typeof modes[modeId].name).toBe('string');
+      expect(modes[modeId].name.length).toBeGreaterThan(0);
     });
 
     test('exposes available/blocked status text', () => {
@@ -51,15 +62,28 @@ describe('i18n resource loader', () => {
       expect(modeSelector.status.blocked.length).toBeGreaterThan(0);
     });
 
-    test.each(['comingSoon', 'ageRestricted'])('exposes blocked-reason copy for cause "%s"', (cause) => {
+    // Mirrors src/game/modesCatalog.js AVAILABILITY_CAUSES exactly, so every
+    // cause the evaluator can return resolves to real, kid-friendly copy.
+    test.each([
+      'insufficient_questions',
+      'insufficient_creatures',
+      'insufficient_creature_sounds',
+      'missing_creature_field',
+    ])('exposes blocked-reason copy for cause "%s"', (cause) => {
       const { modeSelector } = getStrings('es');
       expect(typeof modeSelector.blockedReasons[cause]).toBe('string');
       expect(modeSelector.blockedReasons[cause].length).toBeGreaterThan(0);
     });
 
+    test('the last-played badge text exists', () => {
+      const { modeSelector } = getStrings('es');
+      expect(typeof modeSelector.lastPlayedBadge).toBe('string');
+      expect(modeSelector.lastPlayedBadge.length).toBeGreaterThan(0);
+    });
+
     test('the Oído Jurásico accessible label presents its sounds as imagined, not scientific fact', () => {
       const { modeSelector } = getStrings('es');
-      expect(modeSelector.modes.hearing.accessibleLabel).toMatch(/imaginado/i);
+      expect(modeSelector.modes.oidoJurasico.accessibleLabel).toMatch(/imaginado/i);
     });
   });
 });
