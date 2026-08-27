@@ -3,10 +3,14 @@
 const {
   POINTS_PER_CORRECT_ANSWER,
   POINTS_PER_INCORRECT_ANSWER,
+  MAX_STARS,
   isAnswerCorrect,
   computeScoreDelta,
   applyAnswerToScore,
   applyAnswer,
+  calculatePercentage,
+  calculateStarTier,
+  normalizeOutcome,
 } = require('./scoring');
 
 function buildQuestion(overrides = {}) {
@@ -106,5 +110,68 @@ describe('applyAnswer', () => {
 
     expect(afterHit.score).toBe(1);
     expect(afterMiss.score).toBe(1);
+  });
+});
+
+describe('calculatePercentage', () => {
+  test('converts a score/maxScore pair into a whole 0-100 percentage', () => {
+    expect(calculatePercentage(0, 10)).toBe(0);
+    expect(calculatePercentage(5, 10)).toBe(50);
+    expect(calculatePercentage(10, 10)).toBe(100);
+  });
+
+  test('is independent of the mode-specific maxScore -- any scale normalizes onto 0-100', () => {
+    expect(calculatePercentage(3, 6)).toBe(50);
+    expect(calculatePercentage(4, 8)).toBe(50);
+    expect(calculatePercentage(1, 3)).toBe(33);
+  });
+
+  test('rejects a score outside 0..maxScore', () => {
+    expect(() => calculatePercentage(-1, 10)).toThrow();
+    expect(() => calculatePercentage(11, 10)).toThrow();
+  });
+
+  test('rejects a maxScore that is not a positive number', () => {
+    expect(() => calculatePercentage(1, 0)).toThrow();
+    expect(() => calculatePercentage(1, -5)).toThrow();
+  });
+});
+
+describe('calculateStarTier', () => {
+  test.each([
+    [0, 1],
+    [30, 1],
+    [31, 2],
+    [60, 2],
+    [61, 3],
+    [100, 3],
+  ])('percentage %i maps to %i star(s)', (percentage, expectedStars) => {
+    expect(calculateStarTier(percentage)).toBe(expectedStars);
+  });
+
+  test('never returns more than MAX_STARS', () => {
+    expect(calculateStarTier(100)).toBe(MAX_STARS);
+  });
+
+  test('rejects a percentage outside 0..100', () => {
+    expect(() => calculateStarTier(-1)).toThrow();
+    expect(() => calculateStarTier(101)).toThrow();
+  });
+});
+
+describe('normalizeOutcome', () => {
+  test('converts a 10-round score (Quiz/Laberinto/Parejas/Clasifica scale) into percentage + stars', () => {
+    expect(normalizeOutcome(0, 10)).toEqual({ percentage: 0, stars: 1 });
+    expect(normalizeOutcome(3, 10)).toEqual({ percentage: 30, stars: 1 });
+    expect(normalizeOutcome(4, 10)).toEqual({ percentage: 40, stars: 2 });
+    expect(normalizeOutcome(6, 10)).toEqual({ percentage: 60, stars: 2 });
+    expect(normalizeOutcome(7, 10)).toEqual({ percentage: 70, stars: 3 });
+    expect(normalizeOutcome(10, 10)).toEqual({ percentage: 100, stars: 3 });
+  });
+
+  test('maps a mode with a different maxScore onto the exact same visual scale', () => {
+    expect(normalizeOutcome(2, 8)).toEqual({ percentage: 25, stars: 1 });
+    expect(normalizeOutcome(4, 8)).toEqual({ percentage: 50, stars: 2 });
+    expect(normalizeOutcome(8, 8)).toEqual({ percentage: 100, stars: 3 });
   });
 });
