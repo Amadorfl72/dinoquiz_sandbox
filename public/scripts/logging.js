@@ -276,7 +276,7 @@
       var counts = stored ? JSON.parse(stored) : {};
       return counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
     } catch (error) {
-      console.warn('DinoQuiz: failed to load ' + key + ' from storage', error);
+      console.warn('DinoQuiz: failed to load key from storage', key, error);
       return {};
     }
   };
@@ -285,7 +285,7 @@
     try {
       this.storageAdapter.setItem(key, JSON.stringify(counts));
     } catch (error) {
-      console.error('DinoQuiz: failed to save ' + key + ' to storage', error);
+      console.error('DinoQuiz: failed to save key to storage', key, error);
     }
   };
 
@@ -510,6 +510,9 @@
         if (!response.ok) {
           throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
+        if (typeof response.json !== 'function') {
+          return { success: true };
+        }
         return response.json().catch(function () {
           return { success: true };
         });
@@ -521,7 +524,7 @@
         return data;
       })
       .catch(function (error) {
-        console.error('DinoQuiz: failed to send logs to ' + endpointUrl, error);
+        console.error('DinoQuiz: failed to send logs to endpoint', endpointUrl, error);
         throw error;
       });
   };

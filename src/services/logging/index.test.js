@@ -1,6 +1,6 @@
 'use strict';
 
-const logging = require('./LogService.js');
+const logging = require('./index');
 const LogService = logging.LogService || logging;
 
 function makeStorage() {
