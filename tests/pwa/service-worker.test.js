@@ -135,6 +135,61 @@ describe('TRIOFSND-110: service worker source', () => {
   });
 });
 
+describe('TRIOFSND-266: precache covers every level 6-10 asset actually referenced by the question bank', () => {
+  // eslint-disable-next-line global-require
+  const { PRECACHE_URLS } = require(SW_PATH);
+  const QUESTIONS_PATH = path.resolve(__dirname, '../../public/data/questions.json');
+  const IMAGE_BASE_PATH = '/assets/images/';
+  const IMAGE_FIELDS = ['image', 'imageRealistic', 'imageFallback'];
+
+  let questions;
+  let level6To10Questions;
+
+  beforeAll(() => {
+    expect(fs.existsSync(QUESTIONS_PATH)).toBe(true);
+    // eslint-disable-next-line global-require
+    questions = require(QUESTIONS_PATH);
+    level6To10Questions = questions.filter((question) => question.level >= 6 && question.level <= 10);
+  });
+
+  test('the published question bank and i18n strings are precached', () => {
+    expect(PRECACHE_URLS).toContain('/data/questions.json');
+    expect(PRECACHE_URLS).toContain('/i18n/es.json');
+  });
+
+  test('levels 6-10 carry exactly 150 questions (30 per level, guards against a partial bank)', () => {
+    expect(level6To10Questions).toHaveLength(150);
+  });
+
+  test('every unique image/imageRealistic/imageFallback URL referenced by levels 6-10 is precached', () => {
+    const referencedUrls = new Set();
+    level6To10Questions.forEach((question) => {
+      IMAGE_FIELDS.forEach((field) => {
+        if (typeof question[field] === 'string' && question[field] !== '') {
+          referencedUrls.add(IMAGE_BASE_PATH + question[field]);
+        }
+      });
+    });
+
+    expect(referencedUrls.size).toBeGreaterThan(0);
+    referencedUrls.forEach((url) => {
+      expect(PRECACHE_URLS).toContain(url);
+    });
+  });
+
+  test('every URL referenced by levels 6-10 maps to a file actually shipped under public/', () => {
+    const publicDir = path.resolve(__dirname, '../../public');
+    level6To10Questions.forEach((question) => {
+      IMAGE_FIELDS.forEach((field) => {
+        const value = question[field];
+        expect(typeof value === 'string' && value !== '').toBe(true);
+        const relativePath = path.join('assets/images', value);
+        expect(fs.existsSync(path.join(publicDir, relativePath))).toBe(true);
+      });
+    });
+  });
+});
+
 describe('TRIOFSND-110: isRuntimeCacheable', () => {
   // eslint-disable-next-line global-require
   const { isRuntimeCacheable } = require(SW_PATH);
