@@ -475,7 +475,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       expect(container.querySelector('.age-gate-screen')).toBeNull();
     });
 
-    test('the age-band selection is never written to any storage backend passed to renderHome', () => {
+    test('the age-band selection is never written to any storage backend passed to renderHome (only the last-selected mode is, TRIOFSND-235)', () => {
       const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(10);
@@ -497,7 +497,11 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
         getByRole(container, 'button', { name: require('../../public/i18n/es.json').home.playButton }).click();
         selectAgeGateOption(container);
 
-        expect(storage.setItem).not.toHaveBeenCalled();
+        // The only write is main.js's own last-selected-mode persistence
+        // (dinoquiz:lastMode, TRIOFSND-235) firing once Quiz starts -- the
+        // age band picked just before it is never itself written anywhere.
+        expect(storage.setItem).toHaveBeenCalledTimes(1);
+        expect(storage.setItem).toHaveBeenCalledWith('dinoquiz:lastMode', JSON.stringify('quiz'));
       });
       jest.advanceTimersByTime(0);
       return rendered;
