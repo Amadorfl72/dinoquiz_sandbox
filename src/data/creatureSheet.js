@@ -64,107 +64,6 @@ const VISUAL_FAMILIES = Object.freeze({
   FLYING_REPTILE: 'flying_reptile',
 });
 
-const CREATURE_SHEETS = Object.freeze({
-  [DINOSAURS.TREX]: Object.freeze({
-    id: DINOSAURS.TREX,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 12,
-    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.TRICERATOPS]: Object.freeze({
-    id: DINOSAURS.TRICERATOPS,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 9,
-    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.VELOCIRAPTOR]: Object.freeze({
-    id: DINOSAURS.VELOCIRAPTOR,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 2,
-    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.ESTEGOSAURIO]: Object.freeze({
-    id: DINOSAURS.ESTEGOSAURIO,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 9,
-    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.BRAQUIOSAURIO]: Object.freeze({
-    id: DINOSAURS.BRAQUIOSAURIO,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 21,
-    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.ANKYLOSAURUS]: Object.freeze({
-    id: DINOSAURS.ANKYLOSAURUS,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 7,
-    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.PTERANODON]: Object.freeze({
-    id: DINOSAURS.PTERANODON,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 1.8,
-    visualFamily: VISUAL_FAMILIES.FLYING_REPTILE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.SPINOSAURUS]: Object.freeze({
-    id: DINOSAURS.SPINOSAURUS,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 15,
-    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.DILOPHOSAURUS]: Object.freeze({
-    id: DINOSAURS.DILOPHOSAURUS,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 6.5,
-    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({
-    id: DINOSAURS.PACHYCEPHALOSAURUS,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 4.5,
-    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.COMPSOGNATHUS]: Object.freeze({
-    id: DINOSAURS.COMPSOGNATHUS,
-    diet: DIETS.CARNIVORO,
-    lengthMeters: 1,
-    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.DIPLODOCUS]: Object.freeze({
-    id: DINOSAURS.DIPLODOCUS,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 25,
-    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.IGUANODON]: Object.freeze({
-    id: DINOSAURS.IGUANODON,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 10,
-    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-  [DINOSAURS.PARASAUROLOPHUS]: Object.freeze({
-    id: DINOSAURS.PARASAUROLOPHUS,
-    diet: DIETS.HERBIVORO,
-    lengthMeters: 10,
-    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
-    shadowMeta: Object.freeze({ approved: false, allowedTransforms: [] }),
-  }),
-});
-
 // Body-plan buckets used to judge silhouette similarity: two approved
 // creatures in the same group are the ones most likely to be confused as
 // shadows and should be preferred as cross-group decoys in a round.
@@ -204,56 +103,6 @@ const FLYER_TRANSFORMS = Object.freeze([
   SHADOW_TRANSFORMS.ROTATE_180,
 ]);
 
-const CREATURE_SHEETS = Object.freeze({
-  [DINOSAURS.TREX]: Object.freeze({ id: DINOSAURS.TREX, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.TRICERATOPS]: Object.freeze({ id: DINOSAURS.TRICERATOPS, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_HORNED, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.VELOCIRAPTOR]: Object.freeze({ id: DINOSAURS.VELOCIRAPTOR, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.ESTEGOSAURIO]: Object.freeze({ id: DINOSAURS.ESTEGOSAURIO, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_PLATED, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.BRAQUIOSAURIO]: Object.freeze({ id: DINOSAURS.BRAQUIOSAURIO, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.ANKYLOSAURUS]: Object.freeze({ id: DINOSAURS.ANKYLOSAURUS, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_ARMORED, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.PTERANODON]: Object.freeze({ id: DINOSAURS.PTERANODON, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.FLYING_REPTILE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.FLYER, transforms: FLYER_TRANSFORMS }) }),
-  [DINOSAURS.SPINOSAURUS]: Object.freeze({ id: DINOSAURS.SPINOSAURUS, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.DILOPHOSAURUS]: Object.freeze({ id: DINOSAURS.DILOPHOSAURUS, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({ id: DINOSAURS.PACHYCEPHALOSAURUS, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.DOME_HEAD, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.COMPSOGNATHUS]: Object.freeze({ id: DINOSAURS.COMPSOGNATHUS, diet: DIETS.CARNIVORO, visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_SMALL, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.DIPLODOCUS]: Object.freeze({ id: DINOSAURS.DIPLODOCUS, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.IGUANODON]: Object.freeze({ id: DINOSAURS.IGUANODON, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL, transforms: GROUND_TRANSFORMS }) }),
-  [DINOSAURS.PARASAUROLOPHUS]: Object.freeze({ id: DINOSAURS.PARASAUROLOPHUS, diet: DIETS.HERBIVORO, visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE, shadowMeta: Object.freeze({ approved: true, compatibilityGroup: SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL, transforms: GROUND_TRANSFORMS }) }),
-});
-
-// Pairs of approved creatures whose silhouettes remain too similar even
-// with the other as a decoy, since a correct guess would be unverifiable.
-const SHADOW_INDISTINGUISHABLE_PAIRS = Object.freeze([
-  Object.freeze([DINOSAURS.BRAQUIOSAURIO, DINOSAURS.DIPLODOCUS]),
-  Object.freeze([DINOSAURS.VELOCIRAPTOR, DINOSAURS.DILOPHOSAURUS]),
-  Object.freeze([DINOSAURS.IGUANODON, DINOSAURS.PARASAUROLOPHUS]),
-]);
-
-const SHADOW_MODE_MIN_APPROVED = 12;
-});
-
-// Transforms a creature's silhouette may undergo (e.g. to vary a round's
-// presentation) without losing identity or legibility for the target
-// audience (niños de 6 a 8 años, PRD constraint on WCAG-legible controls).
-const SHADOW_TRANSFORMS = Object.freeze({
-  // Mirroring a side-profile outline (facing the other way) keeps every
-  // shape cue intact, so it is safe for any approved creature.
-  FLIP_HORIZONTAL: 'flipHorizontal',
-  // Rotating a grounded creature onto its side/head destroys the silhouette
-  // a child would recognize; only granted to the flyer, whose profile stays
-  // legible at a bank angle.
-  ROTATE_90: 'rotate90',
-  ROTATE_180: 'rotate180',
-});
-
-// Every approved creature may be mirrored; only the flyer additionally
-// tolerates a partial rotation without becoming unrecognizable.
-const GROUND_TRANSFORMS = Object.freeze([SHADOW_TRANSFORMS.FLIP_HORIZONTAL]);
-const FLYER_TRANSFORMS = Object.freeze([
-  SHADOW_TRANSFORMS.FLIP_HORIZONTAL,
-  SHADOW_TRANSFORMS.ROTATE_90,
-]);
-
 function approvedShadow(compatibilityGroup, allowedTransforms) {
   return Object.freeze({
     approved: true,
@@ -276,71 +125,99 @@ const CREATURE_SHEETS = Object.freeze({
   [DINOSAURS.TREX]: Object.freeze({
     id: DINOSAURS.TREX,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 12,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE),
   }),
   [DINOSAURS.TRICERATOPS]: Object.freeze({
     id: DINOSAURS.TRICERATOPS,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 9,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_HORNED),
   }),
   [DINOSAURS.VELOCIRAPTOR]: Object.freeze({
     id: DINOSAURS.VELOCIRAPTOR,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 2,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM),
   }),
   [DINOSAURS.ESTEGOSAURIO]: Object.freeze({
     id: DINOSAURS.ESTEGOSAURIO,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 9,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_PLATED),
   }),
   [DINOSAURS.BRAQUIOSAURIO]: Object.freeze({
     id: DINOSAURS.BRAQUIOSAURIO,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 21,
+    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK),
   }),
   [DINOSAURS.ANKYLOSAURUS]: Object.freeze({
     id: DINOSAURS.ANKYLOSAURUS,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 7,
+    visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_ARMORED),
   }),
   [DINOSAURS.PTERANODON]: Object.freeze({
     id: DINOSAURS.PTERANODON,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 1.8,
+    visualFamily: VISUAL_FAMILIES.FLYING_REPTILE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.FLYER, FLYER_TRANSFORMS),
   }),
   [DINOSAURS.SPINOSAURUS]: Object.freeze({
     id: DINOSAURS.SPINOSAURUS,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 15,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE),
   }),
   [DINOSAURS.DILOPHOSAURUS]: Object.freeze({
     id: DINOSAURS.DILOPHOSAURUS,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 6.5,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM),
   }),
   [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({
     id: DINOSAURS.PACHYCEPHALOSAURUS,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 4.5,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.DOME_HEAD),
   }),
   [DINOSAURS.COMPSOGNATHUS]: Object.freeze({
     id: DINOSAURS.COMPSOGNATHUS,
     diet: DIETS.CARNIVORO,
+    lengthMeters: 1,
+    visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: UNAPPROVED_SHADOW,
   }),
   [DINOSAURS.DIPLODOCUS]: Object.freeze({
     id: DINOSAURS.DIPLODOCUS,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 25,
+    visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK),
   }),
   [DINOSAURS.IGUANODON]: Object.freeze({
     id: DINOSAURS.IGUANODON,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 10,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL),
   }),
   [DINOSAURS.PARASAUROLOPHUS]: Object.freeze({
     id: DINOSAURS.PARASAUROLOPHUS,
     diet: DIETS.HERBIVORO,
+    lengthMeters: 10,
+    visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL),
   }),
 });
