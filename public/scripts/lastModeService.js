@@ -17,6 +17,17 @@
  * direct-localStorage pattern public/scripts/main.js already uses for the
  * `dinoquiz:muted`/`dinoquiz:adsRemoved` flags.
  *
+ * Registry validation (TRIOFSND-234): `getLastMode` cross-checks the stored
+ * id against modesCatalog.js's MODES_CATALOG and its live availability
+ * evaluator before returning it, so a stale id (a mode that was renamed,
+ * removed, or has since become blocked -- e.g. Oído Jurásico before enough
+ * creature sounds ship) never comes back as "the last mode". This keeps the
+ * validation in one place instead of duplicating it as a second storage
+ * concept: the mode selector's naive `mode.id === lastMode` equality check
+ * (public/scripts/modeSelectorScreen.js) is only ever correct because
+ * `getLastMode` itself already returns null for anything that shouldn't be
+ * highlighted.
+ *
  * Browser bridge (TRIOFSND-231): follows the same dual CommonJS/
  * `window.DinoQuiz` pattern as public/scripts/homeScreen.js so the mode
  * selector can load it as a plain `<script>` (see public/index.html) with no
@@ -40,28 +51,76 @@
     return null;
   }
 
+  function resolveModesCatalog() {
+    if (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.game && window.DinoQuiz.game.modesCatalog) {
+      return window.DinoQuiz.game.modesCatalog;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('./modesCatalog');
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * True only if `modeId` is both a real entry in MODES_CATALOG and currently
+   * playable per its requirements -- an unknown id or a known-but-blocked one
+   * both fail closed (false), never throwing so a resolver problem just means
+   * "don't highlight anything" instead of crashing the selector.
+   */
+  function isKnownAndAvailable(modeId, modesCatalog) {
+    var catalog = modesCatalog || resolveModesCatalog();
+    if (!catalog) {
+      return false;
+    }
+
+    try {
+      var mode = catalog.getModeById(modeId);
+      if (!mode) {
+        return false;
+      }
+      var verdict = catalog.evaluateModeAvailability(mode, catalog.buildCurrentResourceCatalog());
+      return !!(verdict && verdict.available);
+    } catch (error) {
+      return false;
+    }
+  }
+
   /**
    * Reads the last-selected mode id. Returns null if none was ever recorded,
-   * storage is unavailable, or the stored value is corrupted/not a non-empty
-   * string -- never throws, so a caller can always fall back to the catalog's
-   * default mode.
+   * storage is unavailable, the stored value is corrupted/not a non-empty
+   * string, or the id doesn't exist in MODES_CATALOG / isn't currently
+   * available -- never throws, so a caller can always fall back to the
+   * catalog's default mode. `modesCatalog` is an optional override, mirroring
+   * `storageAdapter`, so callers/tests can inject a fake registry instead of
+   * depending on the real one.
    */
-  function getLastMode(storageAdapter) {
+  function getLastMode(storageAdapter, modesCatalog) {
     var storage = resolveStorage(storageAdapter);
     if (!storage) {
       return null;
     }
 
+    var modeId;
     try {
       var raw = storage.getItem(LAST_MODE_STORAGE_KEY);
       if (raw === null) {
         return null;
       }
-      var modeId = JSON.parse(raw);
-      return typeof modeId === 'string' && modeId.length > 0 ? modeId : null;
+      var parsed = JSON.parse(raw);
+      modeId = typeof parsed === 'string' && parsed.length > 0 ? parsed : null;
     } catch (error) {
       return null;
     }
+
+    if (!modeId) {
+      return null;
+    }
+
+    return isKnownAndAvailable(modeId, modesCatalog) ? modeId : null;
   }
 
   /**
