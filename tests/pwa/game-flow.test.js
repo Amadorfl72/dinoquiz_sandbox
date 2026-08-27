@@ -1274,18 +1274,18 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
   });
 
-  test('fin en nivel 5: la partida siempre termina al completar el nivel 5 (MAX_LEVEL), sea cual sea la puntuación', async () => {
+  test('fin en nivel 10: la partida siempre termina al completar el nivel 10 (MAX_LEVEL), sea cual sea la puntuación', async () => {
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
-    const questions = buildQuestionBank(10, 5);
+    const questions = buildQuestionBank(10, 10);
 
     startLevelGame(container, renderers, questions, document, undefined, {
       ageBand: 'eight-plus',
-      level: 5,
+      level: 10,
       randomFn: () => 0,
     });
 
-    expect(container.querySelector('.question-screen__level')).toHaveTextContent('5');
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('10');
 
     await playLevelWithPattern('CCCCCCCCCC');
 

@@ -86,7 +86,7 @@ DinoQuiz cumple los tres criterios de instalabilidad de una PWA:
 
 ## Banco de preguntas
 
-El banco de 150 preguntas (30 por cada uno de los 5 niveles) vive en
+El banco de 300 preguntas (30 por cada uno de los 10 niveles) vive en
 [`public/data/questions.json`](public/data/questions.json)
 y se carga/valida a través de [`src/data/questionBank.js`](src/data/questionBank.js). El JSON
 vive bajo `public/` (igual que [`public/i18n/es.json`](public/i18n/es.json)) para que el
@@ -100,7 +100,9 @@ Cada pregunta sigue este esquema:
 {
   "id": "trex-01",              // identificador único
   "dinosaur": "trex",           // uno de: trex, triceratops, velociraptor,
-                                 // estegosaurio, braquiosaurio, ankylosaurus, pteranodon
+                                 // estegosaurio, braquiosaurio, ankylosaurus, pteranodon,
+                                 // spinosaurus, dilophosaurus, pachycephalosaurus,
+                                 // compsognathus, diplodocus, iguanodon, parasaurolophus
   "question": "...",            // enunciado
   "options": ["...", "..."],    // 3-4 opciones de respuesta
   "correctAnswerIndex": 0,      // índice de la opción correcta
@@ -111,17 +113,17 @@ Cada pregunta sigue este esquema:
   "imageFallback": "fallback/trex.svg",   // asset local de respaldo por dinosaurio, para cuando
                                  // la imagen principal no llega a cargar
   "imageAlt": "...",            // alt educativo y neutral, compartido por las tres variantes
-  "level": 1                    // nivel de dificultad, entero de 1 a 5
+  "level": 1                    // nivel de dificultad, entero de 1 a 10
 }
 ```
 
 `loadQuestionBank()` lee el JSON y valida el esquema de cada pregunta (opciones, índice de
 respuesta correcta, ids únicos, que cada `dato_curioso` resuelva a un texto no vacío en el
-recurso i18n, etc.). El banco cubre los 7 dinosaurios con al menos 3-4 preguntas cada uno, y
+recurso i18n, etc.). El banco cubre los 14 dinosaurios con al menos 3-4 preguntas cada uno, y
 cada una de esas preguntas tiene su propio dato curioso.
 
-**TRIOFSND-202 — niveles y `getQuestionsByLevel()`:** el banco contiene exactamente 150
-preguntas, 30 por cada uno de los 5 niveles (`level`, entero 1-5); `getLevelCoverageErrors()`
+**TRIOFSND-202 — niveles y `getQuestionsByLevel()`:** el banco contiene exactamente 300
+preguntas, 30 por cada uno de los 10 niveles (`level`, entero 1-10); `getLevelCoverageErrors()`
 comprueba ese reparto y `loadQuestionBank()` lo exige junto a la cobertura por dinosaurio.
 `getQuestionsByLevel(level, options)` en
 [`src/data/questionBank.js`](src/data/questionBank.js) valida los campos obligatorios de cada
