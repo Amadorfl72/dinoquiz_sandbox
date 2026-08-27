@@ -46,6 +46,7 @@ const MAZE_GAMES_STARTED_KEY = 'dinoquiz:mazeGamesStartedByLevel';
 const MAZE_GAMES_COMPLETED_KEY = 'dinoquiz:mazeGamesCompletedByLevel';
 const MAZE_GAMES_ABANDONED_KEY = 'dinoquiz:mazeGamesAbandonedByLevel';
 const MAZE_RESOLVABILITY_FAILURE_COUNT_KEY = 'dinoquiz:mazeResolvabilityFailureCount';
+const GAMES_ABANDONED_BY_MODE_KEY = 'dinoquiz:gamesAbandonedByMode';
 const MAX_LOGS = 1000; // Prevent unbounded growth
 const LOG_VERSION = '1.0';
 
@@ -112,6 +113,7 @@ function LogService(storageAdapter) {
   this.mazeGamesCompletedByLevel = this._loadLevelCounts(MAZE_GAMES_COMPLETED_KEY);
   this.mazeGamesAbandonedByLevel = this._loadLevelCounts(MAZE_GAMES_ABANDONED_KEY);
   this.mazeResolvabilityFailureCount = this._loadMazeResolvabilityFailureCount();
+  this.gamesAbandonedByMode = this._loadLevelCounts(GAMES_ABANDONED_BY_MODE_KEY);
 }
 
 LogService.prototype._loadLogs = function () {
@@ -424,6 +426,23 @@ LogService.prototype.getMazeResolvabilityFailureCount = function () {
 };
 
 /**
+ * Tallies one more confirmed "cambiar de juego" (TRIOFSND-239) that discarded
+ * an incomplete round for `modeId`.
+ * @param {string} modeId - The mode id whose incomplete round was discarded
+ * @returns {number} The updated count for `modeId`
+ */
+LogService.prototype.logGameAbandonedByMode = function (modeId) {
+  return this._incrementLevelCount(GAMES_ABANDONED_BY_MODE_KEY, this.gamesAbandonedByMode, modeId);
+};
+
+/**
+ * @returns {object} Defensive copy of the per-mode games-abandoned-by-mode-change counts
+ */
+LogService.prototype.getGamesAbandonedByMode = function () {
+  return Object.assign({}, this.gamesAbandonedByMode);
+};
+
+/**
  * Retrieves all logged events
  * @returns {array} Array of log entries
  */
@@ -591,6 +610,7 @@ if (typeof module !== 'undefined' && module.exports) {
     MAZE_GAMES_COMPLETED_KEY: MAZE_GAMES_COMPLETED_KEY,
     MAZE_GAMES_ABANDONED_KEY: MAZE_GAMES_ABANDONED_KEY,
     MAZE_RESOLVABILITY_FAILURE_COUNT_KEY: MAZE_RESOLVABILITY_FAILURE_COUNT_KEY,
+    GAMES_ABANDONED_BY_MODE_KEY: GAMES_ABANDONED_BY_MODE_KEY,
     MAX_LOGS: MAX_LOGS,
     LOG_VERSION: LOG_VERSION,
   };

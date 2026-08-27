@@ -21,6 +21,11 @@ const QUESTION_SCREEN = '.question-screen';
 const QUESTION_OPTION = '.question-screen__option';
 const NEXT_BUTTON = '.question-screen__next-button';
 const RESULTS_SCREEN = '.results-screen';
+// Class selector, not a role/text lookup (TRIOFSND-207): once a level is
+// unlocked this button's label becomes "Ir al nivel N" instead of the
+// generic "Volver a jugar" (see resultsScreen.js's resolvePlayAgainButtonLabel),
+// so matching by its stable class covers every level outcome.
+const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
 async function playFullGame(page) {
@@ -53,7 +58,7 @@ test.describe('TRIOFSND-119: auditoría de red -- ninguna llamada sale del propi
     await playFullGame(page);
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();
 
-    await page.getByRole('button', { name: 'Volver a jugar' }).click();
+    await page.locator(PLAY_AGAIN_BUTTON).click();
     await playFullGame(page);
     await expect(page.locator(RESULTS_SCREEN)).toBeVisible();
 
