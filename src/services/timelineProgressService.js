@@ -103,7 +103,7 @@ function isValidLastResult(result) {
   if (!Number.isInteger(result.percentage) || result.percentage < 0 || result.percentage > 100) {
     return false;
   }
-  if (!Number.isInteger(result.stars) || result.stars < 1 || result.stars > 3) {
+  if (!Number.isInteger(result.stars) || result.stars < 0 || result.stars > 3) {
     return false;
   }
   return result.level === null || Number.isInteger(result.level);

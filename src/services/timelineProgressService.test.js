@@ -197,6 +197,57 @@ describe('TimelineProgressService', () => {
       expect(logService.roundStarsEarnedCalls).toEqual([{ modeId: MODE_ID, level: 1, stars: result.stars }]);
     });
 
+    test('persists and restores a zero-score result instead of discarding it as incompatible', async () => {
+      const adapter = createFakeAdapter();
+      const service = new TimelineProgressService([adapter], createFakeLogService());
+
+      const result = await service.recordGameFinished({
+        level: 1,
+        answers: answersOf(10, false),
+        score: 0,
+        maxScore: 10,
+      });
+
+      expect(result.percentage).toBe(0);
+      expect(await service.getLastResult()).toEqual({
+        score: 0,
+        maxScore: 10,
+        percentage: 0,
+        stars: result.stars,
+        level: 1,
+      });
+
+      // A fresh service instance reading the same adapter simulates a restore
+      // on a later visit: the zero-score result must come back unchanged,
+      // never discarded as an incompatible/invalid stored entry.
+      const restored = new TimelineProgressService([adapter], createFakeLogService());
+      expect(await restored.getLastResult()).toEqual({
+        score: 0,
+        maxScore: 10,
+        percentage: 0,
+        stars: result.stars,
+        level: 1,
+      });
+    });
+
+    test('restores a stored result with stars: 0 rather than discarding it as incompatible', async () => {
+      const logService = createFakeLogService();
+      const adapter = createFakeAdapter();
+      await adapter.setItem(
+        PROGRESS_KEY,
+        JSON.stringify({
+          schemaVersion: PROGRESS_SCHEMA_VERSION,
+          maxUnlockedLevel: 1,
+          unlockCount: 0,
+          lastResult: { score: 0, maxScore: 10, percentage: 0, stars: 0, level: 1 },
+        })
+      );
+      const service = new TimelineProgressService([adapter], logService);
+
+      expect(await service.getLastResult()).toEqual({ score: 0, maxScore: 10, percentage: 0, stars: 0, level: 1 });
+      expect(logService.stateDiscardedCalls).toEqual([]);
+    });
+
     test('never mutates a sibling mode own progress stored on the same adapter', async () => {
       const adapter = createFakeAdapter();
       await adapter.setItem('dinoquiz:modeProgress:quiz', JSON.stringify({ untouched: true }));
