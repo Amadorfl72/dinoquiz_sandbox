@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v15';
+const SW_VERSION = 'v14';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -109,24 +109,14 @@ const PRECACHE_URLS = [
   '/assets/sounds/correct.wav',
   '/assets/sounds/incorrect.wav',
   '/assets/sounds/fail-neutral.wav',
-  // Oído Jurásico "imagined" creature sounds (TRIOFSND-267): synthesized
-  // original audio, never a real recording (see
-  // public/assets/sounds/oido-jurasico/CREDITS.md). Precached so the mode
-  // works fully offline right after install.
-  '/assets/sounds/oido-jurasico/trex.wav',
-  '/assets/sounds/oido-jurasico/triceratops.wav',
-  '/assets/sounds/oido-jurasico/velociraptor.wav',
-  '/assets/sounds/oido-jurasico/estegosaurio.wav',
-  '/assets/sounds/oido-jurasico/braquiosaurio.wav',
-  '/assets/sounds/oido-jurasico/ankylosaurus.wav',
-  '/assets/sounds/oido-jurasico/pteranodon.wav',
-  '/assets/sounds/oido-jurasico/spinosaurus.wav',
-  '/assets/sounds/oido-jurasico/dilophosaurus.wav',
-  '/assets/sounds/oido-jurasico/pachycephalosaurus.wav',
-  '/assets/sounds/oido-jurasico/compsognathus.wav',
-  '/assets/sounds/oido-jurasico/diplodocus.wav',
-  '/assets/sounds/oido-jurasico/iguanodon.wav',
-  '/assets/sounds/oido-jurasico/parasaurolophus.wav',
+  // NOTE: The Oído Jurásico "imagined" creature sounds under
+  // /assets/sounds/oido-jurasico/ are intentionally NOT precached here.
+  // Adding them to PRECACHE_URLS and bumping SW_VERSION is the
+  // responsibility of the later offline-integration task (TRIOFSND-267
+  // scope note); this content-only task ships the assets and credits but
+  // must not touch the precache manifest or the SW version. Until then the
+  // files are still served offline after first fetch via the runtime
+  // cache-first rule for /assets/sounds/ below.
   '/i18n/es.json',
   '/data/questions.json',
   '/offline.html',
