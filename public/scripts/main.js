@@ -368,6 +368,49 @@
   }
 
   /**
+   * Resolves public/scripts/modeProgressStorage.js's `ModeProgressStorage`
+   * (TRIOFSND-250, PRD "Progresión independiente por modo"): the per-mode
+   * local persistence of a mode's highest unlocked level and its latest
+   * finished-game result (score/percentage/stars), keyed by modeId under
+   * `dinoquiz:modeProgress:<modeId>` -- unlike `storage`'s (StorageClient's)
+   * single, mode-agnostic `maxUnlockedLevel`, this is what `finishLevel`
+   * below reads/writes so one mode's progression never reads, overwrites or
+   * resets another's (TRIOFSND-253).
+   *
+   * Same require-or-`window.DinoQuiz` fallback shape as `resolveModeStorage`/
+   * `resolveMazeGame` above. Node/Jest resolves the canonical
+   * `src/services/storage` module's own shared `modeProgressStorage`
+   * singleton; the real, bundler-less browser instantiates its own singleton
+   * from the `<script>`-loaded constructor once and caches it in
+   * `browserModeProgressStorage` below, so every level completed in the same
+   * session shares the same resolved backend adapter instead of re-probing
+   * IndexedDB/localStorage availability on every call.
+   */
+  var browserModeProgressStorage = null;
+
+  function resolveModeProgressStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/storage').modeProgressStorage;
+    }
+
+    var ModeProgressStorageCtor =
+      win &&
+      win.DinoQuiz &&
+      win.DinoQuiz.services &&
+      win.DinoQuiz.services.modeProgressStorage &&
+      win.DinoQuiz.services.modeProgressStorage.ModeProgressStorage;
+    if (typeof ModeProgressStorageCtor !== 'function') {
+      return null;
+    }
+    if (!browserModeProgressStorage) {
+      browserModeProgressStorage = new ModeProgressStorageCtor();
+    }
+    return browserModeProgressStorage;
+  }
+
+  /**
    * Resolves src/services/gameSessionStorage.js's mode-scoped facade
    * (`hasIncompleteGame`/`discardTransientState`, TRIOFSND-238/239) that
    * `handleModeSelected` below drives to condition "cambiar de modo" on
@@ -455,8 +498,10 @@
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
-      // multi-level orchestrator until its own game engine ships.
-      startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+      // multi-level orchestrator until its own game engine ships -- `modeId`
+      // (TRIOFSND-253) is what keeps each mode's level-unlock progression and
+      // finished-game result independent (see startLevelGame/finishLevel).
+      startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
     }
 
     var gameSessionStorage = resolveGameSessionStorage();
@@ -1024,6 +1069,10 @@
           level: levelGame.level,
           answers: finalState.answers,
           ageBand: ctx.ageBand,
+          // TRIOFSND-253: scopes the unlock threshold looked up (and thus
+          // whether the next level unlocks) strictly to this mode -- see
+          // gameFlow.js's own doc comment on resolveLevelOutcome/completeLevel.
+          modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
         });
@@ -1055,26 +1104,76 @@
    * reason); 'Salir' goes to Inicio, exactly like the flat flow's Resultados.
    */
   function finishLevel(container, renderers, questions, doc, fetchFn, level, finalState, outcome, ctx) {
-    var storage = ctx.storage;
+    var gameFlow = resolveGameFlow();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId;
 
-    var persistUnlock = function () {
-      if (!outcome.gameOver && storage && typeof storage.setMaxUnlockedLevel === 'function') {
-        return Promise.resolve(storage.setMaxUnlockedLevel(outcome.nextLevel));
-      }
-      return Promise.resolve(null);
-    };
+    // TRIOFSND-253: writes this mode's own level-unlock/result progress via
+    // modeProgressStorage.js, fire-and-forget -- mirrors persistBestScoreAndStreak's
+    // own recordScore/recordStreak calls (in playLevel, above) not being
+    // awaited before Resultados renders either. Awaiting a fresh read/write
+    // round trip here would queue behind the *other*, already-busy
+    // per-question storage client (recordQuestionAnswered/markFunFactDiscovered,
+    // fired once per answered question) on the same underlying IndexedDB
+    // database, adding real, user-visible latency right when Resultados is
+    // about to render -- exactly the moment a child is waiting to see their
+    // score. `ModeProgressStorage`'s own writes degrade to an in-memory
+    // adapter rather than rejecting (see its `_write`), so this never needs
+    // a `.catch()`. The two writes are chained (never fired concurrently):
+    // both are read-modify-write calls against the same stored record, so
+    // racing them would let whichever lands second silently clobber the
+    // other's field with its own stale read of the record (e.g.
+    // `recordResult`'s snapshot of `maxUnlockedLevel` taken before
+    // `recordLevelUnlocked`'s write had landed).
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
+          level: level,
+        });
+      });
+    }
 
-    var readMaxUnlockedLevel = function () {
-      return storage && typeof storage.getMaxUnlockedLevel === 'function'
-        ? Promise.resolve(storage.getMaxUnlockedLevel())
-        : Promise.resolve(null);
-    };
+    // TRIOFSND-253: the value to *display* right now, resolved the same way
+    // persistBestScoreAndStreak resolves bestScore/maxStreak above -- never
+    // awaiting the fire-and-forget writes just above (their effect isn't
+    // observable synchronously), but combining this level's own outcome with
+    // the value already read once, before any per-question write could
+    // contend with it (`ctx.maxUnlockedLevelPromise`, kicked off in
+    // startLevelGame). Advancing it in place (rather than replacing it) is
+    // what lets a later level in the same chain ("Volver a jugar" continuing
+    // into the next level, so finishLevel runs again against the same `ctx`)
+    // see this level's own unlock too, without a second storage read.
+    // Undefined (never a resolved promise) when no modeProgressStorage was
+    // ever configured for this chain, so `maxLevelUnlocked` stays unset
+    // exactly like every other caller-supplied-storage-gated option here
+    // (`bestScore`/`bestStreak`/`adsRemoved`).
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
 
-    return persistUnlock()
-      .then(readMaxUnlockedLevel)
+    return Promise.resolve(ctx.maxUnlockedLevelPromise)
       .then(function (maxLevelUnlocked) {
         return renderers.renderResultsScreen(container, {
           score: finalState.score,
+          // TRIOFSND-253: generalizes the score scale this mode's level is
+          // played against -- QUESTIONS_PER_GAME (10) for every mode using
+          // this shared orchestrator today, same value resultsScreen.js
+          // already defaults to, made explicit here since it now also drives
+          // `modeProgressStorage.recordResult`'s maxScore above.
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
           maxStreak: finalState.maxStreak,
           // TRIOFSND-96: the best score/longest racha achieved on this
           // device so far, resolved in playLevel right before this function
@@ -1136,16 +1235,35 @@
     }
 
     var getQuestionsByLevel = ctx.getQuestionsByLevel || buildGetQuestionsByLevel(questions);
+    // TRIOFSND-253: which mode's progression this game chain reads/writes
+    // through modeProgressStorage.js -- defaults to gameFlow's own default
+    // mode (quiz) so every pre-existing caller that never set ctx.modeId
+    // (this orchestrator predates the mode selector) keeps behaving exactly
+    // as before.
+    var modeId = ctx.modeId || gameFlow.DEFAULT_MODE_ID || QUIZ_MODE_ID;
     var resolvedCtx = {
       ageBand: ctx.ageBand !== undefined ? ctx.ageBand : resolveCurrentAgeBand(),
       randomFn: ctx.randomFn,
       storageObj: ctx.storageObj,
       analyticsStorage: ctx.analyticsStorage,
       storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      // TRIOFSND-253: this mode's highest-unlocked-level, read exactly once
+      // here -- before this fresh game's first question renders and long
+      // before any per-question storage write could contend with it (see
+      // finishLevel's own doc comment) -- so Resultados can display it with
+      // no I/O left to do once the 10th question is answered. finishLevel
+      // advances this same promise in place as the chain progresses through
+      // further levels.
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
       getQuestionsByLevel: getQuestionsByLevel,
     };
 
-    persistLastMode(QUIZ_MODE_ID, ctx.storageObj);
+    persistLastMode(modeId, ctx.storageObj);
 
     var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
       getQuestionsByLevel: getQuestionsByLevel,
@@ -2163,6 +2281,11 @@
                   storageObj: resolvedMuteStorage,
                   analyticsStorage: storage,
                   storage: storage,
+                  // TRIOFSND-253: resolved once here so every mode reachable
+                  // from the selector reads/writes its own level progress and
+                  // finished-game result through the same modeProgressStorage
+                  // instance (see startLevelGame/finishLevel).
+                  modeProgressStorage: resolveModeProgressStorage(),
                 });
               });
             }
@@ -2429,6 +2552,7 @@
       renderMuteToggle: renderMuteToggle,
       resolveMazeGame: resolveMazeGame,
       resolveModeStorage: resolveModeStorage,
+      resolveModeProgressStorage: resolveModeProgressStorage,
       persistLastMode: persistLastMode,
       MAZE_HASH: MAZE_HASH,
       isMazeRoute: isMazeRoute,
