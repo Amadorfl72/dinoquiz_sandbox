@@ -1206,41 +1206,55 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     await jest.advanceTimersByTimeAsync(0);
   }
 
-  test('restricción 7 años o menos: el juego siempre termina tras el nivel 1, aunque la puntuación sea perfecta', async () => {
-    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
-    const renderers = resolveScreenRenderers();
-    // A level 2 pool exists too, so a wrong "always unlocks" implementation
-    // would be caught by this test instead of failing to generate anyway.
-    const questions = buildLeveledQuestionBank([1, 2]);
-
-    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'seven', randomFn: () => 0 });
-
-    await playLevelWithPattern('CCCCCCCCCC');
-
-    expect(container.querySelector('.results-screen')).not.toBeNull();
-    expect(container.textContent).toContain(strings.levelOutcome.ageRestricted);
-    expect(container.querySelector('.results-screen__level')).toHaveTextContent('1');
-
-    // "Volver a jugar" starts over at level 1 (game over, whatever the score).
-    getByRole(container, 'button', { name: strings.playAgainButton }).click();
-    expect(container.querySelector('.age-gate-screen')).toBeNull();
-    expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
-  });
-
-  test('desbloqueo con 8 años: >=6 aciertos desbloquea y continúa en el nivel siguiente, persistiendo el nivel máximo desbloqueado en el dispositivo', async () => {
+  test('sin restricción por edad (TRIOFSND-249): con 7 años y puntuación suficiente, el nivel 2 se desbloquea igual que con 8+', async () => {
     const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { ModeProgressStorage } = require('../../src/services/storage/ModeProgressStorage');
     const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildLeveledQuestionBank([1, 2]);
     const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    const modeProgressStorage = new ModeProgressStorage([createMemoryAdapter()]);
 
-    expect(await storage.getMaxUnlockedLevel()).toBe(1);
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'seven',
+      randomFn: () => 0,
+      storage,
+      modeProgressStorage,
+    });
+
+    // 6/10 meets the quiz threshold regardless of ageBand.
+    await playLevelWithPattern('CCCCCCFFFF');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '2'));
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('2');
+
+    // "Volver a jugar" continues straight into the already-unlocked level 2.
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+    expect(container.querySelector('.age-gate-screen')).toBeNull();
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('2');
+  });
+
+  test('desbloqueo con 8 años: >=6 aciertos desbloquea y continúa en el nivel siguiente, persistiendo el nivel máximo desbloqueado en el dispositivo', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { ModeProgressStorage } = require('../../src/services/storage/ModeProgressStorage');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    const modeProgressStorage = new ModeProgressStorage([createMemoryAdapter()]);
+
+    // TRIOFSND-253: level 1 of a mode is available on this device before any
+    // game of that mode has ever been played.
+    expect(await modeProgressStorage.getMaxUnlockedLevel('quiz')).toBe(1);
 
     startLevelGame(container, renderers, questions, document, undefined, {
       ageBand: 'eight-plus',
       randomFn: () => 0,
       storage,
+      modeProgressStorage,
     });
 
     // 6/10 is exactly the level-up threshold (gameFlow.js's LEVEL_UP_MIN_CORRECT).
@@ -1250,9 +1264,20 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '2'));
     expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('2');
 
-    // Persistence (TRIOFSND-205): the unlocked level survives independently
-    // of the rendered screen, readable through the same storage instance.
-    expect(await storage.getMaxUnlockedLevel()).toBe(2);
+    // Persistence (TRIOFSND-253): the unlocked level survives independently
+    // of the rendered screen, readable through the same per-mode
+    // modeProgressStorage instance, scoped to the 'quiz' mode only.
+    expect(await modeProgressStorage.getMaxUnlockedLevel('quiz')).toBe(2);
+
+    // Persistence (TRIOFSND-253): the level's final score/percentage/stars
+    // are recorded as this mode's latest result too.
+    expect(await modeProgressStorage.getLastResult('quiz')).toEqual({
+      score: 6,
+      maxScore: 10,
+      percentage: 60,
+      stars: 2,
+      level: 1,
+    });
 
     // Persistence (TRIOFSND-128): the level's final score/racha are recorded
     // the same way the flat, single-level flow does, through the same storage
@@ -1449,18 +1474,21 @@ describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () 
 
   test('completar el nivel 5 con >=6 aciertos desbloquea el nivel 6 y persiste el nivel máximo desbloqueado', async () => {
     const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { ModeProgressStorage } = require('../../src/services/storage/ModeProgressStorage');
     const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
     const { loadQuestionBank } = require('../../src/data/questionBank');
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = loadQuestionBank();
     const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    const modeProgressStorage = new ModeProgressStorage([createMemoryAdapter()]);
 
     startLevelGame(container, renderers, questions, document, undefined, {
       ageBand: 'eight-plus',
       level: 5,
       randomFn: () => 0,
       storage,
+      modeProgressStorage,
     });
 
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('5');
@@ -1471,18 +1499,27 @@ describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () 
     expect(container.querySelector('.results-screen')).not.toBeNull();
     expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '6'));
     expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('6');
-    expect(await storage.getMaxUnlockedLevel()).toBe(6);
+    expect(await modeProgressStorage.getMaxUnlockedLevel('quiz')).toBe(6);
 
     getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '6') }).click();
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('6');
   });
 
   test('completar el nivel 10 siempre termina la partida sin intentar generar un nivel 11 inexistente', async () => {
-    const { loadQuestionBank } = require('../../src/data/questionBank');
+    const { loadQuestionBank, VALID_DINOSAURS } = require('../../src/data/questionBank');
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = loadQuestionBank();
-    const getQuestionsByLevelSpy = jest.fn((level, options) => require('../../src/data/questionBank').getQuestionsByLevel(level, { ...options, questions }));
+    // TRIOFSND-224: getQuestionsByLevel now excludes any question whose
+    // dinosaur has no ficha in the creature catalog -- this test exercises
+    // gameFlow's level-10-stops-before-11 behaviour, not catalog content
+    // completeness, so it injects a full synthetic catalog (every
+    // VALID_DINOSAURS id) instead of depending on the real, still-partial
+    // public/data/creatures.json.
+    const fullCatalog = VALID_DINOSAURS.map((id) => ({ id }));
+    const getQuestionsByLevelSpy = jest.fn((level, options) =>
+      require('../../src/data/questionBank').getQuestionsByLevel(level, { ...options, questions, catalog: fullCatalog })
+    );
 
     startLevelGame(container, renderers, questions, document, undefined, {
       ageBand: 'eight-plus',
