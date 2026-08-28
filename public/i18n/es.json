@@ -367,8 +367,11 @@
     "screenTitle": "Oído Jurásico",
     "imaginedSoundNotice": {
       "heading": "Un sonido imaginado",
-      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
+      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica.",
+      "continueButton": "Entendido, ¡a jugar!",
+      "continueButtonAriaLabel": "Entendido, empezar a jugar Oído Jurásico"
     },
+    "instructions": "Escucha el sonido imaginado y elige, entre cuatro criaturas, la que crees que podría haberlo hecho.",
     "playButton": "Reproducir sonido",
     "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",
     "replayButton": "Escuchar de nuevo",
@@ -380,10 +383,48 @@
       "backButton": "Volver al selector de juegos"
     },
     "playbackError": {
-      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo."
+      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo.",
+      "backButton": "Volver al selector de juegos"
     },
     "answerReinforcement": {
       "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    },
+    "optionsGroupLabel": "Opciones de respuesta",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado el sonido.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {creature}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {creature}",
+    "scoreLabel": "Puntos",
+    "roundFormat": "Ronda {current} de {total}",
+    "nextButton": "Siguiente",
+    "blocked": {
+      "insufficientCatalog": "Oído Jurásico no está disponible todavía: se necesitan al menos 4 sonidos imaginados de criaturas para activar este modo.",
+      "backButtonLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "parejas": {
@@ -896,6 +937,14 @@
   "timeline": {
     "modeName": "Línea del tiempo",
     "instruction": "¿En qué periodo vivió esta criatura? Elige Triásico, Jurásico o Cretácico.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. ¿En qué periodo vivió {dinosaur}?",
+    "scoreLabel": "Puntos",
+    "optionsGroupLabel": "Elige el periodo",
+    "correctOptionAriaLabelFormat": "Periodo correcto: {period}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {period}",
+    "nextButton": "Siguiente",
     "options": {
       "triasico": {
         "label": "Triásico",
@@ -915,12 +964,43 @@
       "incorrect": "No es correcto. Vivió principalmente en el {periodo}."
     },
     "explanation": {
+      "heading": "Dato curioso",
       "interval": "Su intervalo temporal aproximado fue {intervalo}.",
-      "pteranodon": "Pteranodon era un reptil volador, no un dinosaurio."
+      "intervalRangeFormat": "{startMya} a {endMya} millones de años",
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} es un dinosaurio.",
+        "reptil_volador": "{dinosaur} era un reptil volador, no un dinosaurio.",
+        "otro": "{dinosaur} no es un dinosaurio ni un reptil volador."
+      }
+    },
+    "blockedRound": {
+      "message": "No hemos podido comprobar el periodo de esta criatura todavía. ¡Vamos con otra ronda!",
+      "announcementFormat": "Ronda bloqueada: no hemos podido comprobar el periodo de {dinosaur} todavía. Vamos a intentarlo con otra ronda."
+    },
+    "gameOver": {
+      "heading": "¡Línea del tiempo completada!",
+      "message": "¡Genial explorando cuándo vivió cada criatura! Sigue jugando para descubrir más.",
+      "announcementFormat": "Has terminado Línea del tiempo. Acertaste {score} de {total} rondas."
     },
     "locked": {
       "message": "Línea del tiempo no está disponible porque no hay suficientes fichas válidas para completar una partida.",
       "exitLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "creatures": {
