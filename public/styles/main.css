@@ -2080,6 +2080,17 @@ body {
 }
 
 /*
+ * Ordena por tamaño (TRIOFSND-286): a vertical list of creature rows, not a
+ * grid -- a 4-item row layout risks crowding at 375px, while a column of
+ * full-width rows (name + length text included) wraps instead of forcing
+ * horizontal scroll (PRD: "sin desplazamiento horizontal"). `max-width`
+ * on the root plus `width: 100%`/`box-sizing: border-box` on every child
+ * caps the whole screen the same way `.parejas-screen`/`.maze-screen` do.
+ */
+.size-order-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
  * Clasifica screen (TRIOFSND-281). The creature illustration and the three
  * category buttons are all capped at `min(100%, 320px)`, the same recipe
  * `.maze-screen__board`/`.parejas-screen__board` already use, so nothing
@@ -2104,12 +2115,16 @@ body {
   box-sizing: border-box;
 }
 
+.size-order-screen__title {
+  margin: 0;
+  align-self: center;
 .classify-screen__title {
   margin: 0;
   font-size: var(--font-size-heading-sm);
   color: var(--color-text);
 }
 
+.size-order-screen__progress-row {
 .classify-screen__progress-row {
   display: flex;
   align-items: center;
@@ -2119,6 +2134,8 @@ body {
   max-width: 100%;
 }
 
+.size-order-screen__level,
+.size-order-screen__round {
 .classify-screen__level,
 .classify-screen__round {
   margin: 0;
@@ -2130,6 +2147,15 @@ body {
   color: var(--color-white);
 }
 
+.size-order-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.size-order-screen__round {
+  background-color: var(--color-stars);
+}
+
+.size-order-screen__instructions {
 .classify-screen__level {
   background-color: var(--color-focus-ring-on-light);
 }
@@ -2145,6 +2171,7 @@ body {
   text-align: center;
 }
 
+.size-order-screen__data-error {
 .classify-screen__creature {
   display: flex;
   flex-direction: column;
@@ -2169,6 +2196,32 @@ body {
   text-align: center;
 }
 
+.size-order-screen__board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.size-order-screen__creature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 3px solid var(--color-text);
+  border-radius: 12px;
+  background-color: var(--color-option-bg);
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: inherit;
+  text-align: left;
+}
+
+.size-order-screen__creature:focus-visible {
 .classify-screen__categories {
   display: flex;
   flex-direction: column;
@@ -2209,6 +2262,62 @@ body {
   outline-offset: 3px;
 }
 
+.size-order-screen__creature--selected {
+  border-color: var(--color-focus-ring-on-light);
+  background-color: var(--color-option-bg-hover);
+}
+
+.size-order-screen__creature:disabled {
+  cursor: default;
+}
+
+.size-order-screen__creature-image {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.size-order-screen__creature-position {
+  flex: 0 0 auto;
+  min-width: 28px;
+  padding: 2px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.size-order-screen__creature-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow-wrap: break-word;
+  pointer-events: none;
+}
+
+.size-order-screen__creature-badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-focus-ring-on-light);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.size-order-screen__confirm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
 .classify-screen__category-icon {
   font-size: 24px;
   line-height: 1;
@@ -2338,6 +2447,11 @@ body {
   touch-action: manipulation;
 }
 
+.size-order-screen__confirm-button:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.size-order-screen__confirm-button:active:not(:disabled) {
 .classify-screen__next-button:hover {
   background-color: var(--color-primary-hover);
 }
@@ -2348,11 +2462,34 @@ body {
   box-shadow: 0 2px 0 var(--color-primary-pressed);
 }
 
+.size-order-screen__confirm-button:focus-visible {
 .classify-screen__next-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
 
+.size-order-screen__confirm-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.size-order-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.size-order-screen__result-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
 /*
  * Adivina la sombra screen (TRIOFSND-263). Layout mirrors
  * .question-screen (title/instructions/progress/score, then the puzzle,
@@ -2419,6 +2556,35 @@ body {
   color: var(--color-text);
 }
 
+.size-order-screen__result-icon {
+  font-size: var(--font-size-heading-sm);
+}
+
+.size-order-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: break-word;
+}
+
+.size-order-screen__solution-heading {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.size-order-screen__solution-list {
+  width: 100%;
+  margin: 0;
+  padding-left: 24px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.size-order-screen__solution-item {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: break-word;
 /*
  * Silhouette (TRIOFSND-263): the same cartoon illustration Parejas already
  * shows, blacked out via `filter` regardless of its own colors -- no second

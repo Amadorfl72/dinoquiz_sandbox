@@ -476,26 +476,31 @@
   },
   "sizeOrder": {
     "screenTitle": "Ordena por tamaño",
-    "instructions": "Toca dos criaturas para intercambiarlas de sitio hasta ordenarlas de la más pequeña a la más grande.",
+    "instructions": "Toca dos criaturas para intercambiarlas de sitio hasta ordenarlas de la más pequeña a la más grande. Cuando termines, toca «Confirmar orden».",
     "boardLabel": "Criaturas para ordenar por tamaño",
     "creatureAltFormat": "Ilustración de un {dinosaur}",
     "levelFormat": "Nivel {level}",
     "roundFormat": "Ronda {current} de {total}",
     "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Ordena a las criaturas de la más pequeña a la más grande.",
+    "confirmButton": "Confirmar orden",
     "selection": {
       "selectAriaLabelFormat": "{dinosaur}, posición {position} de {total}. Toca para seleccionarla e intercambiarla de sitio.",
       "selectedAriaLabelFormat": "{dinosaur}, posición {position} de {total}, seleccionada. Toca otra criatura para intercambiarla con esta.",
-      "selectedAnnouncementFormat": "Has seleccionado a {dinosaur}. Toca otra criatura para intercambiarla con esta.",
-      "swapAnnouncementFormat": "Has intercambiado {firstDinosaur} y {secondDinosaur}.",
+      "lockedAriaLabelFormat": "{dinosaur}, posición {position} de {total}.",
+      "selectedBadge": "Seleccionada",
+      "selectedAnnouncementFormat": "Has seleccionado a {dinosaur}, posición {position} de {total}. Toca otra criatura para intercambiarla con esta.",
+      "swapAnnouncementFormat": "Has intercambiado a {firstDinosaur} y {secondDinosaur}. Ahora {firstDinosaur} está en la posición {firstPosition} de {total} y {secondDinosaur} está en la posición {secondPosition} de {total}.",
       "deselectAnnouncementFormat": "Has quitado la selección de {dinosaur}."
     },
     "feedback": {
       "correct": "¡Genial, las has ordenado correctamente!",
-      "incorrect": "Todavía no están en el orden correcto, ¡sigue intentándolo!"
+      "incorrect": "Todavía no era el orden correcto, ¡pero así se aprende! Aquí tienes el orden correcto.",
+      "correctLabel": "Correcto",
+      "incorrectLabel": "Incorrecto"
     },
     "roundResult": {
       "correctAnnouncementFormat": "¡Genial, acertaste! El orden correcto, de la más pequeña a la más grande, es: {order}.",
-      "incorrectAnnouncementFormat": "Todavía no es el orden correcto. Intercambia dos criaturas y vuelve a intentarlo.",
+      "incorrectAnnouncementFormat": "Todavía no era el orden correcto. El orden correcto, de la más pequeña a la más grande, es: {order}.",
       "orderLabel": "Orden correcto, de la más pequeña a la más grande",
       "creatureLengthFormat": "{dinosaur}: {lengthMeters} metros",
       "nextButton": "Siguiente"
@@ -504,10 +509,30 @@
       "message": "No hemos podido preparar esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. ¡Vamos con otra ronda!",
       "announcement": "No se ha podido crear esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. Vamos a intentarlo con otra ronda."
     },
+    "dataError": {
+      "message": "No hemos podido preparar esta ronda porque los datos recibidos no son válidos. ¡Vamos con otra ronda!",
+      "announcement": "No se ha podido preparar esta ronda porque los datos recibidos no son válidos."
+    },
     "gameOver": {
       "heading": "¡Ordena por tamaño completado!",
       "announcementFormat": "Has terminado Ordena por tamaño. Ordenaste correctamente {score} de {total} rondas.",
       "message": "¡Bien hecho ordenando a las criaturas! Sigue jugando para descubrir más tamaños."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "parasaurolophus": "Parasaurolophus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus"
     }
   },
   "shadowGuess": {
