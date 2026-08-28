@@ -926,7 +926,11 @@
       "heading": "Dato curioso",
       "interval": "Su intervalo temporal aproximado fue {intervalo}.",
       "intervalRangeFormat": "{startMya} a {endMya} millones de años",
-      "pteranodon": "Pteranodon era un reptil volador, no un dinosaurio."
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} es un dinosaurio.",
+        "reptil_volador": "{dinosaur} era un reptil volador, no un dinosaurio.",
+        "otro": "{dinosaur} no es un dinosaurio ni un reptil volador."
+      }
     },
     "blockedRound": {
       "message": "No hemos podido comprobar el periodo de esta criatura todavía. ¡Vamos con otra ronda!",

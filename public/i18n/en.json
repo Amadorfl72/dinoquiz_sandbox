@@ -104,7 +104,11 @@
       "heading": "Fun fact",
       "interval": "Its approximate time range was {intervalo}.",
       "intervalRangeFormat": "{startMya} to {endMya} million years ago",
-      "pteranodon": "Pteranodon was a flying reptile, not a dinosaur."
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} is a dinosaur.",
+        "reptil_volador": "{dinosaur} was a flying reptile, not a dinosaur.",
+        "otro": "{dinosaur} is not a dinosaur or a flying reptile."
+      }
     },
     "blockedRound": {
       "message": "We couldn't verify this creature's period yet. Let's try another round!",

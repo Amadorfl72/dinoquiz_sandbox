@@ -119,10 +119,14 @@ describe('TimelineScreen', () => {
 
       expect(explanationInterval.hidden).toBe(false);
       expect(explanationInterval.textContent).toContain('68 a 66 millones de años');
-      expect(explanationClassification.hidden).toBe(true);
+      expect(explanationClassification.hidden).toBe(false);
+      expect(explanationClassification.textContent).toBe(
+        strings.explanation.classificationFormat.dinosaurio.replace('{dinosaur}', strings.dinosaurNames.trex)
+      );
 
       expect(announcementEl.textContent).toContain(strings.feedback.correct.replace('{periodo}', 'Cretácico'));
       expect(announcementEl.textContent).toContain('68 a 66 millones de años');
+      expect(announcementEl.textContent).toContain(explanationClassification.textContent);
       expect(nextButton.hidden).toBe(false);
 
       expect(audioFactory.created[SOUND_SRC.correct].played).toBe(1);
@@ -154,13 +158,17 @@ describe('TimelineScreen', () => {
       expect(audioFactory.created[SOUND_SRC.correct].played).toBe(0);
     });
 
-    test('shows no interval line for a creature with no documented precise interval (never fabricated)', () => {
+    test('shows no interval line but still shows the classification for a creature with no documented precise interval (never fabricated)', () => {
       const round = buildRound({ dinosaur: DINOSAURS.TRICERATOPS });
-      const { periodButtons, explanationInterval } = renderTimelineScreen(container, round, {});
+      const { periodButtons, explanationInterval, explanationClassification } = renderTimelineScreen(container, round, {});
 
       periodButtons.cretacico.click();
 
       expect(explanationInterval.hidden).toBe(true);
+      expect(explanationClassification.hidden).toBe(false);
+      expect(explanationClassification.textContent).toBe(
+        strings.explanation.classificationFormat.dinosaurio.replace('{dinosaur}', strings.dinosaurNames.triceratops)
+      );
     });
 
     test('states Pteranodon as a flying reptile, not a dinosaur, via the classification explanation', () => {
@@ -169,9 +177,11 @@ describe('TimelineScreen', () => {
 
       periodButtons.cretacico.click();
 
+      const expectedText = strings.explanation.classificationFormat.reptil_volador.replace('{dinosaur}', strings.dinosaurNames.pteranodon);
       expect(explanationClassification.hidden).toBe(false);
-      expect(explanationClassification.textContent).toBe(strings.explanation.pteranodon);
-      expect(announcementEl.textContent).toContain(strings.explanation.pteranodon);
+      expect(explanationClassification.textContent).toBe(expectedText);
+      expect(explanationClassification.textContent.toLowerCase()).not.toContain('es un dinosaurio');
+      expect(announcementEl.textContent).toContain(expectedText);
     });
 
     test('a second click on any period is ignored once the round is finished', () => {

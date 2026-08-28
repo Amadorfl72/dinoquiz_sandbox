@@ -66,16 +66,17 @@
  * `timeline.explanation.interval`/`intervalRangeFormat` ONLY when the
  * creature's ficha actually documents one (never fabricated, matching
  * `timelineRound.js`'s own contract) -- e.g. Triceratops has none and shows
- * no interval line. `explanation.classification` is shown via
- * `timeline.explanation.pteranodon` whenever it is `'reptil_volador'` (a
- * local literal copy of `creatureSheet.js`'s `CLASSIFICATIONS.REPTIL_VOLADOR`
- * value -- this screen can't `require` that module directly in a real
- * browser, since its dependency chain reaches `questionBank.js`'s `fs`-based
- * loader; same reasoning `shadowGuessScreen.js` documents for its own local
- * `SHADOW_TRANSFORMS` copy) -- e.g. Pteranodon explicitly states it is a
- * flying reptile, not a dinosaur, so the mode never implies otherwise. A
- * plain `'dinosaurio'` classification needs no extra text (the default,
- * unsurprising case).
+ * no interval line. `explanation.classification` is ALWAYS shown (every
+ * eligible creature's ficha documents a valid classification --
+ * `timelineRound.js`'s own eligibility gate -- so there is always something
+ * true to say) via `timeline.explanation.classificationFormat[classification]`,
+ * keyed by the classification value itself (`'dinosaurio'`, `'reptil_volador'`,
+ * `'otro'` -- `creatureSheet.js`'s `CLASSIFICATIONS.*` values, which this
+ * screen never needs to import since the i18n bundle is keyed by the same
+ * strings) and interpolated with the creature's localized name -- e.g. a
+ * T. rex round states "es un dinosaurio", while Pteranodon explicitly states
+ * it is a flying reptile, not a dinosaur, so the mode never implies
+ * otherwise for either case.
  *
  * Counted once (AC: "bloquea envíos duplicados"): `finished` guards
  * `handlePeriodSelected`, mirroring `questionScreen.js`/`classifyScreen.js`'s
@@ -127,11 +128,6 @@
   var INCORRECT_ICON = '💡';
   var BLOCKED_ICON = '⚠️';
   var LOCKED_ICON = '🔒';
-
-  // Local literal copy of creatureSheet.js's CLASSIFICATIONS.REPTIL_VOLADOR
-  // value (see the file doc comment for why this screen can't just
-  // `require` that module's own dependency chain in a real browser).
-  var CLASSIFICATION_REPTIL_VOLADOR = 'reptil_volador';
 
   function resolveStrings(options) {
     options = options || {};
@@ -515,10 +511,17 @@
           explanationInterval.hidden = true;
         }
 
-        if (explanation.classification === CLASSIFICATION_REPTIL_VOLADOR) {
+        // Classification is shown for every round, not just Pteranodon's
+        // (see the file doc comment): every eligible creature's ficha
+        // documents a valid classification (`timelineRound.js`'s own
+        // eligibility gate), so `classificationFormat` always has an entry
+        // keyed by `explanation.classification` -- always from
+        // `public/i18n/`, never a fabricated/hardcoded string.
+        var classificationFormat = strings.explanation.classificationFormat && strings.explanation.classificationFormat[explanation.classification];
+        if (classificationFormat) {
           explanationClassification.hidden = false;
-          explanationClassification.textContent = strings.explanation.pteranodon;
-          announcementParts.push(strings.explanation.pteranodon);
+          explanationClassification.textContent = formatTemplate(classificationFormat, { dinosaur: dinosaur });
+          announcementParts.push(explanationClassification.textContent);
         } else {
           explanationClassification.hidden = true;
         }

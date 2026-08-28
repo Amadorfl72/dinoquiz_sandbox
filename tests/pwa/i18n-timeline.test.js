@@ -66,7 +66,9 @@ describe('TRIOFSND-293: timeline i18n parity between es.json and en.json', () =>
       'explanation.heading',
       'explanation.interval',
       'explanation.intervalRangeFormat',
-      'explanation.pteranodon',
+      'explanation.classificationFormat.dinosaurio',
+      'explanation.classificationFormat.reptil_volador',
+      'explanation.classificationFormat.otro',
       'blockedRound.message',
       'gameOver.heading',
       'gameOver.message',
@@ -104,8 +106,16 @@ describe('TRIOFSND-293: timeline i18n parity between es.json and en.json', () =>
     expect(Object.keys(es.timeline.options).sort()).toEqual(['cretacico', 'jurasico', 'triasico']);
   });
 
-  test('the Pteranodon explanation never states it is a dinosaur', () => {
-    expect(es.timeline.explanation.pteranodon.toLowerCase()).not.toMatch(/es un dinosaurio/);
-    expect(en.timeline.explanation.pteranodon.toLowerCase()).toContain('not a dinosaur');
+  test('the reptil_volador classification (e.g. Pteranodon) never states it is a dinosaur', () => {
+    expect(es.timeline.explanation.classificationFormat.reptil_volador.toLowerCase()).not.toMatch(/\bes un dinosaurio/);
+    expect(en.timeline.explanation.classificationFormat.reptil_volador.toLowerCase()).toContain('not a dinosaur');
+  });
+
+  test('every classification format string interpolates {dinosaur}', () => {
+    [es, en].forEach((bundle) => {
+      Object.values(bundle.timeline.explanation.classificationFormat).forEach((template) => {
+        expect(template).toContain('{dinosaur}');
+      });
+    });
   });
 });
