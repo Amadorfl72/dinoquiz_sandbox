@@ -15,6 +15,7 @@ const {
   VALID_LEVELS,
   QUESTIONS_PER_LEVEL,
   EXPECTED_QUESTION_COUNT,
+  FORBIDDEN_CATALOG_FIELDS,
   validateQuestion,
   validateQuestionBank,
   hasImageVariants,
@@ -28,6 +29,7 @@ const {
   getQuestionsByLevel,
 } = require('./questionBank');
 const { getStrings } = require('../i18n');
+const { loadCreatureCatalog } = require('./creatureCatalog');
 
 function buildValidQuestion(overrides = {}) {
   return {
@@ -185,17 +187,58 @@ describe('real question bank (public/data/questions.json)', () => {
     });
   });
 
+  // Mandatory content-integrity gate: fails this suite (and CI) if the real
+  // bank breaks any of level-count/total-count, duplicate ids,
+  // correctAnswerIndex range, dato_curioso i18n resolution, or an
+  // image/imageRealistic/imageFallback reference that doesn't exist on disk.
+  // Composed from the same building blocks as the more granular tests above
+  // (kept separately for a precise failure message) so a broken content
+  // update can never slip through with only some of them updated.
+  test('integrity gate: exact level counts, unique ids, in-range correctAnswerIndex, resolvable dato_curioso keys and existing image assets', () => {
+    expect(questions).toHaveLength(EXPECTED_QUESTION_COUNT);
+    expect(getLevelCoverageErrors(questions)).toEqual([]);
+    expect(validateQuestionBank(questions)).toEqual([]);
+    expect(getDatoCuriosoTranslationErrors(questions, getStrings('es'))).toEqual([]);
+
+    questions.forEach((question) => {
+      expectResolvesToRealImageFile(question.image);
+      expectResolvesToRealImageFile(question.imageRealistic);
+      expectResolvesToRealImageFile(question.imageFallback);
+    });
+  });
+
   // TRIOFSND-202: getQuestionsByLevel() against the real bank on disk.
-  test('TRIOFSND-202: getQuestionsByLevel returns exactly 30 valid questions for every level, none logged as invalid', () => {
-    const logService = buildMemoryLogService();
+  // TRIOFSND-224: the usable pool additionally requires every question's
+  // "dinosaur" to have a matching ficha in the real creature catalog
+  // (public/data/creatures.json). The catalog now carries a ficha for every
+  // one of the 14 species used across the bank ("cobertura exacta"), so no
+  // question is excluded by this rule and no "dinosaurCatalog"
+  // content_validation_failed event is ever logged against the real bank --
+  // derived from the real catalog/bank instead of a hardcoded id list so
+  // this test catches a regression the moment a species loses its ficha.
+  test('TRIOFSND-224: exact coverage -- every dinosaur id used by a question has a matching catalog ficha', () => {
+    const catalogIds = new Set(loadCreatureCatalog().map((creature) => creature.id));
+    const uncataloguedQuestionIds = new Set(
+      questions.filter((question) => !catalogIds.has(question.dinosaur)).map((question) => question.id)
+    );
+    expect(uncataloguedQuestionIds.size).toBe(0);
 
     VALID_LEVELS.forEach((level) => {
+      // A fresh logService per level: getQuestionsByLevel validates the
+      // whole raw bank (not just this level) on every call, so reusing one
+      // logService across levels would double-count the same catalog gaps.
+      const logService = buildMemoryLogService();
       const levelQuestions = getQuestionsByLevel(level, { logService });
-      expect(levelQuestions).toHaveLength(QUESTIONS_PER_LEVEL);
-      expect(levelQuestions.every((question) => question.level === level)).toBe(true);
-    });
+      const expectedQuestions = questions.filter((question) => question.level === level);
 
-    expect(logService.events).toEqual([]);
+      expect(levelQuestions.map((question) => question.id).sort()).toEqual(
+        expectedQuestions.map((question) => question.id).sort()
+      );
+      expect(levelQuestions.every((question) => catalogIds.has(question.dinosaur))).toBe(true);
+
+      const uncataloguedEvents = logService.events.filter((event) => event.metadata.rule === 'dinosaurCatalog');
+      expect(uncataloguedEvents).toEqual([]);
+    });
   });
 
   function normalizeQuestionText(text) {
@@ -590,6 +633,24 @@ describe('getQuestionsByDinosaur', () => {
   });
 });
 
+function buildValidCreature(overrides = {}) {
+  return {
+    id: 'trex',
+    nameKey: 'creatures.trex.name',
+    dieta: 'carnivoro',
+    longitudMetros: 12,
+    periodoPrincipal: 'Cretacico',
+    intervaloTemporal: { inicioMa: 68, finMa: 66 },
+    habitat: 'creatures.trex.habitat',
+    clasificacionCientifica: 'dinosaurio',
+    image: 'dinosaurs/trex.svg',
+    imageRealistic: 'realistic/trex.jpg',
+    imageFallback: 'fallback/trex.svg',
+    fuentes: [{ nombre: 'American Museum of Natural History (AMNH)', url: 'https://www.amnh.org/' }],
+    ...overrides,
+  };
+}
+
 describe('getQuestionsByLevel (TRIOFSND-202)', () => {
   test('returns only valid questions matching the requested level', () => {
     const questions = [
@@ -697,5 +758,77 @@ describe('getQuestionsByLevel (TRIOFSND-202)', () => {
     } finally {
       fs.unlinkSync(filePath);
     }
+  });
+});
+
+describe('getQuestionsByLevel: creature catalog cross-reference (TRIOFSND-224)', () => {
+  test('exact coverage: every dinosaur id used by a question with a matching catalog ficha stays in the pool', () => {
+    const catalog = [
+      buildValidCreature({ id: 'trex' }),
+      buildValidCreature({ id: 'triceratops', nameKey: 'creatures.triceratops.name' }),
+    ];
+    const questions = [
+      buildValidQuestion({ id: 'trex-01', level: 1, dinosaur: DINOSAURS.TREX }),
+      buildValidQuestion({ id: 'triceratops-01', level: 1, dinosaur: DINOSAURS.TRICERATOPS }),
+    ];
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions, catalog, logService });
+
+    expect(result.map((question) => question.id).sort()).toEqual(['trex-01', 'triceratops-01'].sort());
+    expect(logService.events).toEqual([]);
+  });
+
+  test('excludes only the question whose dinosaur has no ficha in the catalog, keeping the rest of the bank intact', () => {
+    const catalog = [buildValidCreature({ id: 'trex' })];
+    const withFicha = buildValidQuestion({ id: 'trex-01', level: 1, dinosaur: DINOSAURS.TREX });
+    const withoutFicha = buildValidQuestion({ id: 'triceratops-01', level: 1, dinosaur: DINOSAURS.TRICERATOPS });
+    const otherLevelWithFicha = buildValidQuestion({ id: 'trex-02', level: 2, dinosaur: DINOSAURS.TREX });
+    const logService = buildMemoryLogService();
+
+    const levelOne = getQuestionsByLevel(1, {
+      questions: [withFicha, withoutFicha, otherLevelWithFicha],
+      catalog,
+      logService,
+    });
+
+    expect(levelOne.map((question) => question.id)).toEqual(['trex-01']);
+    expect(logService.events).toEqual([
+      {
+        eventType: 'content_validation_failed',
+        metadata: { id: 'triceratops-01', level: 1, rule: 'dinosaurCatalog' },
+      },
+    ]);
+
+    const levelTwo = getQuestionsByLevel(2, {
+      questions: [withFicha, withoutFicha, otherLevelWithFicha],
+      catalog,
+      logService: buildMemoryLogService(),
+    });
+    expect(levelTwo.map((question) => question.id)).toEqual(['trex-02']);
+  });
+});
+
+describe('FORBIDDEN_CATALOG_FIELDS (TRIOFSND-224)', () => {
+  test.each(FORBIDDEN_CATALOG_FIELDS)('rejects a question carrying its own "%s" instead of reading it from the creature catalog', (field) => {
+    const errors = validateQuestion(buildValidQuestion({ [field]: 'anything' }), 0);
+
+    expect(errors.some((error) => error.includes(`"${field}"`))).toBe(true);
+  });
+
+  test.each(FORBIDDEN_CATALOG_FIELDS)('excludes a question carrying its own "%s" from the usable pool and logs the rule', (field) => {
+    const invalid = buildValidQuestion({ id: 'trex-01', level: 1, [field]: 'anything' });
+    const logService = buildMemoryLogService();
+
+    const result = getQuestionsByLevel(1, { questions: [invalid], logService });
+
+    expect(result).toEqual([]);
+    expect(logService.events).toEqual([
+      { eventType: 'content_validation_failed', metadata: { id: 'trex-01', level: 1, rule: field } },
+    ]);
+  });
+
+  test('a question with none of the forbidden catalog fields is unaffected', () => {
+    expect(validateQuestion(buildValidQuestion(), 0)).toEqual([]);
   });
 });

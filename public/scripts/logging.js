@@ -32,13 +32,85 @@
  * logged by src/game/mazeGenerator.js/public/scripts/mazeGame.js, as a single
  * aggregated counter instead of the full per-event log).
  *
+ * Mode-change abandon diagnostics (TRIOFSND-239): `logGameAbandonedByMode(modeId)`/
+ * `getGamesAbandonedByMode()` tally, per mode id, how many times a player
+ * confirmed "cambiar de juego" (public/scripts/modeChangeConfirmScreen.js)
+ * while a round was still incomplete (public/scripts/main.js, driven by
+ * src/services/gameSessionStorage.js's `hasIncompleteGame`) -- the same
+ * aggregated, local-only, never-transmitted counter shape as the Laberinto
+ * per-level tallies above, but keyed by mode id instead of level, so it
+ * covers every mode (Laberinto keeps its own separate per-level counters
+ * for navigating away outright, which this never duplicates or replaces).
+ *
+ * Round-contract diagnostics (TRIOFSND-246, PRD "Diagnóstico y métricas
+ * agregadas almacenadas únicamente en el dispositivo"): generalizes the
+ * Laberinto-only per-level counters above to every mode. `logRoundGameStarted
+ * (modeId, level)`/`logRoundGameCompleted(modeId, level)`/
+ * `logRoundGameAbandoned(modeId, level)` each tally a per-"modeId:level"
+ * aggregated count (public/scripts/roundDiagnosticsService.js drives these
+ * from src/game/roundContract.js's session hooks), and
+ * `logRoundGenerationFailure(modeId, code)`/`logStateDiscarded(modeId, code)`
+ * each tally a per-"modeId:code" aggregated count of a stable, machine-
+ * readable local failure code -- never any round content (no prompts,
+ * creature ids, seeds or answers) -- for a round a mode's own generator
+ * could not build (mirrors the existing `maze_generation_failed`/
+ * `size_order_round_generation_failed` codes) or a persisted game session
+ * src/services/storage/GameSessionStorage.js had to discard as incompatible.
+ * Same aggregated, local-only, never-transmitted-by-sendLogs shape as every
+ * counter above.
+ *
+ * Parejas jurásicas diagnostics (TRIOFSND-277, PRD "Diagnóstico y métricas
+ * agregadas almacenadas únicamente en el dispositivo"): "partidas
+ * iniciadas/completadas ... por nivel de Parejas" and its local board-
+ * generation-failure codes are already covered by the generic
+ * `logRoundGameStarted`/`logRoundGameCompleted`/`logRoundGameAbandoned`/
+ * `logRoundGenerationFailure` above -- Parejas is just another `modeId`
+ * ('parejas', src/game/parejasGame.js's MODE_ID) through that same
+ * modeId+level/modeId+code family, so this never re-declares a parallel set
+ * of Parejas-only counters. Two round-contract-family counters genuinely
+ * didn't exist yet and are added here, generalized the same way (any mode,
+ * not just Parejas): `logRoundCorrectAnswer(modeId, level)`/
+ * `getRoundCorrectAnswersByModeLevel()` tally one more "acierto" (a correct
+ * match/answer within a round -- for Parejas, one more matched pair) per
+ * "modeId:level", and `logRoundStarsEarned(modeId, level, stars)`/
+ * `getRoundStarsEarnedByModeLevel()` tally the running total of stars
+ * (resultsScreen.js's 1-3 star tiers) earned per "modeId:level" -- unlike
+ * every other counter here this one accumulates an arbitrary non-negative
+ * amount per call (`_addToLevelCount`) instead of always +1, since a single
+ * game awards 1-3 stars at once. A third counter,
+ * `logRoundGridLimitViolation(modeId, code)`/
+ * `getRoundGridLimitViolationCounts()`, tallies per "modeId:code" a stable,
+ * machine-readable local code for a hard rejilla/grid limit a mode enforced
+ * (e.g. Parejas' MAX_VISIBLE_UNMATCHED reveal cap in
+ * src/game/parejasGame.js's `revealCard`) -- kept in its own bucket rather
+ * than folded into `logRoundGenerationFailure`'s codes because a limit
+ * violation is a runtime rule the UI should never have let happen (a stuck
+ * click handler, a stale board), not a generator that failed to build a
+ * round in the first place. Same aggregated, local-only,
+ * never-transmitted-by-sendLogs shape as every counter above.
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
  * src/services/logging/index.js re-exports this file.
+ *
+ * Catalog validation cause codes (TRIOFSND-223, PRD foundation "Ficha única
+ * y verificable para todas las criaturas jugables"): src/data/creatureCatalog.js's
+ * `validateCatalog()` logs one `logEvent(cause, { id, rule })` per structured
+ * violation it finds in public/data/creatures.json, using one of the three
+ * `CATALOG_*_CAUSE` codes exported below instead of a free-text message --
+ * `id` is the affected creature's catalog id and `rule` the violated field/
+ * check name, never a human-readable sentence or other identifiable data.
+ * These are plain eventType strings for the existing generic `logEvent()`
+ * (mirrors questionBank.js's unexported `'content_validation_failed'`
+ * literal); exported here only so creatureCatalog.js and its tests reference
+ * a shared constant instead of duplicating the string.
  */
 
 (function () {
+  var CATALOG_FIELD_INVALID_CAUSE = 'catalog_field_invalid';
+  var CATALOG_REFERENCE_BROKEN_CAUSE = 'catalog_reference_broken';
+  var CATALOG_DUPLICATE_ID_CAUSE = 'catalog_duplicate_id';
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
   var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
   var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
@@ -46,6 +118,15 @@
   var MAZE_GAMES_COMPLETED_KEY = 'dinoquiz:mazeGamesCompletedByLevel';
   var MAZE_GAMES_ABANDONED_KEY = 'dinoquiz:mazeGamesAbandonedByLevel';
   var MAZE_RESOLVABILITY_FAILURE_COUNT_KEY = 'dinoquiz:mazeResolvabilityFailureCount';
+  var GAMES_ABANDONED_BY_MODE_KEY = 'dinoquiz:gamesAbandonedByMode';
+  var ROUND_GAMES_STARTED_KEY = 'dinoquiz:roundGamesStartedByModeLevel';
+  var ROUND_GAMES_COMPLETED_KEY = 'dinoquiz:roundGamesCompletedByModeLevel';
+  var ROUND_GAMES_ABANDONED_KEY = 'dinoquiz:roundGamesAbandonedByModeLevel';
+  var ROUND_GENERATION_FAILURE_CODES_KEY = 'dinoquiz:roundGenerationFailureCodes';
+  var STATE_DISCARD_CODES_KEY = 'dinoquiz:stateDiscardCodes';
+  var ROUND_CORRECT_ANSWERS_KEY = 'dinoquiz:roundCorrectAnswersByModeLevel';
+  var ROUND_STARS_EARNED_KEY = 'dinoquiz:roundStarsEarnedByModeLevel';
+  var ROUND_GRID_LIMIT_VIOLATION_CODES_KEY = 'dinoquiz:roundGridLimitViolationCodes';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -132,6 +213,15 @@
     this.mazeGamesCompletedByLevel = this._loadLevelCounts(MAZE_GAMES_COMPLETED_KEY);
     this.mazeGamesAbandonedByLevel = this._loadLevelCounts(MAZE_GAMES_ABANDONED_KEY);
     this.mazeResolvabilityFailureCount = this._loadMazeResolvabilityFailureCount();
+    this.gamesAbandonedByMode = this._loadLevelCounts(GAMES_ABANDONED_BY_MODE_KEY);
+    this.roundGamesStartedByModeLevel = this._loadLevelCounts(ROUND_GAMES_STARTED_KEY);
+    this.roundGamesCompletedByModeLevel = this._loadLevelCounts(ROUND_GAMES_COMPLETED_KEY);
+    this.roundGamesAbandonedByModeLevel = this._loadLevelCounts(ROUND_GAMES_ABANDONED_KEY);
+    this.roundGenerationFailureCounts = this._loadLevelCounts(ROUND_GENERATION_FAILURE_CODES_KEY);
+    this.stateDiscardCounts = this._loadLevelCounts(STATE_DISCARD_CODES_KEY);
+    this.roundCorrectAnswersByModeLevel = this._loadLevelCounts(ROUND_CORRECT_ANSWERS_KEY);
+    this.roundStarsEarnedByModeLevel = this._loadLevelCounts(ROUND_STARS_EARNED_KEY);
+    this.roundGridLimitViolationCounts = this._loadLevelCounts(ROUND_GRID_LIMIT_VIOLATION_CODES_KEY);
   }
 
   LogService.prototype._loadLogs = function () {
@@ -237,7 +327,7 @@
       var counts = stored ? JSON.parse(stored) : {};
       return counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
     } catch (error) {
-      console.warn('DinoQuiz: failed to load ' + key + ' from storage', error);
+      console.warn('DinoQuiz: failed to load key from storage', key, error);
       return {};
     }
   };
@@ -246,14 +336,19 @@
     try {
       this.storageAdapter.setItem(key, JSON.stringify(counts));
     } catch (error) {
-      console.error('DinoQuiz: failed to save ' + key + ' to storage', error);
+      console.error('DinoQuiz: failed to save key to storage', key, error);
     }
   };
 
   /** Increments `counts[level]` by one, persists it under `key`, and returns the new count. */
   LogService.prototype._incrementLevelCount = function (key, counts, level) {
+    return this._addToLevelCount(key, counts, level, 1);
+  };
+
+  /** Adds `amount` to `counts[level]`, persists it under `key`, and returns the new total. */
+  LogService.prototype._addToLevelCount = function (key, counts, level, amount) {
     var levelKey = String(level);
-    counts[levelKey] = (counts[levelKey] || 0) + 1;
+    counts[levelKey] = (counts[levelKey] || 0) + amount;
     this._saveLevelCounts(key, counts);
     return counts[levelKey];
   };
@@ -313,6 +408,108 @@
 
   LogService.prototype.getMazeResolvabilityFailureCount = function () {
     return this.mazeResolvabilityFailureCount;
+  };
+
+  /** Tallies one more confirmed "cambiar de juego" (TRIOFSND-239) that discarded an incomplete round for `modeId`. */
+  LogService.prototype.logGameAbandonedByMode = function (modeId) {
+    return this._incrementLevelCount(GAMES_ABANDONED_BY_MODE_KEY, this.gamesAbandonedByMode, modeId);
+  };
+
+  LogService.prototype.getGamesAbandonedByMode = function () {
+    return Object.assign({}, this.gamesAbandonedByMode);
+  };
+
+  /** Builds the composite "modeId:suffix" key the round-contract diagnostics counters below are aggregated under. */
+  LogService.prototype._modeKey = function (modeId, suffix) {
+    return modeId + ':' + suffix;
+  };
+
+  /** Tallies one more roundContract.js game started for `modeId` at `level` (TRIOFSND-246). */
+  LogService.prototype.logRoundGameStarted = function (modeId, level) {
+    return this._incrementLevelCount(ROUND_GAMES_STARTED_KEY, this.roundGamesStartedByModeLevel, this._modeKey(modeId, level));
+  };
+
+  LogService.prototype.getRoundGamesStartedByModeLevel = function () {
+    return Object.assign({}, this.roundGamesStartedByModeLevel);
+  };
+
+  /** Tallies one more roundContract.js game completed (reached `game:over`) for `modeId` at `level`. */
+  LogService.prototype.logRoundGameCompleted = function (modeId, level) {
+    return this._incrementLevelCount(ROUND_GAMES_COMPLETED_KEY, this.roundGamesCompletedByModeLevel, this._modeKey(modeId, level));
+  };
+
+  LogService.prototype.getRoundGamesCompletedByModeLevel = function () {
+    return Object.assign({}, this.roundGamesCompletedByModeLevel);
+  };
+
+  /** Tallies one more roundContract.js game left before `game:over` for `modeId` at `level` (e.g. navigating away mid-round). */
+  LogService.prototype.logRoundGameAbandoned = function (modeId, level) {
+    return this._incrementLevelCount(ROUND_GAMES_ABANDONED_KEY, this.roundGamesAbandonedByModeLevel, this._modeKey(modeId, level));
+  };
+
+  LogService.prototype.getRoundGamesAbandonedByModeLevel = function () {
+    return Object.assign({}, this.roundGamesAbandonedByModeLevel);
+  };
+
+  /** Tallies one more local round-generation failure for `modeId`, identified only by a stable, machine-readable `code` (never round content). */
+  LogService.prototype.logRoundGenerationFailure = function (modeId, code) {
+    if (typeof code !== 'string' || code.length === 0) {
+      console.warn('DinoQuiz: logRoundGenerationFailure requires a valid code');
+      return 0;
+    }
+    return this._incrementLevelCount(ROUND_GENERATION_FAILURE_CODES_KEY, this.roundGenerationFailureCounts, this._modeKey(modeId, code));
+  };
+
+  LogService.prototype.getRoundGenerationFailureCounts = function () {
+    return Object.assign({}, this.roundGenerationFailureCounts);
+  };
+
+  /** Tallies one more local state-discard for `modeId`, identified only by a stable, machine-readable `code` (never round content). */
+  LogService.prototype.logStateDiscarded = function (modeId, code) {
+    if (typeof code !== 'string' || code.length === 0) {
+      console.warn('DinoQuiz: logStateDiscarded requires a valid code');
+      return 0;
+    }
+    return this._incrementLevelCount(STATE_DISCARD_CODES_KEY, this.stateDiscardCounts, this._modeKey(modeId, code));
+  };
+
+  LogService.prototype.getStateDiscardCounts = function () {
+    return Object.assign({}, this.stateDiscardCounts);
+  };
+
+  /** Tallies one more "acierto" (a correct match/answer within a round -- for Parejas, one more matched pair) for `modeId` at `level` (TRIOFSND-277). */
+  LogService.prototype.logRoundCorrectAnswer = function (modeId, level) {
+    return this._incrementLevelCount(ROUND_CORRECT_ANSWERS_KEY, this.roundCorrectAnswersByModeLevel, this._modeKey(modeId, level));
+  };
+
+  LogService.prototype.getRoundCorrectAnswersByModeLevel = function () {
+    return Object.assign({}, this.roundCorrectAnswersByModeLevel);
+  };
+
+  /** Adds `stars` (a non-negative integer, e.g. resultsScreen.js's 1-3 star tiers) to the running total for `modeId` at `level`. */
+  LogService.prototype.logRoundStarsEarned = function (modeId, level, stars) {
+    if (!Number.isInteger(stars) || stars < 0) {
+      console.warn('DinoQuiz: logRoundStarsEarned requires a non-negative integer stars count');
+      return 0;
+    }
+    return this._addToLevelCount(ROUND_STARS_EARNED_KEY, this.roundStarsEarnedByModeLevel, this._modeKey(modeId, level), stars);
+  };
+
+  LogService.prototype.getRoundStarsEarnedByModeLevel = function () {
+    return Object.assign({}, this.roundStarsEarnedByModeLevel);
+  };
+
+  /** Tallies one more local hard rejilla/grid-limit violation for `modeId`, identified only by a stable, machine-readable `code` (e.g. Parejas' MAX_VISIBLE_UNMATCHED reveal cap -- never any round content). */
+  LogService.prototype.logRoundGridLimitViolation = function (modeId, code) {
+    if (typeof code !== 'string' || code.length === 0) {
+      console.warn('DinoQuiz: logRoundGridLimitViolation requires a valid code');
+      return 0;
+    }
+    return this._incrementLevelCount(ROUND_GRID_LIMIT_VIOLATION_CODES_KEY, this.roundGridLimitViolationCounts, this._modeKey(modeId, code));
+  };
+
+  LogService.prototype.getRoundGridLimitViolationCounts = function () {
+    return Object.assign({}, this.roundGridLimitViolationCounts);
   };
 
   LogService.prototype.logAppAccess = function (metadata) {
@@ -404,6 +601,9 @@
         if (!response.ok) {
           throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
+        if (typeof response.json !== 'function') {
+          return { success: true };
+        }
         return response.json().catch(function () {
           return { success: true };
         });
@@ -415,7 +615,7 @@
         return data;
       })
       .catch(function (error) {
-        console.error('DinoQuiz: failed to send logs to ' + endpointUrl, error);
+        console.error('DinoQuiz: failed to send logs to endpoint', endpointUrl, error);
         throw error;
       });
   };
@@ -423,6 +623,9 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
       createLogEntry: createLogEntry,
       generateRequestId: generateRequestId,
       detectPlatform: detectPlatform,
@@ -435,6 +638,15 @@
       MAZE_GAMES_COMPLETED_KEY: MAZE_GAMES_COMPLETED_KEY,
       MAZE_GAMES_ABANDONED_KEY: MAZE_GAMES_ABANDONED_KEY,
       MAZE_RESOLVABILITY_FAILURE_COUNT_KEY: MAZE_RESOLVABILITY_FAILURE_COUNT_KEY,
+      GAMES_ABANDONED_BY_MODE_KEY: GAMES_ABANDONED_BY_MODE_KEY,
+      ROUND_GAMES_STARTED_KEY: ROUND_GAMES_STARTED_KEY,
+      ROUND_GAMES_COMPLETED_KEY: ROUND_GAMES_COMPLETED_KEY,
+      ROUND_GAMES_ABANDONED_KEY: ROUND_GAMES_ABANDONED_KEY,
+      ROUND_GENERATION_FAILURE_CODES_KEY: ROUND_GENERATION_FAILURE_CODES_KEY,
+      STATE_DISCARD_CODES_KEY: STATE_DISCARD_CODES_KEY,
+      ROUND_CORRECT_ANSWERS_KEY: ROUND_CORRECT_ANSWERS_KEY,
+      ROUND_STARS_EARNED_KEY: ROUND_STARS_EARNED_KEY,
+      ROUND_GRID_LIMIT_VIOLATION_CODES_KEY: ROUND_GRID_LIMIT_VIOLATION_CODES_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };
@@ -445,6 +657,9 @@
     window.DinoQuiz.services = window.DinoQuiz.services || {};
     window.DinoQuiz.services.logging = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
     };

@@ -1,0 +1,266 @@
+[
+  {
+    "id": "trex",
+    "nameKey": "creatures.trex.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 12,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.trex.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "triceratops",
+    "nameKey": "creatures.triceratops.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 9,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.triceratops.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "velociraptor",
+    "nameKey": "creatures.velociraptor.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 2,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 75, "finMa": 71 },
+    "habitat": "creatures.velociraptor.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "estegosaurio",
+    "nameKey": "creatures.estegosaurio.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 9,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 155, "finMa": 150 },
+    "habitat": "creatures.estegosaurio.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "braquiosaurio",
+    "nameKey": "creatures.braquiosaurio.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 21,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 154, "finMa": 150 },
+    "habitat": "creatures.braquiosaurio.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "fuentes": [
+      {
+        "nombre": "Field Museum, Chicago",
+        "url": "https://www.fieldmuseum.org/"
+      }
+    ]
+  },
+  {
+    "id": "ankylosaurus",
+    "nameKey": "creatures.ankylosaurus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 7,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.ankylosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "pteranodon",
+    "nameKey": "creatures.pteranodon.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 1.8,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 86, "finMa": 84 },
+    "habitat": "creatures.pteranodon.habitat",
+    "clasificacionCientifica": "reptil_volador",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "spinosaurus",
+    "nameKey": "creatures.spinosaurus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 15,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 99, "finMa": 93 },
+    "habitat": "creatures.spinosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "dilophosaurus",
+    "nameKey": "creatures.dilophosaurus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 6.5,
+    "periodoPrincipal": "Jurasico",
+    "habitat": "creatures.dilophosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "pachycephalosaurus",
+    "nameKey": "creatures.pachycephalosaurus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 4.5,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 70, "finMa": 66 },
+    "habitat": "creatures.pachycephalosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "compsognathus",
+    "nameKey": "creatures.compsognathus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 1,
+    "periodoPrincipal": "Jurasico",
+    "habitat": "creatures.compsognathus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "diplodocus",
+    "nameKey": "creatures.diplodocus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 25,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 154, "finMa": 152 },
+    "habitat": "creatures.diplodocus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Field Museum, Chicago",
+        "url": "https://www.fieldmuseum.org/"
+      }
+    ]
+  },
+  {
+    "id": "iguanodon",
+    "nameKey": "creatures.iguanodon.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 10,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 125, "finMa": 120 },
+    "habitat": "creatures.iguanodon.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "parasaurolophus",
+    "nameKey": "creatures.parasaurolophus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 10,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 76, "finMa": 73 },
+    "habitat": "creatures.parasaurolophus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  }
+]

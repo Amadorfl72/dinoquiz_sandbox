@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v14';
+const SW_VERSION = 'v20';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -27,9 +27,13 @@ const PRECACHE_URLS = [
   '/scripts/soundService.js',
   '/scripts/adsService.js',
   '/scripts/gameFlow.js',
+  '/scripts/roundContract.js',
+  '/scripts/visibilityPauseService.js',
   '/scripts/audio.js',
+  '/scripts/feedbackComponent.js',
   '/scripts/network.js',
   '/scripts/logging.js',
+  '/scripts/roundDiagnosticsService.js',
   '/scripts/appShell.js',
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
@@ -39,10 +43,14 @@ const PRECACHE_URLS = [
   '/scripts/mazeGenerator.js',
   '/scripts/mazeGame.js',
   '/scripts/mazeScreen.js',
+  '/scripts/parejasScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/modesCatalog.js',
-  '/scripts/lastModeService.js',
+  '/scripts/unlockThresholds.js',
+  '/scripts/modeStorage.js',
+  '/scripts/modeProgressStorage.js',
   '/scripts/modeSelectorScreen.js',
+  '/scripts/modeChangeConfirmScreen.js',
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',
@@ -91,6 +99,10 @@ const PRECACHE_URLS = [
   // Levels 6-10 dinosaurs reuse this single generic fallback instead of a
   // new per-dinosaur asset (see public/assets/images/fallback/CREDITS.md).
   '/assets/images/fallback/generic.svg',
+  // Parejas jurásicas card art (TRIOFSND-274): the shared card back plus
+  // the fourteen dinosaur fronts already precached above under
+  // /assets/images/dinosaurs/.
+  '/assets/images/cards/back.svg',
   // Mode selector card illustrations (TRIOFSND-232): precached so the
   // selector renders fully offline right after install, before any of these
   // would otherwise be fetched at runtime.
@@ -119,6 +131,10 @@ const PRECACHE_URLS = [
   // cache-first rule for /assets/sounds/ below.
   '/i18n/es.json',
   '/data/questions.json',
+  // Creature catalog (TRIOFSND-222): verified per-creature facts (diet,
+  // length, era, habitat, classification, sources) other modes will read
+  // instead of each re-deriving/duplicating a fact per creature.
+  '/data/creatures.json',
   '/offline.html',
 ];
 

@@ -73,7 +73,7 @@
         "accessibleLabel": "Modo Quiz: responde preguntas sobre criaturas prehistóricas eligiendo la respuesta correcta"
       },
       "laberinto": {
-        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto prehistórico hasta la salida"
+        "accessibleLabel": "Modo Laberinto: guía a una criatura prehistórica por un laberinto hasta encontrar la comida"
       },
       "sombra": {
         "accessibleLabel": "Modo Adivina la sombra: reconoce qué criatura prehistórica se esconde detrás de su silueta"
@@ -102,7 +102,9 @@
       "insufficient_questions": "Necesitamos más preguntas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
       "insufficient_creatures": "Necesitamos más criaturas verificadas para activar este modo. ¡Vuelve a intentarlo más adelante!",
       "insufficient_creature_sounds": "Necesitamos más sonidos imaginados de criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
-      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!"
+      "missing_creature_field": "Necesitamos más datos verificados de las criaturas para activar este modo. ¡Vuelve a intentarlo más adelante!",
+      "round_generation_failed": "No hemos podido preparar una ronda nueva para este modo. ¡Vuelve a intentarlo más adelante!",
+      "state_discarded": "Hemos tenido que reiniciar esta partida por un problema técnico, pero tu progreso y resultados guardados siguen a salvo. ¡Vuelve a intentarlo más adelante!"
     }
   },
   "ageGate": {
@@ -110,6 +112,12 @@
     "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
     "sevenOption": "7 años o menos",
     "eightPlusOption": "8 años o más"
+  },
+  "modeChange": {
+    "title": "¿Cambiar de juego?",
+    "message": "Todavía no has terminado esta partida. Si cambias de juego ahora, perderás lo que llevas jugado.",
+    "confirmButtonLabel": "Sí, cambiar de juego",
+    "cancelButtonLabel": "No, seguir jugando"
   },
   "privacyPolicy": {
     "screenTitle": "Política de privacidad",
@@ -247,6 +255,15 @@
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
     }
   },
+  "feedback": {
+    "correct": {
+      "message": "¡Genial, acertaste!"
+    },
+    "incorrect": {
+      "message": "¡Buen intento!"
+    },
+    "scoreAnnouncementFormat": "Puntos: {score}"
+  },
   "question": {
     "optionsGroupLabel": "Opciones de respuesta",
     "imageAltFormat": "Ilustración de un {dinosaur}",
@@ -362,6 +379,114 @@
     },
     "answerReinforcement": {
       "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    }
+  },
+  "parejas": {
+    "screenTitle": "Parejas jurásicas",
+    "instructions": "Da la vuelta a dos cartas para encontrar la pareja de cada criatura.",
+    "boardLabel": "Tablero de cartas de Parejas jurásicas",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Encuentra las parejas de criaturas.",
+    "progressFormat": "Parejas encontradas: {matched} de {total}",
+    "card": {
+      "hiddenAriaLabelFormat": "Carta boca abajo, posición {position}",
+      "revealedAriaLabelFormat": "Carta boca arriba, posición {position}: {creature}",
+      "matchedAriaLabelFormat": "Pareja encontrada, posición {position}: {creature}",
+      "matchedBadge": "Pareja"
+    },
+    "feedback": {
+      "blockedMessage": "Espera: ya tienes dos cartas boca arriba.",
+      "blockedAnnouncement": "Ya tienes dos cartas boca arriba. Espera a ver si son pareja antes de girar otra.",
+      "matchMessageFormat": "¡Genial, pareja encontrada! Las dos cartas eran {creature}.",
+      "mismatchMessageFormat": "No es pareja: {first} y {second}. Inténtalo de nuevo.",
+      "softLimitHint": "Consejo: fíjate bien en cada carta antes de girar la siguiente."
+    },
+    "roundResult": {
+      "correctMessageFormat": "¡Genial, encontraste las {total} parejas en {attempts} intentos!",
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Parejas jurásicas completado!",
+      "announcementFormat": "Has terminado Parejas jurásicas. Completaste {score} de {total} rondas.",
+      "message": "¡Bien hecho recordando dónde estaba cada criatura! Sigue jugando para mejorar tu memoria."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "sizeOrder": {
+    "screenTitle": "Ordena por tamaño",
+    "instructions": "Toca dos criaturas para intercambiarlas de sitio hasta ordenarlas de la más pequeña a la más grande.",
+    "boardLabel": "Criaturas para ordenar por tamaño",
+    "creatureAltFormat": "Ilustración de un {dinosaur}",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Ordena a las criaturas de la más pequeña a la más grande.",
+    "selection": {
+      "selectAriaLabelFormat": "{dinosaur}, posición {position} de {total}. Toca para seleccionarla e intercambiarla de sitio.",
+      "selectedAriaLabelFormat": "{dinosaur}, posición {position} de {total}, seleccionada. Toca otra criatura para intercambiarla con esta.",
+      "selectedAnnouncementFormat": "Has seleccionado a {dinosaur}. Toca otra criatura para intercambiarla con esta.",
+      "swapAnnouncementFormat": "Has intercambiado {firstDinosaur} y {secondDinosaur}.",
+      "deselectAnnouncementFormat": "Has quitado la selección de {dinosaur}."
+    },
+    "feedback": {
+      "correct": "¡Genial, las has ordenado correctamente!",
+      "incorrect": "Todavía no están en el orden correcto, ¡sigue intentándolo!"
+    },
+    "roundResult": {
+      "correctAnnouncementFormat": "¡Genial, acertaste! El orden correcto, de la más pequeña a la más grande, es: {order}.",
+      "incorrectAnnouncementFormat": "Todavía no es el orden correcto. Intercambia dos criaturas y vuelve a intentarlo.",
+      "orderLabel": "Orden correcto, de la más pequeña a la más grande",
+      "creatureLengthFormat": "{dinosaur}: {lengthMeters} metros",
+      "nextButton": "Siguiente"
+    },
+    "generationError": {
+      "message": "No hemos podido preparar esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. ¡Vamos con otra ronda!",
+      "announcement": "No se ha podido crear esta ronda porque las criaturas disponibles eran demasiado parecidas en tamaño. Vamos a intentarlo con otra ronda."
+    },
+    "gameOver": {
+      "heading": "¡Ordena por tamaño completado!",
+      "announcementFormat": "Has terminado Ordena por tamaño. Ordenaste correctamente {score} de {total} rondas.",
+      "message": "¡Bien hecho ordenando a las criaturas! Sigue jugando para descubrir más tamaños."
+    }
+  },
+  "shadowGuess": {
+    "name": "Adivina la sombra",
+    "instructions": "Observa la silueta y elige, entre cuatro criaturas, la que crees que se esconde detrás.",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado la sombra.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "blocked": {
+      "insufficientCatalog": "Adivina la sombra no está disponible todavía: se necesitan al menos 12 criaturas aprobadas y visualmente diferenciables entre sí para activar este modo."
+    },
+    "results": {
+      "title": "Resultados de Adivina la sombra",
+      "score": "Aciertos en Adivina la sombra",
+      "percentage": "Porcentaje de aciertos",
+      "stars": "Estrellas conseguidas",
+      "progress": "Progreso en Adivina la sombra"
     }
   },
   "dinosaurNames": {
@@ -681,5 +806,63 @@
     "compsognathus-19": "Las calizas de Solnhofen, en Alemania, conservan detalles extraordinariamente finos gracias a su composición especial, lo que ha permitido estudiar a fondo fósiles como el del Compsognathus.",
     "compsognathus-20": "El Compsognathus y el Archaeopteryx, una de las aves más primitivas conocidas, vivieron aproximadamente en la misma época y zona, lo que ayuda a estudiar la transición hacia las aves.",
     "compsognathus-21": "Los huesos pequeños y delicados como los del Compsognathus se conservan con más dificultad, lo que complica calcular con precisión medidas como su peso exacto."
+  },
+  "creatures": {
+    "trex": {
+      "name": "Tyrannosaurus Rex",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "triceratops": {
+      "name": "Triceratops",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "velociraptor": {
+      "name": "Velociraptor",
+      "habitat": "Desiertos y dunas de Asia (actual Mongolia)"
+    },
+    "estegosaurio": {
+      "name": "Estegosaurio",
+      "habitat": "Llanuras con helechos y coníferas de Norteamérica"
+    },
+    "braquiosaurio": {
+      "name": "Braquiosaurio",
+      "habitat": "Llanuras con ríos y bosques de coníferas de Norteamérica"
+    },
+    "ankylosaurus": {
+      "name": "Ankylosaurus",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "pteranodon": {
+      "name": "Pteranodon",
+      "habitat": "Costas y mares interiores de Norteamérica"
+    },
+    "spinosaurus": {
+      "name": "Spinosaurus",
+      "habitat": "Ríos y marismas del norte de África"
+    },
+    "dilophosaurus": {
+      "name": "Dilophosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "pachycephalosaurus": {
+      "name": "Pachycephalosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "compsognathus": {
+      "name": "Compsognathus",
+      "habitat": "Llanuras costeras de Europa"
+    },
+    "diplodocus": {
+      "name": "Diplodocus",
+      "habitat": "Llanuras y ríos de Norteamérica"
+    },
+    "iguanodon": {
+      "name": "Iguanodon",
+      "habitat": "Llanuras y bosques de Europa"
+    },
+    "parasaurolophus": {
+      "name": "Parasaurolophus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    }
   }
 }
