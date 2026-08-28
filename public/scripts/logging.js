@@ -93,9 +93,24 @@
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
  * src/services/logging/index.js re-exports this file.
+ *
+ * Catalog validation cause codes (TRIOFSND-223, PRD foundation "Ficha única
+ * y verificable para todas las criaturas jugables"): src/data/creatureCatalog.js's
+ * `validateCatalog()` logs one `logEvent(cause, { id, rule })` per structured
+ * violation it finds in public/data/creatures.json, using one of the three
+ * `CATALOG_*_CAUSE` codes exported below instead of a free-text message --
+ * `id` is the affected creature's catalog id and `rule` the violated field/
+ * check name, never a human-readable sentence or other identifiable data.
+ * These are plain eventType strings for the existing generic `logEvent()`
+ * (mirrors questionBank.js's unexported `'content_validation_failed'`
+ * literal); exported here only so creatureCatalog.js and its tests reference
+ * a shared constant instead of duplicating the string.
  */
 
 (function () {
+  var CATALOG_FIELD_INVALID_CAUSE = 'catalog_field_invalid';
+  var CATALOG_REFERENCE_BROKEN_CAUSE = 'catalog_reference_broken';
+  var CATALOG_DUPLICATE_ID_CAUSE = 'catalog_duplicate_id';
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
   var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
   var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
@@ -608,6 +623,9 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
       createLogEntry: createLogEntry,
       generateRequestId: generateRequestId,
       detectPlatform: detectPlatform,
@@ -639,6 +657,9 @@
     window.DinoQuiz.services = window.DinoQuiz.services || {};
     window.DinoQuiz.services.logging = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
     };
