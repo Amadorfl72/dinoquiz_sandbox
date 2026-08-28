@@ -135,6 +135,100 @@ describe('TRIOFSND-110: service worker source', () => {
   });
 });
 
+describe('TRIOFSND-268: Oído Jurásico sounds and copy precached for offline play', () => {
+  const OIDO_JURASICO_DIR = path.resolve(__dirname, '../../public/assets/sounds/oido-jurasico');
+
+  function listOidoJurasicoAudioUrls() {
+    return fs
+      .readdirSync(OIDO_JURASICO_DIR)
+      .filter((file) => file.endsWith('.wav'))
+      .sort()
+      .map((file) => `/assets/sounds/oido-jurasico/${file}`);
+  }
+
+  test('every Oído Jurásico creature sound file is listed in PRECACHE_URLS', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const audioUrls = listOidoJurasicoAudioUrls();
+
+    expect(audioUrls.length).toBeGreaterThan(0);
+    audioUrls.forEach((url) => {
+      expect(PRECACHE_URLS).toContain(url);
+    });
+  });
+
+  test('the i18n copy introducing Oído Jurásico ships inside the already-precached i18n/es.json', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    // eslint-disable-next-line global-require
+    const es = require('../../public/i18n/es.json');
+
+    expect(PRECACHE_URLS).toContain('/i18n/es.json');
+    expect(es.oidoJurasico).toBeDefined();
+    expect(es.oidoJurasico.imaginedSoundNotice).toBeDefined();
+  });
+
+  test('a clean install makes every Oído Jurásico resource available from cache once the network is disabled', async () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    const oidoJurasicoResources = [...listOidoJurasicoAudioUrls(), '/i18n/es.json'];
+
+    // A fresh device: no pre-existing cache entries ("instalación limpia").
+    const store = new Map();
+    const fakeCache = {
+      addAll: async (urls) => {
+        await Promise.all(
+          urls.map(async (url) => {
+            const response = await self.fetch(url);
+            if (!response || !response.ok) {
+              throw new Error(`precache failed for ${url}`);
+            }
+            store.set(url, response);
+          })
+        );
+      },
+    };
+    self.caches = {
+      open: async () => fakeCache,
+      match: async (url) => store.get(url),
+      keys: async () => [],
+      delete: async () => true,
+    };
+    self.skipWaiting = jest.fn();
+    // Stands in for the one-time online fetch a real install performs; every
+    // assertion after this point must be satisfied purely from `store`.
+    self.fetch = jest.fn(async (url) => ({ ok: true, url, clone: () => ({ url }) }));
+
+    try {
+      const installEvent = new Event('install');
+      let installPromise = Promise.resolve();
+      installEvent.waitUntil = (promise) => {
+        installPromise = promise;
+      };
+      self.dispatchEvent(installEvent);
+      await installPromise;
+
+      expect(self.fetch).toHaveBeenCalledTimes(PRECACHE_URLS.length);
+
+      // The device goes fully offline: any further fetch must fail loudly,
+      // so the lookups below can only succeed if install-time caching worked.
+      self.fetch = jest.fn(async () => {
+        throw new Error('network disabled');
+      });
+
+      const cachedResults = await Promise.all(oidoJurasicoResources.map((url) => self.caches.match(url)));
+      cachedResults.forEach((cached) => {
+        expect(cached).toBeDefined();
+      });
+      expect(self.fetch).not.toHaveBeenCalled();
+    } finally {
+      delete self.caches;
+      delete self.skipWaiting;
+      delete self.fetch;
+    }
+  });
+});
+
 describe('TRIOFSND-110: isRuntimeCacheable', () => {
   // eslint-disable-next-line global-require
   const { isRuntimeCacheable } = require(SW_PATH);
