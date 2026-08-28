@@ -895,6 +895,7 @@ body {
   color: var(--color-text);
 }
 
+.results-screen__percentage,
 .results-screen__level-outcome,
 .results-screen__max-level-unlocked,
 .results-screen__fun-facts-progress,
@@ -981,6 +982,49 @@ body {
 }
 
 .results-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
+ * Own-mode level-progress actions (TRIOFSND-252): repeat the level just
+ * played, jump to the next already-unlocked level, or return to the mode
+ * selector. Same outline-button treatment and minimum touch target as
+ * `.results-screen__exit-button` -- these are secondary actions alongside the
+ * primary "Volver a jugar" call to action.
+ */
+.results-screen__repeat-level-button,
+.results-screen__go-to-next-level-button,
+.results-screen__back-to-selector-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 2px solid var(--color-text);
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.results-screen__repeat-level-button:hover,
+.results-screen__go-to-next-level-button:hover,
+.results-screen__back-to-selector-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.results-screen__repeat-level-button:active,
+.results-screen__go-to-next-level-button:active,
+.results-screen__back-to-selector-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.results-screen__repeat-level-button:focus-visible,
+.results-screen__go-to-next-level-button:focus-visible,
+.results-screen__back-to-selector-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
