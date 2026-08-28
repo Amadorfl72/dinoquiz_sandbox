@@ -73,13 +73,18 @@
  * Node/Jest it `require`s the real `src/game/classifyGame.js` /
  * `src/game/classifyTimer.js` (both exercised end-to-end by this screen's
  * own tests); in a real, unbundled browser it looks for
- * `window.DinoQuiz.game.classify` / `window.DinoQuiz.game.classifyTimer` --
- * not yet registered by any file, since `classifyGame.js` transitively
- * `require`s `src/data/questionBank.js` (which reads the bank off disk with
- * `fs`) and can't be loaded as a plain `<script>` yet. A browser-runnable
- * port (mirroring `public/scripts/mazeGame.js`'s own precedent) is future
- * work; until then this screen is exercised via Node/Jest and via
- * `options.classifyGame`/`options.classifyTimer` injected directly. It
+ * `window.DinoQuiz.game.classify` / `window.DinoQuiz.game.classifyTimer`,
+ * registered by `public/scripts/classifyGame.js` /
+ * `public/scripts/classifyTimer.js` respectively (both loaded as
+ * `<script>`s in public/index.html before this file, and precached by the
+ * service worker). `classifyGame.js`'s browser port is a second,
+ * browser-runnable implementation mirroring `public/scripts/mazeGame.js`'s
+ * own precedent (its Node twin transitively `require`s
+ * `src/data/questionBank.js`, which reads the bank off disk with `fs` and
+ * can't be loaded as a plain `<script>`); `classifyTimer.js` has no such
+ * dependency and its canonical implementation lives directly under
+ * `public/scripts/`. This screen's own tests exercise it via Node/Jest and
+ * via `options.classifyGame`/`options.classifyTimer` injected directly. It
  * resolves its i18n strings from `options.strings`, or
  * `window.DinoQuiz.strings.classify` in the browser, or the `src/i18n`
  * loader under Node -- never a hardcoded string. It registers on
