@@ -937,6 +937,14 @@
   "timeline": {
     "modeName": "Línea del tiempo",
     "instruction": "¿En qué periodo vivió esta criatura? Elige Triásico, Jurásico o Cretácico.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. ¿En qué periodo vivió {dinosaur}?",
+    "scoreLabel": "Puntos",
+    "optionsGroupLabel": "Elige el periodo",
+    "correctOptionAriaLabelFormat": "Periodo correcto: {period}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {period}",
+    "nextButton": "Siguiente",
     "options": {
       "triasico": {
         "label": "Triásico",
@@ -956,12 +964,43 @@
       "incorrect": "No es correcto. Vivió principalmente en el {periodo}."
     },
     "explanation": {
+      "heading": "Dato curioso",
       "interval": "Su intervalo temporal aproximado fue {intervalo}.",
-      "pteranodon": "Pteranodon era un reptil volador, no un dinosaurio."
+      "intervalRangeFormat": "{startMya} a {endMya} millones de años",
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} es un dinosaurio.",
+        "reptil_volador": "{dinosaur} era un reptil volador, no un dinosaurio.",
+        "otro": "{dinosaur} no es un dinosaurio ni un reptil volador."
+      }
+    },
+    "blockedRound": {
+      "message": "No hemos podido comprobar el periodo de esta criatura todavía. ¡Vamos con otra ronda!",
+      "announcementFormat": "Ronda bloqueada: no hemos podido comprobar el periodo de {dinosaur} todavía. Vamos a intentarlo con otra ronda."
+    },
+    "gameOver": {
+      "heading": "¡Línea del tiempo completada!",
+      "message": "¡Genial explorando cuándo vivió cada criatura! Sigue jugando para descubrir más.",
+      "announcementFormat": "Has terminado Línea del tiempo. Acertaste {score} de {total} rondas."
     },
     "locked": {
       "message": "Línea del tiempo no está disponible porque no hay suficientes fichas válidas para completar una partida.",
       "exitLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "creatures": {
