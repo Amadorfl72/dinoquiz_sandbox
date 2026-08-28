@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v24';
+const SW_VERSION = 'v25';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -119,6 +119,13 @@ const PRECACHE_URLS = [
   '/assets/images/modes/clasifica.svg',
   '/assets/images/modes/ordenaPorTamano.svg',
   '/assets/images/modes/lineaDelTiempo.svg',
+  // Timeline period illustrations (TRIOFSND-295): precached so the period
+  // selection in Línea del tiempo has its three visual supports available
+  // offline right after install, before any of these would otherwise be
+  // fetched at runtime.
+  '/assets/images/periods/triasico.svg',
+  '/assets/images/periods/jurasico.svg',
+  '/assets/images/periods/cretacico.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms
