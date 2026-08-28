@@ -28,6 +28,18 @@
  * `content_validation_failed` log event — via the logging service — for any
  * entry that breaks a rule, excluding that entry from the returned pool
  * instead of failing the whole load.
+ *
+ * TRIOFSND-224: the question schema intentionally carries no diet/period/
+ * habitat/classification of its own -- those facts live solely on the single
+ * creature catalog (`src/data/creatureCatalog.js`, the PRD foundation "Ficha
+ * única y verificable para todas las criaturas jugables"). A question only
+ * references a creature by its `dinosaur` id; `FORBIDDEN_CATALOG_FIELDS`
+ * rejects any question that tries to carry its own copy of a catalog field
+ * instead (see `collectQuestionViolations`), so the two data sources can
+ * never drift apart. `getQuestionsByLevel()`'s usable pool additionally
+ * excludes -- via the same `content_validation_failed` mechanism above -- any
+ * question whose `dinosaur` has no matching ficha in the catalog
+ * (`creatureCatalog.getCreatureById`, see `collectCatalogViolations`).
  */
 
 const fs = require('fs');
@@ -35,6 +47,7 @@ const path = require('path');
 
 const { getStrings } = require('../i18n');
 const { LogService } = require('../services/logging');
+const { getCreatureById, loadCreatureCatalog } = require('./creatureCatalog');
 
 // The question bank JSON lives under public/data so the browser can fetch it
 // at runtime (/data/questions.json, precached/runtime-cached by the service
@@ -77,6 +90,18 @@ const MAX_LEVEL = 10;
 const VALID_LEVELS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const QUESTIONS_PER_LEVEL = 30;
 const EXPECTED_QUESTION_COUNT = VALID_LEVELS.length * QUESTIONS_PER_LEVEL;
+
+// TRIOFSND-224: these fields belong solely to the creature catalog
+// (src/data/creatureCatalog.js) -- a question must reference facts about its
+// creature via `dinosaur` + `creatureCatalog.getCreatureById`, never by
+// carrying its own copy, so the two data sources can never drift apart.
+const FORBIDDEN_CATALOG_FIELDS = Object.freeze([
+  'dieta',
+  'periodoPrincipal',
+  'intervaloTemporal',
+  'habitat',
+  'clasificacionCientifica',
+]);
 
 function describeQuestion(question, index) {
   const id = question && typeof question === 'object' ? question.id : undefined;
@@ -168,6 +193,15 @@ function collectQuestionViolations(question, index) {
       message: `${where}: "level" must be an integer between ${MIN_LEVEL} and ${MAX_LEVEL}`,
     });
   }
+
+  FORBIDDEN_CATALOG_FIELDS.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(question, field)) {
+      violations.push({
+        rule: field,
+        message: `${where}: "${field}" must not be duplicated on a question -- read it from creatureCatalog.getCreatureById(dinosaur) instead`,
+      });
+    }
+  });
 
   return violations;
 }
@@ -339,6 +373,33 @@ function collectImageVariantViolations(question, index) {
   return violations;
 }
 
+// TRIOFSND-224: cross-catalog reference check for the "usable pool" -- a
+// question's `dinosaur` must resolve to an actual ficha in the creature
+// catalog (`creatureCatalog.getCreatureById`), not just be one of the
+// hardcoded `VALID_DINOSAURS` names (already checked by
+// `collectQuestionViolations`'s "dinosaur" rule). `catalog` is the raw
+// creature array to check against, resolved once per `getQuestionsByLevel`
+// call (never reloaded per question).
+function collectCatalogViolations(question, index, catalog) {
+  if (!question || typeof question !== 'object' || Array.isArray(question)) {
+    return [];
+  }
+  if (typeof question.dinosaur !== 'string' || question.dinosaur.trim() === '') {
+    return [];
+  }
+  if (getCreatureById(question.dinosaur, { catalog })) {
+    return [];
+  }
+
+  const where = describeQuestion(question, index);
+  return [
+    {
+      rule: 'dinosaurCatalog',
+      message: `${where}: "dinosaur" "${question.dinosaur}" has no matching ficha in the creature catalog`,
+    },
+  ];
+}
+
 let defaultLogService;
 function getDefaultLogService() {
   if (!defaultLogService) {
@@ -356,14 +417,20 @@ function logContentValidationFailure(logService, question, rule) {
   logService.logEvent('content_validation_failed', { id, level, rule });
 }
 
-// TRIOFSND-202: validates every mandatory field of each raw entry (the
-// `validateQuestion` schema plus the AW5 image variants), emits
-// `content_validation_failed` for any entry that breaks a rule and excludes
-// that entry from the returned pool — a single invalid question never blocks
-// the rest of the bank, mirroring the AW5 image-variant filtering above.
-function getValidQuestions(rawQuestions, logService) {
+// TRIOFSND-202/TRIOFSND-224: validates every mandatory field of each raw
+// entry (the `validateQuestion` schema plus the AW5 image variants), plus
+// this pool's cross-catalog reference check (every `dinosaur` must have a
+// matching ficha in `catalog`), emits `content_validation_failed` for any
+// entry that breaks a rule and excludes that entry from the returned pool —
+// a single invalid question never blocks the rest of the bank, mirroring the
+// AW5 image-variant filtering above.
+function getValidQuestions(rawQuestions, logService, catalog) {
   return rawQuestions.filter((question, index) => {
-    const violations = [...collectQuestionViolations(question, index), ...collectImageVariantViolations(question, index)];
+    const violations = [
+      ...collectQuestionViolations(question, index),
+      ...collectImageVariantViolations(question, index),
+      ...collectCatalogViolations(question, index, catalog),
+    ];
 
     if (violations.length === 0) {
       return true;
@@ -379,14 +446,18 @@ function getValidQuestions(rawQuestions, logService) {
  *
  * Loads the raw question bank (from `options.filePath`/`QUESTIONS_JSON_PATH`,
  * or `options.questions` if provided), validates each entry's mandatory
- * fields and excludes any invalid entry from the pool — logging a
- * `content_validation_failed` event (id, level, violated rule) via
- * `options.logService` (a `LogService`-shaped `{ logEvent(eventType, metadata) }`,
- * defaulting to a shared `LogService` instance) for each one.
+ * fields -- plus (TRIOFSND-224) that its `dinosaur` resolves to a ficha in
+ * the creature catalog (`options.catalog`, or a freshly loaded/validated
+ * `creatureCatalog.loadCreatureCatalog()` by default) -- and excludes any
+ * invalid entry from the pool, logging a `content_validation_failed` event
+ * (id, level, violated rule) via `options.logService` (a `LogService`-shaped
+ * `{ logEvent(eventType, metadata) }`, defaulting to a shared `LogService`
+ * instance) for each one.
  */
 function getQuestionsByLevel(level, options = {}) {
   const filePath = options.filePath || QUESTIONS_JSON_PATH;
   const logService = options.logService || getDefaultLogService();
+  const catalog = options.catalog || loadCreatureCatalog();
 
   let rawQuestions = options.questions;
   if (!rawQuestions) {
@@ -402,7 +473,7 @@ function getQuestionsByLevel(level, options = {}) {
     throw new Error('The question bank must be an array of questions');
   }
 
-  const validQuestions = getValidQuestions(rawQuestions, logService);
+  const validQuestions = getValidQuestions(rawQuestions, logService, catalog);
   return validQuestions.filter((question) => question.level === level);
 }
 
@@ -418,6 +489,7 @@ module.exports = {
   QUESTIONS_PER_LEVEL,
   EXPECTED_QUESTION_COUNT,
   QUESTIONS_JSON_PATH,
+  FORBIDDEN_CATALOG_FIELDS,
   validateQuestion,
   validateQuestionBank,
   hasImageVariants,
