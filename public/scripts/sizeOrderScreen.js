@@ -1,21 +1,25 @@
 'use strict';
 
 /**
- * Ordena por tamaño board screen (TRIOFSND-286): renders one round's 3-4
+ * Ordena por tamaño board screen (TRIOFSND-286/288): renders one round's 3-4
  * creatures in the exact `round.initialOrder` they arrived in and drives
  * the "select two, they swap" interaction through to a single confirmed
- * evaluation. Round generation (src/game/sizeOrderRoundGenerator.js), the
- * 10-round game/score flow (src/game/roundContract.js) and the results
- * screen are all out of scope here -- this file only ever renders and
- * evaluates the one round it's given.
+ * evaluation, then a "Siguiente" tap (`options.onNext`, mirroring
+ * oidoJurasicoScreen.js's own `nextButton`) hands control back to the
+ * caller. Round generation (src/game/sizeOrderRoundGenerator.js/
+ * public/scripts/sizeOrderGame.js) and the 10-round game/score flow
+ * (src/game/roundContract.js, driven by main.js) are out of scope here --
+ * this file only ever renders and evaluates the one round it's given, plus
+ * the single "move on" gesture past it.
  *
  * State machine (four states, no others): `lista` (no selection; select or
  * confirm are both valid), `primera-seleccion` (exactly one creature
  * selected; activating another swaps, re-activating the same one cancels),
- * `evaluada` (confirmed -- every control is disabled, no further mutation is
- * possible) and `error-de-datos` (the round failed local validation -- no
- * board is ever built). `validateRound` is the single gate into the last
- * state; nothing past it ever re-checks round shape.
+ * `evaluada` (confirmed -- every creature/confirm control is disabled, only
+ * the newly-revealed "Siguiente" button stays active) and `error-de-datos`
+ * (the round failed local validation -- no board is ever built).
+ * `validateRound` is the single gate into the last state; nothing past it
+ * ever re-checks round shape.
  *
  * Single source of truth for length: `round.creatures` (the ficha única
  * array `src/game/sizeOrderRoundGenerator.js` already produces, each
@@ -265,6 +269,12 @@
     confirmButton.className = 'size-order-screen__confirm-button';
     confirmButton.textContent = strings.confirmButton;
 
+    var nextButton = document.createElement('button');
+    nextButton.type = 'button';
+    nextButton.className = 'size-order-screen__next-button';
+    nextButton.textContent = strings.roundResult.nextButton;
+    nextButton.hidden = true;
+
     var announcementEl = document.createElement('p');
     announcementEl.className = 'size-order-screen__announcement sr-only';
     announcementEl.setAttribute('role', 'status');
@@ -365,6 +375,7 @@
       });
 
       resultBox.hidden = false;
+      nextButton.hidden = false;
 
       var orderedNames = correctOrder
         .map(function (id) {
@@ -513,12 +524,22 @@
       handleActivationKey(event, confirmButton);
     });
 
+    nextButton.addEventListener('click', function () {
+      if (typeof options.onNext === 'function') {
+        options.onNext();
+      }
+    });
+    nextButton.addEventListener('keydown', function (event) {
+      handleActivationKey(event, nextButton);
+    });
+
     root.appendChild(title);
     root.appendChild(progressRow);
     root.appendChild(instructions);
     root.appendChild(board);
     root.appendChild(confirmButton);
     root.appendChild(resultBox);
+    root.appendChild(nextButton);
     root.appendChild(announcementEl);
 
     renderPositions();
@@ -539,6 +560,7 @@
       board: board,
       creatureButtons: creatureButtons,
       confirmButton: confirmButton,
+      nextButton: nextButton,
       announcementEl: announcementEl,
       announcement: announcementEl,
       resultBox: resultBox,

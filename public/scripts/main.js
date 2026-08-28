@@ -246,6 +246,7 @@
   var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
   var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
   var CLASIFICA_MODE_ID = 'clasifica'; // mirrors src/game/modesCatalog.js MODE_IDS.CLASIFICA
+  var SIZE_ORDER_MODE_ID = 'ordenaPorTamano'; // mirrors src/game/modesCatalog.js MODE_IDS.ORDENA_POR_TAMANO
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -302,6 +303,8 @@
           fromWindow.renderShadowGuessScreen || require('../../src/screens/ShadowGuessScreen').renderShadowGuessScreen,
         renderClassifyScreen:
           fromWindow.renderClassifyScreen || require('../../src/screens/ClassifyScreen').renderClassifyScreen,
+        renderSizeOrderScreen:
+          fromWindow.renderSizeOrderScreen || require('../../src/screens/SizeOrderScreen').renderSizeOrderScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -437,6 +440,40 @@
   }
 
   /**
+   * Resolves public/scripts/sizeOrderGame.js (TRIOFSND-288), the
+   * browser-runnable Ordena por tamaño round generator/orchestrator -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveMazeGame`/
+   * `resolveClassifyGame` above. Registered nested under
+   * `window.DinoQuiz.game.sizeOrder`.
+   */
+  function resolveSizeOrderGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./sizeOrderGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.sizeOrder) || null;
+  }
+
+  /**
+   * Resolves public/scripts/roundDiagnosticsService.js (TRIOFSND-246), the
+   * shared local diagnostics hook every roundContract.js-driven mode attaches
+   * once per session to tally started/completed/abandoned and log a mode's
+   * own round-generation failure code -- same require-or-`window.DinoQuiz`
+   * pattern as `resolveRoundContract` above.
+   */
+  function resolveRoundDiagnosticsService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/roundDiagnosticsService');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.roundDiagnosticsService) || null;
+  }
+
+  /**
    * Resolves public/scripts/modesCatalog.js the same require-or-window way,
    * so `renderModeSelector` below can override just the Sombra card's
    * availability verdict without modeSelectorScreen.js ever needing to know
@@ -486,19 +523,36 @@
   }
 
   /**
+   * Resolves the real, verified `isSizeOrderModeUnlocked` check (TRIOFSND-288,
+   * src/data/creatureSheet.js's >=4-verified-lengths gate) via
+   * sizeOrderGame.js, mirroring `resolveIsClassifyModeUnlocked` above.
+   */
+  function resolveIsSizeOrderModeUnlocked(win) {
+    var sizeOrderGameApi = resolveSizeOrderGame(win);
+    if (sizeOrderGameApi && typeof sizeOrderGameApi.isSizeOrderModeUnlocked === 'function') {
+      return sizeOrderGameApi.isSizeOrderModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
    * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
    * generic MIN_CREATURES/requireVisuallyDifferentiable/
-   * MIN_CREATURES_WITH_FIELD requirements) still evaluates Sombra/Clasifica
-   * against `buildCurrentResourceCatalog`'s placeholder, which marks every
-   * shipped dinosaur `visuallyDifferentiable: true` but leaves `diet`
-   * undefined until a future ticket wires the real creature sheet into that
-   * generic engine (see modesCatalog.js's own doc comment) -- so today it can
-   * report Sombra "available" even when fewer than 12 creatures have
-   * actually cleared visual review, and always reports Clasifica "blocked"
-   * even though the real roster already covers carnivoro/herbivoro/omnivoro.
-   * This wraps the real `evaluateModes` and replaces the Sombra verdict with
-   * the real `isShadowModeUnlocked` check (TRIOFSND-265) and the Clasifica
-   * verdict with the real `isClassifyModeUnlocked` check (TRIOFSND-282),
+   * MIN_CREATURES_WITH_FIELD requirements) still evaluates Sombra/Clasifica/
+   * Ordena por tamaño against `buildCurrentResourceCatalog`'s placeholder,
+   * which marks every shipped dinosaur `visuallyDifferentiable: true` but
+   * leaves `diet`/`size` undefined until a future ticket wires the real
+   * creature sheet into that generic engine (see modesCatalog.js's own doc
+   * comment) -- so today it can report Sombra "available" even when fewer
+   * than 12 creatures have actually cleared visual review, and always
+   * reports Clasifica/Ordena por tamaño "blocked" even though the real
+   * roster already covers both. This wraps the real `evaluateModes` and
+   * replaces the Sombra verdict with the real `isShadowModeUnlocked` check
+   * (TRIOFSND-265), the Clasifica verdict with the real
+   * `isClassifyModeUnlocked` check (TRIOFSND-282) and the Ordena por tamaño
+   * verdict with the real `isSizeOrderModeUnlocked` check (TRIOFSND-288),
    * leaving every other mode's verdict untouched.
    */
   function evaluateModesWithShadowOverride(catalog, modes) {
@@ -506,6 +560,7 @@
     var results = modesCatalog.evaluateModes(catalog, modes);
     var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
     var isClassifyModeUnlocked = resolveIsClassifyModeUnlocked();
+    var isSizeOrderModeUnlocked = resolveIsSizeOrderModeUnlocked();
 
     return results.map(function (verdict) {
       if (verdict.modeId === SOMBRA_MODE_ID) {
@@ -526,6 +581,18 @@
         }
         return {
           modeId: CLASIFICA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.MISSING_CREATURE_FIELD,
+          details: null,
+        };
+      }
+
+      if (verdict.modeId === SIZE_ORDER_MODE_ID) {
+        if (isSizeOrderModeUnlocked()) {
+          return { modeId: SIZE_ORDER_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: SIZE_ORDER_MODE_ID,
           available: false,
           cause: modesCatalog.AVAILABILITY_CAUSES.MISSING_CREATURE_FIELD,
           details: null,
@@ -711,6 +778,13 @@
         // (classifyGame.js) instead of the question-bank-driven orchestrator
         // below -- see startClassifyGame's own doc comment.
         startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
+      if (modeId === SIZE_ORDER_MODE_ID) {
+        // TRIOFSND-288: Ordena por tamaño is a fixed, level-less
+        // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape
+        // as Oído Jurásico -- see startSizeOrderGame's own doc comment.
+        startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -2099,6 +2173,154 @@
   }
 
   /**
+   * Ordena por tamaño mode integration (TRIOFSND-288): another fixed,
+   * level-less ROUNDS_PER_GAME-round "partida" driven by roundContract.js,
+   * exactly mirroring Oído Jurásico's own
+   * `startOidoJurasicoGame`/`playOidoJurasicoRound`/`finishOidoJurasicoGame`
+   * shape above -- Ordena por tamaño's own round generation
+   * (public/scripts/sizeOrderGame.js's `generateSizeOrderRoundForContract`)
+   * is the one piece that contract asks a mode to supply. Unlike Oído
+   * Jurásico, this mode has no pre-game explanation screen, so it starts
+   * straight from `handleModeSelected`'s `startMode`.
+   *
+   * Diagnóstico local (PRD "Diagnóstico y métricas agregadas almacenadas
+   * únicamente en el dispositivo", TRIOFSND-246): `startSizeOrderGame`
+   * attaches public/scripts/roundDiagnosticsService.js to the freshly-started
+   * session, which inspects every `round.error` roundContract.js's own
+   * `ROUND_STARTED` hook surfaces (a mode's own local
+   * round-generation-failed code, e.g. sizeOrderGame.js's
+   * `ERRORS.NO_VALID_COMBINATION` when no combination of creatures clears the
+   * minimum size gap) and tallies it via LogService#logRoundGenerationFailure
+   * -- the stable code alone, never any round content. `finishSizeOrderGame`
+   * detaches it once the game ends.
+   */
+
+  /**
+   * Renders `session.round` and drives it to completion (answer -> feedback
+   * -> "Siguiente"), then either the next round or Resultados, exactly
+   * mirroring `playOidoJurasicoRound`'s shape. `roundContractApi.evaluateAnswer`
+   * rejects a second answer for the same round independently of the screen's
+   * own `resultEmitted` guard; `advanceRound` is the single place that
+   * decides the game is over once the round just answered was the 10th --
+   * this function never counts rounds itself.
+   */
+  function playSizeOrderRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    return renderers.renderSizeOrderScreen(container, session.round, {
+      roundNumber: session.roundIndex + 1,
+      totalRounds: session.roundCount,
+      onAnswer: function (result) {
+        var evaluated = roundContractApi.evaluateAnswer(session, {
+          isCorrect: result.isCorrect,
+          order: result.order,
+          correctOrder: result.correctOrder,
+        });
+        if (evaluated.accepted) {
+          session = evaluated.session;
+        }
+      },
+      onNext: function () {
+        var advanced = roundContractApi.advanceRound(session);
+        if (!advanced.accepted) {
+          return;
+        }
+        session = advanced.session;
+
+        if (advanced.gameOver) {
+          finishSizeOrderGame(container, renderers, doc, fetchFn, session.state, ctx);
+        } else {
+          playSizeOrderRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+        }
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Ordena por tamaño game; 'Volver a jugar' starts a fresh one, 'Salir' goes to Inicio. Mirrors `finishOidoJurasicoGame`. */
+  function finishSizeOrderGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    // TRIOFSND-253: this mode's own result, scoped by modeId so it never
+    // reads/overwrites a different mode's progression (see finishLevel's own
+    // doc comment on the same modeProgressStorage).
+    if (ctx.modeProgressStorage && typeof ctx.modeProgressStorage.recordResult === 'function') {
+      var roundContractApi = resolveRoundContract();
+      ctx.modeProgressStorage.recordResult(SIZE_ORDER_MODE_ID, {
+        score: finalState.score,
+        maxScore: roundContractApi ? roundContractApi.ROUNDS_PER_GAME : 10,
+      });
+    }
+
+    if (ctx.sizeOrderDiagnostics && typeof ctx.sizeOrderDiagnostics.off === 'function') {
+      ctx.sizeOrderDiagnostics.off();
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startSizeOrderGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        navigateHome();
+      },
+    });
+  }
+
+  /**
+   * Starts a fresh Ordena por tamaño game: builds the round context/session
+   * via roundContract.js, attaches roundDiagnosticsService.js to it and
+   * renders its first round. Persists the last-selected mode
+   * (`dinoquiz:lastMode`, TRIOFSND-230/288), mirrors `startOidoJurasicoGame`.
+   */
+  function startSizeOrderGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var roundContractApi = resolveRoundContract();
+    var sizeOrderGame = resolveSizeOrderGame();
+    if (!roundContractApi || !sizeOrderGame || !renderers || typeof renderers.renderSizeOrderScreen !== 'function') {
+      return null;
+    }
+
+    persistLastMode(SIZE_ORDER_MODE_ID, ctx.storageObj);
+
+    var context = sizeOrderGame.buildSizeOrderRoundContext({
+      randomFn: ctx.randomFn,
+      creatures: ctx.creatures,
+      creatureCount: ctx.creatureCount,
+      minRelativeDifference: ctx.minRelativeDifference,
+    });
+    var session = roundContractApi.startGame({
+      generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
+      context: context,
+    });
+
+    var diagnosticsService = resolveRoundDiagnosticsService();
+    var sizeOrderDiagnostics =
+      diagnosticsService && typeof diagnosticsService.attachToSession === 'function'
+        ? diagnosticsService.attachToSession(session, { modeId: SIZE_ORDER_MODE_ID, level: null })
+        : null;
+
+    return playSizeOrderRound(
+      container,
+      renderers,
+      doc,
+      fetchFn,
+      roundContractApi,
+      session,
+      Object.assign({}, ctx, { sizeOrderDiagnostics: sizeOrderDiagnostics })
+    );
+  }
+
+  /**
    * "Volver al selector de juegos" (AC, from the blocked/muted/playback-error
    * panels): the mode selector has no hash route of its own (it only ever
    * renders as a step between the age gate and a chosen mode, see
@@ -3333,6 +3555,13 @@
       finishOidoJurasicoGame: finishOidoJurasicoGame,
       returnToModeSelectorFromOidoJurasico: returnToModeSelectorFromOidoJurasico,
       renderOidoJurasicoRoute: renderOidoJurasicoRoute,
+      SIZE_ORDER_MODE_ID: SIZE_ORDER_MODE_ID,
+      resolveSizeOrderGame: resolveSizeOrderGame,
+      resolveIsSizeOrderModeUnlocked: resolveIsSizeOrderModeUnlocked,
+      resolveRoundDiagnosticsService: resolveRoundDiagnosticsService,
+      playSizeOrderRound: playSizeOrderRound,
+      finishSizeOrderGame: finishSizeOrderGame,
+      startSizeOrderGame: startSizeOrderGame,
     };
   }
 })();
