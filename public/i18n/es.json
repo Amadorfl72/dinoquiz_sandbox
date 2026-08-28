@@ -345,7 +345,7 @@
     "screenTitle": "Oído Jurásico",
     "imaginedSoundNotice": {
       "heading": "Un sonido imaginado",
-      "message": "Nadie sabe con certeza cómo sonaban los dinosaurios de verdad: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
+      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
     },
     "playButton": "Reproducir sonido",
     "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",

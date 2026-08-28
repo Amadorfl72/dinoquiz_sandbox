@@ -3,7 +3,7 @@
     "screenTitle": "Jurassic Hearing",
     "imaginedSoundNotice": {
       "heading": "An imagined sound",
-      "message": "No one knows for certain what dinosaurs really sounded like: no real sound has ever been preserved. This sound is an imagined creation made for the game, not a recording or a scientific reconstruction."
+      "message": "These sounds are imagined. No one knows for certain what these creatures really sounded like: no real sound has ever been preserved. This sound is an imagined creation made for the game, not a recording or a scientific reconstruction."
     },
     "playButton": "Play sound",
     "playButtonAriaLabel": "Play the imagined sound for this round",
