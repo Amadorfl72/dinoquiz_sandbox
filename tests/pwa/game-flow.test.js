@@ -1480,11 +1480,20 @@ describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () 
   });
 
   test('completar el nivel 10 siempre termina la partida sin intentar generar un nivel 11 inexistente', async () => {
-    const { loadQuestionBank } = require('../../src/data/questionBank');
+    const { loadQuestionBank, VALID_DINOSAURS } = require('../../src/data/questionBank');
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = loadQuestionBank();
-    const getQuestionsByLevelSpy = jest.fn((level, options) => require('../../src/data/questionBank').getQuestionsByLevel(level, { ...options, questions }));
+    // TRIOFSND-224: getQuestionsByLevel now excludes any question whose
+    // dinosaur has no ficha in the creature catalog -- this test exercises
+    // gameFlow's level-10-stops-before-11 behaviour, not catalog content
+    // completeness, so it injects a full synthetic catalog (every
+    // VALID_DINOSAURS id) instead of depending on the real, still-partial
+    // public/data/creatures.json.
+    const fullCatalog = VALID_DINOSAURS.map((id) => ({ id }));
+    const getQuestionsByLevelSpy = jest.fn((level, options) =>
+      require('../../src/data/questionBank').getQuestionsByLevel(level, { ...options, questions, catalog: fullCatalog })
+    );
 
     startLevelGame(container, renderers, questions, document, undefined, {
       ageBand: 'eight-plus',

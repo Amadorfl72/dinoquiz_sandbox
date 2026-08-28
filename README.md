@@ -132,6 +132,21 @@ entrada (esquema más las variantes de imagen AW5) y, por cada entrada inválida
 servicio de logging ([`src/services/logging`](src/services/logging)) en lugar de incluirla en
 el resultado — una entrada incompleta nunca bloquea el resto del nivel.
 
+**TRIOFSND-224 — enlace con el catálogo único de criaturas:** el esquema de preguntas no lleva
+(ni debe llevar nunca) su propia copia de `dieta`/`periodoPrincipal`/`intervaloTemporal`/
+`habitat`/`clasificacionCientifica` — esos datos viven solo en el
+[catálogo único de criaturas](#catálogo-único-de-criaturas-triofsnd-226); `FORBIDDEN_CATALOG_FIELDS`
+en [`src/data/questionBank.js`](src/data/questionBank.js) rechaza cualquier pregunta que
+intente duplicar uno de esos campos. Además, el pool que construye
+`getQuestionsByLevel()` comprueba, vía `creatureCatalog.getCreatureById`, que el `dinosaur` de
+cada pregunta tiene una ficha real en el catálogo — cualquier pregunta cuyo `dinosaur` no
+resuelva a una ficha se excluye del pool con el mismo mecanismo `content_validation_failed`
+(regla `dinosaurCatalog`) que las demás validaciones de esta sección, en vez de romper el resto
+del nivel. El catálogo (`public/data/creatures.json`) cubre hoy las 14 especies del banco de
+preguntas (cobertura exacta) — `src/data/questionBank.test.js` verifica esa cobertura contra el
+banco y el catálogo reales, en vez de asumir una cifra fija, para que el test detecte cualquier
+regresión si una especie nueva se añade al banco sin su ficha correspondiente.
+
 **AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
 pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver
 `hasImageVariants`/`filterQuestionsWithImageVariants` en

@@ -27,10 +27,10 @@ citada, para qué criaturas se ha usado y su URL de referencia:
 
 | Fuente | URL | Criaturas verificadas |
 |---|---|---|
-| American Museum of Natural History (AMNH) | https://www.amnh.org/ | Tyrannosaurus Rex (`trex`), Ankylosaurus (`ankylosaurus`) |
-| Natural History Museum, Londres | https://www.nhm.ac.uk/ | Triceratops (`triceratops`), Estegosaurio (`estegosaurio`) |
-| Smithsonian National Museum of Natural History | https://naturalhistory.si.edu/ | Velociraptor (`velociraptor`), Pteranodon (`pteranodon`) |
-| Field Museum, Chicago | https://www.fieldmuseum.org/ | Braquiosaurio (`braquiosaurio`) |
+| American Museum of Natural History (AMNH) | https://www.amnh.org/ | Tyrannosaurus Rex (`trex`), Ankylosaurus (`ankylosaurus`), Spinosaurus (`spinosaurus`), Parasaurolophus (`parasaurolophus`) |
+| Natural History Museum, Londres | https://www.nhm.ac.uk/ | Triceratops (`triceratops`), Estegosaurio (`estegosaurio`), Compsognathus (`compsognathus`), Iguanodon (`iguanodon`) |
+| Smithsonian National Museum of Natural History | https://naturalhistory.si.edu/ | Velociraptor (`velociraptor`), Pteranodon (`pteranodon`), Dilophosaurus (`dilophosaurus`), Pachycephalosaurus (`pachycephalosaurus`) |
+| Field Museum, Chicago | https://www.fieldmuseum.org/ | Braquiosaurio (`braquiosaurio`), Diplodocus (`diplodocus`) |
 
 Ninguna de estas cuatro instituciones exige atribución contractual para citar
 sus fichas educativas públicas (no son obra con copyright redistribuida,

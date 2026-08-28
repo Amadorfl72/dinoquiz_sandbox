@@ -812,6 +812,34 @@
     "pteranodon": {
       "name": "Pteranodon",
       "habitat": "Costas y mares interiores de Norteamérica"
+    },
+    "spinosaurus": {
+      "name": "Spinosaurus",
+      "habitat": "Ríos y marismas del norte de África"
+    },
+    "dilophosaurus": {
+      "name": "Dilophosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "pachycephalosaurus": {
+      "name": "Pachycephalosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "compsognathus": {
+      "name": "Compsognathus",
+      "habitat": "Llanuras costeras de Europa"
+    },
+    "diplodocus": {
+      "name": "Diplodocus",
+      "habitat": "Llanuras y ríos de Norteamérica"
+    },
+    "iguanodon": {
+      "name": "Iguanodon",
+      "habitat": "Llanuras y bosques de Europa"
+    },
+    "parasaurolophus": {
+      "name": "Parasaurolophus",
+      "habitat": "Bosques y llanuras de Norteamérica"
     }
   }
 }
