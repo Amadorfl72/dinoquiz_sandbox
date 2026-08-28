@@ -418,6 +418,40 @@ function isClassifyModeUnlocked(catalog) {
   );
 }
 
+// Mirrors src/game/modesCatalog.js's MODES_CATALOG entry for
+// MODE_IDS.ORDENA_POR_TAMANO (minCreaturesWithField on "size", minCount 4) --
+// kept here too so this module can answer "is Ordena por tamaño actually
+// unlocked?" against the real, verified roster, the same way
+// CLASSIFY_MODE_MIN_CREATURES does for Clasifica.
+const SIZE_ORDER_MODE_MIN_CREATURES = 4;
+
+/**
+ * Ids of every creature with a verified, positive `lengthMeters`, in
+ * `CREATURE_SHEETS` order -- the exact pool
+ * src/game/sizeOrderRoundGenerator.js draws from. `sheets` follows the same
+ * optional-override shape as `getCreaturesWithVerifiedDiet`.
+ */
+function getCreaturesWithVerifiedLength(sheets) {
+  const source = sheets || CREATURE_SHEETS;
+  return Object.keys(source).filter((id) => {
+    const sheet = source[id];
+    return Boolean(
+      sheet && typeof sheet.lengthMeters === 'number' && Number.isFinite(sheet.lengthMeters) && sheet.lengthMeters > 0
+    );
+  });
+}
+
+/**
+ * Whether "Ordena por tamaño" has enough verified creatures to unlock (PRD/
+ * MODES_CATALOG requirement: >=4 creatures with a verified `lengthMeters`).
+ * `catalog` is optional and follows the same shape as `sheets` in
+ * `getCreaturesWithVerifiedLength` -- omit it to evaluate the live roster.
+ */
+function isSizeOrderModeUnlocked(catalog) {
+  const source = catalog || CREATURE_SHEETS;
+  return getCreaturesWithVerifiedLength(source).length >= SIZE_ORDER_MODE_MIN_CREATURES;
+}
+
 module.exports = {
   DIETS,
   VISUAL_FAMILIES,
@@ -429,6 +463,7 @@ module.exports = {
   SHADOW_MODE_MIN_APPROVED,
   CLASSIFY_MODE_MIN_CREATURES,
   CLASSIFY_MODE_REQUIRED_DIETS,
+  SIZE_ORDER_MODE_MIN_CREATURES,
   CREATURE_SHEETS,
   getCreatureSheet,
   getCreatureDiet,
@@ -441,4 +476,6 @@ module.exports = {
   isShadowModeUnlocked,
   getCreaturesWithVerifiedDiet,
   isClassifyModeUnlocked,
+  getCreaturesWithVerifiedLength,
+  isSizeOrderModeUnlocked,
 };

@@ -2087,27 +2087,18 @@ body {
  * on the root plus `width: 100%`/`box-sizing: border-box` on every child
  * caps the whole screen the same way `.parejas-screen`/`.maze-screen` do.
  */
+/*
+ * Ordena por tamaño (TRIOFSND-286): a vertical list of creature rows, not a
+ * grid -- a 4-item row layout risks crowding at 375px, while a column of
+ * full-width rows (name + length text included) wraps instead of forcing
+ * horizontal scroll (PRD: "sin desplazamiento horizontal"). `max-width`
+ * on the root plus `width: 100%`/`box-sizing: border-box` on every child
+ * caps the whole screen the same way `.parejas-screen`/`.maze-screen` do.
+ */
 .size-order-screen {
   display: flex;
   flex-direction: column;
   align-items: stretch;
- * Clasifica screen (TRIOFSND-281). The creature illustration and the three
- * category buttons are all capped at `min(100%, 320px)`, the same recipe
- * `.maze-screen__board`/`.parejas-screen__board` already use, so nothing
- * grows past a 375px-wide viewport (PRD: no horizontal scroll).
- *
- * Every color pair below reuses the already WCAG-AA-verified design tokens
- * (`:root` above) instead of introducing new ones -- the correct category is
- * never carried by color alone: it also gets a visible "✓" text badge (see
- * the `::after` below), a decorative checkmark icon in the feedback message,
- * and an updated aria-label (classifyScreen.js). The child's own wrong pick
- * gets a neutral gray marker, never red, matching the no-penalty tone the
- * rest of the app already uses (questionScreen.js's NEUTRAL_CLASS).
- */
-.classify-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 12px;
   width: 100%;
   max-width: 400px;
@@ -2118,14 +2109,11 @@ body {
 .size-order-screen__title {
   margin: 0;
   align-self: center;
-.classify-screen__title {
-  margin: 0;
   font-size: var(--font-size-heading-sm);
   color: var(--color-text);
 }
 
 .size-order-screen__progress-row {
-.classify-screen__progress-row {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2136,8 +2124,6 @@ body {
 
 .size-order-screen__level,
 .size-order-screen__round {
-.classify-screen__level,
-.classify-screen__round {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
@@ -2156,15 +2142,6 @@ body {
 }
 
 .size-order-screen__instructions {
-.classify-screen__level {
-  background-color: var(--color-focus-ring-on-light);
-}
-
-.classify-screen__round {
-  background-color: var(--color-stars);
-}
-
-.classify-screen__instructions {
   margin: 0;
   font-size: var(--font-size-body);
   color: var(--color-text);
@@ -2172,23 +2149,6 @@ body {
 }
 
 .size-order-screen__data-error {
-.classify-screen__creature {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  width: min(100%, 240px);
-}
-
-.classify-screen__creature-image {
-  width: 100%;
-  max-width: 200px;
-  height: auto;
-  object-fit: contain;
-}
-
-.classify-screen__creature-name {
   margin: 0;
   font-size: var(--font-size-body);
   font-weight: 700;
@@ -2222,42 +2182,6 @@ body {
 }
 
 .size-order-screen__creature:focus-visible {
-.classify-screen__categories {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: min(100%, 320px);
-  box-sizing: border-box;
-}
-
-.classify-screen__category-button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: var(--tap-target-min);
-  box-sizing: border-box;
-  padding: 10px 16px;
-  font-size: var(--font-size-button);
-  font-family: inherit;
-  font-weight: 700;
-  color: var(--color-text);
-  background-color: var(--color-option-bg);
-  border: 3px solid var(--color-text);
-  border-radius: 16px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.classify-screen__category-button:hover:not(:disabled) {
-  background-color: var(--color-option-bg-hover);
-}
-
-.classify-screen__category-button:active:not(:disabled) {
-  background-color: var(--color-option-bg-pressed);
-}
-
-.classify-screen__category-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
@@ -2318,6 +2242,272 @@ body {
   align-items: center;
   justify-content: center;
   align-self: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.size-order-screen__confirm-button:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.size-order-screen__confirm-button:active:not(:disabled) {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.size-order-screen__confirm-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.size-order-screen__confirm-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.size-order-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.size-order-screen__result-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.size-order-screen__result-icon {
+  font-size: var(--font-size-heading-sm);
+}
+
+.size-order-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: break-word;
+}
+
+.size-order-screen__solution-heading {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.size-order-screen__solution-list {
+  width: 100%;
+  margin: 0;
+  padding-left: 24px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.size-order-screen__solution-item {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  overflow-wrap: break-word;
+}
+
+.size-order-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.size-order-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.size-order-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.size-order-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.size-order-screen__result-badge--correct {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: 10px 16px;
+  border-radius: 16px;
+}
+
+.size-order-screen__result-badge--incorrect {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+  padding: 10px 16px;
+  border-radius: 16px;
+}
+
+/*
+ * Clasifica screen (TRIOFSND-281). The creature illustration and the three
+ * category buttons are all capped at `min(100%, 320px)`, the same recipe
+ * `.maze-screen__board`/`.parejas-screen__board` already use, so nothing
+ * grows past a 375px-wide viewport (PRD: no horizontal scroll).
+ *
+ * Every color pair below reuses the already WCAG-AA-verified design tokens
+ * (`:root` above) instead of introducing new ones -- the correct category is
+ * never carried by color alone: it also gets a visible "✓" text badge (see
+ * the `::after` below), a decorative checkmark icon in the feedback message,
+ * and an updated aria-label (classifyScreen.js). The child's own wrong pick
+ * gets a neutral gray marker, never red, matching the no-penalty tone the
+ * rest of the app already uses (questionScreen.js's NEUTRAL_CLASS).
+ */
+.classify-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.classify-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.classify-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.classify-screen__level,
+.classify-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.classify-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.classify-screen__round {
+  background-color: var(--color-stars);
+}
+
+.classify-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.classify-screen__creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: min(100%, 240px);
+}
+
+.classify-screen__creature-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  object-fit: contain;
+}
+
+.classify-screen__creature-name {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.classify-screen__categories {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 320px);
+  box-sizing: border-box;
+}
+
+.classify-screen__category-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 10px 16px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.classify-screen__category-button:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.classify-screen__category-button:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.classify-screen__category-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
 .classify-screen__category-icon {
   font-size: 24px;
   line-height: 1;
@@ -2447,11 +2637,6 @@ body {
   touch-action: manipulation;
 }
 
-.size-order-screen__confirm-button:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.size-order-screen__confirm-button:active:not(:disabled) {
 .classify-screen__next-button:hover {
   background-color: var(--color-primary-hover);
 }
@@ -2462,34 +2647,10 @@ body {
   box-shadow: 0 2px 0 var(--color-primary-pressed);
 }
 
-.size-order-screen__confirm-button:focus-visible {
 .classify-screen__next-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
-
-.size-order-screen__confirm-button:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.size-order-screen__result {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.size-order-screen__result-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0;
-  font-size: var(--font-size-heading-sm);
 /*
  * Adivina la sombra screen (TRIOFSND-263). Layout mirrors
  * .question-screen (title/instructions/progress/score, then the puzzle,

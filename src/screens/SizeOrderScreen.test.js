@@ -579,15 +579,17 @@ describe('SizeOrderScreen', () => {
 
   test('accessibility structure: every creature control and the confirm control are real, labeled, reachable buttons in DOM/tab order', () => {
     const round = buildRound({ initialOrder: ['trex', 'velociraptor', 'triceratops'] });
-    const { board, confirmButton } = renderSizeOrderScreen(container, round);
+    const { board, confirmButton, nextButton } = renderSizeOrderScreen(container, round);
 
     const interactive = Array.from(container.querySelectorAll('button'));
-    expect(interactive).toHaveLength(4); // 3 creatures + confirm
+    expect(interactive).toHaveLength(5); // 3 creatures + confirm + next (hidden until evaluated)
     interactive.forEach((button) => {
       expect(button.tagName).toBe('BUTTON');
       expect(button.hasAttribute('disabled')).toBe(false);
     });
-    expect(interactive[interactive.length - 1]).toBe(confirmButton);
+    expect(interactive[interactive.length - 2]).toBe(confirmButton);
+    expect(interactive[interactive.length - 1]).toBe(nextButton);
+    expect(nextButton.hidden).toBe(true);
     expect(board.getAttribute('role')).toBe('group');
   });
 });
