@@ -395,36 +395,28 @@
     }
   },
   "shadowGuess": {
-    "screenTitle": "Adivina la sombra",
-    "instructions": "Mira la silueta y toca la criatura prehistórica que crees que se esconde detrás.",
-    "levelFormat": "Nivel {level}",
-    "roundFormat": "Ronda {current} de {total}",
-    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Mira la silueta y adivina qué criatura prehistórica es.",
-    "shadowImageAlt": "Silueta misteriosa de una criatura prehistórica",
-    "optionsGroupLabel": "Opciones de respuesta",
-    "optionAriaLabelFormat": "¿Es la silueta de un {dinosaur}?",
-    "correctOptionAriaLabelFormat": "Respuesta correcta: {dinosaur}",
-    "selectedOptionAriaLabelFormat": "Tu respuesta: {dinosaur}",
+    "name": "Adivina la sombra",
+    "instructions": "Observa la silueta y elige, entre cuatro criaturas, la que crees que se esconde detrás.",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
     "feedback": {
-      "correct": {
-        "message": "¡Genial, acertaste! Era un {dinosaur}.",
-        "announcementFormat": "¡Genial, acertaste! La silueta era de un {dinosaur}."
-      },
-      "incorrect": {
-        "message": "¡Buen intento! Era un {dinosaur}.",
-        "announcementFormat": "¡Buen intento! La silueta era de un {dinosaur}."
-      }
+      "correct": "¡Correcto! Has adivinado la sombra.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
     },
-    "nextButton": "Siguiente",
     "blocked": {
-      "heading": "Adivina la sombra bloqueado",
-      "message": "Necesitamos más criaturas verificadas y distinguibles entre sí para activar Adivina la sombra. ¡Vuelve a intentarlo más adelante!",
-      "announcement": "Adivina la sombra está bloqueado: necesitamos más criaturas verificadas y distinguibles entre sí. Vuelve a intentarlo más adelante."
+      "insufficientCatalog": "Adivina la sombra no está disponible todavía: se necesitan al menos 12 criaturas aprobadas y visualmente diferenciables entre sí para activar este modo."
     },
-    "gameOver": {
-      "heading": "¡Adivina la sombra completado!",
-      "announcementFormat": "Has terminado Adivina la sombra. Acertaste {score} de {total} siluetas.",
-      "message": "¡Bien hecho reconociendo siluetas! Sigue jugando para afinar tu vista de explorador."
+    "results": {
+      "title": "Resultados de Adivina la sombra",
+      "score": "Aciertos en Adivina la sombra",
+      "percentage": "Porcentaje de aciertos",
+      "stars": "Estrellas conseguidas",
+      "progress": "Progreso en Adivina la sombra"
     }
   },
   "dinosaurNames": {
