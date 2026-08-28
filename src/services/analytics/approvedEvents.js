@@ -58,6 +58,7 @@ const APPROVED_LOG_EVENT_TYPES = [
   'storage_max_unlocked_level_persist_error',
   'storage_session_persist_error',
   'storage_mode_progress_persist_error',
+  'storage_timeline_progress_persist_error',
   'mode_blocked',
 ];
 
