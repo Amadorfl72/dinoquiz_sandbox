@@ -512,3 +512,102 @@ describe('completeLevel (TRIOFSND-203)', () => {
     expect(outcome.nextLevelGame).toEqual({ error: 'level_generation_failed', level: 2, validQuestionCount: 0 });
   });
 });
+
+describe('resolveLevelOutcome / completeLevel independent per-mode progression (TRIOFSND-249)', () => {
+  const OTHER_MODE_ID = 'laberinto';
+
+  test('a non-quiz mode is never subject to the quiz-only age-band restriction', () => {
+    const outcome = resolveLevelOutcome({
+      level: MIN_LEVEL,
+      answers: buildAnswers('FFFFFFFFFF'), // 0 correct, and no ageBand at all
+      modeId: OTHER_MODE_ID,
+    });
+
+    expect(outcome.reason).not.toBe('age_restricted');
+  });
+
+  test('threshold met unlocks the next level, in-mode only, with no ageBand involved', () => {
+    const outcome = resolveLevelOutcome({
+      level: 2,
+      answers: buildAnswers('CCCCCCFFFF'), // 6 correct, meets the shared default threshold
+      modeId: OTHER_MODE_ID,
+    });
+
+    expect(outcome).toEqual({
+      gameOver: false,
+      nextLevel: 3,
+      level: 2,
+      correctCount: 6,
+      reason: 'level_up',
+    });
+  });
+
+  test('threshold missed keeps the level locked', () => {
+    const outcome = resolveLevelOutcome({
+      level: 2,
+      answers: buildAnswers('CCCCCFFFFF'), // 5 correct, below the threshold
+      modeId: OTHER_MODE_ID,
+    });
+
+    expect(outcome).toEqual({
+      gameOver: true,
+      nextLevel: null,
+      level: 2,
+      correctCount: 5,
+      reason: 'insufficient_score',
+    });
+  });
+
+  test('completing the last level ends the game without offering a nonexistent next level', () => {
+    const outcome = completeLevel({
+      level: MAX_LEVEL,
+      answers: buildAnswers('CCCCCCCCCC'),
+      modeId: OTHER_MODE_ID,
+    });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.nextLevel).toBeNull();
+    expect(outcome.nextLevelGame).toBeUndefined();
+  });
+
+  test('resolving one mode never reads or is influenced by another mode resolved just before it', () => {
+    const quizOutcome = resolveLevelOutcome({
+      level: 2,
+      answers: buildAnswers('CCCCCFFFFF'), // 5 correct: locked for quiz
+      modeId: 'quiz',
+      ageBand: AGE_BAND_EIGHT_PLUS,
+    });
+    const laberintoOutcome = resolveLevelOutcome({
+      level: 2,
+      answers: buildAnswers('CCCCCCFFFF'), // 6 correct: unlocked for laberinto
+      modeId: OTHER_MODE_ID,
+    });
+
+    expect(quizOutcome.reason).toBe('insufficient_score');
+    expect(laberintoOutcome.reason).toBe('level_up');
+  });
+
+  test('repeating an already-cleared level is idempotent: no drift, no re-incremented unlock counter', () => {
+    const params = {
+      level: 3,
+      answers: buildAnswers('CCCCCCFFFF'), // 6 correct
+      modeId: OTHER_MODE_ID,
+    };
+
+    const first = resolveLevelOutcome(params);
+    const second = resolveLevelOutcome(params); // simulates replaying the same already-cleared level
+
+    expect(second).toEqual(first);
+    expect(second.nextLevel).toBe(4);
+  });
+
+  test('defaults to the quiz mode, age-band restriction included, when modeId is omitted', () => {
+    const outcome = resolveLevelOutcome({
+      level: MIN_LEVEL,
+      answers: buildAnswers('CCCCCCCCCC'),
+      ageBand: 'six',
+    });
+
+    expect(outcome.reason).toBe('age_restricted');
+  });
+});
