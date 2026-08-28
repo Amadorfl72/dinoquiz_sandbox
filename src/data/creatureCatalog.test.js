@@ -180,6 +180,22 @@ describe('validateCatalog', () => {
       expect(failures).toEqual([{ id: 'trex', rule: 'fuentes', cause: CAUSES.FIELD_INVALID }]);
     });
 
+    test('rejects a "fuentes" entry with a non-empty nombre/url that is not institutional', () => {
+      const failures = validateCatalog([
+        buildValidCreature({ fuentes: [{ nombre: 'Blog personal', url: 'https://example.com' }] }),
+      ]);
+
+      expect(failures).toEqual([{ id: 'trex', rule: 'fuentes', cause: CAUSES.FIELD_INVALID }]);
+    });
+
+    test('accepts a "fuentes" entry whose url uses a recognized institutional domain even without a keyword in nombre', () => {
+      const failures = validateCatalog([
+        buildValidCreature({ fuentes: [{ nombre: 'Paleontology Dept.', url: 'https://paleo.example.edu/' }] }),
+      ]);
+
+      expect(failures).toEqual([]);
+    });
+
     test('rejects a "siluetaMeta" that does not match its schema', () => {
       const failures = validateCatalog([
         buildValidCreature({ siluetaMeta: { aprobada: 'si', grupoCompatibilidad: null, transformacionesPermitidas: [] } }),

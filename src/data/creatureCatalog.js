@@ -90,6 +90,50 @@ const VALID_SILUETA_TRANSFORMACIONES = Object.values(SILUETA_TRANSFORMACIONES);
 
 const RESOURCE_FIELDS = Object.freeze(['image', 'imageRealistic', 'imageFallback']);
 
+// A source is "institucional" when its url resolves to a recognized
+// institutional domain (academic/government/museum TLD) or its nombre names
+// a recognized institution type -- catches e.g. a personal blog with a
+// generic, non-institutional domain, which a plain non-empty-string check
+// alone would wrongly accept.
+const INSTITUTIONAL_URL_SUFFIXES = Object.freeze(['.edu', '.gov', '.mil', '.museum']);
+const INSTITUTIONAL_HOSTNAME_PATTERN = /(^|\.)ac\.[a-z]{2,}$/;
+
+const INSTITUTIONAL_NAME_KEYWORDS = Object.freeze([
+  'museum',
+  'museo',
+  'natural history',
+  'historia natural',
+  'smithsonian',
+  'university',
+  'universidad',
+  'instituto',
+  'institute',
+  'academy',
+  'academia',
+  'geological survey',
+  'servicio geologico',
+  'national park',
+  'parque nacional',
+]);
+
+function isInstitutionalUrl(url) {
+  let hostname;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch (error) {
+    return false;
+  }
+  return (
+    INSTITUTIONAL_URL_SUFFIXES.some((suffix) => hostname.endsWith(suffix)) ||
+    INSTITUTIONAL_HOSTNAME_PATTERN.test(hostname)
+  );
+}
+
+function isInstitutionalSourceName(nombre) {
+  const lower = nombre.toLowerCase();
+  return INSTITUTIONAL_NAME_KEYWORDS.some((keyword) => lower.includes(keyword));
+}
+
 const CAUSES = Object.freeze({
   FIELD_INVALID: CATALOG_FIELD_INVALID_CAUSE,
   REFERENCE_BROKEN: CATALOG_REFERENCE_BROKEN_CAUSE,
@@ -138,9 +182,12 @@ function isValidImageReference(imageRef) {
 function hasInstitutionalSource(creature) {
   return (
     Array.isArray(creature.fuentes) &&
-    creature.fuentes.some(
-      (fuente) => fuente && typeof fuente === 'object' && isNonEmptyString(fuente.nombre) && isNonEmptyString(fuente.url)
-    )
+    creature.fuentes.some((fuente) => {
+      if (!fuente || typeof fuente !== 'object' || !isNonEmptyString(fuente.nombre) || !isNonEmptyString(fuente.url)) {
+        return false;
+      }
+      return isInstitutionalUrl(fuente.url) || isInstitutionalSourceName(fuente.nombre);
+    })
   );
 }
 
