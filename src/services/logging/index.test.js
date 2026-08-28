@@ -2,6 +2,7 @@
 
 const logging = require('./index');
 const LogService = logging.LogService || logging;
+const scoring = require('../../../public/scripts/scoring');
 
 function makeStorage() {
   const store = {};
@@ -506,6 +507,241 @@ describe('LogService — structured access & PWA install logging', () => {
       } finally {
         global.fetch = originalFetch;
       }
+    });
+  });
+
+  describe('Clasifica aggregated metrics & diagnostics (TRIOFSND-283)', () => {
+    it('a first valid game increments partidasCompletadas and folds in its aciertos/estrellas', () => {
+      expect(service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 7, stars: 2 })).toBe(true);
+      expect(service.getClasificaLevelStats(1)).toEqual({
+        partidasCompletadas: 1,
+        porcentajeAciertos: 70,
+        estrellasPromedio: 2,
+      });
+    });
+
+    it('accumulates several completed games into the same level', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 10, stars: 3 });
+      service.recordClasificaGame({ matchId: 'm2', level: 1, correct: 5, stars: 2 });
+      expect(service.getClasificaLevelStats(1)).toEqual({
+        partidasCompletadas: 2,
+        porcentajeAciertos: 75, // 100 * (10 + 5) / (10 * 2)
+        estrellasPromedio: 2.5,
+      });
+    });
+
+    it('derives porcentajeAciertos from the summed integer totals, never averaging previously-rounded percentages', () => {
+      // 1/10 (10%) and 2/10 (20%) rounded individually would average to 15%,
+      // but the true combined percentage over 20 rounds is 3/20 = 15% here
+      // -- pick counts where naive per-game rounding would drift instead.
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 1, stars: 1 });
+      service.recordClasificaGame({ matchId: 'm2', level: 1, correct: 2, stars: 1 });
+      service.recordClasificaGame({ matchId: 'm3', level: 1, correct: 1, stars: 1 });
+      // totals: 4 aciertos over 3 games * 10 rounds = 30 -> 13.333...%
+      expect(service.getClasificaLevelStats(1).porcentajeAciertos).toBeCloseTo(400 / 30, 10);
+    });
+
+    it('keeps levels fully independent -- registering level 2 never touches level 1', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 10, stars: 3 });
+      service.recordClasificaGame({ matchId: 'm2', level: 2, correct: 0, stars: 1 });
+      expect(service.getClasificaLevelStats(1)).toEqual({ partidasCompletadas: 1, porcentajeAciertos: 100, estrellasPromedio: 3 });
+      expect(service.getClasificaLevelStats(2)).toEqual({ partidasCompletadas: 1, porcentajeAciertos: 0, estrellasPromedio: 1 });
+    });
+
+    it('getClasificaAggregates returns every registered level keyed by its own id', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 10, stars: 3 });
+      service.recordClasificaGame({ matchId: 'm2', level: 3, correct: 0, stars: 1 });
+      expect(service.getClasificaAggregates()).toEqual({
+        1: { partidasCompletadas: 1, porcentajeAciertos: 100, estrellasPromedio: 3 },
+        3: { partidasCompletadas: 1, porcentajeAciertos: 0, estrellasPromedio: 1 },
+      });
+    });
+
+    it('registering the same matchId twice (or more) is idempotent -- identical state as registering once', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 6, stars: 2 });
+      expect(service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 6, stars: 2 })).toBe(true);
+      expect(service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 6, stars: 2 })).toBe(true);
+      expect(service.getClasificaLevelStats(1)).toEqual({
+        partidasCompletadas: 1,
+        porcentajeAciertos: 60,
+        estrellasPromedio: 2,
+      });
+    });
+
+    it('rejects correct outside 0..10 without mutating any aggregate', () => {
+      expect(service.recordClasificaGame({ matchId: 'm1', level: 1, correct: -1, stars: 2 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'm2', level: 1, correct: 11, stars: 2 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'm3', level: 1, correct: 5.5, stars: 2 })).toBe(false);
+      expect(service.getClasificaAggregates()).toEqual({});
+    });
+
+    it('accepts the boundary values 0 and 10 for correct', () => {
+      expect(service.recordClasificaGame({ matchId: 'm0', level: 1, correct: 0, stars: 1 })).toBe(true);
+      expect(service.recordClasificaGame({ matchId: 'm10', level: 2, correct: 10, stars: 3 })).toBe(true);
+      expect(service.getClasificaLevelStats(1).porcentajeAciertos).toBe(0);
+      expect(service.getClasificaLevelStats(2).porcentajeAciertos).toBe(100);
+    });
+
+    it('validates stars against scoring.js own PERCENTAGE_STAR_TIERS values, rejecting anything outside it', () => {
+      const validStars = scoring.PERCENTAGE_STAR_TIERS.map((tier) => tier.stars);
+      validStars.forEach((stars, index) => {
+        expect(service.recordClasificaGame({ matchId: `valid-${index}`, level: 1, correct: 5, stars })).toBe(true);
+      });
+      expect(service.recordClasificaGame({ matchId: 'bad-1', level: 1, correct: 5, stars: 0 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'bad-2', level: 1, correct: 5, stars: 4 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'bad-3', level: 1, correct: 5, stars: 1.5 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'bad-4', level: 1, correct: 5, stars: undefined })).toBe(false);
+      expect(service.getClasificaLevelStats(1).partidasCompletadas).toBe(validStars.length);
+    });
+
+    it('rejects a missing matchId or level without mutating any aggregate', () => {
+      expect(service.recordClasificaGame({ level: 1, correct: 5, stars: 2 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: '', level: 1, correct: 5, stars: 2 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'm1', correct: 5, stars: 2 })).toBe(false);
+      expect(service.recordClasificaGame({ matchId: 'm1', level: null, correct: 5, stars: 2 })).toBe(false);
+      expect(service.getClasificaAggregates()).toEqual({});
+    });
+
+    it('a game is never counted before it is registered -- no automatic tally mid-game', () => {
+      expect(service.getClasificaLevelStats(1)).toEqual({ partidasCompletadas: 0, porcentajeAciertos: 0, estrellasPromedio: 0 });
+    });
+
+    it('with zero completed games, returns 0 for every metric -- never NaN, Infinity or a throw', () => {
+      expect(() => service.getClasificaLevelStats(99)).not.toThrow();
+      const stats = service.getClasificaLevelStats(99);
+      expect(stats.partidasCompletadas).toBe(0);
+      expect(stats.porcentajeAciertos).toBe(0);
+      expect(stats.estrellasPromedio).toBe(0);
+      expect(Number.isNaN(stats.porcentajeAciertos)).toBe(false);
+      expect(Number.isFinite(stats.porcentajeAciertos)).toBe(true);
+      expect(Number.isFinite(stats.estrellasPromedio)).toBe(true);
+    });
+
+    it('records CLASIFICA_MISSING_CREATURE_RECORD exclusively in the local diagnostics store', () => {
+      expect(service.recordClasificaDiagnostic({
+        code: logging.CLASIFICA_MISSING_CREATURE_RECORD,
+        level: 2,
+        creatureId: 'trex',
+      })).toBe(true);
+
+      const entries = service.getClasificaDiagnostics();
+      expect(entries).toHaveLength(1);
+      expect(entries[0].eventType).toBe(logging.CLASIFICA_MISSING_CREATURE_RECORD);
+      expect(entries[0].metadata).toEqual({ mode: 'clasifica', level: 2, creatureId: 'trex', context: null });
+      expect(service.getLogs()).toHaveLength(0);
+      expect(service.getLogsByType(logging.CLASIFICA_MISSING_CREATURE_RECORD)).toHaveLength(0);
+    });
+
+    it('records CLASIFICA_INVALID_DIET exclusively in the local diagnostics store', () => {
+      expect(service.recordClasificaDiagnostic({
+        code: logging.CLASIFICA_INVALID_DIET,
+        level: 3,
+        creatureId: 'stegosaurus',
+        context: { rule: 'diet' },
+      })).toBe(true);
+
+      const entries = service.getClasificaDiagnostics();
+      expect(entries[0].eventType).toBe(logging.CLASIFICA_INVALID_DIET);
+      expect(entries[0].metadata).toEqual({ mode: 'clasifica', level: 3, creatureId: 'stegosaurus', context: { rule: 'diet' } });
+    });
+
+    it('rejects any diagnostic code outside the two defined for this scope (no cronómetro/timing codes)', () => {
+      expect(service.recordClasificaDiagnostic({ code: 'CLASIFICA_TIMEOUT', level: 1 })).toBe(false);
+      expect(service.recordClasificaDiagnostic({ code: 'classify_missing_creature_sheet', level: 1 })).toBe(false);
+      expect(service.getClasificaDiagnostics()).toHaveLength(0);
+    });
+
+    it('recording a diagnostic never counts the round as completed and never touches level metrics', () => {
+      service.recordClasificaDiagnostic({ code: logging.CLASIFICA_MISSING_CREATURE_RECORD, level: 1, creatureId: 'trex' });
+      expect(service.getClasificaLevelStats(1)).toEqual({ partidasCompletadas: 0, porcentajeAciertos: 0, estrellasPromedio: 0 });
+    });
+
+    it('is never included in getLogsPayload or transmitted by sendLogs (local-only, privacy)', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 5, stars: 2 });
+        service.recordClasificaDiagnostic({ code: logging.CLASIFICA_MISSING_CREATURE_RECORD, level: 1, creatureId: 'trex' });
+
+        const payload = service.getLogsPayload();
+        expect(payload.logs).toHaveLength(0);
+
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        const body = JSON.parse(config.body);
+        expect(body.logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('persists both aggregates and diagnostics under their own dinoquiz: keys and round-trips into a fresh instance after reload', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 8, stars: 3 });
+      service.recordClasificaDiagnostic({ code: logging.CLASIFICA_INVALID_DIET, level: 1, creatureId: 'trex' });
+
+      expect(storage.getItem('dinoquiz:clasificaLevelStats')).not.toBeNull();
+      expect(storage.getItem('dinoquiz:clasificaProcessedMatchIds')).toBe('["m1"]');
+      expect(storage.getItem('dinoquiz:clasificaDiagnostics')).not.toBeNull();
+
+      const reloaded = new LogService(storage);
+      expect(reloaded.getClasificaLevelStats(1)).toEqual({ partidasCompletadas: 1, porcentajeAciertos: 80, estrellasPromedio: 3 });
+      expect(reloaded.getClasificaDiagnostics()).toHaveLength(1);
+
+      // idempotency survives the reload too -- the same matchId is still known
+      expect(reloaded.recordClasificaGame({ matchId: 'm1', level: 1, correct: 8, stars: 3 })).toBe(true);
+      expect(reloaded.getClasificaLevelStats(1).partidasCompletadas).toBe(1);
+    });
+
+    it('tolerates a corrupted or incompatible stored entry without throwing, without erasing other modes data', () => {
+      storage.setItem('dinoquiz:clasificaLevelStats', 'not valid json{{{');
+      storage.setItem('dinoquiz:clasificaProcessedMatchIds', '"not an array"');
+      storage.setItem('dinoquiz:clasificaDiagnostics', 'also not json[[[');
+      service.logMazeGameStarted(1); // another mode's counter, written before the corrupted reload
+
+      expect(() => new LogService(storage)).not.toThrow();
+      const reloaded = new LogService(storage);
+      expect(reloaded.getClasificaAggregates()).toEqual({});
+      expect(reloaded.getClasificaDiagnostics()).toEqual([]);
+      expect(reloaded.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+
+      expect(reloaded.recordClasificaGame({ matchId: 'm1', level: 1, correct: 5, stars: 2 })).toBe(true);
+      expect(reloaded.getClasificaLevelStats(1).partidasCompletadas).toBe(1);
+    });
+
+    it('recording Clasifica never modifies another mode counter', () => {
+      service.logMazeGameStarted(1);
+      service.logRoundGameCompleted('parejas', 1);
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 5, stars: 2 });
+      expect(service.getMazeGamesStartedByLevel()).toEqual({ 1: 1 });
+      expect(service.getRoundGamesCompletedByModeLevel()).toEqual({ 'parejas:1': 1 });
+    });
+
+    it('never persists the player chosen category, per-round correctness, an answer sequence or free text', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 7, stars: 2 });
+      service.recordClasificaDiagnostic({ code: logging.CLASIFICA_MISSING_CREATURE_RECORD, level: 1, creatureId: 'trex' });
+
+      const persisted = [
+        storage.getItem('dinoquiz:clasificaLevelStats'),
+        storage.getItem('dinoquiz:clasificaProcessedMatchIds'),
+        storage.getItem('dinoquiz:clasificaDiagnostics'),
+      ].join(' ');
+
+      ['carnivoro', 'herbivoro', 'omnivoro', 'category', 'answers', 'isCorrect'].forEach((forbidden) => {
+        expect(persisted).not.toMatch(forbidden);
+      });
+    });
+
+    it('clearLogs resets Clasifica aggregates, processed match ids and diagnostics', () => {
+      service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 7, stars: 2 });
+      service.recordClasificaDiagnostic({ code: logging.CLASIFICA_MISSING_CREATURE_RECORD, level: 1, creatureId: 'trex' });
+
+      service.clearLogs();
+
+      expect(service.getClasificaAggregates()).toEqual({});
+      expect(service.getClasificaDiagnostics()).toEqual([]);
+      // a matchId recorded before the reset is treated as new again after it
+      expect(service.recordClasificaGame({ matchId: 'm1', level: 1, correct: 7, stars: 2 })).toBe(true);
+      expect(service.getClasificaLevelStats(1).partidasCompletadas).toBe(1);
     });
   });
 
