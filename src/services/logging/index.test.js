@@ -745,6 +745,110 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('Oído Jurásico diagnostics & aggregated metrics (TRIOFSND-271)', () => {
+    it('partidas iniciadas/completadas/abandonadas por nivel reuse the generic round-contract counters under OIDO_JURASICO_MODE_ID', () => {
+      expect(logging.OIDO_JURASICO_MODE_ID).toBe('oidoJurasico');
+      service.logRoundGameStarted(logging.OIDO_JURASICO_MODE_ID, 1);
+      service.logRoundGameStarted(logging.OIDO_JURASICO_MODE_ID, 1);
+      service.logRoundGameCompleted(logging.OIDO_JURASICO_MODE_ID, 1);
+      service.logRoundGameAbandoned(logging.OIDO_JURASICO_MODE_ID, 1);
+      service.logRoundCorrectAnswer(logging.OIDO_JURASICO_MODE_ID, 1);
+      service.logRoundStarsEarned(logging.OIDO_JURASICO_MODE_ID, 1, 3);
+      expect(service.getRoundGamesStartedByModeLevel()).toEqual({ 'oidoJurasico:1': 2 });
+      expect(service.getRoundGamesCompletedByModeLevel()).toEqual({ 'oidoJurasico:1': 1 });
+      expect(service.getRoundGamesAbandonedByModeLevel()).toEqual({ 'oidoJurasico:1': 1 });
+      expect(service.getRoundCorrectAnswersByModeLevel()).toEqual({ 'oidoJurasico:1': 1 });
+      expect(service.getRoundStarsEarnedByModeLevel()).toEqual({ 'oidoJurasico:1': 3 });
+    });
+
+    it('records a playback error with code, mode and a local YYYY-MM-DD date, nothing else', () => {
+      expect(service.logOidoJurasicoPlaybackError(logging.OIDO_JURASICO_AUDIO_UNAVAILABLE)).toBe(true);
+      const entries = service.getOidoJurasicoPlaybackErrors();
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toEqual({
+        code: logging.OIDO_JURASICO_AUDIO_UNAVAILABLE,
+        mode: 'oidoJurasico',
+        date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      });
+    });
+
+    it('accepts both supported playback error codes and rejects anything else', () => {
+      expect(service.logOidoJurasicoPlaybackError(logging.OIDO_JURASICO_PLAYBACK_FAILED)).toBe(true);
+      expect(service.logOidoJurasicoPlaybackError('OIDO_JURASICO_TIMEOUT')).toBe(false);
+      expect(service.logOidoJurasicoPlaybackError('')).toBe(false);
+      expect(service.logOidoJurasicoPlaybackError(undefined)).toBe(false);
+      expect(service.getOidoJurasicoPlaybackErrors()).toHaveLength(1);
+    });
+
+    it('keeps playback errors out of the transmittable logs array', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      try {
+        service.logOidoJurasicoPlaybackError(logging.OIDO_JURASICO_AUDIO_UNAVAILABLE);
+        expect(service.getLogsPayload().logs).toHaveLength(0);
+        await service.sendLogs('https://log.example/ingest', { timeout: 50 });
+        const [, config] = global.fetch.mock.calls[0];
+        expect(JSON.parse(config.body).logs).toHaveLength(0);
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('persists playback errors under their own dinoquiz: key and round-trips through storage', () => {
+      service.logOidoJurasicoPlaybackError(logging.OIDO_JURASICO_PLAYBACK_FAILED);
+      expect(storage.getItem('dinoquiz:oidoJurasicoPlaybackErrors')).toContain('OIDO_JURASICO_PLAYBACK_FAILED');
+      const reloaded = new LogService(storage);
+      expect(reloaded.getOidoJurasicoPlaybackErrors()).toHaveLength(1);
+    });
+
+    it('tallies missing cache resources per resourceId', () => {
+      expect(service.logOidoJurasicoMissingCacheResource('/assets/sounds/oido-jurasico/trex.wav')).toBe(1);
+      expect(service.logOidoJurasicoMissingCacheResource('/assets/sounds/oido-jurasico/trex.wav')).toBe(2);
+      expect(service.logOidoJurasicoMissingCacheResource('/assets/sounds/oido-jurasico/triceratops.wav')).toBe(1);
+      expect(service.getOidoJurasicoMissingCacheResourceCounts()).toEqual({
+        '/assets/sounds/oido-jurasico/trex.wav': 2,
+        '/assets/sounds/oido-jurasico/triceratops.wav': 1,
+      });
+    });
+
+    it('ignores a missing-cache-resource call without a valid resourceId', () => {
+      expect(service.logOidoJurasicoMissingCacheResource('')).toBe(0);
+      expect(service.logOidoJurasicoMissingCacheResource(undefined)).toBe(0);
+      expect(service.getOidoJurasicoMissingCacheResourceCounts()).toEqual({});
+    });
+
+    it('persists missing-cache-resource counts under their own dinoquiz: key and round-trips through storage', () => {
+      service.logOidoJurasicoMissingCacheResource('/assets/sounds/oido-jurasico/trex.wav');
+      expect(storage.getItem('dinoquiz:oidoJurasicoMissingCacheResourceCounts')).toBe(
+        '{"/assets/sounds/oido-jurasico/trex.wav":1}',
+      );
+      const reloaded = new LogService(storage);
+      expect(reloaded.getOidoJurasicoMissingCacheResourceCounts()).toEqual({
+        '/assets/sounds/oido-jurasico/trex.wav': 1,
+      });
+    });
+
+    it('are unaffected by clearLogs', () => {
+      service.logOidoJurasicoPlaybackError(logging.OIDO_JURASICO_AUDIO_UNAVAILABLE);
+      service.logOidoJurasicoMissingCacheResource('/assets/sounds/oido-jurasico/trex.wav');
+      service.clearLogs();
+      expect(service.getOidoJurasicoPlaybackErrors()).toHaveLength(1);
+      expect(service.getOidoJurasicoMissingCacheResourceCounts()).toEqual({
+        '/assets/sounds/oido-jurasico/trex.wav': 1,
+      });
+    });
+
+    it('tolerates a corrupted or incompatible stored entry without throwing', () => {
+      storage.setItem('dinoquiz:oidoJurasicoPlaybackErrors', 'not valid json{{{');
+      storage.setItem('dinoquiz:oidoJurasicoMissingCacheResourceCounts', '"not an object"');
+
+      expect(() => new LogService(storage)).not.toThrow();
+      const reloaded = new LogService(storage);
+      expect(reloaded.getOidoJurasicoPlaybackErrors()).toEqual([]);
+      expect(reloaded.getOidoJurasicoMissingCacheResourceCounts()).toEqual({});
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});
