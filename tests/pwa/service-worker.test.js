@@ -122,6 +122,14 @@ describe('TRIOFSND-110: service worker source', () => {
     });
   });
 
+  test('precaches the three timeline period illustrations (TRIOFSND-295)', () => {
+    // eslint-disable-next-line global-require
+    const { PRECACHE_URLS } = require(SW_PATH);
+    ['triasico', 'jurasico', 'cretacico'].forEach((period) => {
+      expect(PRECACHE_URLS).toContain(`/assets/images/periods/${period}.svg`);
+    });
+  });
+
   test('drops old caches and claims clients on activate', () => {
     expect(swContent).toMatch(/caches\s*\.\s*keys/);
     expect(swContent).toMatch(/caches\.delete/);
