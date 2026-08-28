@@ -245,6 +245,7 @@
   var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
   var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
   var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
+  var CLASIFICA_MODE_ID = 'clasifica'; // mirrors src/game/modesCatalog.js MODE_IDS.CLASIFICA
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -299,6 +300,8 @@
           fromWindow.renderOidoJurasicoScreen || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoScreen,
         renderShadowGuessScreen:
           fromWindow.renderShadowGuessScreen || require('../../src/screens/ShadowGuessScreen').renderShadowGuessScreen,
+        renderClassifyScreen:
+          fromWindow.renderClassifyScreen || require('../../src/screens/ClassifyScreen').renderClassifyScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -418,6 +421,22 @@
   }
 
   /**
+   * Resolves public/scripts/classifyGame.js (TRIOFSND-281), the
+   * browser-runnable Clasifica round/game orchestrator -- same require-or-
+   * `window.DinoQuiz` pattern as `resolveMazeGame`/`resolveShadowGuessGame`
+   * above. Registered nested under `window.DinoQuiz.game.classify`.
+   */
+  function resolveClassifyGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./classifyGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.classify) || null;
+  }
+
+  /**
    * Resolves public/scripts/modesCatalog.js the same require-or-window way,
    * so `renderModeSelector` below can override just the Sombra card's
    * availability verdict without modeSelectorScreen.js ever needing to know
@@ -452,35 +471,68 @@
   }
 
   /**
+   * Resolves the real, verified `isClassifyModeUnlocked` check (TRIOFSND-282,
+   * src/data/creatureSheet.js's >=6-creatures/all-three-diets gate) via
+   * classifyGame.js, mirroring `resolveIsShadowModeUnlocked` above.
+   */
+  function resolveIsClassifyModeUnlocked(win) {
+    var classifyGameApi = resolveClassifyGame(win);
+    if (classifyGameApi && typeof classifyGameApi.isClassifyModeUnlocked === 'function') {
+      return classifyGameApi.isClassifyModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
    * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
-   * generic MIN_CREATURES/requireVisuallyDifferentiable requirement) still
-   * evaluates Sombra against `buildCurrentResourceCatalog`'s placeholder,
-   * which marks every shipped dinosaur `visuallyDifferentiable: true` until a
-   * future ticket wires the real creature sheet into that generic engine
-   * (see modesCatalog.js's own doc comment) -- so today it can report Sombra
-   * "available" even when fewer than 12 creatures have actually cleared
-   * visual review. This wraps the real `evaluateModes` and replaces just the
-   * Sombra verdict with the real `isShadowModeUnlocked` check (TRIOFSND-265),
+   * generic MIN_CREATURES/requireVisuallyDifferentiable/
+   * MIN_CREATURES_WITH_FIELD requirements) still evaluates Sombra/Clasifica
+   * against `buildCurrentResourceCatalog`'s placeholder, which marks every
+   * shipped dinosaur `visuallyDifferentiable: true` but leaves `diet`
+   * undefined until a future ticket wires the real creature sheet into that
+   * generic engine (see modesCatalog.js's own doc comment) -- so today it can
+   * report Sombra "available" even when fewer than 12 creatures have
+   * actually cleared visual review, and always reports Clasifica "blocked"
+   * even though the real roster already covers carnivoro/herbivoro/omnivoro.
+   * This wraps the real `evaluateModes` and replaces the Sombra verdict with
+   * the real `isShadowModeUnlocked` check (TRIOFSND-265) and the Clasifica
+   * verdict with the real `isClassifyModeUnlocked` check (TRIOFSND-282),
    * leaving every other mode's verdict untouched.
    */
   function evaluateModesWithShadowOverride(catalog, modes) {
     var modesCatalog = resolveModesCatalog();
     var results = modesCatalog.evaluateModes(catalog, modes);
     var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
+    var isClassifyModeUnlocked = resolveIsClassifyModeUnlocked();
 
     return results.map(function (verdict) {
-      if (verdict.modeId !== SOMBRA_MODE_ID) {
-        return verdict;
+      if (verdict.modeId === SOMBRA_MODE_ID) {
+        if (isShadowModeUnlocked()) {
+          return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: SOMBRA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
+          details: null,
+        };
       }
-      if (isShadowModeUnlocked()) {
-        return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+
+      if (verdict.modeId === CLASIFICA_MODE_ID) {
+        if (isClassifyModeUnlocked()) {
+          return { modeId: CLASIFICA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: CLASIFICA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.MISSING_CREATURE_FIELD,
+          details: null,
+        };
       }
-      return {
-        modeId: SOMBRA_MODE_ID,
-        available: false,
-        cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
-        details: null,
-      };
+
+      return verdict;
     });
   }
 
@@ -652,6 +704,13 @@
         // question-bank-driven orchestrator below -- see
         // startShadowGuessLevelGame's own doc comment.
         startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
+      if (modeId === CLASIFICA_MODE_ID) {
+        // TRIOFSND-282: Clasifica has its own fixed-level round generator
+        // (classifyGame.js) instead of the question-bank-driven orchestrator
+        // below -- see startClassifyGame's own doc comment.
+        startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -1783,6 +1842,142 @@
   }
 
   /**
+   * Clasifica mode integration (TRIOFSND-282): like Laberinto (a single,
+   * fixed-level ROUNDS_PER_GAME "partida", no cross-game level-unlock chain
+   * -- classifyGame.js's own `startGame`/`completeRound` share that exact
+   * shape with mazeGame.js's, see that module's doc comment) rather than the
+   * Quiz/Sombra multi-level unlock chain. Unlike mazeScreen.js (which only
+   * reports moves and leaves scoring to main.js's `advance()`),
+   * classifyScreen.js evaluates each round itself the instant a category is
+   * tapped (so it can show feedback immediately) and hands the already-
+   * evaluated round/gameState back via `onAnswer` -- so `onNext`/`onGameOver`
+   * below only need to feed that evaluated round back into
+   * classifyGame.js's `completeRound` to generate the next round;
+   * `completeRound`'s own `round.evaluated` guard makes the re-evaluation a
+   * no-op that simply returns the gameState already updated by the screen
+   * (see classifyGame.js's `evaluateRound` doc comment).
+   */
+
+  /** Renders `round` and drives it to completion (or the next round, or Resultados once the game is over). */
+  function playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, round, gameState, ctx) {
+    var totalRounds = classifyGameApi.ROUNDS_PER_GAME;
+    var evaluatedRound = round;
+    var latestGameState = gameState;
+
+    function advance() {
+      var result = classifyGameApi.completeRound({
+        round: evaluatedRound,
+        gameState: latestGameState,
+        level: ctx.level,
+        category: evaluatedRound.category,
+        randomFn: ctx.randomFn,
+        dinosaurPool: ctx.dinosaurPool,
+        getCreatureSheet: ctx.getCreatureSheet,
+        logService: ctx.logService,
+      });
+
+      if (result.gameOver) {
+        finishClassifyGame(container, renderers, doc, fetchFn, result.state, ctx);
+      } else {
+        playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, result.nextRound, result.state, ctx);
+      }
+    }
+
+    return renderers.renderClassifyScreen(container, round, {
+      score: gameState.score,
+      roundNumber: round.roundIndex + 1,
+      totalRounds: totalRounds,
+      gameState: gameState,
+      getCreatureSheet: ctx.getCreatureSheet,
+      logService: ctx.logService,
+      onAnswer: function (result) {
+        evaluatedRound = result.round;
+        latestGameState = result.gameState;
+      },
+      onNext: function () {
+        advance();
+      },
+      onGameOver: function () {
+        advance();
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Clasifica game; 'Volver a jugar' starts a fresh one at the same level, 'Salir' goes to Inicio. */
+  function finishClassifyGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startClassifyGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          homeStorage,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage
+        );
+      },
+    });
+  }
+
+  /**
+   * Starts a fresh Clasifica game at `ctx.level` (defaults to
+   * gameFlow.MIN_LEVEL, mirrors `startShadowGuessLevelGame`'s own default).
+   * Persists the last-selected mode (`dinoquiz:lastMode`) before the first
+   * round renders, same as every other mode's own start function.
+   */
+  function startClassifyGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var classifyGameApi = resolveClassifyGame();
+    var gameFlow = resolveGameFlow();
+    if (!classifyGameApi || !gameFlow || !renderers || typeof renderers.renderClassifyScreen !== 'function') {
+      return null;
+    }
+
+    var level = ctx.level || gameFlow.MIN_LEVEL;
+    var resolvedCtx = {
+      level: level,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      getCreatureSheet: ctx.getCreatureSheet,
+      logService: ctx.logService,
+    };
+
+    persistLastMode(CLASIFICA_MODE_ID, ctx.storageObj);
+
+    var game = classifyGameApi.startGame({
+      level: level,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+    });
+
+    return playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, game.round, game.state, resolvedCtx);
+  }
+
+  /**
    * Oído Jurásico mode integration (TRIOFSND-270): a fixed, level-less
    * ROUNDS_PER_GAME-round "partida" (mirrors Laberinto's own flat game
    * shape, `startMazeGame`/`playMazeRound`/`finishMazeGame` above), but
@@ -2030,11 +2225,12 @@
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
-      // TRIOFSND-265: overrides the Sombra card's availability verdict with
-      // the real isShadowModeUnlocked check -- see
-      // evaluateModesWithShadowOverride's own doc comment. A missing
-      // modesCatalog.js (e.g. failed to load) falls back to
-      // modeSelectorScreen.js's own default resolution untouched.
+      // TRIOFSND-265/282: overrides the Sombra and Clasifica cards'
+      // availability verdicts with the real isShadowModeUnlocked/
+      // isClassifyModeUnlocked checks -- see evaluateModesWithShadowOverride's
+      // own doc comment. A missing modesCatalog.js (e.g. failed to load)
+      // falls back to modeSelectorScreen.js's own default resolution
+      // untouched.
       evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
@@ -3109,17 +3305,23 @@
       QUIZ_MODE_ID: QUIZ_MODE_ID,
       MAZE_MODE_ID: MAZE_MODE_ID,
       SOMBRA_MODE_ID: SOMBRA_MODE_ID,
+      CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
       resolveShadowGuessGame: resolveShadowGuessGame,
+      resolveClassifyGame: resolveClassifyGame,
       resolveModesCatalog: resolveModesCatalog,
       resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
+      resolveIsClassifyModeUnlocked: resolveIsClassifyModeUnlocked,
       evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
       renderShadowRoundAt: renderShadowRoundAt,
       playShadowGuessLevel: playShadowGuessLevel,
       finishShadowGuessLevel: finishShadowGuessLevel,
       startShadowGuessLevelGame: startShadowGuessLevelGame,
+      playClassifyRound: playClassifyRound,
+      finishClassifyGame: finishClassifyGame,
+      startClassifyGame: startClassifyGame,
       resolveOidoJurasicoGame: resolveOidoJurasicoGame,
       resolveRoundContract: resolveRoundContract,
       OIDO_JURASICO_HASH: OIDO_JURASICO_HASH,

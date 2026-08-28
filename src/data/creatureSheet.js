@@ -248,7 +248,13 @@ const CREATURE_SHEETS = Object.freeze({
   }),
   [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({
     id: DINOSAURS.PACHYCEPHALOSAURUS,
-    diet: DIETS.HERBIVORO,
+    // Omnivoro, not herbivoro: funFacts "pachycephalosaurus-02" ("se
+    // alimentaba principalmente de plantas, aunque también pudo comer algún
+    // insecto ocasional") and "-16" ("dientes ... sugieren que podía tener
+    // una dieta mixta, con plantas y posiblemente pequeños animales o
+    // insectos") already verify a mixed plant-and-animal diet -- this sheet
+    // must match, per this file's own doc comment.
+    diet: DIETS.OMNIVORO,
     lengthMeters: 4.5,
     visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.DOME_HEAD),
@@ -374,6 +380,44 @@ function isShadowModeUnlocked(catalog) {
   return getApprovedShadowCreatures(catalog).length >= SHADOW_MODE_MIN_APPROVED;
 }
 
+// Mirrors src/game/modesCatalog.js's MODES_CATALOG entry for MODE_IDS.CLASIFICA
+// (minCreaturesWithField on "diet", minCount 6, requireAllCategories the
+// three DIETS) -- kept here too so this module can answer "is Clasifica
+// actually unlocked?" against the real, verified roster.
+const CLASSIFY_MODE_MIN_CREATURES = 6;
+const CLASSIFY_MODE_REQUIRED_DIETS = Object.freeze(Object.values(DIETS));
+
+/**
+ * Ids of every creature with a verified `diet` (one of DIETS' three values),
+ * in `CREATURE_SHEETS` order. `sheets` follows the same optional-override
+ * shape as `getApprovedShadowCreatures`.
+ */
+function getCreaturesWithVerifiedDiet(sheets) {
+  const source = sheets || CREATURE_SHEETS;
+  return Object.keys(source).filter((id) => {
+    const sheet = source[id];
+    return Boolean(sheet && Object.values(DIETS).includes(sheet.diet));
+  });
+}
+
+/**
+ * Whether "Clasifica" has enough verified creatures to unlock (PRD/
+ * MODES_CATALOG requirement: >=6 creatures with a verified diet, covering
+ * carnivoro/herbivoro/omnivoro so no round is ever unsolvable). `catalog` is
+ * optional and follows the same shape as `sheets` in
+ * `getCreaturesWithVerifiedDiet` -- omit it to evaluate the live roster.
+ */
+function isClassifyModeUnlocked(catalog) {
+  const source = catalog || CREATURE_SHEETS;
+  const withDiet = getCreaturesWithVerifiedDiet(source);
+  if (withDiet.length < CLASSIFY_MODE_MIN_CREATURES) {
+    return false;
+  }
+  return CLASSIFY_MODE_REQUIRED_DIETS.every((diet) =>
+    withDiet.some((id) => source[id].diet === diet)
+  );
+}
+
 module.exports = {
   DIETS,
   VISUAL_FAMILIES,
@@ -383,6 +427,8 @@ module.exports = {
   SHADOW_TRANSFORMS,
   SHADOW_INDISTINGUISHABLE_PAIRS,
   SHADOW_MODE_MIN_APPROVED,
+  CLASSIFY_MODE_MIN_CREATURES,
+  CLASSIFY_MODE_REQUIRED_DIETS,
   CREATURE_SHEETS,
   getCreatureSheet,
   getCreatureDiet,
@@ -393,4 +439,6 @@ module.exports = {
   getCreatureTemporalRange,
   getApprovedShadowCreatures,
   isShadowModeUnlocked,
+  getCreaturesWithVerifiedDiet,
+  isClassifyModeUnlocked,
 };
