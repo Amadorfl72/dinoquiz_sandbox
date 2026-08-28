@@ -441,6 +441,31 @@
       "message": "¡Bien hecho ordenando a las criaturas! Sigue jugando para descubrir más tamaños."
     }
   },
+  "shadowGuess": {
+    "name": "Adivina la sombra",
+    "instructions": "Observa la silueta y elige, entre cuatro criaturas, la que crees que se esconde detrás.",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado la sombra.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "blocked": {
+      "insufficientCatalog": "Adivina la sombra no está disponible todavía: se necesitan al menos 12 criaturas aprobadas y visualmente diferenciables entre sí para activar este modo."
+    },
+    "results": {
+      "title": "Resultados de Adivina la sombra",
+      "score": "Aciertos en Adivina la sombra",
+      "percentage": "Porcentaje de aciertos",
+      "stars": "Estrellas conseguidas",
+      "progress": "Progreso en Adivina la sombra"
+    }
+  },
   "dinosaurNames": {
     "trex": "Tyrannosaurus Rex",
     "triceratops": "Triceratops",
