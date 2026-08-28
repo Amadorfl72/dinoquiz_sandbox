@@ -47,6 +47,7 @@ const PRECACHE_URLS = [
   '/scripts/classifyGame.js',
   '/scripts/classifyTimer.js',
   '/scripts/classifyScreen.js',
+  '/scripts/shadowGuessGame.js',
   '/scripts/shadowGuessScreen.js',
   '/scripts/oidoJurasicoScreen.js',
   '/scripts/resultsScreen.js',

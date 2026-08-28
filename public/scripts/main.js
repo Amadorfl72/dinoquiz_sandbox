@@ -244,6 +244,7 @@
   var MAZE_HASH = '#/laberinto';
   var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
   var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
+  var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -296,6 +297,8 @@
           fromWindow.renderOidoJurasicoIntro || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoIntro,
         renderOidoJurasicoScreen:
           fromWindow.renderOidoJurasicoScreen || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoScreen,
+        renderShadowGuessScreen:
+          fromWindow.renderShadowGuessScreen || require('../../src/screens/ShadowGuessScreen').renderShadowGuessScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -396,6 +399,89 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.roundContract) || null;
+  }
+
+  /**
+   * Resolves public/scripts/shadowGuessGame.js (TRIOFSND-265), the
+   * browser-runnable Adivina la sombra round/level orchestrator -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveMazeGame` above.
+   * Registered nested under `window.DinoQuiz.game.shadowGuess`.
+   */
+  function resolveShadowGuessGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./shadowGuessGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.shadowGuess) || null;
+  }
+
+  /**
+   * Resolves public/scripts/modesCatalog.js the same require-or-window way,
+   * so `renderModeSelector` below can override just the Sombra card's
+   * availability verdict without modeSelectorScreen.js ever needing to know
+   * about that override (see `evaluateModesWithShadowOverride`).
+   */
+  function resolveModesCatalog(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./modesCatalog');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.modesCatalog) || null;
+  }
+
+  /**
+   * Resolves the real, verified `isShadowModeUnlocked` check (TRIOFSND-265,
+   * src/data/creatureSheet.js's >=12 approved-creature gate) via
+   * shadowGuessGame.js, which already exposes it under both Node/Jest (the
+   * real creatureSheet.js check) and the real, unbundled browser (a local
+   * mirror of the same roster) -- see that file's own doc comment for why it
+   * can't `require('../../src/data/creatureSheet')` directly in the browser.
+   */
+  function resolveIsShadowModeUnlocked(win) {
+    var shadowGuessGameApi = resolveShadowGuessGame(win);
+    if (shadowGuessGameApi && typeof shadowGuessGameApi.isShadowModeUnlocked === 'function') {
+      return shadowGuessGameApi.isShadowModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
+   * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
+   * generic MIN_CREATURES/requireVisuallyDifferentiable requirement) still
+   * evaluates Sombra against `buildCurrentResourceCatalog`'s placeholder,
+   * which marks every shipped dinosaur `visuallyDifferentiable: true` until a
+   * future ticket wires the real creature sheet into that generic engine
+   * (see modesCatalog.js's own doc comment) -- so today it can report Sombra
+   * "available" even when fewer than 12 creatures have actually cleared
+   * visual review. This wraps the real `evaluateModes` and replaces just the
+   * Sombra verdict with the real `isShadowModeUnlocked` check (TRIOFSND-265),
+   * leaving every other mode's verdict untouched.
+   */
+  function evaluateModesWithShadowOverride(catalog, modes) {
+    var modesCatalog = resolveModesCatalog();
+    var results = modesCatalog.evaluateModes(catalog, modes);
+    var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
+
+    return results.map(function (verdict) {
+      if (verdict.modeId !== SOMBRA_MODE_ID) {
+        return verdict;
+      }
+      if (isShadowModeUnlocked()) {
+        return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+      }
+      return {
+        modeId: SOMBRA_MODE_ID,
+        available: false,
+        cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
+        details: null,
+      };
+    });
   }
 
   /**
@@ -558,6 +644,14 @@
       }
       if (modeId === OIDO_JURASICO_MODE_ID) {
         navigateToOidoJurasico();
+        return;
+      }
+      if (modeId === SOMBRA_MODE_ID) {
+        // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
+        // procedural round generator (shadowGuessGame.js) instead of the
+        // question-bank-driven orchestrator below -- see
+        // startShadowGuessLevelGame's own doc comment.
+        startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -1518,6 +1612,177 @@
   }
 
   /**
+  /**
+   * Adivina la sombra mode integration (TRIOFSND-265): unlike Laberinto
+   * (a single fixed-level game per hash route), this mode plays through the
+   * same multi-level unlock chain as Quiz (`playLevel`/`finishLevel`/
+   * `startLevelGame` above) -- `playShadowGuessLevel`/`finishShadowGuessLevel`/
+   * `startShadowGuessLevelGame` mirror that same shape exactly, but drive
+   * shadowGuessGame.js's procedural rounds and shadowGuessScreen.js instead
+   * of the question bank and questionScreen.js.
+   */
+
+  /** Renders `levelGame.rounds[levelGame.state.questionIndex]` and recurses (or completes the level) once 'Siguiente' is tapped -- mirrors `renderQuestionAt`'s own advance loop. */
+  function renderShadowRoundAt(container, renderers, levelGame, onGameComplete) {
+    var round = levelGame.rounds[levelGame.state.questionIndex];
+
+    return renderers.renderShadowGuessScreen(container, round, {
+      score: levelGame.state.score,
+      roundNumber: levelGame.state.questionIndex + 1,
+      totalRounds: levelGame.rounds.length,
+      onAnswer: function (result) {
+        levelGame.state.score = result.score;
+        levelGame.state.answers = levelGame.state.answers.concat([
+          { correctId: result.correctId, selectedId: result.selectedId, isCorrect: result.isCorrect },
+        ]);
+      },
+      onNext: function () {
+        levelGame.state.questionIndex += 1;
+        if (levelGame.state.questionIndex >= levelGame.rounds.length) {
+          onGameComplete(levelGame.state);
+        } else {
+          renderShadowRoundAt(container, renderers, levelGame, onGameComplete);
+        }
+      },
+    });
+  }
+
+  /** Plays one already-started Sombra level end to end, then resolves what happens next via shadowGuessGame.js's `completeLevel` and hands off to `finishShadowGuessLevel` -- mirrors `playLevel` exactly. */
+  function playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, ctx) {
+    var gameFlow = resolveGameFlow();
+
+    return renderShadowRoundAt(container, renderers, levelGame, function (finalState) {
+      finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+      var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+      finalState.bestScore = bestScoreAndStreak.bestScore;
+      finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+      var shadowGuessGameApi = resolveShadowGuessGame();
+      var outcome = shadowGuessGameApi.completeLevel({
+        level: levelGame.level,
+        answers: finalState.answers,
+        randomFn: ctx.randomFn,
+      });
+
+      if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+        exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+        return;
+      }
+
+      finishShadowGuessLevel(container, renderers, doc, fetchFn, levelGame.level, finalState, outcome, ctx);
+    });
+  }
+
+  /** Renders Resultados for the Sombra level just finished, persisting/reading progress through the same per-mode modeProgressStorage.js instance every mode uses -- mirrors `finishLevel` exactly (see that function's own doc comment). */
+  function finishShadowGuessLevel(container, renderers, doc, fetchFn, level, finalState, outcome, ctx) {
+    var gameFlow = resolveGameFlow();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId;
+
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
+          level: level,
+        });
+      });
+    }
+
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return Promise.resolve(ctx.maxUnlockedLevelPromise).then(function (maxLevelUnlocked) {
+      return renderers.renderResultsScreen(container, {
+        score: finalState.score,
+        maxScore: gameFlow.QUESTIONS_PER_GAME,
+        maxStreak: finalState.maxStreak,
+        bestScore: finalState.bestScore,
+        bestStreak: finalState.bestStreak,
+        level: level,
+        levelOutcome: outcome,
+        maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+        adsRemoved: loadAdsRemovedState(ctx.storageObj),
+        onPlayAgain: function () {
+          if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+            ctx.analyticsStorage.recordEvent('replay_pulsado');
+          }
+          if (!outcome.gameOver && outcome.nextLevelGame) {
+            playShadowGuessLevel(container, renderers, doc, fetchFn, outcome.nextLevelGame, ctx);
+          } else {
+            startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx);
+          }
+        },
+        onExit: function () {
+          var homeStorage = resolveHomeStorage();
+          renderHome(
+            doc,
+            renderers.renderHomeScreen,
+            fetchFn,
+            homeStorage,
+            function () {
+              navigateToPrivacyPolicy();
+            },
+            homeStorage
+          );
+        },
+      });
+    });
+  }
+
+  /** Starts (or restarts) the Sombra multi-level game at `ctx.level` (level 1 by default) -- mirrors `startLevelGame` exactly, using shadowGuessGame.js's own procedural rounds instead of the question bank. */
+  function startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var shadowGuessGameApi = resolveShadowGuessGame();
+    var gameFlow = resolveGameFlow();
+    if (!shadowGuessGameApi || !gameFlow || !renderers || typeof renderers.renderShadowGuessScreen !== 'function') {
+      return null;
+    }
+
+    var modeId = SOMBRA_MODE_ID;
+    var resolvedCtx = {
+      randomFn: ctx.randomFn,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
+    };
+
+    persistLastMode(modeId, ctx.storageObj);
+
+    var levelGame = shadowGuessGameApi.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
+      randomFn: ctx.randomFn,
+    });
+
+    if (levelGame && levelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, levelGame);
+    }
+
+    return playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, resolvedCtx);
+  }
+
+  /**
    * Oído Jurásico mode integration (TRIOFSND-270): a fixed, level-less
    * ROUNDS_PER_GAME-round "partida" (mirrors Laberinto's own flat game
    * shape, `startMazeGame`/`playMazeRound`/`finishMazeGame` above), but
@@ -1765,6 +2030,12 @@
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
+      // TRIOFSND-265: overrides the Sombra card's availability verdict with
+      // the real isShadowModeUnlocked check -- see
+      // evaluateModesWithShadowOverride's own doc comment. A missing
+      // modesCatalog.js (e.g. failed to load) falls back to
+      // modeSelectorScreen.js's own default resolution untouched.
+      evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
@@ -2837,9 +3108,18 @@
       renderModeSelector: renderModeSelector,
       QUIZ_MODE_ID: QUIZ_MODE_ID,
       MAZE_MODE_ID: MAZE_MODE_ID,
+      SOMBRA_MODE_ID: SOMBRA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
+      resolveShadowGuessGame: resolveShadowGuessGame,
+      resolveModesCatalog: resolveModesCatalog,
+      resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
+      evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
+      renderShadowRoundAt: renderShadowRoundAt,
+      playShadowGuessLevel: playShadowGuessLevel,
+      finishShadowGuessLevel: finishShadowGuessLevel,
+      startShadowGuessLevelGame: startShadowGuessLevelGame,
       resolveOidoJurasicoGame: resolveOidoJurasicoGame,
       resolveRoundContract: resolveRoundContract,
       OIDO_JURASICO_HASH: OIDO_JURASICO_HASH,
