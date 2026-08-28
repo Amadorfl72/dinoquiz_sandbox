@@ -48,6 +48,9 @@
   // src/data/questionBank.js's VALID_DINOSAURS -- see the module doc comment
   // above for why this is a local, static duplicate instead of a `require`
   // (same table public/scripts/mazeGame.js's own DINOSAUR_DIETS mirrors).
+  // pachycephalosaurus is omnivoro, not herbivoro -- see
+  // src/data/creatureSheet.js's own comment on that entry (its funFacts
+  // already verify a mixed plant-and-animal diet).
   var DINOSAUR_DIETS = Object.freeze({
     trex: 'carnivoro',
     triceratops: 'herbivoro',
@@ -58,13 +61,19 @@
     pteranodon: 'carnivoro',
     spinosaurus: 'carnivoro',
     dilophosaurus: 'carnivoro',
-    pachycephalosaurus: 'herbivoro',
+    pachycephalosaurus: 'omnivoro',
     compsognathus: 'carnivoro',
     diplodocus: 'herbivoro',
     iguanodon: 'herbivoro',
     parasaurolophus: 'herbivoro',
   });
   var DEFAULT_DINOSAUR_POOL = Object.freeze(Object.keys(DINOSAUR_DIETS));
+
+  // Mirrors src/game/modesCatalog.js's MODES_CATALOG entry for
+  // MODE_IDS.CLASIFICA (minCreaturesWithField on "diet", minCount 6,
+  // requireAllCategories the three CATEGORIES).
+  var CLASSIFY_MODE_MIN_CREATURES = 6;
+  var CLASSIFY_MODE_REQUIRED_CATEGORIES = VALID_CATEGORIES;
 
   // Local, machine-readable diagnostic codes for the controlled guard --
   // mirrors src/game/classifyGame.js's own DIAGNOSTIC_CODES exactly.
@@ -75,6 +84,35 @@
 
   function isValidCategory(category) {
     return VALID_CATEGORIES.indexOf(category) !== -1;
+  }
+
+  /** Resolves src/data/creatureSheet.js the require-or-null way, mirroring shadowGuessGame.js's own resolveCreatureSheetModule. */
+  function resolveCreatureSheetModule() {
+    return typeof require === 'function' ? require('../../src/data/creatureSheet') : null;
+  }
+
+  /**
+   * Whether Clasifica has enough verified creatures to unlock (PRD/
+   * MODES_CATALOG requirement: >=6 creatures with a verified diet, covering
+   * carnivoro/herbivoro/omnivoro). Prefers the real, verified
+   * `src/data/creatureSheet.js#isClassifyModeUnlocked` under Node/Jest;
+   * falls back to counting the local `DINOSAUR_DIETS` mirror above when
+   * `require` isn't available (real, unbundled browser), mirroring
+   * shadowGuessGame.js's own `isShadowModeUnlocked`.
+   */
+  function isClassifyModeUnlocked() {
+    var creatureSheetModule = resolveCreatureSheetModule();
+    if (creatureSheetModule && typeof creatureSheetModule.isClassifyModeUnlocked === 'function') {
+      return creatureSheetModule.isClassifyModeUnlocked();
+    }
+
+    var dinosaurIds = Object.keys(DINOSAUR_DIETS);
+    if (dinosaurIds.length < CLASSIFY_MODE_MIN_CREATURES) {
+      return false;
+    }
+    return CLASSIFY_MODE_REQUIRED_CATEGORIES.every(function (category) {
+      return dinosaurIds.some(function (id) { return DINOSAUR_DIETS[id] === category; });
+    });
   }
 
   /** Resolves public/scripts/scoring.js the require-or-window way every public/scripts module does. */
@@ -317,6 +355,9 @@
     CATEGORIES: CATEGORIES,
     DIAGNOSTIC_CODES: DIAGNOSTIC_CODES,
     DEFAULT_DINOSAUR_POOL: DEFAULT_DINOSAUR_POOL,
+    CLASSIFY_MODE_MIN_CREATURES: CLASSIFY_MODE_MIN_CREATURES,
+    CLASSIFY_MODE_REQUIRED_CATEGORIES: CLASSIFY_MODE_REQUIRED_CATEGORIES,
+    isClassifyModeUnlocked: isClassifyModeUnlocked,
     pickDinosaur: pickDinosaur,
     startRound: startRound,
     resolveVerifiedDiet: resolveVerifiedDiet,

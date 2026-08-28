@@ -172,7 +172,7 @@
   {
     "id": "pachycephalosaurus",
     "nameKey": "creatures.pachycephalosaurus.name",
-    "dieta": "herbivoro",
+    "dieta": "omnivoro",
     "longitudMetros": 4.5,
     "periodoPrincipal": "Cretacico",
     "intervaloTemporal": { "inicioMa": 70, "finMa": 66 },

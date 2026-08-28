@@ -412,35 +412,68 @@
   }
 
   /**
+   * Resolves the real, verified `isClassifyModeUnlocked` check (TRIOFSND-282,
+   * src/data/creatureSheet.js's >=6-creatures/all-three-diets gate) via
+   * classifyGame.js, mirroring `resolveIsShadowModeUnlocked` above.
+   */
+  function resolveIsClassifyModeUnlocked(win) {
+    var classifyGameApi = resolveClassifyGame(win);
+    if (classifyGameApi && typeof classifyGameApi.isClassifyModeUnlocked === 'function') {
+      return classifyGameApi.isClassifyModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
    * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
-   * generic MIN_CREATURES/requireVisuallyDifferentiable requirement) still
-   * evaluates Sombra against `buildCurrentResourceCatalog`'s placeholder,
-   * which marks every shipped dinosaur `visuallyDifferentiable: true` until a
-   * future ticket wires the real creature sheet into that generic engine
-   * (see modesCatalog.js's own doc comment) -- so today it can report Sombra
-   * "available" even when fewer than 12 creatures have actually cleared
-   * visual review. This wraps the real `evaluateModes` and replaces just the
-   * Sombra verdict with the real `isShadowModeUnlocked` check (TRIOFSND-265),
+   * generic MIN_CREATURES/requireVisuallyDifferentiable/
+   * MIN_CREATURES_WITH_FIELD requirements) still evaluates Sombra/Clasifica
+   * against `buildCurrentResourceCatalog`'s placeholder, which marks every
+   * shipped dinosaur `visuallyDifferentiable: true` but leaves `diet`
+   * undefined until a future ticket wires the real creature sheet into that
+   * generic engine (see modesCatalog.js's own doc comment) -- so today it can
+   * report Sombra "available" even when fewer than 12 creatures have
+   * actually cleared visual review, and always reports Clasifica "blocked"
+   * even though the real roster already covers carnivoro/herbivoro/omnivoro.
+   * This wraps the real `evaluateModes` and replaces the Sombra verdict with
+   * the real `isShadowModeUnlocked` check (TRIOFSND-265) and the Clasifica
+   * verdict with the real `isClassifyModeUnlocked` check (TRIOFSND-282),
    * leaving every other mode's verdict untouched.
    */
   function evaluateModesWithShadowOverride(catalog, modes) {
     var modesCatalog = resolveModesCatalog();
     var results = modesCatalog.evaluateModes(catalog, modes);
     var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
+    var isClassifyModeUnlocked = resolveIsClassifyModeUnlocked();
 
     return results.map(function (verdict) {
-      if (verdict.modeId !== SOMBRA_MODE_ID) {
-        return verdict;
+      if (verdict.modeId === SOMBRA_MODE_ID) {
+        if (isShadowModeUnlocked()) {
+          return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: SOMBRA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
+          details: null,
+        };
       }
-      if (isShadowModeUnlocked()) {
-        return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+
+      if (verdict.modeId === CLASIFICA_MODE_ID) {
+        if (isClassifyModeUnlocked()) {
+          return { modeId: CLASIFICA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: CLASIFICA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.MISSING_CREATURE_FIELD,
+          details: null,
+        };
       }
-      return {
-        modeId: SOMBRA_MODE_ID,
-        available: false,
-        cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
-        details: null,
-      };
+
+      return verdict;
     });
   }
 
@@ -1923,11 +1956,12 @@
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
-      // TRIOFSND-265: overrides the Sombra card's availability verdict with
-      // the real isShadowModeUnlocked check -- see
-      // evaluateModesWithShadowOverride's own doc comment. A missing
-      // modesCatalog.js (e.g. failed to load) falls back to
-      // modeSelectorScreen.js's own default resolution untouched.
+      // TRIOFSND-265/282: overrides the Sombra and Clasifica cards'
+      // availability verdicts with the real isShadowModeUnlocked/
+      // isClassifyModeUnlocked checks -- see evaluateModesWithShadowOverride's
+      // own doc comment. A missing modesCatalog.js (e.g. failed to load)
+      // falls back to modeSelectorScreen.js's own default resolution
+      // untouched.
       evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
@@ -3006,6 +3040,7 @@
       resolveClassifyGame: resolveClassifyGame,
       resolveModesCatalog: resolveModesCatalog,
       resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
+      resolveIsClassifyModeUnlocked: resolveIsClassifyModeUnlocked,
       evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
       renderShadowRoundAt: renderShadowRoundAt,
       playShadowGuessLevel: playShadowGuessLevel,

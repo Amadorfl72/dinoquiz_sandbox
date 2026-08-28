@@ -7,20 +7,22 @@ const { getByRole } = require('@testing-library/dom');
 
 /**
  * TRIOFSND-282: covers the Clasifica integration end to end -- reaching the
- * mode via main.js's `handleModeSelected` (the handler every mode selector
- * card tap routes through, public/scripts/modeSelectorScreen.js), playing a
- * full 10-round game with the device reporting no network connectivity at
- * all (mirrors tests/pwa/offline-maze-game.test.js's own TRIOFSND-259
- * coverage for Laberinto), and the `dinoquiz:lastMode` state main.js drives
- * for every mode.
+ * mode by actually tapping its card on the illustrated mode selector
+ * (public/scripts/modeSelectorScreen.js, via main.js's `renderModeSelector`/
+ * `handleModeSelected`), playing a full 10-round game with the device
+ * reporting no network connectivity at all (mirrors
+ * tests/pwa/offline-maze-game.test.js's own TRIOFSND-259 coverage for
+ * Laberinto), and the `dinoquiz:lastMode` state main.js drives for every
+ * mode.
  *
- * `handleModeSelected` is exercised directly instead of clicking the actual
- * selector card: modesCatalog.js's generic MIN_CREATURES_WITH_FIELD
- * requirement for Clasifica needs a verified omnivoro creature, and today's
- * roster (src/data/creatureSheet.js) has none yet -- a real content gap
- * outside this ticket's scope (registering the script, wiring the route,
- * precaching its assets), never something to fake here. The card will
- * unblock itself, with no further wiring changes, once that creature ships.
+ * The card is reachable and tappable here because
+ * `src/data/creatureSheet.js`'s roster already verifies a creature of each
+ * diet -- Pachycephalosaurus is omnivoro (its own funFacts "-02"/"-16"
+ * already describe a mixed plant-and-animal diet; see that file's comment on
+ * the entry) -- and main.js's `evaluateModesWithShadowOverride` overrides the
+ * Clasifica card's verdict with the real `isClassifyModeUnlocked` check
+ * (mirroring the Sombra override already in place for TRIOFSND-265) instead
+ * of leaving it pinned to modesCatalog.js's still-generic placeholder.
  */
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
@@ -50,6 +52,16 @@ function clickCategory(container, classifyGameApi, category) {
   const order = Object.keys(classifyGameApi.CATEGORIES).map((key) => classifyGameApi.CATEGORIES[key]);
   const buttons = container.querySelectorAll('.classify-screen__category-button');
   buttons[order.indexOf(category)].click();
+}
+
+/** Taps a mode selector card by its accessible label, the same real interaction a player performs (mirrors tests/pwa/mode-change-flow.test.js's own clickModeCard). */
+function clickModeCard(container, modeId) {
+  getByRole(container, 'button', { name: modeSelectorStrings.modes[modeId].accessibleLabel }).click();
+}
+
+/** Flushes the real (non-fake) timer/microtask queue so handleModeSelected's async incomplete-game check settles before assertions run. */
+function flush() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 /** Plays every round of the in-progress Clasifica game to completion, always answering correctly, ending on Resultados. */
@@ -90,25 +102,24 @@ describe('TRIOFSND-282: Clasifica reachable via the mode selector, plays a full 
     }
   });
 
-  test('selecting the Clasifica card (handleModeSelected) starts a full offline game, ending on Resultados with a normalized score', () => {
+  test('tapping the Clasifica card on the real mode selector starts a full offline game, ending on Resultados with a normalized score', async () => {
     global.fetch = rejectingFetch();
 
-    const { handleModeSelected, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const { renderModeSelector, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const classifyGameApi = require(CLASSIFY_GAME_PATH);
     const renderers = resolveScreenRenderers();
     const questions = require('../../src/data/questionBank').loadQuestionBank();
 
-    handleModeSelected(
-      container,
-      renderers,
-      questions,
-      document,
-      undefined,
-      buildResources(),
-      { randomFn: () => 0.5 },
-      'clasifica',
-      null
-    );
+    renderModeSelector(container, renderers, questions, document, undefined, buildResources(), {
+      randomFn: () => 0.5,
+    });
+
+    expect(
+      getByRole(container, 'button', { name: modeSelectorStrings.modes.clasifica.accessibleLabel })
+    ).not.toHaveAttribute('aria-disabled');
+
+    clickModeCard(container, 'clasifica');
+    await flush();
 
     expect(container.querySelector('.classify-screen')).not.toBeNull();
 
