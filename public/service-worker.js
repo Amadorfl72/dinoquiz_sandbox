@@ -48,6 +48,7 @@ const PRECACHE_URLS = [
   '/scripts/modesCatalog.js',
   '/scripts/unlockThresholds.js',
   '/scripts/modeStorage.js',
+  '/scripts/modeProgressStorage.js',
   '/scripts/modeSelectorScreen.js',
   '/scripts/modeChangeConfirmScreen.js',
   '/scripts/main.js',
