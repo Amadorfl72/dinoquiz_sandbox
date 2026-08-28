@@ -367,8 +367,11 @@
     "screenTitle": "Oído Jurásico",
     "imaginedSoundNotice": {
       "heading": "Un sonido imaginado",
-      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
+      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica.",
+      "continueButton": "Entendido, ¡a jugar!",
+      "continueButtonAriaLabel": "Entendido, empezar a jugar Oído Jurásico"
     },
+    "instructions": "Escucha el sonido imaginado y elige, entre cuatro criaturas, la que crees que podría haberlo hecho.",
     "playButton": "Reproducir sonido",
     "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",
     "replayButton": "Escuchar de nuevo",
@@ -380,10 +383,48 @@
       "backButton": "Volver al selector de juegos"
     },
     "playbackError": {
-      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo."
+      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo.",
+      "backButton": "Volver al selector de juegos"
     },
     "answerReinforcement": {
       "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    },
+    "optionsGroupLabel": "Opciones de respuesta",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado el sonido.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {creature}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {creature}",
+    "scoreLabel": "Puntos",
+    "roundFormat": "Ronda {current} de {total}",
+    "nextButton": "Siguiente",
+    "blocked": {
+      "insufficientCatalog": "Oído Jurásico no está disponible todavía: se necesitan al menos 4 sonidos imaginados de criaturas para activar este modo.",
+      "backButtonLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "parejas": {

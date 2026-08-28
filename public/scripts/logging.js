@@ -139,6 +139,27 @@
  * parent/dev reset clears Clasifica's aggregates the same way it clears the
  * transmittable log array.
  *
+ * Oído Jurásico diagnostics and aggregated metrics (TRIOFSND-271, PRD
+ * "Diagnóstico y métricas agregadas almacenadas únicamente en el
+ * dispositivo"): its partidas iniciadas/completadas/abandonadas por nivel
+ * and aciertos/estrellas reuse the same generic round-contract-family
+ * counters as Parejas above (`OIDO_JURASICO_MODE_ID` is just another
+ * modeId through that family), so this never re-declares a parallel set of
+ * Oído-Jurásico-only counters for those. `logOidoJurasicoPlaybackError(code)`/
+ * `getOidoJurasicoPlaybackErrors()` record one entry per failed attempt to
+ * play the round's sound (oidoJurasicoAudioService.js's `STATUS.ERROR`) --
+ * only a stable `code` (`OIDO_JURASICO_AUDIO_UNAVAILABLE`/
+ * `OIDO_JURASICO_PLAYBACK_FAILED`, the audio service's only two failure
+ * branches), `mode` and today's local calendar date, never the round's
+ * creature id, sound file or any other player content.
+ * `logOidoJurasicoMissingCacheResource(resourceId)`/
+ * `getOidoJurasicoMissingCacheResourceCounts()` tally, per precached sound
+ * file path, how many times it was looked for in the Cache Storage precache
+ * (service-worker.js's `PRECACHE_URLS`) and not found. Same aggregated,
+ * local-only, never-transmitted-by-sendLogs shape as every counter above;
+ * neither store is reset by `clearLogs()` (same choice as the generic
+ * round-contract counters and `modeBlockedLogs`).
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -180,6 +201,8 @@
   var CLASIFICA_LEVEL_STATS_KEY = 'dinoquiz:clasificaLevelStats';
   var CLASIFICA_PROCESSED_MATCH_IDS_KEY = 'dinoquiz:clasificaProcessedMatchIds';
   var CLASIFICA_DIAGNOSTICS_KEY = 'dinoquiz:clasificaDiagnostics';
+  var OIDO_JURASICO_PLAYBACK_ERRORS_KEY = 'dinoquiz:oidoJurasicoPlaybackErrors';
+  var OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY = 'dinoquiz:oidoJurasicoMissingCacheResourceCounts';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -192,6 +215,17 @@
   var CLASIFICA_MISSING_CREATURE_RECORD = 'CLASIFICA_MISSING_CREATURE_RECORD';
   var CLASIFICA_INVALID_DIET = 'CLASIFICA_INVALID_DIET';
   var CLASIFICA_DIAGNOSTIC_CODES = Object.freeze([CLASIFICA_MISSING_CREATURE_RECORD, CLASIFICA_INVALID_DIET]);
+
+  var OIDO_JURASICO_MODE_ID = 'oidoJurasico';
+
+  // The only two failure branches oidoJurasicoAudioService.js's `attempt()`
+  // ever reports (TRIOFSND-271): no audio source/player available at all, or
+  // an available player that failed to start/continue (Audio() construction
+  // throwing, or play() rejecting/throwing synchronously). No cronómetro/
+  // timing code exists for this scope, none should be invented here.
+  var OIDO_JURASICO_AUDIO_UNAVAILABLE = 'OIDO_JURASICO_AUDIO_UNAVAILABLE';
+  var OIDO_JURASICO_PLAYBACK_FAILED = 'OIDO_JURASICO_PLAYBACK_FAILED';
+  var OIDO_JURASICO_PLAYBACK_ERROR_CODES = Object.freeze([OIDO_JURASICO_AUDIO_UNAVAILABLE, OIDO_JURASICO_PLAYBACK_FAILED]);
 
   function generateRequestId() {
     return 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -232,6 +266,16 @@
 
   function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  /** `YYYY-MM-DD` from the device's local calendar (getFullYear/getMonth/getDate, never the UTC getters) -- deliberately date-only, no time-of-day, for the Oído Jurásico playback-error diagnostics below (TRIOFSND-271). */
+  function localDateString(dateObj) {
+    var d = dateObj instanceof Date ? dateObj : new Date();
+    var month = String(d.getMonth() + 1);
+    var day = String(d.getDate());
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+    return d.getFullYear() + '-' + month + '-' + day;
   }
 
   /** Resolves scoring.js under Node/Jest via `require`, or `window.DinoQuiz.scoring` in the browser -- same fallback shape as roundDiagnosticsService.js's own resolveRoundContract. */
@@ -322,6 +366,8 @@
     this.clasificaLevelStats = this._loadClasificaLevelStats();
     this.clasificaProcessedMatchIds = this._loadClasificaProcessedMatchIds();
     this.clasificaDiagnostics = this._loadClasificaDiagnostics();
+    this.oidoJurasicoPlaybackErrors = this._loadOidoJurasicoPlaybackErrors();
+    this.oidoJurasicoMissingCacheResourceCounts = this._loadLevelCounts(OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY);
   }
 
   LogService.prototype._loadLogs = function () {
@@ -804,6 +850,97 @@
     return this.clasificaDiagnostics.slice();
   };
 
+  /**
+   * Oído Jurásico diagnostics and aggregated metrics (TRIOFSND-271, PRD
+   * "Diagnóstico y métricas agregadas almacenadas únicamente en el
+   * dispositivo"). "Partidas iniciadas/completadas/abandonadas por nivel" and
+   * "aciertos"/"estrellas" are already covered by the generic round-contract-
+   * family counters above (`logRoundGameStarted`/`logRoundGameCompleted`/
+   * `logRoundGameAbandoned`/`logRoundCorrectAnswer`/`logRoundStarsEarned`) --
+   * Oído Jurásico is just another `modeId` (`OIDO_JURASICO_MODE_ID`, exported
+   * below) through that same modeId+level family, same as Parejas above, so
+   * this never re-declares a parallel set of Oído-Jurásico-only counters for
+   * those. Two genuinely new, mode-specific stores are added here:
+   *
+   * `logOidoJurasicoPlaybackError(code)`/`getOidoJurasicoPlaybackErrors()`
+   * record one entry per failed attempt to play the round's sound
+   * (oidoJurasicoAudioService.js's `STATUS.ERROR`), each carrying only
+   * `code` (one of the two exported `OIDO_JURASICO_AUDIO_UNAVAILABLE`/
+   * `OIDO_JURASICO_PLAYBACK_FAILED` codes -- no other code is accepted),
+   * `mode` (`OIDO_JURASICO_MODE_ID`) and a local calendar `date`
+   * (`localDateString`, `YYYY-MM-DD` from the device's own clock, never a
+   * full timestamp) -- deliberately never the round's creature id, its
+   * sound file or any other player content. Stored under their own
+   * `dinoquiz:oidoJurasicoPlaybackErrors` key, same array-with-MAX_LOGS-
+   * rotation shape as `clasificaDiagnostics`, never pushed into the
+   * transmittable `logs` array, so never reachable via
+   * `getLogsPayload()`/`sendLogs()`.
+   *
+   * `logOidoJurasicoMissingCacheResource(resourceId)`/
+   * `getOidoJurasicoMissingCacheResourceCounts()` tally, per stable resource
+   * identifier (e.g. the precached sound's file path -- a technical asset
+   * name, never round content), how many times the mode looked for that
+   * resource in the Cache Storage populated by service-worker.js's
+   * `PRECACHE_URLS` and didn't find it. Same aggregated, local-only,
+   * never-transmitted-by-sendLogs counter shape as
+   * `roundGenerationFailureCounts` above.
+   *
+   * Neither store is reset by `clearLogs()` -- same choice already made for
+   * the generic round-contract counters and `modeBlockedLogs` above, which
+   * `clearLogs()` deliberately leaves alone.
+   */
+  LogService.prototype._loadOidoJurasicoPlaybackErrors = function () {
+    try {
+      var stored = this.storageAdapter.getItem(OIDO_JURASICO_PLAYBACK_ERRORS_KEY);
+      var parsed = stored ? JSON.parse(stored) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load Oído Jurásico playback errors from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveOidoJurasicoPlaybackErrors = function () {
+    try {
+      if (this.oidoJurasicoPlaybackErrors.length > MAX_LOGS) {
+        this.oidoJurasicoPlaybackErrors = this.oidoJurasicoPlaybackErrors.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(OIDO_JURASICO_PLAYBACK_ERRORS_KEY, JSON.stringify(this.oidoJurasicoPlaybackErrors));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save Oído Jurásico playback errors to storage', error);
+    }
+  };
+
+  /** Records one failed Oído Jurásico playback attempt: `code` must be one of `OIDO_JURASICO_AUDIO_UNAVAILABLE`/`OIDO_JURASICO_PLAYBACK_FAILED`. Never any round content -- only `code`, `mode` and today's local date. */
+  LogService.prototype.logOidoJurasicoPlaybackError = function (code) {
+    if (OIDO_JURASICO_PLAYBACK_ERROR_CODES.indexOf(code) === -1) {
+      console.warn('DinoQuiz: logOidoJurasicoPlaybackError requires one of the supported Oído Jurásico playback error codes');
+      return false;
+    }
+
+    var entry = { code: code, mode: OIDO_JURASICO_MODE_ID, date: localDateString() };
+    this.oidoJurasicoPlaybackErrors.push(entry);
+    this._saveOidoJurasicoPlaybackErrors();
+    return true;
+  };
+
+  LogService.prototype.getOidoJurasicoPlaybackErrors = function () {
+    return this.oidoJurasicoPlaybackErrors.slice();
+  };
+
+  /** Tallies one more Oído Jurásico sound resource that was looked for in the Cache Storage precache and not found, identified only by a stable `resourceId` (e.g. its precached file path -- never round content). */
+  LogService.prototype.logOidoJurasicoMissingCacheResource = function (resourceId) {
+    if (typeof resourceId !== 'string' || resourceId.length === 0) {
+      console.warn('DinoQuiz: logOidoJurasicoMissingCacheResource requires a valid resourceId');
+      return 0;
+    }
+    return this._incrementLevelCount(OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY, this.oidoJurasicoMissingCacheResourceCounts, resourceId);
+  };
+
+  LogService.prototype.getOidoJurasicoMissingCacheResourceCounts = function () {
+    return Object.assign({}, this.oidoJurasicoMissingCacheResourceCounts);
+  };
+
   LogService.prototype.logAppAccess = function (metadata) {
     this.logEvent('app_access', metadata);
   };
@@ -960,6 +1097,11 @@
       CLASIFICA_ROUNDS_PER_GAME: CLASIFICA_ROUNDS_PER_GAME,
       CLASIFICA_MISSING_CREATURE_RECORD: CLASIFICA_MISSING_CREATURE_RECORD,
       CLASIFICA_INVALID_DIET: CLASIFICA_INVALID_DIET,
+      OIDO_JURASICO_PLAYBACK_ERRORS_KEY: OIDO_JURASICO_PLAYBACK_ERRORS_KEY,
+      OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY: OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
+      OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };
@@ -976,6 +1118,9 @@
       CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
       CLASIFICA_MISSING_CREATURE_RECORD: CLASIFICA_MISSING_CREATURE_RECORD,
       CLASIFICA_INVALID_DIET: CLASIFICA_INVALID_DIET,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
+      OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
     };

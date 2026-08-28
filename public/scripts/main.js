@@ -244,6 +244,7 @@
   var MAZE_HASH = '#/laberinto';
   var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
   var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
+  var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -255,6 +256,26 @@
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
       loc.hash = MAZE_HASH;
+    }
+  }
+
+  // Oído Jurásico route (TRIOFSND-270): mirrors the Laberinto hash route
+  // above -- its own fixed 10-round game (no cross-game level chain, same
+  // shape as Laberinto's own single-level game) lives behind its own hash so
+  // handleModeSelected/renderRoute can navigate to and re-enter it exactly
+  // like Laberinto, instead of falling through to the Quiz's level orchestrator.
+  var OIDO_JURASICO_HASH = '#/oido-jurasico';
+  var OIDO_JURASICO_MODE_ID = 'oidoJurasico'; // mirrors src/game/modesCatalog.js MODE_IDS.OIDO_JURASICO
+
+  function isOidoJurasicoRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === OIDO_JURASICO_HASH;
+  }
+
+  function navigateToOidoJurasico(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = OIDO_JURASICO_HASH;
     }
   }
 
@@ -272,6 +293,12 @@
         renderResultsScreen:
           fromWindow.renderResultsScreen || require('../../src/screens/ResultsScreen').renderResultsScreen,
         renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
+        renderOidoJurasicoIntro:
+          fromWindow.renderOidoJurasicoIntro || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoIntro,
+        renderOidoJurasicoScreen:
+          fromWindow.renderOidoJurasicoScreen || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoScreen,
+        renderShadowGuessScreen:
+          fromWindow.renderShadowGuessScreen || require('../../src/screens/ShadowGuessScreen').renderShadowGuessScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -337,6 +364,124 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.maze) || null;
+  }
+
+  /**
+   * Resolves public/scripts/oidoJurasicoScreen.js's non-rendering exports
+   * (round generation, the intro-seen flag helpers) -- same require-or-
+   * `window.DinoQuiz` pattern as `resolveMazeGame` above, but nested under
+   * `window.DinoQuiz.game.oidoJurasico` since that one file's `api` object
+   * covers both the screens (flat on `window.DinoQuiz.screens`, see
+   * `resolveScreenRenderers`) and the game logic (nested here).
+   */
+  function resolveOidoJurasicoGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/screens/OidoJurasicoScreen');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.oidoJurasico) || null;
+  }
+
+  /**
+   * Resolves public/scripts/roundContract.js (TRIOFSND-241), the shared
+   * "start a game, run exactly ROUNDS_PER_GAME (10) rounds, score/advance
+   * once each" contract Oído Jurásico's flat, level-less game drives instead
+   * of hand-rolling a fourth start/evaluate/advance loop -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveGameFlow` above.
+   */
+  function resolveRoundContract(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/game/roundContract');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.roundContract) || null;
+  }
+
+  /**
+   * Resolves public/scripts/shadowGuessGame.js (TRIOFSND-265), the
+   * browser-runnable Adivina la sombra round/level orchestrator -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveMazeGame` above.
+   * Registered nested under `window.DinoQuiz.game.shadowGuess`.
+   */
+  function resolveShadowGuessGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./shadowGuessGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.shadowGuess) || null;
+  }
+
+  /**
+   * Resolves public/scripts/modesCatalog.js the same require-or-window way,
+   * so `renderModeSelector` below can override just the Sombra card's
+   * availability verdict without modeSelectorScreen.js ever needing to know
+   * about that override (see `evaluateModesWithShadowOverride`).
+   */
+  function resolveModesCatalog(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./modesCatalog');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.modesCatalog) || null;
+  }
+
+  /**
+   * Resolves the real, verified `isShadowModeUnlocked` check (TRIOFSND-265,
+   * src/data/creatureSheet.js's >=12 approved-creature gate) via
+   * shadowGuessGame.js, which already exposes it under both Node/Jest (the
+   * real creatureSheet.js check) and the real, unbundled browser (a local
+   * mirror of the same roster) -- see that file's own doc comment for why it
+   * can't `require('../../src/data/creatureSheet')` directly in the browser.
+   */
+  function resolveIsShadowModeUnlocked(win) {
+    var shadowGuessGameApi = resolveShadowGuessGame(win);
+    if (shadowGuessGameApi && typeof shadowGuessGameApi.isShadowModeUnlocked === 'function') {
+      return shadowGuessGameApi.isShadowModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
+   * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
+   * generic MIN_CREATURES/requireVisuallyDifferentiable requirement) still
+   * evaluates Sombra against `buildCurrentResourceCatalog`'s placeholder,
+   * which marks every shipped dinosaur `visuallyDifferentiable: true` until a
+   * future ticket wires the real creature sheet into that generic engine
+   * (see modesCatalog.js's own doc comment) -- so today it can report Sombra
+   * "available" even when fewer than 12 creatures have actually cleared
+   * visual review. This wraps the real `evaluateModes` and replaces just the
+   * Sombra verdict with the real `isShadowModeUnlocked` check (TRIOFSND-265),
+   * leaving every other mode's verdict untouched.
+   */
+  function evaluateModesWithShadowOverride(catalog, modes) {
+    var modesCatalog = resolveModesCatalog();
+    var results = modesCatalog.evaluateModes(catalog, modes);
+    var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
+
+    return results.map(function (verdict) {
+      if (verdict.modeId !== SOMBRA_MODE_ID) {
+        return verdict;
+      }
+      if (isShadowModeUnlocked()) {
+        return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+      }
+      return {
+        modeId: SOMBRA_MODE_ID,
+        available: false,
+        cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
+        details: null,
+      };
+    });
   }
 
   /**
@@ -495,6 +640,18 @@
     function startMode() {
       if (modeId === MAZE_MODE_ID) {
         navigateToMaze();
+        return;
+      }
+      if (modeId === OIDO_JURASICO_MODE_ID) {
+        navigateToOidoJurasico();
+        return;
+      }
+      if (modeId === SOMBRA_MODE_ID) {
+        // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
+        // procedural round generator (shadowGuessGame.js) instead of the
+        // question-bank-driven orchestrator below -- see
+        // startShadowGuessLevelGame's own doc comment.
+        startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -1455,6 +1612,382 @@
   }
 
   /**
+  /**
+   * Adivina la sombra mode integration (TRIOFSND-265): unlike Laberinto
+   * (a single fixed-level game per hash route), this mode plays through the
+   * same multi-level unlock chain as Quiz (`playLevel`/`finishLevel`/
+   * `startLevelGame` above) -- `playShadowGuessLevel`/`finishShadowGuessLevel`/
+   * `startShadowGuessLevelGame` mirror that same shape exactly, but drive
+   * shadowGuessGame.js's procedural rounds and shadowGuessScreen.js instead
+   * of the question bank and questionScreen.js.
+   */
+
+  /** Renders `levelGame.rounds[levelGame.state.questionIndex]` and recurses (or completes the level) once 'Siguiente' is tapped -- mirrors `renderQuestionAt`'s own advance loop. */
+  function renderShadowRoundAt(container, renderers, levelGame, onGameComplete) {
+    var round = levelGame.rounds[levelGame.state.questionIndex];
+
+    return renderers.renderShadowGuessScreen(container, round, {
+      score: levelGame.state.score,
+      roundNumber: levelGame.state.questionIndex + 1,
+      totalRounds: levelGame.rounds.length,
+      onAnswer: function (result) {
+        levelGame.state.score = result.score;
+        levelGame.state.answers = levelGame.state.answers.concat([
+          { correctId: result.correctId, selectedId: result.selectedId, isCorrect: result.isCorrect },
+        ]);
+      },
+      onNext: function () {
+        levelGame.state.questionIndex += 1;
+        if (levelGame.state.questionIndex >= levelGame.rounds.length) {
+          onGameComplete(levelGame.state);
+        } else {
+          renderShadowRoundAt(container, renderers, levelGame, onGameComplete);
+        }
+      },
+    });
+  }
+
+  /** Plays one already-started Sombra level end to end, then resolves what happens next via shadowGuessGame.js's `completeLevel` and hands off to `finishShadowGuessLevel` -- mirrors `playLevel` exactly. */
+  function playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, ctx) {
+    var gameFlow = resolveGameFlow();
+
+    return renderShadowRoundAt(container, renderers, levelGame, function (finalState) {
+      finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+      var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+      finalState.bestScore = bestScoreAndStreak.bestScore;
+      finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+      var shadowGuessGameApi = resolveShadowGuessGame();
+      var outcome = shadowGuessGameApi.completeLevel({
+        level: levelGame.level,
+        answers: finalState.answers,
+        randomFn: ctx.randomFn,
+      });
+
+      if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+        exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+        return;
+      }
+
+      finishShadowGuessLevel(container, renderers, doc, fetchFn, levelGame.level, finalState, outcome, ctx);
+    });
+  }
+
+  /** Renders Resultados for the Sombra level just finished, persisting/reading progress through the same per-mode modeProgressStorage.js instance every mode uses -- mirrors `finishLevel` exactly (see that function's own doc comment). */
+  function finishShadowGuessLevel(container, renderers, doc, fetchFn, level, finalState, outcome, ctx) {
+    var gameFlow = resolveGameFlow();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId;
+
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
+          level: level,
+        });
+      });
+    }
+
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return Promise.resolve(ctx.maxUnlockedLevelPromise).then(function (maxLevelUnlocked) {
+      return renderers.renderResultsScreen(container, {
+        score: finalState.score,
+        maxScore: gameFlow.QUESTIONS_PER_GAME,
+        maxStreak: finalState.maxStreak,
+        bestScore: finalState.bestScore,
+        bestStreak: finalState.bestStreak,
+        level: level,
+        levelOutcome: outcome,
+        maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+        adsRemoved: loadAdsRemovedState(ctx.storageObj),
+        onPlayAgain: function () {
+          if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+            ctx.analyticsStorage.recordEvent('replay_pulsado');
+          }
+          if (!outcome.gameOver && outcome.nextLevelGame) {
+            playShadowGuessLevel(container, renderers, doc, fetchFn, outcome.nextLevelGame, ctx);
+          } else {
+            startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx);
+          }
+        },
+        onExit: function () {
+          var homeStorage = resolveHomeStorage();
+          renderHome(
+            doc,
+            renderers.renderHomeScreen,
+            fetchFn,
+            homeStorage,
+            function () {
+              navigateToPrivacyPolicy();
+            },
+            homeStorage
+          );
+        },
+      });
+    });
+  }
+
+  /** Starts (or restarts) the Sombra multi-level game at `ctx.level` (level 1 by default) -- mirrors `startLevelGame` exactly, using shadowGuessGame.js's own procedural rounds instead of the question bank. */
+  function startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var shadowGuessGameApi = resolveShadowGuessGame();
+    var gameFlow = resolveGameFlow();
+    if (!shadowGuessGameApi || !gameFlow || !renderers || typeof renderers.renderShadowGuessScreen !== 'function') {
+      return null;
+    }
+
+    var modeId = SOMBRA_MODE_ID;
+    var resolvedCtx = {
+      randomFn: ctx.randomFn,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
+    };
+
+    persistLastMode(modeId, ctx.storageObj);
+
+    var levelGame = shadowGuessGameApi.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
+      randomFn: ctx.randomFn,
+    });
+
+    if (levelGame && levelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, levelGame);
+    }
+
+    return playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, resolvedCtx);
+  }
+
+  /**
+   * Oído Jurásico mode integration (TRIOFSND-270): a fixed, level-less
+   * ROUNDS_PER_GAME-round "partida" (mirrors Laberinto's own flat game
+   * shape, `startMazeGame`/`playMazeRound`/`finishMazeGame` above), but
+   * driven by public/scripts/roundContract.js's shared start/evaluate/
+   * advance contract instead of a bespoke per-mode game module -- Oído
+   * Jurásico's own round generation
+   * (oidoJurasicoScreen.js's `generateOidoJurasicoRound`) is exactly the one
+   * piece that contract asks a mode to supply.
+   */
+
+  /**
+   * Renders `session.round` and drives it to completion (answer -> feedback
+   * -> "Siguiente"), then either the next round or Resultados, exactly
+   * mirroring `playMazeRound`'s shape. `roundContractApi.evaluateAnswer`
+   * rejects a second answer for the same round (AC: "selección de respuesta
+   * sin doble conteo") independently of the screen's own `answered` guard;
+   * `advanceRound` is the single place that decides the game is over once
+   * the round just answered was the 10th (AC: "bucle de exactamente 10
+   * rondas") -- this function never counts rounds itself.
+   */
+  function playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    return renderers.renderOidoJurasicoScreen(container, session.round, {
+      score: session.state.score,
+      roundNumber: session.roundIndex + 1,
+      totalRounds: session.roundCount,
+      storageObj: ctx.storageObj,
+      onAnswer: function (result) {
+        var evaluated = roundContractApi.evaluateAnswer(session, {
+          isCorrect: result.isCorrect,
+          selectedId: result.selectedId,
+          correctId: result.correctId,
+        });
+        if (evaluated.accepted) {
+          session = evaluated.session;
+        }
+      },
+      onNext: function () {
+        var advanced = roundContractApi.advanceRound(session);
+        if (!advanced.accepted) {
+          return;
+        }
+        session = advanced.session;
+
+        if (advanced.gameOver) {
+          finishOidoJurasicoGame(container, renderers, doc, fetchFn, session.state, ctx);
+        } else {
+          playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+        }
+      },
+      // AC: "bloqueo controlado y accesible con vuelta al selector si falta
+      // un recurso" / "aviso de dinoquiz:muted con opciones de ... volver".
+      onBack: function () {
+        returnToModeSelectorFromOidoJurasico(doc, fetchFn);
+      },
+      // Keeps the shared #mute-toggle button (outside #app) in sync after
+      // "Activar sonido" writes the mute flag directly via appShell.js.
+      onUnmute: function () {
+        renderMuteToggle(doc);
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Oído Jurásico game; 'Volver a jugar' starts a fresh one, 'Salir' goes to Inicio. Mirrors `finishMazeGame`. */
+  function finishOidoJurasicoGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    // TRIOFSND-253: this mode's own result, scoped by modeId so it never
+    // reads/overwrites a different mode's progression (see finishLevel's own
+    // doc comment on the same modeProgressStorage).
+    if (ctx.modeProgressStorage && typeof ctx.modeProgressStorage.recordResult === 'function') {
+      var roundContractApi = resolveRoundContract();
+      ctx.modeProgressStorage.recordResult(OIDO_JURASICO_MODE_ID, {
+        score: finalState.score,
+        maxScore: roundContractApi ? roundContractApi.ROUNDS_PER_GAME : 10,
+      });
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        navigateHome();
+      },
+    });
+  }
+
+  /** Starts a fresh Oído Jurásico game: builds the round context/session via roundContract.js and renders its first round. Persists the last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`. */
+  function startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var roundContractApi = resolveRoundContract();
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    if (!roundContractApi || !oidoJurasicoGame || !renderers || typeof renderers.renderOidoJurasicoScreen !== 'function') {
+      return null;
+    }
+
+    persistLastMode(OIDO_JURASICO_MODE_ID, ctx.storageObj);
+
+    var context = oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn });
+    var session = roundContractApi.startGame({
+      generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+      context: context,
+    });
+
+    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+  }
+
+  /**
+   * "Volver al selector de juegos" (AC, from the blocked/muted/playback-error
+   * panels): the mode selector has no hash route of its own (it only ever
+   * renders as a step between the age gate and a chosen mode, see
+   * `renderModeSelector`), so this re-fetches the same i18n resources that
+   * step normally already has in hand and renders it directly into `#app`,
+   * clearing the Oído Jurásico hash first so a later refresh/back doesn't
+   * re-enter the game that was just left.
+   */
+  function returnToModeSelectorFromOidoJurasico(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      navigateHome();
+      return null;
+    }
+
+    navigateHome();
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    return loadHomeResources(fetchFn).then(function (resources) {
+      return renderModeSelector(container, renderers, loadQuestions(), doc, fetchFn, resources, ctx);
+    });
+  }
+
+  /**
+   * Renders the Oído Jurásico route (#/oido-jurasico): shows the localized
+   * pre-game explanation once, ever, before this device's first game (AC:
+   * "explicación previa localizada antes de la primera partida",
+   * `hasSeenIntro`/`markIntroSeen`), then starts a fresh game every time --
+   * mirrors `renderMazeRoute`'s full re-render on every entry.
+   */
+  function renderOidoJurasicoRoute(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      return null;
+    }
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    var alreadySeenIntro =
+      oidoJurasicoGame && typeof oidoJurasicoGame.hasSeenIntro === 'function' && oidoJurasicoGame.hasSeenIntro(homeStorage);
+
+    if (alreadySeenIntro || typeof renderers.renderOidoJurasicoIntro !== 'function') {
+      return startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+    }
+
+    return renderers.renderOidoJurasicoIntro(container, {
+      onContinue: function () {
+        if (oidoJurasicoGame && typeof oidoJurasicoGame.markIntroSeen === 'function') {
+          oidoJurasicoGame.markIntroSeen(homeStorage);
+        }
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
+    });
+  }
+
+  /**
    * Mode selector (TRIOFSND-232, PRD "Selector ilustrado de modos"): rendered
    * right after the age gate resolves and before any game starts, so the
    * player always picks a mode instead of always landing on Quiz. Selecting
@@ -1497,6 +2030,12 @@
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
+      // TRIOFSND-265: overrides the Sombra card's availability verdict with
+      // the real isShadowModeUnlocked check -- see
+      // evaluateModesWithShadowOverride's own doc comment. A missing
+      // modesCatalog.js (e.g. failed to load) falls back to
+      // modeSelectorScreen.js's own default resolution untouched.
+      evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
@@ -2414,6 +2953,10 @@
       return renderMazeRoute(doc, fetchFn);
     }
 
+    if (isOidoJurasicoRoute(loc)) {
+      return renderOidoJurasicoRoute(doc, fetchFn);
+    }
+
     if (isPrivacyPolicyRoute(loc)) {
       return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
         navigateHome(loc);
@@ -2565,9 +3108,29 @@
       renderModeSelector: renderModeSelector,
       QUIZ_MODE_ID: QUIZ_MODE_ID,
       MAZE_MODE_ID: MAZE_MODE_ID,
+      SOMBRA_MODE_ID: SOMBRA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
+      resolveShadowGuessGame: resolveShadowGuessGame,
+      resolveModesCatalog: resolveModesCatalog,
+      resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
+      evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
+      renderShadowRoundAt: renderShadowRoundAt,
+      playShadowGuessLevel: playShadowGuessLevel,
+      finishShadowGuessLevel: finishShadowGuessLevel,
+      startShadowGuessLevelGame: startShadowGuessLevelGame,
+      resolveOidoJurasicoGame: resolveOidoJurasicoGame,
+      resolveRoundContract: resolveRoundContract,
+      OIDO_JURASICO_HASH: OIDO_JURASICO_HASH,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      isOidoJurasicoRoute: isOidoJurasicoRoute,
+      navigateToOidoJurasico: navigateToOidoJurasico,
+      startOidoJurasicoGame: startOidoJurasicoGame,
+      playOidoJurasicoRound: playOidoJurasicoRound,
+      finishOidoJurasicoGame: finishOidoJurasicoGame,
+      returnToModeSelectorFromOidoJurasico: returnToModeSelectorFromOidoJurasico,
+      renderOidoJurasicoRoute: renderOidoJurasicoRoute,
     };
   }
 })();
