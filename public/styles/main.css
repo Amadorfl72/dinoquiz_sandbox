@@ -2593,3 +2593,394 @@ body {
   font-weight: 700;
   color: var(--color-text);
 }
+
+/*
+ * Oído Jurásico pre-game explanation (TRIOFSND-270): a small standalone
+ * screen shown once, ever, per device before the first game -- layout
+ * mirrors .shadow-guess-screen__blocked (icon, heading, message, one
+ * button), centered and capped for 375px.
+ */
+.oido-jurasico-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 16px;
+}
+
+.oido-jurasico-intro__icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.oido-jurasico-intro__heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.oido-jurasico-intro__message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.oido-jurasico-intro__continue-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-intro__continue-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-intro__continue-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-intro__continue-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+/*
+ * Oído Jurásico board (TRIOFSND-270): layout mirrors .shadow-guess-screen
+ * (title/instructions/progress/score, then the round's own content, then a
+ * 2-column options grid) -- same "listen/look, then pick one of four" shape,
+ * already proven to fit 375px with no horizontal scroll.
+ */
+.oido-jurasico-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.oido-jurasico-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.oido-jurasico-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.oido-jurasico-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  max-width: 100%;
+}
+
+.oido-jurasico-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+  background-color: var(--color-stars);
+}
+
+.oido-jurasico-screen__score {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__sound-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.oido-jurasico-screen__play-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
+  padding: 16px 28px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__play-button::before {
+  content: '🔊';
+}
+
+.oido-jurasico-screen__play-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__play-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__play-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.oido-jurasico-screen__option {
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  padding: 16px 20px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
+  font-family: inherit;
+  border-radius: 16px;
+  border: 3px solid var(--color-text);
+  background-color: var(--color-option-bg);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.oido-jurasico-screen__option:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.oido-jurasico-screen__option:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.oido-jurasico-screen__option:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__option:disabled {
+  cursor: default;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 1) {
+  background-color: #1565c0;
+  border-color: #0d47a1;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 2) {
+  background-color: #6a1b9a;
+  border-color: #4a0072;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 3) {
+  background-color: #00695c;
+  border-color: #003d33;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 4) {
+  background-color: #fbc02d;
+  border-color: #f57f17;
+  color: #1b5e20;
+}
+
+.oido-jurasico-screen__option--correct {
+  border-width: 6px;
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.oido-jurasico-screen__option--neutral {
+  border-color: #607d8b;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.oido-jurasico-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+
+.oido-jurasico-screen__blocked-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.oido-jurasico-screen__blocked-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/*
+ * Muted/playback-error notices (AC: "aviso de dinoquiz:muted con opciones de
+ * activar sonido o volver"; "bloqueo controlado ... si falta un recurso"):
+ * a bordered panel using --color-stars (amber) as a non-alarming attention
+ * accent -- this app never uses red, per the shared "no negative feedback"
+ * rule question-screen/shadow-guess-screen already follow for a wrong
+ * answer.
+ */
+.oido-jurasico-screen__muted-notice,
+.oido-jurasico-screen__error-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+  padding: 16px;
+  border: 3px solid var(--color-stars);
+  border-radius: 16px;
+  background-color: var(--color-option-bg);
+}
+
+.oido-jurasico-screen__muted-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__muted-message,
+.oido-jurasico-screen__error-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__unmute-button,
+.oido-jurasico-screen__back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 10px 24px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__unmute-button {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__unmute-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__unmute-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__back-button {
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+}
+
+.oido-jurasico-screen__back-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.oido-jurasico-screen__back-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.oido-jurasico-screen__unmute-button:focus-visible,
+.oido-jurasico-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}

@@ -258,6 +258,26 @@
     }
   }
 
+  // Oído Jurásico route (TRIOFSND-270): mirrors the Laberinto hash route
+  // above -- its own fixed 10-round game (no cross-game level chain, same
+  // shape as Laberinto's own single-level game) lives behind its own hash so
+  // handleModeSelected/renderRoute can navigate to and re-enter it exactly
+  // like Laberinto, instead of falling through to the Quiz's level orchestrator.
+  var OIDO_JURASICO_HASH = '#/oido-jurasico';
+  var OIDO_JURASICO_MODE_ID = 'oidoJurasico'; // mirrors src/game/modesCatalog.js MODE_IDS.OIDO_JURASICO
+
+  function isOidoJurasicoRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === OIDO_JURASICO_HASH;
+  }
+
+  function navigateToOidoJurasico(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = OIDO_JURASICO_HASH;
+    }
+  }
+
   function resolveScreenRenderers(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
     var fromWindow = (win && win.DinoQuiz && win.DinoQuiz.screens) || {};
@@ -272,6 +292,10 @@
         renderResultsScreen:
           fromWindow.renderResultsScreen || require('../../src/screens/ResultsScreen').renderResultsScreen,
         renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
+        renderOidoJurasicoIntro:
+          fromWindow.renderOidoJurasicoIntro || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoIntro,
+        renderOidoJurasicoScreen:
+          fromWindow.renderOidoJurasicoScreen || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -337,6 +361,41 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.maze) || null;
+  }
+
+  /**
+   * Resolves public/scripts/oidoJurasicoScreen.js's non-rendering exports
+   * (round generation, the intro-seen flag helpers) -- same require-or-
+   * `window.DinoQuiz` pattern as `resolveMazeGame` above, but nested under
+   * `window.DinoQuiz.game.oidoJurasico` since that one file's `api` object
+   * covers both the screens (flat on `window.DinoQuiz.screens`, see
+   * `resolveScreenRenderers`) and the game logic (nested here).
+   */
+  function resolveOidoJurasicoGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/screens/OidoJurasicoScreen');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.oidoJurasico) || null;
+  }
+
+  /**
+   * Resolves public/scripts/roundContract.js (TRIOFSND-241), the shared
+   * "start a game, run exactly ROUNDS_PER_GAME (10) rounds, score/advance
+   * once each" contract Oído Jurásico's flat, level-less game drives instead
+   * of hand-rolling a fourth start/evaluate/advance loop -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveGameFlow` above.
+   */
+  function resolveRoundContract(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/game/roundContract');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.roundContract) || null;
   }
 
   /**
@@ -495,6 +554,10 @@
     function startMode() {
       if (modeId === MAZE_MODE_ID) {
         navigateToMaze();
+        return;
+      }
+      if (modeId === OIDO_JURASICO_MODE_ID) {
+        navigateToOidoJurasico();
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -1451,6 +1514,211 @@
       analyticsStorage: homeStorage,
       storage: homeStorage,
       logger: resolveLogger(),
+    });
+  }
+
+  /**
+   * Oído Jurásico mode integration (TRIOFSND-270): a fixed, level-less
+   * ROUNDS_PER_GAME-round "partida" (mirrors Laberinto's own flat game
+   * shape, `startMazeGame`/`playMazeRound`/`finishMazeGame` above), but
+   * driven by public/scripts/roundContract.js's shared start/evaluate/
+   * advance contract instead of a bespoke per-mode game module -- Oído
+   * Jurásico's own round generation
+   * (oidoJurasicoScreen.js's `generateOidoJurasicoRound`) is exactly the one
+   * piece that contract asks a mode to supply.
+   */
+
+  /**
+   * Renders `session.round` and drives it to completion (answer -> feedback
+   * -> "Siguiente"), then either the next round or Resultados, exactly
+   * mirroring `playMazeRound`'s shape. `roundContractApi.evaluateAnswer`
+   * rejects a second answer for the same round (AC: "selección de respuesta
+   * sin doble conteo") independently of the screen's own `answered` guard;
+   * `advanceRound` is the single place that decides the game is over once
+   * the round just answered was the 10th (AC: "bucle de exactamente 10
+   * rondas") -- this function never counts rounds itself.
+   */
+  function playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    return renderers.renderOidoJurasicoScreen(container, session.round, {
+      score: session.state.score,
+      roundNumber: session.roundIndex + 1,
+      totalRounds: session.roundCount,
+      storageObj: ctx.storageObj,
+      onAnswer: function (result) {
+        var evaluated = roundContractApi.evaluateAnswer(session, {
+          isCorrect: result.isCorrect,
+          selectedId: result.selectedId,
+          correctId: result.correctId,
+        });
+        if (evaluated.accepted) {
+          session = evaluated.session;
+        }
+      },
+      onNext: function () {
+        var advanced = roundContractApi.advanceRound(session);
+        if (!advanced.accepted) {
+          return;
+        }
+        session = advanced.session;
+
+        if (advanced.gameOver) {
+          finishOidoJurasicoGame(container, renderers, doc, fetchFn, session.state, ctx);
+        } else {
+          playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+        }
+      },
+      // AC: "bloqueo controlado y accesible con vuelta al selector si falta
+      // un recurso" / "aviso de dinoquiz:muted con opciones de ... volver".
+      onBack: function () {
+        returnToModeSelectorFromOidoJurasico(doc, fetchFn);
+      },
+      // Keeps the shared #mute-toggle button (outside #app) in sync after
+      // "Activar sonido" writes the mute flag directly via appShell.js.
+      onUnmute: function () {
+        renderMuteToggle(doc);
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Oído Jurásico game; 'Volver a jugar' starts a fresh one, 'Salir' goes to Inicio. Mirrors `finishMazeGame`. */
+  function finishOidoJurasicoGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    // TRIOFSND-253: this mode's own result, scoped by modeId so it never
+    // reads/overwrites a different mode's progression (see finishLevel's own
+    // doc comment on the same modeProgressStorage).
+    if (ctx.modeProgressStorage && typeof ctx.modeProgressStorage.recordResult === 'function') {
+      var roundContractApi = resolveRoundContract();
+      ctx.modeProgressStorage.recordResult(OIDO_JURASICO_MODE_ID, {
+        score: finalState.score,
+        maxScore: roundContractApi ? roundContractApi.ROUNDS_PER_GAME : 10,
+      });
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        navigateHome();
+      },
+    });
+  }
+
+  /** Starts a fresh Oído Jurásico game: builds the round context/session via roundContract.js and renders its first round. Persists the last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`. */
+  function startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var roundContractApi = resolveRoundContract();
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    if (!roundContractApi || !oidoJurasicoGame || !renderers || typeof renderers.renderOidoJurasicoScreen !== 'function') {
+      return null;
+    }
+
+    persistLastMode(OIDO_JURASICO_MODE_ID, ctx.storageObj);
+
+    var context = oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn });
+    var session = roundContractApi.startGame({
+      generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+      context: context,
+    });
+
+    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+  }
+
+  /**
+   * "Volver al selector de juegos" (AC, from the blocked/muted/playback-error
+   * panels): the mode selector has no hash route of its own (it only ever
+   * renders as a step between the age gate and a chosen mode, see
+   * `renderModeSelector`), so this re-fetches the same i18n resources that
+   * step normally already has in hand and renders it directly into `#app`,
+   * clearing the Oído Jurásico hash first so a later refresh/back doesn't
+   * re-enter the game that was just left.
+   */
+  function returnToModeSelectorFromOidoJurasico(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      navigateHome();
+      return null;
+    }
+
+    navigateHome();
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    return loadHomeResources(fetchFn).then(function (resources) {
+      return renderModeSelector(container, renderers, loadQuestions(), doc, fetchFn, resources, ctx);
+    });
+  }
+
+  /**
+   * Renders the Oído Jurásico route (#/oido-jurasico): shows the localized
+   * pre-game explanation once, ever, before this device's first game (AC:
+   * "explicación previa localizada antes de la primera partida",
+   * `hasSeenIntro`/`markIntroSeen`), then starts a fresh game every time --
+   * mirrors `renderMazeRoute`'s full re-render on every entry.
+   */
+  function renderOidoJurasicoRoute(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      return null;
+    }
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    var alreadySeenIntro =
+      oidoJurasicoGame && typeof oidoJurasicoGame.hasSeenIntro === 'function' && oidoJurasicoGame.hasSeenIntro(homeStorage);
+
+    if (alreadySeenIntro || typeof renderers.renderOidoJurasicoIntro !== 'function') {
+      return startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+    }
+
+    return renderers.renderOidoJurasicoIntro(container, {
+      onContinue: function () {
+        if (oidoJurasicoGame && typeof oidoJurasicoGame.markIntroSeen === 'function') {
+          oidoJurasicoGame.markIntroSeen(homeStorage);
+        }
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
     });
   }
 
@@ -2414,6 +2682,10 @@
       return renderMazeRoute(doc, fetchFn);
     }
 
+    if (isOidoJurasicoRoute(loc)) {
+      return renderOidoJurasicoRoute(doc, fetchFn);
+    }
+
     if (isPrivacyPolicyRoute(loc)) {
       return renderPrivacyPolicy(doc, undefined, fetchFn, function () {
         navigateHome(loc);
@@ -2568,6 +2840,17 @@
       resolveGameSessionStorage: resolveGameSessionStorage,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
+      resolveOidoJurasicoGame: resolveOidoJurasicoGame,
+      resolveRoundContract: resolveRoundContract,
+      OIDO_JURASICO_HASH: OIDO_JURASICO_HASH,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      isOidoJurasicoRoute: isOidoJurasicoRoute,
+      navigateToOidoJurasico: navigateToOidoJurasico,
+      startOidoJurasicoGame: startOidoJurasicoGame,
+      playOidoJurasicoRound: playOidoJurasicoRound,
+      finishOidoJurasicoGame: finishOidoJurasicoGame,
+      returnToModeSelectorFromOidoJurasico: returnToModeSelectorFromOidoJurasico,
+      renderOidoJurasicoRoute: renderOidoJurasicoRoute,
     };
   }
 })();
