@@ -1206,25 +1206,27 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     await jest.advanceTimersByTimeAsync(0);
   }
 
-  test('restricción 7 años o menos: el juego siempre termina tras el nivel 1, aunque la puntuación sea perfecta', async () => {
+  test('sin restricción por edad (TRIOFSND-249): con 7 años y puntuación suficiente, el nivel 2 se desbloquea igual que con 8+', async () => {
+    const { DinoQuizStorage } = require('../../src/services/storage/StorageClient');
+    const { createMemoryAdapter } = require('../../src/services/storage/adapters/memoryAdapter');
     const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
-    // A level 2 pool exists too, so a wrong "always unlocks" implementation
-    // would be caught by this test instead of failing to generate anyway.
     const questions = buildLeveledQuestionBank([1, 2]);
+    const storage = new DinoQuizStorage([createMemoryAdapter()]);
 
-    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'seven', randomFn: () => 0 });
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'seven', randomFn: () => 0, storage });
 
-    await playLevelWithPattern('CCCCCCCCCC');
+    // 6/10 meets the quiz threshold regardless of ageBand.
+    await playLevelWithPattern('CCCCCCFFFF');
 
     expect(container.querySelector('.results-screen')).not.toBeNull();
-    expect(container.textContent).toContain(strings.levelOutcome.ageRestricted);
-    expect(container.querySelector('.results-screen__level')).toHaveTextContent('1');
+    expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '2'));
+    expect(container.querySelector('.results-screen__max-level-unlocked')).toHaveTextContent('2');
 
-    // "Volver a jugar" starts over at level 1 (game over, whatever the score).
-    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+    // "Volver a jugar" continues straight into the already-unlocked level 2.
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
     expect(container.querySelector('.age-gate-screen')).toBeNull();
-    expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('2');
   });
 
   test('desbloqueo con 8 años: >=6 aciertos desbloquea y continúa en el nivel siguiente, persistiendo el nivel máximo desbloqueado en el dispositivo', async () => {

@@ -182,8 +182,11 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     expect(currentImageSrc(container)).toContain('dinosaurs/realista/trex.png');
   });
 
-  test('la selección de edad persiste entre partidas de la misma sesión: "Volver a jugar" no vuelve a preguntar y conserva el estilo de imagen', async () => {
-    const questions = buildQuestionBank(10);
+  test('la selección de edad persiste entre partidas de la misma sesión: continuar al siguiente nivel no vuelve a preguntar y conserva el estilo de imagen', async () => {
+    // TRIOFSND-249: progression is no longer age-gated, so 10/10 as a
+    // "seven" ageBand unlocks level 2 the same as an 8+ ageBand would -- a
+    // second level's worth of questions must exist for that to succeed.
+    const questions = buildLeveledQuestionBank([1, 2]);
     await startFromHome(questions);
 
     getByRole(container, 'button', { name: homeStrings.playButton }).click();
@@ -199,7 +202,9 @@ describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image styl
     await jest.advanceTimersByTimeAsync(0);
     expect(container.querySelector('.results-screen')).not.toBeNull();
 
-    getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
+    // 10/10 unlocked level 2, so the main button now reads the next-level
+    // label instead of the generic "Volver a jugar".
+    getByRole(container, 'button', { name: resultsStrings.nextLevelButtonFormat.replace('{level}', '2') }).click();
 
     // No re-prompt: straight back to a question screen, same (realista) style.
     expect(container.querySelector('.age-gate-screen')).toBeNull();
@@ -296,7 +301,10 @@ describe('TRIOFSND-196: privacidad — ni la edad ni el grupo de edad viajan por
   });
 
   test('el flujo completo (Inicio -> age gate -> Quiz -> Resultados -> Volver a jugar -> Salir) nunca expone la edad/grupo de edad en logs, red o almacenamiento', async () => {
-    const questions = buildQuestionBank(10);
+    // TRIOFSND-249: the second playthrough below answers 10/10, which (no
+    // longer age-gated) unlocks level 2 -- a second level's worth of
+    // questions must exist for that to succeed instead of safe-exiting.
+    const questions = buildLeveledQuestionBank([1, 2]);
     const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     jest.spyOn(require('../../src/data/questionBank'), 'loadQuestionBank').mockReturnValue(questions);
