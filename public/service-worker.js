@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v18';
+const SW_VERSION = 'v19';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -107,6 +107,10 @@ const PRECACHE_URLS = [
   '/assets/images/modes/clasifica.svg',
   '/assets/images/modes/ordenaPorTamano.svg',
   '/assets/images/modes/lineaDelTiempo.svg',
+  // Parejas jurásicas card back (TRIOFSND-275): shared face-down artwork for
+  // every card, precached alongside the rest of the mode-specific art (see
+  // public/assets/images/cards/CREDITS.md).
+  '/assets/images/cards/back.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms

@@ -1,7 +1,8 @@
 {
-  "swVersion": "v18",
+  "swVersion": "v19",
   "precacheUrls": [
     "/",
+    "/assets/images/cards/back.svg",
     "/assets/images/dinosaurs/ankylosaurus.svg",
     "/assets/images/dinosaurs/braquiosaurio.svg",
     "/assets/images/dinosaurs/compsognathus.svg",

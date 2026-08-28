@@ -13,7 +13,12 @@
  *   - modes: public/scripts/modesCatalog.js's MODES_CATALOG (the ids the PRD
  *     commits to, in order).
  *   - images: public/scripts/modeSelectorScreen.js's MODE_ILLUSTRATION_SRCS
- *     (one card illustration per mode, PRD "Selector ilustrado de modos").
+ *     (one card illustration per mode, PRD "Selector ilustrado de modos"),
+ *     plus every file under any public/assets/images/<dir>/ that isn't one
+ *     of the sets shared across every mode (creature art reused by several
+ *     modes, or the selector illustrations already covered above) --
+ *     e.g. public/assets/images/cards/ holds the Parejas jurásicas card-back
+ *     art (see that folder's CREDITS.md) and has no other check covering it.
  *   - i18n: public/i18n/es.json's `modes.<id>` entries (PRD constraint "todo
  *     texto debe proceder de public/i18n/") -- checks the *file* is
  *     precached and that every mode actually has copy backing it.
@@ -44,11 +49,33 @@ const { SOUND_SRC } = require('../../public/scripts/soundService');
 // eslint-disable-next-line global-require
 const { SOUND_SOURCES } = require('../../public/scripts/audio');
 
+const IMAGES_DIR = path.resolve(__dirname, '../../public/assets/images');
+
+// Directories under public/assets/images/ whose contents are shared across
+// several modes rather than belonging to one: the creature art (reused by
+// the quiz, sombra, laberinto, etc.) and the selector illustrations
+// (already asserted per-mode above). Any other directory holds art specific
+// to a single mode -- e.g. `cards/` for Parejas jurásicas's card back -- and
+// isn't covered by any of the other checks in this file.
+const SHARED_IMAGE_DIRS = new Set(['dinosaurs', 'fallback', 'realistic', 'modes']);
+
 const MODE_IDS = MODES_CATALOG.map((mode) => mode.id);
 
 function readIndexScriptSrcs() {
   const indexHtml = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
   return Array.from(indexHtml.matchAll(/<script\s+src="([^"]+)"/g)).map((match) => match[1]);
+}
+
+function readModeSpecificImageAssets() {
+  return fs
+    .readdirSync(IMAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !SHARED_IMAGE_DIRS.has(entry.name))
+    .flatMap((dirEntry) =>
+      fs
+        .readdirSync(path.join(IMAGES_DIR, dirEntry.name), { withFileTypes: true })
+        .filter((fileEntry) => fileEntry.isFile() && fileEntry.name !== 'CREDITS.md')
+        .map((fileEntry) => `/assets/images/${dirEntry.name}/${fileEntry.name}`)
+    );
 }
 
 describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
@@ -69,6 +96,14 @@ describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
     MODE_IDS.forEach((modeId) => {
       const src = MODE_ILLUSTRATION_SRCS[modeId];
       expect(typeof src).toBe('string');
+      expect(PRECACHE_URLS).toContain(src);
+    });
+  });
+
+  test('every mode-specific image asset (beyond selector illustrations and shared creature art) is precached', () => {
+    const modeSpecificAssets = readModeSpecificImageAssets();
+    expect(modeSpecificAssets).toContain('/assets/images/cards/back.svg');
+    modeSpecificAssets.forEach((src) => {
       expect(PRECACHE_URLS).toContain(src);
     });
   });
