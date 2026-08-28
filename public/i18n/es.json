@@ -223,8 +223,9 @@
     "heading": "¡Resultados!",
     "scoreLabel": "Puntuación",
     "scoreFormat": "{score}/{total}",
+    "percentageFormat": "Acertaste el {percentage}% de las rondas",
     "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
-    "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
+    "summaryAnnouncement": "Conseguiste {score} de {total} puntos, un {percentage} por ciento de aciertos, {stars} de {maxStars} estrellas. {message}",
     "levelFormat": "Nivel {level}",
     "maxLevelUnlockedFormat": "Nivel máximo desbloqueado: {maxLevel}",
     "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
@@ -238,6 +239,10 @@
     },
     "playAgainButton": "Volver a jugar",
     "nextLevelButtonFormat": "Ir al nivel {level}",
+    "repeatLevelButton": "Repetir este nivel",
+    "repeatLevelButtonFormat": "Repetir el nivel {level}",
+    "goToNextLevelButtonFormat": "Ir al nivel {level}",
+    "backToSelectorButton": "Volver a elegir modo",
     "exitButton": "Salir",
     "messages": [
       "¡Lo has hecho genial! Sigue descubriendo datos curiosos de dinosaurios.",
@@ -495,6 +500,64 @@
     "levelFormat": "Nivel {level}",
     "roundFormat": "Ronda {current} de {total}",
     "nextButton": "Siguiente",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "classify": {
+    "screenTitle": "Clasifica",
+    "instructions": "Mira a la criatura y toca su categoría: carnívoro, herbívoro u omnívoro.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Mira a {dinosaur} y elige su categoría.",
+    "categoriesGroupLabel": "Categorías",
+    "categoryButtonAriaLabelFormat": "{label}: {description}. Toca para elegir esta categoría.",
+    "categoryCorrectAriaLabelFormat": "Categoría correcta: {label}",
+    "categorySelectedAriaLabelFormat": "Tu respuesta: {label}",
+    "categories": {
+      "carnivoro": {
+        "label": "Carnívoro",
+        "description": "Come la carne de otros animales"
+      },
+      "herbivoro": {
+        "label": "Herbívoro",
+        "description": "Come solo plantas"
+      },
+      "omnivoro": {
+        "label": "Omnívoro",
+        "description": "Come plantas y también carne de otros animales"
+      }
+    },
+    "feedback": {
+      "correctMessageFormat": "¡Genial, acertaste! {dinosaur} es {category}.",
+      "incorrectMessageFormat": "¡Buen intento! {dinosaur} es {category}, no {yourCategory}.",
+      "bonusMessage": "¡Bonus por rapidez conseguido!"
+    },
+    "blocked": {
+      "message": "No hemos podido comprobar la categoría de esta criatura todavía. ¡Vamos con otra ronda!",
+      "announcementFormat": "Ronda bloqueada: no hemos podido comprobar la categoría de {dinosaur} todavía. Vamos a intentarlo con otra ronda."
+    },
+    "roundResult": {
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Clasifica completado!",
+      "announcementFormat": "Has terminado Clasifica. Acertaste {score} de {total} rondas.",
+      "message": "¡Bien hecho clasificando a las criaturas! Sigue jugando para conocer más dietas."
+    },
     "dinosaurNames": {
       "trex": "Tyrannosaurus Rex",
       "triceratops": "Triceratops",
