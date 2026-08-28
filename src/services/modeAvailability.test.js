@@ -72,6 +72,51 @@ describe('evaluateModeAvailability', () => {
     expect(quizVerdict.cause).toBe(CATALOG_DUPLICATE_ID_CAUSE);
   });
 
+  test('a field-scoped mode is unaffected by a failure on a field it does not use', () => {
+    const modeDependencies = { visualMode: { ids: ['trex'], fields: ['image'] } };
+    const failures = [{ id: 'trex', rule: 'habitat', cause: CATALOG_FIELD_INVALID_CAUSE }];
+
+    const verdicts = evaluateModeAvailability(failures, modeDependencies);
+
+    expect(verdicts).toEqual([{ modeId: 'visualMode', available: true, cause: null, blockedByIds: [] }]);
+  });
+
+  test('a field-scoped mode is blocked when the failing field is one it declares', () => {
+    const modeDependencies = { visualMode: { ids: ['trex'], fields: ['image'] } };
+    const failures = [{ id: 'trex', rule: 'image', cause: CATALOG_REFERENCE_BROKEN_CAUSE }];
+
+    const verdicts = evaluateModeAvailability(failures, modeDependencies);
+
+    expect(verdicts).toEqual([
+      { modeId: 'visualMode', available: false, cause: CATALOG_REFERENCE_BROKEN_CAUSE, blockedByIds: ['trex'] },
+    ]);
+  });
+
+  test('two modes scoped to different fields of the same id are isolated from each other', () => {
+    const modeDependencies = {
+      visualMode: { ids: ['trex'], fields: ['image'] },
+      habitatMode: { ids: ['trex'], fields: ['habitat'] },
+    };
+    const failures = [{ id: 'trex', rule: 'habitat', cause: CATALOG_FIELD_INVALID_CAUSE }];
+
+    const verdicts = evaluateModeAvailability(failures, modeDependencies);
+
+    expect(verdicts).toEqual([
+      { modeId: 'visualMode', available: true, cause: null, blockedByIds: [] },
+      { modeId: 'habitatMode', available: false, cause: CATALOG_FIELD_INVALID_CAUSE, blockedByIds: ['trex'] },
+    ]);
+  });
+
+  test('a mode with no declared fields is blocked by any failing field on a dependent id', () => {
+    const modeDependencies = { [MODE_IDS.QUIZ]: MODE_CREATURE_DEPENDENCIES[MODE_IDS.QUIZ] };
+    const failures = [{ id: VALID_DINOSAURS[0], rule: 'habitat', cause: CATALOG_FIELD_INVALID_CAUSE }];
+
+    const [quizVerdict] = evaluateModeAvailability(failures, modeDependencies);
+
+    expect(quizVerdict.available).toBe(false);
+    expect(quizVerdict.cause).toBe(CATALOG_FIELD_INVALID_CAUSE);
+  });
+
   test('aggregates every dependent id blocking a mode, not just the first', () => {
     const failures = [
       { id: 'trex', rule: 'habitat', cause: CATALOG_FIELD_INVALID_CAUSE },

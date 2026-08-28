@@ -2,17 +2,30 @@
 
 /**
  * Correlates src/data/creatureCatalog.js's `validateCatalog()` failures with
- * a declared per-mode dependency on catalog ids, so a single broken ficha or
- * reference only blocks the mode(s) that actually read that id -- never the
+ * a declared per-mode dependency on catalog ids/fields, so a single broken
+ * ficha or reference only blocks the mode(s) that actually read the
+ * specific id -- and, when the mode scopes itself to particular fields, only
+ * the mode(s) that actually read the specific field that broke -- never the
  * rest of the eight modes (PRD foundation "Ficha única y verificable para
  * todas las criaturas jugables").
  *
- * Each mode's dependency declaration is `{ ids: string[] }`, the catalog ids
- * that mode reads. 'quiz' is seeded from questionBank's `VALID_DINOSAURS`
- * (every id `public/data/questions.json`'s `dinosaur` field references) --
- * the only mode wired to real gameplay data today; further modes add their
- * own entry to `MODE_CREATURE_DEPENDENCIES` as they land, each isolated the
- * same way.
+ * Each mode's dependency declaration is `{ ids: string[], fields?: string[] }`:
+ * `ids` are the catalog ids that mode reads, `fields` (optional) are the
+ * catalog field names (`validateCatalog()`'s `rule`, e.g. `'image'`,
+ * `'habitat'`) that mode actually uses from those ids. A failure only blocks
+ * the mode when its `id` is in `ids` AND, when `fields` is declared, its
+ * `rule` is in `fields` -- e.g. a mode declaring `fields: ['image']` is
+ * unaffected by a `habitat` failure on an id it depends on. Omitting
+ * `fields` keeps the coarser "any failure on a dependent id blocks" behavior,
+ * for modes that don't (yet) scope themselves to specific fields.
+ *
+ * 'quiz' is seeded from questionBank's `VALID_DINOSAURS` (every id
+ * `public/data/questions.json`'s `dinosaur` field references), with no
+ * `fields` scoping -- it reads its own question data, not creatureCatalog
+ * fields, so any catalog failure on a ficha it depends on is treated as
+ * relevant. Further modes add their own entry to `MODE_CREATURE_DEPENDENCIES`
+ * as they land, each isolated the same way and scoped to `fields` where the
+ * mode only reads specific catalog fields.
  *
  * `evaluateModeAvailability()` reuses `validateCatalog()`'s own cause codes
  * (the `CATALOG_*_CAUSE` constants src/services/logging.js defines) as its
@@ -50,20 +63,27 @@ function normalizeFailures(catalogFailures) {
  * against `catalogFailures` (a `validateCatalog()` result). A mode with no
  * failing dependency is `available: true, cause: null, blockedByIds: []`; a
  * mode is blocked as soon as `catalogFailures` contains an entry whose `id`
- * is one it depends on, and `cause` is that failure's own cause code. A
- * failure for an id no mode depends on -- or a mode with an empty/no
- * declaration -- blocks nothing, so isolated fichas only ever affect their
- * dependents.
+ * is one it depends on -- and, when the mode declares `fields`, whose `rule`
+ * (the broken field/rule name) is also in that list -- and `cause` is that
+ * failure's own cause code. A failure for an id no mode depends on, a
+ * failure for a field a field-scoped mode doesn't use, or a mode with an
+ * empty/no declaration, blocks nothing, so isolated fichas -- or isolated
+ * fields on a ficha -- only ever affect their dependents.
  */
 function evaluateModeAvailability(catalogFailures, modeDependencies = MODE_CREATURE_DEPENDENCIES) {
   const failures = normalizeFailures(catalogFailures);
 
   return Object.keys(modeDependencies).map((modeId) => {
-    const dependency = modeDependencies[modeId];
-    const dependentIds = new Set(Array.isArray(dependency && dependency.ids) ? dependency.ids : []);
-    const blockingFailures = failures.filter(
-      (failure) => failure && isNonEmptyString(failure.id) && dependentIds.has(failure.id)
-    );
+    const dependency = modeDependencies[modeId] || {};
+    const dependentIds = new Set(Array.isArray(dependency.ids) ? dependency.ids : []);
+    const dependentFields =
+      Array.isArray(dependency.fields) && dependency.fields.length > 0 ? new Set(dependency.fields) : null;
+    const blockingFailures = failures.filter((failure) => {
+      if (!failure || !isNonEmptyString(failure.id) || !dependentIds.has(failure.id)) {
+        return false;
+      }
+      return !dependentFields || (isNonEmptyString(failure.rule) && dependentFields.has(failure.rule));
+    });
 
     if (blockingFailures.length === 0) {
       return { modeId, available: true, cause: null, blockedByIds: [] };
