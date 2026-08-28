@@ -121,6 +121,14 @@ const PRECACHE_URLS = [
   '/assets/sounds/correct.wav',
   '/assets/sounds/incorrect.wav',
   '/assets/sounds/fail-neutral.wav',
+  // NOTE: The Oído Jurásico "imagined" creature sounds under
+  // /assets/sounds/oido-jurasico/ are intentionally NOT precached here.
+  // Adding them to PRECACHE_URLS and bumping SW_VERSION is the
+  // responsibility of the later offline-integration task (TRIOFSND-267
+  // scope note); this content-only task ships the assets and credits but
+  // must not touch the precache manifest or the SW version. Until then the
+  // files are still served offline after first fetch via the runtime
+  // cache-first rule for /assets/sounds/ below.
   '/i18n/es.json',
   '/data/questions.json',
   // Creature catalog (TRIOFSND-222): verified per-creature facts (diet,

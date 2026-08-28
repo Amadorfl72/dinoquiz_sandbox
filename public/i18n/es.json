@@ -358,6 +358,29 @@
       "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
     }
   },
+  "oidoJurasico": {
+    "screenTitle": "Oído Jurásico",
+    "imaginedSoundNotice": {
+      "heading": "Un sonido imaginado",
+      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica."
+    },
+    "playButton": "Reproducir sonido",
+    "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",
+    "replayButton": "Escuchar de nuevo",
+    "replayButtonAriaLabel": "Volver a escuchar el sonido imaginado de esta ronda",
+    "mutedNotice": {
+      "heading": "El sonido está silenciado",
+      "message": "Oído Jurásico necesita el sonido activado para poder jugar. Actívalo para escuchar la pista de esta ronda.",
+      "unmuteButton": "Activar sonido",
+      "backButton": "Volver al selector de juegos"
+    },
+    "playbackError": {
+      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo."
+    },
+    "answerReinforcement": {
+      "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    }
+  },
   "parejas": {
     "screenTitle": "Parejas jurásicas",
     "instructions": "Da la vuelta a dos cartas para encontrar la pareja de cada criatura.",
