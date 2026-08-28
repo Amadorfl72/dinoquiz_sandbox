@@ -257,6 +257,23 @@ hardcodeado en el JSON.
   pueda automatizarse por completo, porque su objeto es la exactitud científica del contenido,
   no solo la forma del JSON.
 
+### Contenido i18n de Línea del tiempo (TRIOFSND-292)
+
+`public/i18n/es.json` y `public/i18n/en.json` incluyen la sección `timeline` (nombre del modo,
+instrucción, nombre y etiqueta accesible de cada opción — `triasico`/`jurasico`/`cretacico` —,
+feedback de acierto/error, explicación del intervalo temporal preciso, explicación de que
+Pteranodon es un reptil volador y no un dinosaurio, y el estado bloqueado) que consumirá la
+futura pantalla del modo. Es contenido i18n únicamente: no implementa la mecánica, el selector
+ni la validación de fichas del modo.
+
+Al igual que el resto de contenido educativo del catálogo de criaturas, la instrucción, el
+feedback, la explicación del intervalo y la clasificación de Pteranodon de `timeline` quedan
+**pendientes de revisión humana** bajo el mismo checklist de la Definition of Done descrito en
+"Revisión humana de contenido científico" arriba, antes de desplegar el modo Línea del tiempo:
+en particular, confirmar que el intervalo temporal nunca se presenta como una categoría
+seleccionable (solo como explicación posterior a la respuesta) y que ninguna cadena de
+`timeline` denomina a Pteranodon "dinosaurio".
+
 ## Motor de selección aleatoria de preguntas
 
 [`src/game/questionSelector.js`](src/game/questionSelector.js) implementa la lógica que, al

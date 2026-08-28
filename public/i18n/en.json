@@ -70,5 +70,35 @@
     "answerReinforcement": {
       "message": "Remember: this sound is an imagined interpretation, not a proven scientific reconstruction."
     }
+  },
+  "timeline": {
+    "modeName": "Timeline",
+    "instruction": "In which period did this creature live? Choose Triassic, Jurassic, or Cretaceous.",
+    "options": {
+      "triasico": {
+        "label": "Triassic",
+        "a11yLabel": "Choose the Triassic period"
+      },
+      "jurasico": {
+        "label": "Jurassic",
+        "a11yLabel": "Choose the Jurassic period"
+      },
+      "cretacico": {
+        "label": "Cretaceous",
+        "a11yLabel": "Choose the Cretaceous period"
+      }
+    },
+    "feedback": {
+      "correct": "Correct! It lived mainly in the {periodo}.",
+      "incorrect": "That's not correct. It lived mainly in the {periodo}."
+    },
+    "explanation": {
+      "interval": "Its approximate time range was {intervalo}.",
+      "pteranodon": "Pteranodon was a flying reptile, not a dinosaur."
+    },
+    "locked": {
+      "message": "Timeline isn't available because there aren't enough valid creature cards to complete a game.",
+      "exitLabel": "Back to the game selector"
+    }
   }
 }
