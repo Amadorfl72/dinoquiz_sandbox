@@ -835,6 +835,36 @@
     "compsognathus-20": "El Compsognathus y el Archaeopteryx, una de las aves más primitivas conocidas, vivieron aproximadamente en la misma época y zona, lo que ayuda a estudiar la transición hacia las aves.",
     "compsognathus-21": "Los huesos pequeños y delicados como los del Compsognathus se conservan con más dificultad, lo que complica calcular con precisión medidas como su peso exacto."
   },
+  "timeline": {
+    "modeName": "Línea del tiempo",
+    "instruction": "¿En qué periodo vivió esta criatura? Elige Triásico, Jurásico o Cretácico.",
+    "options": {
+      "triasico": {
+        "label": "Triásico",
+        "a11yLabel": "Elegir el periodo Triásico"
+      },
+      "jurasico": {
+        "label": "Jurásico",
+        "a11yLabel": "Elegir el periodo Jurásico"
+      },
+      "cretacico": {
+        "label": "Cretácico",
+        "a11yLabel": "Elegir el periodo Cretácico"
+      }
+    },
+    "feedback": {
+      "correct": "¡Correcto! Vivió principalmente en el {periodo}.",
+      "incorrect": "No es correcto. Vivió principalmente en el {periodo}."
+    },
+    "explanation": {
+      "interval": "Su intervalo temporal aproximado fue {intervalo}.",
+      "pteranodon": "Pteranodon era un reptil volador, no un dinosaurio."
+    },
+    "locked": {
+      "message": "Línea del tiempo no está disponible porque no hay suficientes fichas válidas para completar una partida.",
+      "exitLabel": "Volver al selector de juegos"
+    }
+  },
   "creatures": {
     "trex": {
       "name": "Tyrannosaurus Rex",
