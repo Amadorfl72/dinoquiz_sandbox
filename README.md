@@ -142,10 +142,10 @@ intente duplicar uno de esos campos. Además, el pool que construye
 cada pregunta tiene una ficha real en el catálogo — cualquier pregunta cuyo `dinosaur` no
 resuelva a una ficha se excluye del pool con el mismo mecanismo `content_validation_failed`
 (regla `dinosaurCatalog`) que las demás validaciones de esta sección, en vez de romper el resto
-del nivel. Como el catálogo (`public/data/creatures.json`) todavía no cubre las 14 especies del
-banco de preguntas, esto excluye hoy del pool las preguntas de las especies aún sin ficha —
-`src/data/questionBank.test.js` documenta ese estado exacto contra el banco y el catálogo
-reales en vez de asumir una cifra fija, para que el test se ajuste solo según el catálogo crezca.
+del nivel. El catálogo (`public/data/creatures.json`) cubre hoy las 14 especies del banco de
+preguntas (cobertura exacta) — `src/data/questionBank.test.js` verifica esa cobertura contra el
+banco y el catálogo reales, en vez de asumir una cifra fija, para que el test detecte cualquier
+regresión si una especie nueva se añade al banco sin su ficha correspondiente.
 
 **AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
 pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver

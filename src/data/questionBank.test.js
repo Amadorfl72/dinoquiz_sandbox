@@ -210,18 +210,18 @@ describe('real question bank (public/data/questions.json)', () => {
   // TRIOFSND-202: getQuestionsByLevel() against the real bank on disk.
   // TRIOFSND-224: the usable pool additionally requires every question's
   // "dinosaur" to have a matching ficha in the real creature catalog
-  // (public/data/creatures.json) -- which today only covers a subset of the
-  // 14 species used across the bank, so a level whose questions reference an
-  // uncatalogued species returns fewer than 30 (or zero), each excluded
-  // entry logged as content_validation_failed with rule "dinosaurCatalog".
-  // Derived from the real catalog/bank instead of a hardcoded count so this
-  // test tracks catalog completeness automatically as creatures.json grows.
-  test('TRIOFSND-224: getQuestionsByLevel only returns questions whose dinosaur has a catalog ficha', () => {
+  // (public/data/creatures.json). The catalog now carries a ficha for every
+  // one of the 14 species used across the bank ("cobertura exacta"), so no
+  // question is excluded by this rule and no "dinosaurCatalog"
+  // content_validation_failed event is ever logged against the real bank --
+  // derived from the real catalog/bank instead of a hardcoded id list so
+  // this test catches a regression the moment a species loses its ficha.
+  test('TRIOFSND-224: exact coverage -- every dinosaur id used by a question has a matching catalog ficha', () => {
     const catalogIds = new Set(loadCreatureCatalog().map((creature) => creature.id));
     const uncataloguedQuestionIds = new Set(
       questions.filter((question) => !catalogIds.has(question.dinosaur)).map((question) => question.id)
     );
-    expect(uncataloguedQuestionIds.size).toBeGreaterThan(0);
+    expect(uncataloguedQuestionIds.size).toBe(0);
 
     VALID_LEVELS.forEach((level) => {
       // A fresh logService per level: getQuestionsByLevel validates the
@@ -229,9 +229,7 @@ describe('real question bank (public/data/questions.json)', () => {
       // logService across levels would double-count the same catalog gaps.
       const logService = buildMemoryLogService();
       const levelQuestions = getQuestionsByLevel(level, { logService });
-      const expectedQuestions = questions.filter(
-        (question) => question.level === level && catalogIds.has(question.dinosaur)
-      );
+      const expectedQuestions = questions.filter((question) => question.level === level);
 
       expect(levelQuestions.map((question) => question.id).sort()).toEqual(
         expectedQuestions.map((question) => question.id).sort()
@@ -239,7 +237,7 @@ describe('real question bank (public/data/questions.json)', () => {
       expect(levelQuestions.every((question) => catalogIds.has(question.dinosaur))).toBe(true);
 
       const uncataloguedEvents = logService.events.filter((event) => event.metadata.rule === 'dinosaurCatalog');
-      expect(uncataloguedEvents.map((event) => event.metadata.id).sort()).toEqual([...uncataloguedQuestionIds].sort());
+      expect(uncataloguedEvents).toEqual([]);
     });
   });
 
