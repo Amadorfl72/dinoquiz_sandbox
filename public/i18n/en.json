@@ -1,0 +1,25 @@
+{
+  "oidoJurasico": {
+    "screenTitle": "Jurassic Hearing",
+    "imaginedSoundNotice": {
+      "heading": "An imagined sound",
+      "message": "No one knows for certain what dinosaurs really sounded like: no real sound has ever been preserved. This sound is an imagined creation made for the game, not a recording or a scientific reconstruction."
+    },
+    "playButton": "Play sound",
+    "playButtonAriaLabel": "Play the imagined sound for this round",
+    "replayButton": "Listen again",
+    "replayButtonAriaLabel": "Listen again to the imagined sound for this round",
+    "mutedNotice": {
+      "heading": "Sound is muted",
+      "message": "Jurassic Hearing needs sound turned on to play. Turn it on to hear this round's clue.",
+      "unmuteButton": "Turn on sound",
+      "backButton": "Back to the game selector"
+    },
+    "playbackError": {
+      "message": "Jurassic Hearing can't continue because the sound couldn't be played. You can go back to the game selector and try another mode."
+    },
+    "answerReinforcement": {
+      "message": "Remember: this sound is an imagined interpretation, not a proven scientific reconstruction."
+    }
+  }
+}

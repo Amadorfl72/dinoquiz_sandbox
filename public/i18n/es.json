@@ -355,10 +355,10 @@
       "heading": "El sonido está silenciado",
       "message": "Oído Jurásico necesita el sonido activado para poder jugar. Actívalo para escuchar la pista de esta ronda.",
       "unmuteButton": "Activar sonido",
-      "backButton": "Volver"
+      "backButton": "Volver al selector de juegos"
     },
     "playbackError": {
-      "message": "No hemos podido reproducir el sonido. Comprueba el volumen de tu dispositivo y vuelve a intentarlo."
+      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo."
     },
     "answerReinforcement": {
       "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
