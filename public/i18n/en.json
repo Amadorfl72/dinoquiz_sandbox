@@ -23,6 +23,29 @@
       "percentage": "Accuracy Percentage",
       "stars": "Stars Earned",
       "progress": "Guess the Shadow Progress"
+    },
+    "optionsGroupLabel": "Answer options",
+    "correctOptionAriaLabelFormat": "Correct answer: {creature}",
+    "selectedOptionAriaLabelFormat": "Your answer: {creature}",
+    "scoreLabel": "Points",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "nextButton": "Next",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "oidoJurasico": {

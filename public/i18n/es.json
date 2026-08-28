@@ -487,6 +487,29 @@
       "percentage": "Porcentaje de aciertos",
       "stars": "Estrellas conseguidas",
       "progress": "Progreso en Adivina la sombra"
+    },
+    "optionsGroupLabel": "Opciones de respuesta",
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {creature}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {creature}",
+    "scoreLabel": "Puntos",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "nextButton": "Siguiente",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "dinosaurNames": {
