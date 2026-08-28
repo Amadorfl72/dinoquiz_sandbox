@@ -758,5 +758,35 @@
     "compsognathus-19": "Las calizas de Solnhofen, en Alemania, conservan detalles extraordinariamente finos gracias a su composición especial, lo que ha permitido estudiar a fondo fósiles como el del Compsognathus.",
     "compsognathus-20": "El Compsognathus y el Archaeopteryx, una de las aves más primitivas conocidas, vivieron aproximadamente en la misma época y zona, lo que ayuda a estudiar la transición hacia las aves.",
     "compsognathus-21": "Los huesos pequeños y delicados como los del Compsognathus se conservan con más dificultad, lo que complica calcular con precisión medidas como su peso exacto."
+  },
+  "creatures": {
+    "trex": {
+      "name": "Tyrannosaurus Rex",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "triceratops": {
+      "name": "Triceratops",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "velociraptor": {
+      "name": "Velociraptor",
+      "habitat": "Desiertos y dunas de Asia (actual Mongolia)"
+    },
+    "estegosaurio": {
+      "name": "Estegosaurio",
+      "habitat": "Llanuras con helechos y coníferas de Norteamérica"
+    },
+    "braquiosaurio": {
+      "name": "Braquiosaurio",
+      "habitat": "Llanuras con ríos y bosques de coníferas de Norteamérica"
+    },
+    "ankylosaurus": {
+      "name": "Ankylosaurus",
+      "habitat": "Llanuras y bosques de Norteamérica"
+    },
+    "pteranodon": {
+      "name": "Pteranodon",
+      "habitat": "Costas y mares interiores de Norteamérica"
+    }
   }
 }

@@ -1,0 +1,135 @@
+[
+  {
+    "id": "trex",
+    "nameKey": "creatures.trex.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 12,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.trex.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/trex.svg",
+    "imageRealistic": "realistic/trex.jpg",
+    "imageFallback": "fallback/trex.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "triceratops",
+    "nameKey": "creatures.triceratops.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 9,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.triceratops.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/triceratops.svg",
+    "imageRealistic": "realistic/triceratops.jpg",
+    "imageFallback": "fallback/triceratops.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "velociraptor",
+    "nameKey": "creatures.velociraptor.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 2,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 75, "finMa": 71 },
+    "habitat": "creatures.velociraptor.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/velociraptor.svg",
+    "imageRealistic": "realistic/velociraptor.jpg",
+    "imageFallback": "fallback/velociraptor.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "estegosaurio",
+    "nameKey": "creatures.estegosaurio.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 9,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 155, "finMa": 150 },
+    "habitat": "creatures.estegosaurio.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/estegosaurio.svg",
+    "imageRealistic": "realistic/estegosaurio.jpg",
+    "imageFallback": "fallback/estegosaurio.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "braquiosaurio",
+    "nameKey": "creatures.braquiosaurio.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 21,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 154, "finMa": 150 },
+    "habitat": "creatures.braquiosaurio.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/braquiosaurio.svg",
+    "imageRealistic": "realistic/braquiosaurio.jpg",
+    "imageFallback": "fallback/braquiosaurio.svg",
+    "fuentes": [
+      {
+        "nombre": "Field Museum, Chicago",
+        "url": "https://www.fieldmuseum.org/"
+      }
+    ]
+  },
+  {
+    "id": "ankylosaurus",
+    "nameKey": "creatures.ankylosaurus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 7,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 68, "finMa": 66 },
+    "habitat": "creatures.ankylosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/ankylosaurus.svg",
+    "imageRealistic": "realistic/ankylosaurus.jpg",
+    "imageFallback": "fallback/ankylosaurus.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "pteranodon",
+    "nameKey": "creatures.pteranodon.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 1.8,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 86, "finMa": 84 },
+    "habitat": "creatures.pteranodon.habitat",
+    "clasificacionCientifica": "reptil_volador",
+    "image": "dinosaurs/pteranodon.svg",
+    "imageRealistic": "realistic/pteranodon.jpg",
+    "imageFallback": "fallback/pteranodon.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  }
+]
