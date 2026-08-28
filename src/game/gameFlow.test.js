@@ -424,29 +424,29 @@ describe('resolveLevelOutcome (TRIOFSND-203)', () => {
     });
   });
 
-  test('ages 6-7 are restricted to level 1 and the game always ends, even with a perfect score', () => {
+  test('ages 6-7 are not restricted: threshold met still unlocks the next level (TRIOFSND-249)', () => {
     ['six', 'seven'].forEach((ageBand) => {
       const outcome = resolveLevelOutcome({
         level: MIN_LEVEL,
-        answers: buildAnswers('CCCCCCCCCC'),
+        answers: buildAnswers('CCCCCCCCCC'), // 10 correct, well above the threshold
         ageBand,
       });
 
       expect(outcome).toEqual({
-        gameOver: true,
-        nextLevel: null,
+        gameOver: false,
+        nextLevel: MIN_LEVEL + 1,
         level: MIN_LEVEL,
         correctCount: 10,
-        reason: 'age_restricted',
+        reason: 'level_up',
       });
     });
   });
 
-  test('treats a missing/unknown ageBand the same as the 6-7 restriction (safe default)', () => {
+  test('a missing/unknown ageBand has no effect on the outcome: the threshold alone decides', () => {
     const outcome = resolveLevelOutcome({ level: MIN_LEVEL, answers: buildAnswers('CCCCCCCCCC') });
 
-    expect(outcome.gameOver).toBe(true);
-    expect(outcome.reason).toBe('age_restricted');
+    expect(outcome.gameOver).toBe(false);
+    expect(outcome.reason).toBe('level_up');
   });
 
   test('derives correctCount exclusively from this level\'s own answers, never a cross-level total', () => {
@@ -601,13 +601,31 @@ describe('resolveLevelOutcome / completeLevel independent per-mode progression (
     expect(second.nextLevel).toBe(4);
   });
 
-  test('defaults to the quiz mode, age-band restriction included, when modeId is omitted', () => {
+  test('defaults to the quiz mode when modeId is omitted, and its threshold alone governs progression regardless of ageBand', () => {
     const outcome = resolveLevelOutcome({
       level: MIN_LEVEL,
-      answers: buildAnswers('CCCCCCCCCC'),
+      answers: buildAnswers('CCCCCCCCCC'), // 10 correct, meets the quiz threshold
       ageBand: 'six',
     });
 
-    expect(outcome.reason).toBe('age_restricted');
+    expect(outcome.reason).toBe('level_up');
+    expect(outcome.nextLevel).toBe(MIN_LEVEL + 1);
+  });
+
+  test('quiz mode, ageBand "seven", threshold met still unlocks the next level (not age-gated)', () => {
+    const outcome = resolveLevelOutcome({
+      modeId: 'quiz',
+      level: MIN_LEVEL,
+      answers: buildAnswers('CCCCCCCCCC'), // 10 correct
+      ageBand: 'seven',
+    });
+
+    expect(outcome).toEqual({
+      gameOver: false,
+      nextLevel: MIN_LEVEL + 1,
+      level: MIN_LEVEL,
+      correctCount: 10,
+      reason: 'level_up',
+    });
   });
 });

@@ -57,12 +57,11 @@
  * another mode's progress, and these functions carry no state of their own
  * between calls (calling them twice with the same level/answers, e.g. a
  * replayed already-cleared level, always returns the same outcome -- there
- * is no counter here to double-increment). The one exception is the ages
- * 6-7 restriction (always stuck at level 1, whatever the score): that is a
- * quiz-only UX rule (only the quiz flow ever resolves an `ageBand` at all --
- * see ageGateScreen.js/main.js) and only applies when `modeId` is the
- * default quiz mode; the other seven modes have no age gate and progress
- * purely off their own unlock threshold.
+ * is no counter here to double-increment). There is no age-band exception:
+ * `params.ageBand`, when a caller still passes it (e.g. main.js's quiz
+ * flow), is accepted but never consulted here -- progression for every
+ * mode, including quiz, is governed strictly by that mode/level's
+ * `unlockThresholds.js` entry, never by the child's age band.
  *
  * The score needed to unlock the next level (TRIOFSND-248) is no longer a
  * single constant applying to every level of the one mode that used to
@@ -90,9 +89,9 @@
   var MAX_LEVEL = 10;
 
   // TRIOFSND-203 AC: >=6 aciertos (out of the level's 10 questions) unlocks
-  // the next level for an 8+ year old; <=5 ends the game. This is the quiz
-  // mode's own threshold in unlockThresholds.js's per-mode/level table
-  // (TRIOFSND-248) -- kept exported here as a constant for existing callers.
+  // the next level; <=5 ends the game. This is the quiz mode's own threshold
+  // in unlockThresholds.js's per-mode/level table (TRIOFSND-248) -- kept
+  // exported here as a constant for existing callers.
   var LEVEL_UP_MIN_CORRECT = 6;
 
   // resolveLevelOutcome/completeLevel default to the quiz mode when no
@@ -321,17 +320,15 @@
    *   - `modeId`: which mode's unlock threshold to use (TRIOFSND-248, see
    *     unlockThresholds.js); defaults to `'quiz'` (DEFAULT_MODE_ID). Every
    *     other mode's progress is untouched by this call.
-   *   - `ageBand`: the child's exact age band (see ageGateScreen.js); only
-   *     consulted when `modeId` is the default quiz mode -- see below.
+   *   - `ageBand`: accepted for callers that still pass it (e.g. main.js's
+   *     quiz flow, see ageGateScreen.js) but never consulted here -- it has
+   *     no effect on the outcome for any mode, quiz included (TRIOFSND-249).
    *
    * Completing MAX_LEVEL always ends the game (no mode has more than
    * MAX_LEVEL levels); below that, `level` unlocks `level + 1` of the SAME
    * mode once `answers` has at least `modeId`'s unlock threshold for `level`
-   * aciertos, otherwise the game ends. The one mode-specific exception: for
-   * the default quiz mode only, ages 6-7 (or a missing/unknown ageBand) stay
-   * restricted to level 1 and the game always ends after those 10
-   * questions, whatever the score -- the other seven modes have no age gate
-   * and never apply this restriction, regardless of `ageBand`.
+   * aciertos, otherwise the game ends. This applies uniformly to every mode,
+   * including quiz: there is no age-band exception.
    */
   function resolveLevelOutcome(params) {
     params = params || {};
@@ -343,14 +340,6 @@
 
     var modeId = params.modeId || DEFAULT_MODE_ID;
     var correctCount = countCorrectAnswers(params.answers);
-
-    // The 6-7 age-band restriction is a quiz-only UX rule (only the quiz
-    // flow ever resolves/passes an ageBand -- see ageGateScreen.js/main.js);
-    // the other seven modes have no age gate at all, so it must not leak
-    // into their progression via a missing/unknown ageBand.
-    if (modeId === DEFAULT_MODE_ID && !isEightPlusAgeBand(params.ageBand)) {
-      return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'age_restricted' };
-    }
 
     if (level >= MAX_LEVEL) {
       return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'completed_all_levels' };
