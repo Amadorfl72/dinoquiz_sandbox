@@ -14,7 +14,7 @@
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
  */
-const SW_VERSION = 'v21';
+const SW_VERSION = 'v29';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -45,12 +45,22 @@ const PRECACHE_URLS = [
   '/scripts/mazeScreen.js',
   '/scripts/parejasScreen.js',
   '/scripts/sizeOrderScreen.js',
+  '/scripts/classifyGame.js',
+  '/scripts/classifyTimer.js',
+  '/scripts/classifyScreen.js',
+  '/scripts/shadowGuessGame.js',
+  '/scripts/shadowGuessScreen.js',
+  '/scripts/shadowGuessScreen.js',
+  '/scripts/timelineScreen.js',
+  '/scripts/oidoJurasicoScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/modesCatalog.js',
   '/scripts/unlockThresholds.js',
   '/scripts/modeStorage.js',
+  '/scripts/modeProgressStorage.js',
   '/scripts/modeSelectorScreen.js',
   '/scripts/modeChangeConfirmScreen.js',
+  '/scripts/oidoJurasicoAudioService.js',
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',
@@ -114,6 +124,13 @@ const PRECACHE_URLS = [
   '/assets/images/modes/clasifica.svg',
   '/assets/images/modes/ordenaPorTamano.svg',
   '/assets/images/modes/lineaDelTiempo.svg',
+  // Timeline period illustrations (TRIOFSND-295): precached so the period
+  // selection in Línea del tiempo has its three visual supports available
+  // offline right after install, before any of these would otherwise be
+  // fetched at runtime.
+  '/assets/images/periods/triasico.svg',
+  '/assets/images/periods/jurasico.svg',
+  '/assets/images/periods/cretacico.svg',
   // Feedback sound effects (TRIOFSND-78, AC-5): precached with the rest of
   // the app shell instead of left to runtime caching, so the very first
   // answer in a fresh install can still play its sfx within the <300ms
@@ -121,6 +138,27 @@ const PRECACHE_URLS = [
   '/assets/sounds/correct.wav',
   '/assets/sounds/incorrect.wav',
   '/assets/sounds/fail-neutral.wav',
+  // Oído Jurásico "imagined" creature sounds (TRIOFSND-268): synthesized
+  // original audio, never a real recording (see
+  // public/assets/sounds/oido-jurasico/CREDITS.md). Precached so the mode
+  // works fully offline right after install instead of waiting on the
+  // runtime cache-first rule for /assets/sounds/ below to catch the first
+  // play. The i18n copy that introduces them ("sonido imaginado" notice,
+  // playback strings) already lives inside i18n/es.json, precached below.
+  '/assets/sounds/oido-jurasico/ankylosaurus.wav',
+  '/assets/sounds/oido-jurasico/braquiosaurio.wav',
+  '/assets/sounds/oido-jurasico/compsognathus.wav',
+  '/assets/sounds/oido-jurasico/dilophosaurus.wav',
+  '/assets/sounds/oido-jurasico/diplodocus.wav',
+  '/assets/sounds/oido-jurasico/estegosaurio.wav',
+  '/assets/sounds/oido-jurasico/iguanodon.wav',
+  '/assets/sounds/oido-jurasico/pachycephalosaurus.wav',
+  '/assets/sounds/oido-jurasico/parasaurolophus.wav',
+  '/assets/sounds/oido-jurasico/pteranodon.wav',
+  '/assets/sounds/oido-jurasico/spinosaurus.wav',
+  '/assets/sounds/oido-jurasico/trex.wav',
+  '/assets/sounds/oido-jurasico/triceratops.wav',
+  '/assets/sounds/oido-jurasico/velociraptor.wav',
   '/i18n/es.json',
   '/data/questions.json',
   // Creature catalog (TRIOFSND-222): verified per-creature facts (diet,

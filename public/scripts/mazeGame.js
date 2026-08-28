@@ -44,6 +44,9 @@
   // Mirrors src/data/creatureSheet.js's CREATURE_SHEETS diet field and
   // src/data/questionBank.js's VALID_DINOSAURS -- see the module doc comment
   // above for why this is a local, static duplicate instead of a `require`.
+  // pachycephalosaurus is omnivoro, not herbivoro -- see
+  // src/data/creatureSheet.js's own comment on that entry (its funFacts
+  // already verify a mixed plant-and-animal diet).
   var DINOSAUR_DIETS = Object.freeze({
     trex: 'carnivoro',
     triceratops: 'herbivoro',
@@ -54,7 +57,7 @@
     pteranodon: 'carnivoro',
     spinosaurus: 'carnivoro',
     dilophosaurus: 'carnivoro',
-    pachycephalosaurus: 'herbivoro',
+    pachycephalosaurus: 'omnivoro',
     compsognathus: 'carnivoro',
     diplodocus: 'herbivoro',
     iguanodon: 'herbivoro',

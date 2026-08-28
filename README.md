@@ -132,6 +132,21 @@ entrada (esquema más las variantes de imagen AW5) y, por cada entrada inválida
 servicio de logging ([`src/services/logging`](src/services/logging)) en lugar de incluirla en
 el resultado — una entrada incompleta nunca bloquea el resto del nivel.
 
+**TRIOFSND-224 — enlace con el catálogo único de criaturas:** el esquema de preguntas no lleva
+(ni debe llevar nunca) su propia copia de `dieta`/`periodoPrincipal`/`intervaloTemporal`/
+`habitat`/`clasificacionCientifica` — esos datos viven solo en el
+[catálogo único de criaturas](#catálogo-único-de-criaturas-triofsnd-226); `FORBIDDEN_CATALOG_FIELDS`
+en [`src/data/questionBank.js`](src/data/questionBank.js) rechaza cualquier pregunta que
+intente duplicar uno de esos campos. Además, el pool que construye
+`getQuestionsByLevel()` comprueba, vía `creatureCatalog.getCreatureById`, que el `dinosaur` de
+cada pregunta tiene una ficha real en el catálogo — cualquier pregunta cuyo `dinosaur` no
+resuelva a una ficha se excluye del pool con el mismo mecanismo `content_validation_failed`
+(regla `dinosaurCatalog`) que las demás validaciones de esta sección, en vez de romper el resto
+del nivel. El catálogo (`public/data/creatures.json`) cubre hoy las 14 especies del banco de
+preguntas (cobertura exacta) — `src/data/questionBank.test.js` verifica esa cobertura contra el
+banco y el catálogo reales, en vez de asumir una cifra fija, para que el test detecte cualquier
+regresión si una especie nueva se añade al banco sin su ficha correspondiente.
+
 **AW5 — variantes de imagen obligatorias:** `loadQuestionBank()` excluye del banco cualquier
 pregunta a la que le falte `imageRealistic`, `imageFallback` o `imageAlt` (ver
 `hasImageVariants`/`filterQuestionsWithImageVariants` en
@@ -161,6 +176,103 @@ de cada pregunta del banco resuelvan a un fichero real bajo `public/assets/image
 El texto de cada dato curioso vive en [`src/i18n/es.json`](src/i18n/es.json) bajo la clave
 `funFacts.<id-de-pregunta>`, siguiendo el mismo criterio de "sin strings hardcodeados" que el
 resto de textos de la UI.
+
+## Catálogo único de criaturas (TRIOFSND-226)
+
+El PRD de "Nuevos Modos de Juego" (`scope.foundations`) exige una "ficha única y verificable
+para todas las criaturas jugables": una única fuente de verdad de la que beban el quiz y los
+siete modos nuevos (Laberinto, Adivina la sombra, Oído Jurásico, Parejas jurásicas, Clasifica,
+Ordena por tamaño, Línea del tiempo), en vez de que cada modo re-derive o duplique sus propios
+datos por criatura.
+
+**Ubicación:** [`public/data/creatures.json`](public/data/creatures.json). Vive bajo `public/`
+(igual que [`public/data/questions.json`](public/data/questions.json) y
+[`public/i18n/es.json`](public/i18n/es.json)) porque es el navegador quien lo carga en tiempo de
+ejecución vía `fetch('/data/creatures.json')`; el service worker lo precachea como parte del app
+shell (ver `PRECACHE_URLS` en [`public/service-worker.js`](public/service-worker.js)).
+
+**Esquema** — un array de objetos, uno por criatura:
+
+```jsonc
+{
+  "id": "trex",                          // identificador único, compartido con
+                                          // DINOSAURS (src/data/questionBank.js)
+  "nameKey": "creatures.trex.name",      // clave i18n del nombre visible (public/i18n/es.json);
+                                          // el nombre nunca va hardcodeado aquí
+  "dieta": "carnivoro",                  // uno de: carnivoro, herbivoro, omnivoro
+  "longitudMetros": 12,                  // longitud hocico-cola, en metros
+  "periodoPrincipal": "Cretacico",       // uno de: Triasico, Jurasico, Cretacico
+  "intervaloTemporal": { "inicioMa": 68, "finMa": 66 }, // rango en millones de años,
+                                          // solo cuando la fuente da un intervalo verificado
+  "habitat": "creatures.trex.habitat",   // clave i18n de la descripción del hábitat
+  "clasificacionCientifica": "dinosaurio", // uno de: dinosaurio, reptil_volador, otro
+                                          // (p.ej. Pteranodon es reptil_volador, no dinosaurio)
+  "image": "dinosaurs/trex.svg",             // misma terna de variantes que questions.json
+  "imageRealistic": "realistic/trex.jpg",    // (ver sección "Banco de preguntas")
+  "imageFallback": "fallback/trex.svg",
+  "fuentes": [                           // institución(es) científica/museística en la que
+    { "nombre": "American Museum of Natural History (AMNH)", "url": "https://www.amnh.org/" }
+    // se ha verificado la ficha; ver CREDITS.md para el índice completo por institución
+  ]
+}
+```
+
+Igual que `dato_curioso` en el banco de preguntas, todo texto visible (`nameKey`, `habitat`) es
+una clave i18n resuelta contra [`public/i18n/es.json`](public/i18n/es.json), nunca un string
+hardcodeado en el JSON.
+
+**Cómo se valida:**
+
+- **Consistencia con el resto del contenido:** los valores de `dieta`, `longitudMetros`,
+  `periodoPrincipal`/`intervaloTemporal` y `clasificacionCientifica` deben coincidir con los
+  datos ya afirmados en `funFacts` ([`public/i18n/es.json`](public/i18n/es.json)) y con
+  [`src/data/creatureSheet.js`](src/data/creatureSheet.js) (la ficha por-criatura que ya
+  consumen Laberinto, Parejas, Clasifica, Ordena por tamaño y Línea del tiempo) para la misma
+  criatura — ningún modo debe poder contradecir lo que el quiz enseña sobre el mismo animal
+  (PRD G4).
+- **Trazabilidad de fuente:** cada criatura debe declarar al menos una entrada en `fuentes` con
+  `nombre` (institución) y `url` verificables; [`CREDITS.md`](CREDITS.md) mantiene el índice
+  agregado de instituciones citadas y para qué criaturas se ha usado cada una, y debe
+  actualizarse en la misma PR que añada una criatura o una fuente nueva.
+- **Precarga:** `tests/pwa/service-worker.test.js` cubre que `/data/creatures.json` esté en
+  `PRECACHE_URLS`, igual que el resto del app shell.
+- **Revisión humana de contenido científico (checklist de la Definition of Done, obligatoria
+  antes de desplegar cualquier cambio a `creatures.json`):**
+  1. Cada campo científico (`dieta`, `longitudMetros`, `periodoPrincipal`, `intervaloTemporal`,
+     `habitat`, `clasificacionCientifica`) se ha contrastado manualmente contra al menos una de
+     las `fuentes` declaradas para esa criatura — no basta con que el JSON tenga el campo
+     relleno.
+  2. Ninguna afirmación es más precisa de lo que la fuente realmente sostiene (p.ej.
+     `intervaloTemporal` solo se rellena cuando la fuente da un rango explícito, nunca una
+     estimación inventada).
+  3. `clasificacionCientifica` distingue explícitamente dinosaurios de otros reptiles
+     contemporáneos no dinosaurios (p.ej. pterosaurios como Pteranodon), para no afirmar algo
+     falso por omisión (PRD G4).
+  4. La criatura y su `nameKey`/`habitat` tienen traducción completa en
+     [`public/i18n/es.json`](public/i18n/es.json) y las variantes `image`/`imageRealistic`/
+     `imageFallback` resuelven a un fichero real bajo `public/assets/images/`.
+  5. Toda fuente nueva queda reflejada en [`CREDITS.md`](CREDITS.md) antes de mergear.
+  Quien apruebe la PR que modifica `creatures.json` deja constancia de haber repasado este
+  checklist en la propia revisión (comentario o aprobación de PR); no es una comprobación que
+  pueda automatizarse por completo, porque su objeto es la exactitud científica del contenido,
+  no solo la forma del JSON.
+
+### Contenido i18n de Línea del tiempo (TRIOFSND-292)
+
+`public/i18n/es.json` y `public/i18n/en.json` incluyen la sección `timeline` (nombre del modo,
+instrucción, nombre y etiqueta accesible de cada opción — `triasico`/`jurasico`/`cretacico` —,
+feedback de acierto/error, explicación del intervalo temporal preciso, explicación de que
+Pteranodon es un reptil volador y no un dinosaurio, y el estado bloqueado) que consumirá la
+futura pantalla del modo. Es contenido i18n únicamente: no implementa la mecánica, el selector
+ni la validación de fichas del modo.
+
+Al igual que el resto de contenido educativo del catálogo de criaturas, la instrucción, el
+feedback, la explicación del intervalo y la clasificación de Pteranodon de `timeline` quedan
+**pendientes de revisión humana** bajo el mismo checklist de la Definition of Done descrito en
+"Revisión humana de contenido científico" arriba, antes de desplegar el modo Línea del tiempo:
+en particular, confirmar que el intervalo temporal nunca se presenta como una categoría
+seleccionable (solo como explicación posterior a la respuesta) y que ninguna cadena de
+`timeline` denomina a Pteranodon "dinosaurio".
 
 ## Motor de selección aleatoria de preguntas
 

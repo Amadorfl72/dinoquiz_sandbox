@@ -895,6 +895,7 @@ body {
   color: var(--color-text);
 }
 
+.results-screen__percentage,
 .results-screen__level-outcome,
 .results-screen__max-level-unlocked,
 .results-screen__fun-facts-progress,
@@ -981,6 +982,49 @@ body {
 }
 
 .results-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
+ * Own-mode level-progress actions (TRIOFSND-252): repeat the level just
+ * played, jump to the next already-unlocked level, or return to the mode
+ * selector. Same outline-button treatment and minimum touch target as
+ * `.results-screen__exit-button` -- these are secondary actions alongside the
+ * primary "Volver a jugar" call to action.
+ */
+.results-screen__repeat-level-button,
+.results-screen__go-to-next-level-button,
+.results-screen__back-to-selector-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 2px solid var(--color-text);
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.results-screen__repeat-level-button:hover,
+.results-screen__go-to-next-level-button:hover,
+.results-screen__back-to-selector-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.results-screen__repeat-level-button:active,
+.results-screen__go-to-next-level-button:active,
+.results-screen__back-to-selector-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.results-screen__repeat-level-button:focus-visible,
+.results-screen__go-to-next-level-button:focus-visible,
+.results-screen__back-to-selector-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
@@ -2047,6 +2091,23 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+ * Clasifica screen (TRIOFSND-281). The creature illustration and the three
+ * category buttons are all capped at `min(100%, 320px)`, the same recipe
+ * `.maze-screen__board`/`.parejas-screen__board` already use, so nothing
+ * grows past a 375px-wide viewport (PRD: no horizontal scroll).
+ *
+ * Every color pair below reuses the already WCAG-AA-verified design tokens
+ * (`:root` above) instead of introducing new ones -- the correct category is
+ * never carried by color alone: it also gets a visible "✓" text badge (see
+ * the `::after` below), a decorative checkmark icon in the feedback message,
+ * and an updated aria-label (classifyScreen.js). The child's own wrong pick
+ * gets a neutral gray marker, never red, matching the no-penalty tone the
+ * rest of the app already uses (questionScreen.js's NEUTRAL_CLASS).
+ */
+.classify-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 12px;
   width: 100%;
   max-width: 400px;
@@ -2057,11 +2118,14 @@ body {
 .size-order-screen__title {
   margin: 0;
   align-self: center;
+.classify-screen__title {
+  margin: 0;
   font-size: var(--font-size-heading-sm);
   color: var(--color-text);
 }
 
 .size-order-screen__progress-row {
+.classify-screen__progress-row {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2072,6 +2136,8 @@ body {
 
 .size-order-screen__level,
 .size-order-screen__round {
+.classify-screen__level,
+.classify-screen__round {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
@@ -2090,6 +2156,15 @@ body {
 }
 
 .size-order-screen__instructions {
+.classify-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.classify-screen__round {
+  background-color: var(--color-stars);
+}
+
+.classify-screen__instructions {
   margin: 0;
   font-size: var(--font-size-body);
   color: var(--color-text);
@@ -2097,6 +2172,23 @@ body {
 }
 
 .size-order-screen__data-error {
+.classify-screen__creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: min(100%, 240px);
+}
+
+.classify-screen__creature-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  object-fit: contain;
+}
+
+.classify-screen__creature-name {
   margin: 0;
   font-size: var(--font-size-body);
   font-weight: 700;
@@ -2130,6 +2222,42 @@ body {
 }
 
 .size-order-screen__creature:focus-visible {
+.classify-screen__categories {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 320px);
+  box-sizing: border-box;
+}
+
+.classify-screen__category-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 10px 16px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.classify-screen__category-button:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.classify-screen__category-button:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.classify-screen__category-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
@@ -2190,6 +2318,120 @@ body {
   align-items: center;
   justify-content: center;
   align-self: center;
+.classify-screen__category-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.classify-screen__category-label {
+  flex: 1;
+  text-align: left;
+}
+
+.classify-screen__category-button:disabled {
+  cursor: default;
+}
+
+.classify-screen__category-button--correct {
+  border-color: var(--color-primary);
+  background-color: var(--color-option-bg-pressed);
+}
+
+.classify-screen__category-button--correct .classify-screen__category-label::after {
+  content: ' ✓';
+  color: var(--color-primary-pressed);
+}
+
+.classify-screen__category-button--selected {
+  border-color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.classify-screen__feedback-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  border-radius: 16px;
+}
+
+.classify-screen__feedback-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.classify-screen__feedback-message--correct {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.classify-screen__feedback-message--incorrect {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.classify-screen__bonus-badge {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-stars);
+  text-align: center;
+}
+
+.classify-screen__blocked-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.classify-screen__blocked-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.classify-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.classify-screen__result-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.classify-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.classify-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: var(--tap-target-min);
   min-height: var(--tap-target-min);
   padding: 12px 32px;
@@ -2210,12 +2452,18 @@ body {
 }
 
 .size-order-screen__confirm-button:active:not(:disabled) {
+.classify-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.classify-screen__next-button:active {
   background-color: var(--color-primary-pressed);
   transform: translateY(2px);
   box-shadow: 0 2px 0 var(--color-primary-pressed);
 }
 
 .size-order-screen__confirm-button:focus-visible {
+.classify-screen__next-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-dark);
   outline-offset: 3px;
 }
@@ -2242,6 +2490,68 @@ body {
   gap: 8px;
   margin: 0;
   font-size: var(--font-size-heading-sm);
+/*
+ * Adivina la sombra screen (TRIOFSND-263). Layout mirrors
+ * .question-screen (title/instructions/progress/score, then the puzzle,
+ * then a 2-column options grid) since the interaction is structurally the
+ * same "look, then pick one of four" shape.
+ */
+.shadow-guess-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.shadow-guess-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.shadow-guess-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.shadow-guess-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  max-width: 100%;
+}
+
+.shadow-guess-screen__level,
+.shadow-guess-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.shadow-guess-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.shadow-guess-screen__round {
+  background-color: var(--color-stars);
+}
+
+.shadow-guess-screen__score {
+  margin: 0;
+  font-size: 20px;
   font-weight: 700;
   color: var(--color-text);
 }
@@ -2275,4 +2585,921 @@ body {
   font-size: var(--font-size-body);
   color: var(--color-text);
   overflow-wrap: break-word;
+/*
+ * Silhouette (TRIOFSND-263): the same cartoon illustration Parejas already
+ * shows, blacked out via `filter` regardless of its own colors -- no second
+ * license-encumbered asset per creature. `width: min(100%, 260px)` mirrors
+ * `.maze-screen__board`/`.parejas-screen__board`'s own 320px cap (a bit
+ * narrower here since the frame never needs the full board width) so this
+ * never forces horizontal scroll at 375px. `rotate90`'s extra height is
+ * capped by shadowGuessRound.js's own GAME_AREA/geometry guard before a
+ * round is ever generated -- this frame only needs to stay square enough
+ * to hold whichever safe transform it's given.
+ */
+.shadow-guess-screen__silhouette-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 260px);
+  aspect-ratio: 4 / 3;
+}
+
+.shadow-guess-screen__silhouette-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  filter: brightness(0);
+}
+
+.shadow-guess-screen__silhouette-image--flip {
+  transform: scaleX(-1);
+}
+
+.shadow-guess-screen__silhouette-image--rotate-90 {
+  transform: rotate(90deg);
+}
+
+.shadow-guess-screen__silhouette-image--rotate-180 {
+  transform: rotate(180deg);
+}
+
+.shadow-guess-screen__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.shadow-guess-screen__option {
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  padding: 16px 20px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
+  font-family: inherit;
+  border-radius: 16px;
+  border: 3px solid var(--color-text);
+  background-color: var(--color-option-bg);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.shadow-guess-screen__option:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.shadow-guess-screen__option:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.shadow-guess-screen__option:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.shadow-guess-screen__option:disabled {
+  cursor: default;
+}
+
+.shadow-guess-screen__option:nth-child(4n + 1) {
+  background-color: #1565c0;
+  border-color: #0d47a1;
+  color: #ffffff;
+}
+
+.shadow-guess-screen__option:nth-child(4n + 2) {
+  background-color: #6a1b9a;
+  border-color: #4a0072;
+  color: #ffffff;
+}
+
+.shadow-guess-screen__option:nth-child(4n + 3) {
+  background-color: #00695c;
+  border-color: #003d33;
+  color: #ffffff;
+}
+
+.shadow-guess-screen__option:nth-child(4n + 4) {
+  background-color: #fbc02d;
+  border-color: #f57f17;
+  color: #1b5e20;
+}
+
+/*
+ * Answered-state option colors reuse the same WCAG-AA-verified pair as
+ * .question-screen__option--correct/--neutral (contrast.test.js) -- the
+ * correct option is the only colored one, a miss stays neutral gray, never
+ * red (no negative feedback).
+ */
+.shadow-guess-screen__option--correct {
+  border-width: 6px;
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.shadow-guess-screen__option--neutral {
+  border-color: #607d8b;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.shadow-guess-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.shadow-guess-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.shadow-guess-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.shadow-guess-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.shadow-guess-screen__blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+
+.shadow-guess-screen__blocked-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.shadow-guess-screen__blocked-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/*
+ * Línea del tiempo screen (TRIOFSND-293). Layout mirrors .classify-screen
+ * (title/progress/score/instructions, then the creature, then a stacked
+ * options column) since the interaction is structurally the same "look at
+ * the creature, then pick one of three" shape -- the period buttons reuse
+ * the same width cap (min(100%, 320px)) already proven to fit 375px.
+ */
+.timeline-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.timeline-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.timeline-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.timeline-screen__level,
+.timeline-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.timeline-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.timeline-screen__round {
+  background-color: var(--color-stars);
+}
+
+.timeline-screen__score {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.timeline-screen__creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: min(100%, 240px);
+}
+
+.timeline-screen__creature-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  object-fit: contain;
+}
+
+.timeline-screen__creature-name {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.timeline-screen__periods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 320px);
+  box-sizing: border-box;
+}
+
+.timeline-screen__period-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 10px 16px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.timeline-screen__period-button:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.timeline-screen__period-button:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__period-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.timeline-screen__period-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__period-label {
+  flex: 1;
+  text-align: left;
+}
+
+.timeline-screen__period-button:disabled {
+  cursor: default;
+}
+
+.timeline-screen__period-button--correct {
+  border-color: var(--color-primary);
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__period-button--correct .timeline-screen__period-label::after {
+  content: ' ✓';
+  color: var(--color-primary-pressed);
+}
+
+.timeline-screen__period-button--selected {
+  border-color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.timeline-screen__feedback-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  border-radius: 16px;
+}
+
+.timeline-screen__feedback-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__feedback-message--correct {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.timeline-screen__feedback-message--incorrect {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+/* Educational explanation box (PRD G4): reuses the same yellow "dato
+ * curioso" tokens as .question-screen__fun-fact-box (contrast.test.js
+ * already guards that background/text pair at WCAG AA), so this never
+ * introduces a new, unverified color pairing.
+ */
+.timeline-screen__explanation {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 16px;
+  background-color: #fff9c4;
+  color: #5d4037;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.timeline-screen__explanation-heading {
+  margin: 0 0 6px;
+  font-size: var(--font-size-body);
+  color: inherit;
+}
+
+.timeline-screen__explanation-interval,
+.timeline-screen__explanation-classification {
+  margin: 4px 0 0;
+  font-size: var(--font-size-body);
+  color: inherit;
+}
+
+.timeline-screen__blocked-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.timeline-screen__blocked-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.timeline-screen__result-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.timeline-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.timeline-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.timeline-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.timeline-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+/*
+ * Locked mode state (PRD: "fichas insuficientes ... acción localizada y
+ * accesible para volver al selector"), mirrors
+ * .shadow-guess-screen__blocked's text+icon+aria-live pattern plus a
+ * visible exit button styled like .results-screen__back-to-selector-button
+ * (transparent fill, green outline -- already AA-verified: contrast.test.js
+ * checks this exact color pair for the privacy policy back button).
+ */
+.timeline-screen__locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 16px;
+}
+
+.timeline-screen__locked-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.timeline-screen__locked-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__exit-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 2px solid var(--color-text);
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.timeline-screen__exit-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.timeline-screen__exit-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
+ * Oído Jurásico pre-game explanation (TRIOFSND-270): a small standalone
+ * screen shown once, ever, per device before the first game -- layout
+ * mirrors .shadow-guess-screen__blocked (icon, heading, message, one
+ * button), centered and capped for 375px.
+ */
+.oido-jurasico-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 16px;
+}
+
+.oido-jurasico-intro__icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.oido-jurasico-intro__heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.oido-jurasico-intro__message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.oido-jurasico-intro__continue-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-intro__continue-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-intro__continue-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-intro__continue-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+/*
+ * Oído Jurásico board (TRIOFSND-270): layout mirrors .shadow-guess-screen
+ * (title/instructions/progress/score, then the round's own content, then a
+ * 2-column options grid) -- same "listen/look, then pick one of four" shape,
+ * already proven to fit 375px with no horizontal scroll.
+ */
+.oido-jurasico-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 24px);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.oido-jurasico-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.oido-jurasico-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.oido-jurasico-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  max-width: 100%;
+}
+
+.oido-jurasico-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+  background-color: var(--color-stars);
+}
+
+.oido-jurasico-screen__score {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__sound-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.oido-jurasico-screen__play-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
+  padding: 16px 28px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__play-button::before {
+  content: '🔊';
+}
+
+.oido-jurasico-screen__play-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__play-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__play-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.oido-jurasico-screen__option {
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  padding: 16px 20px;
+  min-width: var(--tap-target-min);
+  min-height: 64px;
+  font-family: inherit;
+  border-radius: 16px;
+  border: 3px solid var(--color-text);
+  background-color: var(--color-option-bg);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.oido-jurasico-screen__option:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.oido-jurasico-screen__option:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.oido-jurasico-screen__option:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__option:disabled {
+  cursor: default;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 1) {
+  background-color: #1565c0;
+  border-color: #0d47a1;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 2) {
+  background-color: #6a1b9a;
+  border-color: #4a0072;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 3) {
+  background-color: #00695c;
+  border-color: #003d33;
+  color: #ffffff;
+}
+
+.oido-jurasico-screen__option:nth-child(4n + 4) {
+  background-color: #fbc02d;
+  border-color: #f57f17;
+  color: #1b5e20;
+}
+
+.oido-jurasico-screen__option--correct {
+  border-width: 6px;
+  border-color: var(--color-text);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.oido-jurasico-screen__option--neutral {
+  border-color: #607d8b;
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.oido-jurasico-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.oido-jurasico-screen__blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 16px;
+}
+
+.oido-jurasico-screen__blocked-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.oido-jurasico-screen__blocked-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/*
+ * Muted/playback-error notices (AC: "aviso de dinoquiz:muted con opciones de
+ * activar sonido o volver"; "bloqueo controlado ... si falta un recurso"):
+ * a bordered panel using --color-stars (amber) as a non-alarming attention
+ * accent -- this app never uses red, per the shared "no negative feedback"
+ * rule question-screen/shadow-guess-screen already follow for a wrong
+ * answer.
+ */
+.oido-jurasico-screen__muted-notice,
+.oido-jurasico-screen__error-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+  padding: 16px;
+  border: 3px solid var(--color-stars);
+  border-radius: 16px;
+  background-color: var(--color-option-bg);
+}
+
+.oido-jurasico-screen__muted-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__muted-message,
+.oido-jurasico-screen__error-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.oido-jurasico-screen__unmute-button,
+.oido-jurasico-screen__back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 10px 24px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.oido-jurasico-screen__unmute-button {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__unmute-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.oido-jurasico-screen__unmute-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.oido-jurasico-screen__back-button {
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+}
+
+.oido-jurasico-screen__back-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.oido-jurasico-screen__back-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.oido-jurasico-screen__unmute-button:focus-visible,
+.oido-jurasico-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }

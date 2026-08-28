@@ -11,6 +11,7 @@ const {
   MAX_SCORE,
   MAX_STARS,
   calculateStars,
+  normalizeScore,
   validateMotivationalMessages,
   selectMotivationalMessage,
   resolveLevelOutcomeMessage,
@@ -520,6 +521,179 @@ describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded a
     playAgainButton.click();
 
     expect(onPlayAgain).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('own-mode score, percentage and stars (TRIOFSND-252)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('normalizeScore delegates to scoring.js and defaults maxScore to MAX_SCORE', () => {
+    expect(normalizeScore(7)).toEqual({ percentage: 70, stars: 3 });
+    expect(normalizeScore(6, 8)).toEqual({ percentage: 75, stars: 3 });
+  });
+
+  test('rejects a score outside a custom maxScore range', () => {
+    expect(() => normalizeScore(9, 8)).toThrow();
+    expect(() => normalizeScore(-1, 8)).toThrow();
+  });
+
+  test('rejects a non-positive maxScore', () => {
+    expect(() => normalizeScore(0, 0)).toThrow();
+    expect(() => normalizeScore(0, -1)).toThrow();
+  });
+
+  test('renders a mode\'s own score out of its own maxScore, not a fixed /10', () => {
+    const { scoreEl } = renderResultsScreen(container, { score: 5, maxScore: 8 });
+
+    expect(scoreEl).toHaveTextContent('5/8');
+  });
+
+  test('renders the shared percentage and star tier derived from score/maxScore', () => {
+    const { percentageEl, starsEl } = renderResultsScreen(container, { score: 6, maxScore: 8 });
+
+    expect(percentageEl).toHaveTextContent(strings.percentageFormat.replace('{percentage}', '75'));
+    expect(starsEl.getAttribute('aria-label')).toContain(`3 de ${MAX_STARS}`);
+  });
+
+  test('a Quiz caller that never passes maxScore keeps the existing /10 percentage behaviour', () => {
+    const { scoreEl, percentageEl } = renderResultsScreen(container, { score: 7 });
+
+    expect(scoreEl).toHaveTextContent('7/10');
+    expect(percentageEl).toHaveTextContent(strings.percentageFormat.replace('{percentage}', '70'));
+  });
+
+  test('throws for a score outside a custom maxScore range', () => {
+    expect(() => renderResultsScreen(container, { score: 9, maxScore: 8 })).toThrow();
+    expect(() => renderResultsScreen(container, { score: -1, maxScore: 8 })).toThrow();
+  });
+
+  test('throws for a non-positive maxScore', () => {
+    expect(() => renderResultsScreen(container, { score: 0, maxScore: 0 })).toThrow();
+  });
+
+  test('the aria-live summary announcement includes the percentage', () => {
+    const { announcementEl } = renderResultsScreen(container, { score: 6, maxScore: 8, message: 'Mensaje de prueba' });
+
+    expect(announcementEl).toHaveTextContent('75');
+  });
+
+  test('the percentage copy contains no negative/discouraging language', () => {
+    expect(findBannedWords(strings.percentageFormat)).toEqual([]);
+  });
+});
+
+describe('level-progress actions: repeat level, go to next unlocked level, back to selector (TRIOFSND-252)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders none of the three actions when neither callback is provided (unchanged for existing callers)', () => {
+    const { repeatLevelButton, goToNextUnlockedLevelButton, backToSelectorButton } = renderResultsScreen(container, {
+      score: 6,
+      level: 2,
+      maxLevelUnlocked: 3,
+    });
+
+    expect(repeatLevelButton).toBeNull();
+    expect(goToNextUnlockedLevelButton).toBeNull();
+    expect(backToSelectorButton).toBeNull();
+  });
+
+  test('renders a "repeat this level" button that calls onRepeatLevel, naming the level when known', () => {
+    const onRepeatLevel = jest.fn();
+    const { repeatLevelButton } = renderResultsScreen(container, { score: 6, level: 3, onRepeatLevel });
+
+    const expectedName = strings.repeatLevelButtonFormat.replace('{level}', '3');
+    expect(getByRole(container, 'button', { name: expectedName })).toBe(repeatLevelButton);
+
+    repeatLevelButton.click();
+
+    expect(onRepeatLevel).toHaveBeenCalledTimes(1);
+  });
+
+  test('the "repeat this level" button falls back to a generic label when no level is given', () => {
+    const { repeatLevelButton } = renderResultsScreen(container, { score: 6, onRepeatLevel: jest.fn() });
+
+    expect(getByRole(container, 'button', { name: strings.repeatLevelButton })).toBe(repeatLevelButton);
+  });
+
+  test('renders a "go to the next unlocked level" button only while a next level is actually unlocked', () => {
+    const onGoToNextUnlockedLevel = jest.fn();
+
+    expect(
+      renderResultsScreen(container, {
+        score: 6,
+        level: 2,
+        maxLevelUnlocked: 2,
+        onGoToNextUnlockedLevel,
+      }).goToNextUnlockedLevelButton
+    ).toBeNull();
+
+    const { goToNextUnlockedLevelButton } = renderResultsScreen(container, {
+      score: 6,
+      level: 2,
+      maxLevelUnlocked: 3,
+      onGoToNextUnlockedLevel,
+    });
+
+    const expectedName = strings.goToNextLevelButtonFormat.replace('{level}', '3');
+    expect(getByRole(container, 'button', { name: expectedName })).toBe(goToNextUnlockedLevelButton);
+
+    goToNextUnlockedLevelButton.click();
+
+    expect(onGoToNextUnlockedLevel).toHaveBeenCalledTimes(1);
+    expect(onGoToNextUnlockedLevel).toHaveBeenCalledWith(3);
+  });
+
+  test('renders a "back to the mode selector" button that calls onBackToSelector', () => {
+    const onBackToSelector = jest.fn();
+    const { backToSelectorButton } = renderResultsScreen(container, { score: 6, onBackToSelector });
+
+    expect(getByRole(container, 'button', { name: strings.backToSelectorButton })).toBe(backToSelectorButton);
+
+    backToSelectorButton.click();
+
+    expect(onBackToSelector).toHaveBeenCalledTimes(1);
+  });
+
+  test('all three actions are plain, keyboard- and touch-operable <button> elements with accessible names', () => {
+    const { repeatLevelButton, goToNextUnlockedLevelButton, backToSelectorButton } = renderResultsScreen(container, {
+      score: 6,
+      level: 1,
+      maxLevelUnlocked: 2,
+      onRepeatLevel: jest.fn(),
+      onGoToNextUnlockedLevel: jest.fn(),
+      onBackToSelector: jest.fn(),
+    });
+
+    [repeatLevelButton, goToNextUnlockedLevelButton, backToSelectorButton].forEach((button) => {
+      expect(button.tagName).toBe('BUTTON');
+      expect(button).toHaveAttribute('type', 'button');
+      expect(button).toHaveAccessibleName();
+    });
+  });
+
+  test('none of the level-progress action copy strings contain negative/discouraging language', () => {
+    expect(findBannedWords(strings.repeatLevelButton)).toEqual([]);
+    expect(findBannedWords(strings.repeatLevelButtonFormat)).toEqual([]);
+    expect(findBannedWords(strings.goToNextLevelButtonFormat)).toEqual([]);
+    expect(findBannedWords(strings.backToSelectorButton)).toEqual([]);
   });
 });
 

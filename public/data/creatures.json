@@ -131,5 +131,136 @@
         "url": "https://naturalhistory.si.edu/"
       }
     ]
+  },
+  {
+    "id": "spinosaurus",
+    "nameKey": "creatures.spinosaurus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 15,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 99, "finMa": 93 },
+    "habitat": "creatures.spinosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/spinosaurus.svg",
+    "imageRealistic": "realistic/spinosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
+  },
+  {
+    "id": "dilophosaurus",
+    "nameKey": "creatures.dilophosaurus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 6.5,
+    "periodoPrincipal": "Jurasico",
+    "habitat": "creatures.dilophosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/dilophosaurus.svg",
+    "imageRealistic": "realistic/dilophosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "pachycephalosaurus",
+    "nameKey": "creatures.pachycephalosaurus.name",
+    "dieta": "omnivoro",
+    "longitudMetros": 4.5,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 70, "finMa": 66 },
+    "habitat": "creatures.pachycephalosaurus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/pachycephalosaurus.svg",
+    "imageRealistic": "realistic/pachycephalosaurus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Smithsonian National Museum of Natural History",
+        "url": "https://naturalhistory.si.edu/"
+      }
+    ]
+  },
+  {
+    "id": "compsognathus",
+    "nameKey": "creatures.compsognathus.name",
+    "dieta": "carnivoro",
+    "longitudMetros": 1,
+    "periodoPrincipal": "Jurasico",
+    "habitat": "creatures.compsognathus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/compsognathus.svg",
+    "imageRealistic": "realistic/compsognathus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "diplodocus",
+    "nameKey": "creatures.diplodocus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 25,
+    "periodoPrincipal": "Jurasico",
+    "intervaloTemporal": { "inicioMa": 154, "finMa": 152 },
+    "habitat": "creatures.diplodocus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/diplodocus.svg",
+    "imageRealistic": "realistic/diplodocus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Field Museum, Chicago",
+        "url": "https://www.fieldmuseum.org/"
+      }
+    ]
+  },
+  {
+    "id": "iguanodon",
+    "nameKey": "creatures.iguanodon.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 10,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 125, "finMa": 120 },
+    "habitat": "creatures.iguanodon.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/iguanodon.svg",
+    "imageRealistic": "realistic/iguanodon.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "Natural History Museum, Londres",
+        "url": "https://www.nhm.ac.uk/"
+      }
+    ]
+  },
+  {
+    "id": "parasaurolophus",
+    "nameKey": "creatures.parasaurolophus.name",
+    "dieta": "herbivoro",
+    "longitudMetros": 10,
+    "periodoPrincipal": "Cretacico",
+    "intervaloTemporal": { "inicioMa": 76, "finMa": 73 },
+    "habitat": "creatures.parasaurolophus.habitat",
+    "clasificacionCientifica": "dinosaurio",
+    "image": "dinosaurs/parasaurolophus.svg",
+    "imageRealistic": "realistic/parasaurolophus.jpg",
+    "imageFallback": "fallback/generic.svg",
+    "fuentes": [
+      {
+        "nombre": "American Museum of Natural History (AMNH)",
+        "url": "https://www.amnh.org/"
+      }
+    ]
   }
 ]

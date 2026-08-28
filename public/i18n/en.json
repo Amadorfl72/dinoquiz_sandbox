@@ -1,0 +1,184 @@
+{
+  "locale": "en",
+  "shadowGuess": {
+    "name": "Guess the Shadow",
+    "instructions": "Look at the silhouette and choose, among four creatures, the one you think is hiding behind it.",
+    "options": {
+      "option1Label": "Option 1: {creature}",
+      "option2Label": "Option 2: {creature}",
+      "option3Label": "Option 3: {creature}",
+      "option4Label": "Option 4: {creature}"
+    },
+    "feedback": {
+      "correct": "Correct! You guessed the shadow.",
+      "incorrect": "Incorrect. Keep trying!",
+      "correctAnswer": "The correct answer was {creature}."
+    },
+    "blocked": {
+      "insufficientCatalog": "Guess the Shadow isn't available yet: it needs at least 12 approved creatures that are visually distinguishable from each other to unlock this mode."
+    },
+    "results": {
+      "title": "Guess the Shadow Results",
+      "score": "Guess the Shadow Score",
+      "percentage": "Accuracy Percentage",
+      "stars": "Stars Earned",
+      "progress": "Guess the Shadow Progress"
+    },
+    "optionsGroupLabel": "Answer options",
+    "correctOptionAriaLabelFormat": "Correct answer: {creature}",
+    "selectedOptionAriaLabelFormat": "Your answer: {creature}",
+    "scoreLabel": "Points",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "nextButton": "Next",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "oidoJurasico": {
+    "screenTitle": "Jurassic Hearing",
+    "imaginedSoundNotice": {
+      "heading": "An imagined sound",
+      "message": "These sounds are imagined. No one knows for certain what these creatures really sounded like: no real sound has ever been preserved. This sound is an imagined creation made for the game, not a recording or a scientific reconstruction.",
+      "continueButton": "Got it, let's play!",
+      "continueButtonAriaLabel": "Got it, start playing Jurassic Hearing"
+    },
+    "instructions": "Listen to the imagined sound and choose, among four creatures, the one you think could have made it.",
+    "playButton": "Play sound",
+    "playButtonAriaLabel": "Play the imagined sound for this round",
+    "replayButton": "Listen again",
+    "replayButtonAriaLabel": "Listen again to the imagined sound for this round",
+    "mutedNotice": {
+      "heading": "Sound is muted",
+      "message": "Jurassic Hearing needs sound turned on to play. Turn it on to hear this round's clue.",
+      "unmuteButton": "Turn on sound",
+      "backButton": "Back to the game selector"
+    },
+    "playbackError": {
+      "message": "Jurassic Hearing can't continue because the sound couldn't be played. You can go back to the game selector and try another mode.",
+      "backButton": "Back to the game selector"
+    },
+    "answerReinforcement": {
+      "message": "Remember: this sound is an imagined interpretation, not a proven scientific reconstruction."
+    },
+    "optionsGroupLabel": "Answer options",
+    "options": {
+      "option1Label": "Option 1: {creature}",
+      "option2Label": "Option 2: {creature}",
+      "option3Label": "Option 3: {creature}",
+      "option4Label": "Option 4: {creature}"
+    },
+    "feedback": {
+      "correct": "Correct! You guessed the sound.",
+      "incorrect": "Incorrect. Keep trying!",
+      "correctAnswer": "The correct answer was {creature}."
+    },
+    "correctOptionAriaLabelFormat": "Correct answer: {creature}",
+    "selectedOptionAriaLabelFormat": "Your answer: {creature}",
+    "scoreLabel": "Points",
+    "roundFormat": "Round {current} of {total}",
+    "nextButton": "Next",
+    "blocked": {
+      "insufficientCatalog": "Jurassic Hearing isn't available yet: at least 4 imagined creature sounds are needed to unlock this mode.",
+      "backButtonLabel": "Back to the game selector"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "timeline": {
+    "modeName": "Timeline",
+    "instruction": "In which period did this creature live? Choose Triassic, Jurassic, or Cretaceous.",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. In which period did {dinosaur} live?",
+    "scoreLabel": "Points",
+    "optionsGroupLabel": "Choose the period",
+    "correctOptionAriaLabelFormat": "Correct period: {period}",
+    "selectedOptionAriaLabelFormat": "Your answer: {period}",
+    "nextButton": "Next",
+    "options": {
+      "triasico": {
+        "label": "Triassic",
+        "a11yLabel": "Choose the Triassic period"
+      },
+      "jurasico": {
+        "label": "Jurassic",
+        "a11yLabel": "Choose the Jurassic period"
+      },
+      "cretacico": {
+        "label": "Cretaceous",
+        "a11yLabel": "Choose the Cretaceous period"
+      }
+    },
+    "feedback": {
+      "correct": "Correct! It lived mainly in the {periodo}.",
+      "incorrect": "That's not correct. It lived mainly in the {periodo}."
+    },
+    "explanation": {
+      "heading": "Fun fact",
+      "interval": "Its approximate time range was {intervalo}.",
+      "intervalRangeFormat": "{startMya} to {endMya} million years ago",
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} is a dinosaur.",
+        "reptil_volador": "{dinosaur} was a flying reptile, not a dinosaur.",
+        "otro": "{dinosaur} is not a dinosaur or a flying reptile."
+      }
+    },
+    "blockedRound": {
+      "message": "We couldn't verify this creature's period yet. Let's try another round!",
+      "announcementFormat": "Round blocked: we couldn't verify {dinosaur}'s period yet. Let's try another round."
+    },
+    "gameOver": {
+      "heading": "Timeline complete!",
+      "message": "Great job exploring when each creature lived! Keep playing to discover more.",
+      "announcementFormat": "You finished Timeline. You got {score} of {total} rounds right."
+    },
+    "locked": {
+      "message": "Timeline isn't available because there aren't enough valid creature cards to complete a game.",
+      "exitLabel": "Back to the game selector"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  }
+}

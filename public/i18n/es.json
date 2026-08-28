@@ -223,8 +223,9 @@
     "heading": "¡Resultados!",
     "scoreLabel": "Puntuación",
     "scoreFormat": "{score}/{total}",
+    "percentageFormat": "Acertaste el {percentage}% de las rondas",
     "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
-    "summaryAnnouncement": "Conseguiste {score} de {total} puntos, {stars} de {maxStars} estrellas. {message}",
+    "summaryAnnouncement": "Conseguiste {score} de {total} puntos, un {percentage} por ciento de aciertos, {stars} de {maxStars} estrellas. {message}",
     "levelFormat": "Nivel {level}",
     "maxLevelUnlockedFormat": "Nivel máximo desbloqueado: {maxLevel}",
     "funFactsProgressFormat": "Datos curiosos descubiertos: {count}/{total}",
@@ -238,6 +239,10 @@
     },
     "playAgainButton": "Volver a jugar",
     "nextLevelButtonFormat": "Ir al nivel {level}",
+    "repeatLevelButton": "Repetir este nivel",
+    "repeatLevelButtonFormat": "Repetir el nivel {level}",
+    "goToNextLevelButtonFormat": "Ir al nivel {level}",
+    "backToSelectorButton": "Volver a elegir modo",
     "exitButton": "Salir",
     "messages": [
       "¡Lo has hecho genial! Sigue descubriendo datos curiosos de dinosaurios.",
@@ -358,6 +363,70 @@
       "message": "¡Bien hecho explorando el laberinto! Sigue jugando para descubrir más caminos."
     }
   },
+  "oidoJurasico": {
+    "screenTitle": "Oído Jurásico",
+    "imaginedSoundNotice": {
+      "heading": "Un sonido imaginado",
+      "message": "Estos sonidos son imaginados. Nadie sabe con certeza cómo sonaban de verdad estas criaturas: no se ha conservado ningún sonido real. Este sonido es una imaginación creada para el juego, no una grabación ni una reconstrucción científica.",
+      "continueButton": "Entendido, ¡a jugar!",
+      "continueButtonAriaLabel": "Entendido, empezar a jugar Oído Jurásico"
+    },
+    "instructions": "Escucha el sonido imaginado y elige, entre cuatro criaturas, la que crees que podría haberlo hecho.",
+    "playButton": "Reproducir sonido",
+    "playButtonAriaLabel": "Reproducir el sonido imaginado de esta ronda",
+    "replayButton": "Escuchar de nuevo",
+    "replayButtonAriaLabel": "Volver a escuchar el sonido imaginado de esta ronda",
+    "mutedNotice": {
+      "heading": "El sonido está silenciado",
+      "message": "Oído Jurásico necesita el sonido activado para poder jugar. Actívalo para escuchar la pista de esta ronda.",
+      "unmuteButton": "Activar sonido",
+      "backButton": "Volver al selector de juegos"
+    },
+    "playbackError": {
+      "message": "Oído Jurásico no puede continuar porque el sonido no se pudo reproducir. Puedes volver al selector de juegos e intentar otro modo.",
+      "backButton": "Volver al selector de juegos"
+    },
+    "answerReinforcement": {
+      "message": "Recuerda: es una interpretación imaginada del sonido, no una reconstrucción científica demostrada."
+    },
+    "optionsGroupLabel": "Opciones de respuesta",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado el sonido.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {creature}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {creature}",
+    "scoreLabel": "Puntos",
+    "roundFormat": "Ronda {current} de {total}",
+    "nextButton": "Siguiente",
+    "blocked": {
+      "insufficientCatalog": "Oído Jurásico no está disponible todavía: se necesitan al menos 4 sonidos imaginados de criaturas para activar este modo.",
+      "backButtonLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
   "parejas": {
     "screenTitle": "Parejas jurásicas",
     "instructions": "Da la vuelta a dos cartas para encontrar la pareja de cada criatura.",
@@ -464,6 +533,112 @@
       "dilophosaurus": "Dilophosaurus",
       "pachycephalosaurus": "Pachycephalosaurus",
       "compsognathus": "Compsognathus"
+    }
+  },
+  "shadowGuess": {
+    "name": "Adivina la sombra",
+    "instructions": "Observa la silueta y elige, entre cuatro criaturas, la que crees que se esconde detrás.",
+    "options": {
+      "option1Label": "Opción 1: {creature}",
+      "option2Label": "Opción 2: {creature}",
+      "option3Label": "Opción 3: {creature}",
+      "option4Label": "Opción 4: {creature}"
+    },
+    "feedback": {
+      "correct": "¡Correcto! Has adivinado la sombra.",
+      "incorrect": "Incorrecto. ¡Sigue intentándolo!",
+      "correctAnswer": "La respuesta correcta era {creature}."
+    },
+    "blocked": {
+      "insufficientCatalog": "Adivina la sombra no está disponible todavía: se necesitan al menos 12 criaturas aprobadas y visualmente diferenciables entre sí para activar este modo."
+    },
+    "results": {
+      "title": "Resultados de Adivina la sombra",
+      "score": "Aciertos en Adivina la sombra",
+      "percentage": "Porcentaje de aciertos",
+      "stars": "Estrellas conseguidas",
+      "progress": "Progreso en Adivina la sombra"
+    },
+    "optionsGroupLabel": "Opciones de respuesta",
+    "correctOptionAriaLabelFormat": "Respuesta correcta: {creature}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {creature}",
+    "scoreLabel": "Puntos",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "nextButton": "Siguiente",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "classify": {
+    "screenTitle": "Clasifica",
+    "instructions": "Mira a la criatura y toca su categoría: carnívoro, herbívoro u omnívoro.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. Mira a {dinosaur} y elige su categoría.",
+    "categoriesGroupLabel": "Categorías",
+    "categoryButtonAriaLabelFormat": "{label}: {description}. Toca para elegir esta categoría.",
+    "categoryCorrectAriaLabelFormat": "Categoría correcta: {label}",
+    "categorySelectedAriaLabelFormat": "Tu respuesta: {label}",
+    "categories": {
+      "carnivoro": {
+        "label": "Carnívoro",
+        "description": "Come la carne de otros animales"
+      },
+      "herbivoro": {
+        "label": "Herbívoro",
+        "description": "Come solo plantas"
+      },
+      "omnivoro": {
+        "label": "Omnívoro",
+        "description": "Come plantas y también carne de otros animales"
+      }
+    },
+    "feedback": {
+      "correctMessageFormat": "¡Genial, acertaste! {dinosaur} es {category}.",
+      "incorrectMessageFormat": "¡Buen intento! {dinosaur} es {category}, no {yourCategory}.",
+      "bonusMessage": "¡Bonus por rapidez conseguido!"
+    },
+    "blocked": {
+      "message": "No hemos podido comprobar la categoría de esta criatura todavía. ¡Vamos con otra ronda!",
+      "announcementFormat": "Ronda bloqueada: no hemos podido comprobar la categoría de {dinosaur} todavía. Vamos a intentarlo con otra ronda."
+    },
+    "roundResult": {
+      "nextButton": "Siguiente"
+    },
+    "gameOver": {
+      "heading": "¡Clasifica completado!",
+      "announcementFormat": "Has terminado Clasifica. Acertaste {score} de {total} rondas.",
+      "message": "¡Bien hecho clasificando a las criaturas! Sigue jugando para conocer más dietas."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   },
   "dinosaurNames": {
@@ -784,6 +959,75 @@
     "compsognathus-20": "El Compsognathus y el Archaeopteryx, una de las aves más primitivas conocidas, vivieron aproximadamente en la misma época y zona, lo que ayuda a estudiar la transición hacia las aves.",
     "compsognathus-21": "Los huesos pequeños y delicados como los del Compsognathus se conservan con más dificultad, lo que complica calcular con precisión medidas como su peso exacto."
   },
+  "timeline": {
+    "modeName": "Línea del tiempo",
+    "instruction": "¿En qué periodo vivió esta criatura? Elige Triásico, Jurásico o Cretácico.",
+    "levelFormat": "Nivel {level}",
+    "roundFormat": "Ronda {current} de {total}",
+    "roundChangeAnnouncementFormat": "Ronda {current} de {total}. ¿En qué periodo vivió {dinosaur}?",
+    "scoreLabel": "Puntos",
+    "optionsGroupLabel": "Elige el periodo",
+    "correctOptionAriaLabelFormat": "Periodo correcto: {period}",
+    "selectedOptionAriaLabelFormat": "Tu respuesta: {period}",
+    "nextButton": "Siguiente",
+    "options": {
+      "triasico": {
+        "label": "Triásico",
+        "a11yLabel": "Elegir el periodo Triásico"
+      },
+      "jurasico": {
+        "label": "Jurásico",
+        "a11yLabel": "Elegir el periodo Jurásico"
+      },
+      "cretacico": {
+        "label": "Cretácico",
+        "a11yLabel": "Elegir el periodo Cretácico"
+      }
+    },
+    "feedback": {
+      "correct": "¡Correcto! Vivió principalmente en el {periodo}.",
+      "incorrect": "No es correcto. Vivió principalmente en el {periodo}."
+    },
+    "explanation": {
+      "heading": "Dato curioso",
+      "interval": "Su intervalo temporal aproximado fue {intervalo}.",
+      "intervalRangeFormat": "{startMya} a {endMya} millones de años",
+      "classificationFormat": {
+        "dinosaurio": "{dinosaur} es un dinosaurio.",
+        "reptil_volador": "{dinosaur} era un reptil volador, no un dinosaurio.",
+        "otro": "{dinosaur} no es un dinosaurio ni un reptil volador."
+      }
+    },
+    "blockedRound": {
+      "message": "No hemos podido comprobar el periodo de esta criatura todavía. ¡Vamos con otra ronda!",
+      "announcementFormat": "Ronda bloqueada: no hemos podido comprobar el periodo de {dinosaur} todavía. Vamos a intentarlo con otra ronda."
+    },
+    "gameOver": {
+      "heading": "¡Línea del tiempo completada!",
+      "message": "¡Genial explorando cuándo vivió cada criatura! Sigue jugando para descubrir más.",
+      "announcementFormat": "Has terminado Línea del tiempo. Acertaste {score} de {total} rondas."
+    },
+    "locked": {
+      "message": "Línea del tiempo no está disponible porque no hay suficientes fichas válidas para completar una partida.",
+      "exitLabel": "Volver al selector de juegos"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Estegosaurio",
+      "braquiosaurio": "Braquiosaurio",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
   "creatures": {
     "trex": {
       "name": "Tyrannosaurus Rex",
@@ -812,6 +1056,34 @@
     "pteranodon": {
       "name": "Pteranodon",
       "habitat": "Costas y mares interiores de Norteamérica"
+    },
+    "spinosaurus": {
+      "name": "Spinosaurus",
+      "habitat": "Ríos y marismas del norte de África"
+    },
+    "dilophosaurus": {
+      "name": "Dilophosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "pachycephalosaurus": {
+      "name": "Pachycephalosaurus",
+      "habitat": "Bosques y llanuras de Norteamérica"
+    },
+    "compsognathus": {
+      "name": "Compsognathus",
+      "habitat": "Llanuras costeras de Europa"
+    },
+    "diplodocus": {
+      "name": "Diplodocus",
+      "habitat": "Llanuras y ríos de Norteamérica"
+    },
+    "iguanodon": {
+      "name": "Iguanodon",
+      "habitat": "Llanuras y bosques de Europa"
+    },
+    "parasaurolophus": {
+      "name": "Parasaurolophus",
+      "habitat": "Bosques y llanuras de Norteamérica"
     }
   }
 }

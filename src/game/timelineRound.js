@@ -47,6 +47,16 @@
  * states that as fact -- PRD G4). None of this is exposed on the round
  * before it is evaluated, so the round object handed to a player never
  * leaks the answer up front (mirrors classifyGame.js's own `startRound`).
+ *
+ * Level-unlock chain (TRIOFSND-294, PRD "Progresión independiente por
+ * modo"): `completeLevel` registers this mode into gameFlow.js's common
+ * game contract exactly the way public/scripts/shadowGuessGame.js's own
+ * `completeLevel` does -- composing `gameFlow.resolveLevelOutcome` (scoped
+ * to this mode's own `MODE_ID` entry in unlockThresholds.js, never another
+ * mode's) with `startGame` for whichever level unlocks next. This is the
+ * single place that decides a level's *fin* (game over vs. level-up) from
+ * that level's own 10 rondas/aciertos, purely a function of `params.level`/
+ * `params.answers` -- it carries no state of its own between calls.
  */
 
 const gameFlow = require('./gameFlow');
@@ -358,6 +368,33 @@ function completeRound(params) {
   };
 }
 
+/**
+ * Composes `gameFlow.resolveLevelOutcome` (scoped to this mode's own
+ * unlockThresholds.js entry, MODE_ID) with the `startGame` above: resolves
+ * what happens once a level's ROUNDS_PER_GAME rounds are all answered and,
+ * when a next level unlocks, also starts it (attached as `nextLevelGame`).
+ * Mirrors gameFlow.js's own `completeLevel`/shadowGuessGame.js's exactly,
+ * but generating this mode's own eligible-creature rounds instead of
+ * pulling from the question bank. `params` (`dinosaurPool`,
+ * `getCreatureSheet`, `randomFn`, `logService`) is forwarded to `startGame`
+ * as-is, so the next level is generated the same way any fresh game is.
+ */
+function completeLevel(params) {
+  params = params || {};
+  const outcome = gameFlow.resolveLevelOutcome({
+    level: params.level,
+    answers: params.answers,
+    modeId: MODE_ID,
+  });
+
+  if (outcome.gameOver) {
+    return outcome;
+  }
+
+  outcome.nextLevelGame = startGame(Object.assign({}, params, { level: outcome.nextLevel }));
+  return outcome;
+}
+
 module.exports = {
   ROUNDS_PER_GAME,
   MODE_ID,
@@ -374,4 +411,5 @@ module.exports = {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 };

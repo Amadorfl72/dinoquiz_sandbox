@@ -244,6 +244,8 @@
   var MAZE_HASH = '#/laberinto';
   var MAZE_MODE_ID = 'laberinto'; // mirrors src/game/modesCatalog.js MODE_IDS.LABERINTO
   var QUIZ_MODE_ID = 'quiz'; // mirrors src/game/modesCatalog.js MODE_IDS.QUIZ
+  var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
+  var CLASIFICA_MODE_ID = 'clasifica'; // mirrors src/game/modesCatalog.js MODE_IDS.CLASIFICA
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -255,6 +257,26 @@
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
       loc.hash = MAZE_HASH;
+    }
+  }
+
+  // Oído Jurásico route (TRIOFSND-270): mirrors the Laberinto hash route
+  // above -- its own fixed 10-round game (no cross-game level chain, same
+  // shape as Laberinto's own single-level game) lives behind its own hash so
+  // handleModeSelected/renderRoute can navigate to and re-enter it exactly
+  // like Laberinto, instead of falling through to the Quiz's level orchestrator.
+  var OIDO_JURASICO_HASH = '#/oido-jurasico';
+  var OIDO_JURASICO_MODE_ID = 'oidoJurasico'; // mirrors src/game/modesCatalog.js MODE_IDS.OIDO_JURASICO
+
+  function isOidoJurasicoRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === OIDO_JURASICO_HASH;
+  }
+
+  function navigateToOidoJurasico(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = OIDO_JURASICO_HASH;
     }
   }
 
@@ -272,6 +294,14 @@
         renderResultsScreen:
           fromWindow.renderResultsScreen || require('../../src/screens/ResultsScreen').renderResultsScreen,
         renderMazeScreen: fromWindow.renderMazeScreen || require('../../src/screens/MazeScreen').renderMazeScreen,
+        renderOidoJurasicoIntro:
+          fromWindow.renderOidoJurasicoIntro || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoIntro,
+        renderOidoJurasicoScreen:
+          fromWindow.renderOidoJurasicoScreen || require('../../src/screens/OidoJurasicoScreen').renderOidoJurasicoScreen,
+        renderShadowGuessScreen:
+          fromWindow.renderShadowGuessScreen || require('../../src/screens/ShadowGuessScreen').renderShadowGuessScreen,
+        renderClassifyScreen:
+          fromWindow.renderClassifyScreen || require('../../src/screens/ClassifyScreen').renderClassifyScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -340,6 +370,173 @@
   }
 
   /**
+   * Resolves public/scripts/oidoJurasicoScreen.js's non-rendering exports
+   * (round generation, the intro-seen flag helpers) -- same require-or-
+   * `window.DinoQuiz` pattern as `resolveMazeGame` above, but nested under
+   * `window.DinoQuiz.game.oidoJurasico` since that one file's `api` object
+   * covers both the screens (flat on `window.DinoQuiz.screens`, see
+   * `resolveScreenRenderers`) and the game logic (nested here).
+   */
+  function resolveOidoJurasicoGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/screens/OidoJurasicoScreen');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.oidoJurasico) || null;
+  }
+
+  /**
+   * Resolves public/scripts/roundContract.js (TRIOFSND-241), the shared
+   * "start a game, run exactly ROUNDS_PER_GAME (10) rounds, score/advance
+   * once each" contract Oído Jurásico's flat, level-less game drives instead
+   * of hand-rolling a fourth start/evaluate/advance loop -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveGameFlow` above.
+   */
+  function resolveRoundContract(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/game/roundContract');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.roundContract) || null;
+  }
+
+  /**
+   * Resolves public/scripts/shadowGuessGame.js (TRIOFSND-265), the
+   * browser-runnable Adivina la sombra round/level orchestrator -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveMazeGame` above.
+   * Registered nested under `window.DinoQuiz.game.shadowGuess`.
+   */
+  function resolveShadowGuessGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./shadowGuessGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.shadowGuess) || null;
+  }
+
+  /**
+   * Resolves public/scripts/classifyGame.js (TRIOFSND-281), the
+   * browser-runnable Clasifica round/game orchestrator -- same require-or-
+   * `window.DinoQuiz` pattern as `resolveMazeGame`/`resolveShadowGuessGame`
+   * above. Registered nested under `window.DinoQuiz.game.classify`.
+   */
+  function resolveClassifyGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./classifyGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.classify) || null;
+  }
+
+  /**
+   * Resolves public/scripts/modesCatalog.js the same require-or-window way,
+   * so `renderModeSelector` below can override just the Sombra card's
+   * availability verdict without modeSelectorScreen.js ever needing to know
+   * about that override (see `evaluateModesWithShadowOverride`).
+   */
+  function resolveModesCatalog(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./modesCatalog');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.modesCatalog) || null;
+  }
+
+  /**
+   * Resolves the real, verified `isShadowModeUnlocked` check (TRIOFSND-265,
+   * src/data/creatureSheet.js's >=12 approved-creature gate) via
+   * shadowGuessGame.js, which already exposes it under both Node/Jest (the
+   * real creatureSheet.js check) and the real, unbundled browser (a local
+   * mirror of the same roster) -- see that file's own doc comment for why it
+   * can't `require('../../src/data/creatureSheet')` directly in the browser.
+   */
+  function resolveIsShadowModeUnlocked(win) {
+    var shadowGuessGameApi = resolveShadowGuessGame(win);
+    if (shadowGuessGameApi && typeof shadowGuessGameApi.isShadowModeUnlocked === 'function') {
+      return shadowGuessGameApi.isShadowModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
+   * Resolves the real, verified `isClassifyModeUnlocked` check (TRIOFSND-282,
+   * src/data/creatureSheet.js's >=6-creatures/all-three-diets gate) via
+   * classifyGame.js, mirroring `resolveIsShadowModeUnlocked` above.
+   */
+  function resolveIsClassifyModeUnlocked(win) {
+    var classifyGameApi = resolveClassifyGame(win);
+    if (classifyGameApi && typeof classifyGameApi.isClassifyModeUnlocked === 'function') {
+      return classifyGameApi.isClassifyModeUnlocked;
+    }
+    return function () {
+      return true;
+    };
+  }
+
+  /**
+   * `modeSelectorScreen.js`'s own `evaluateModes` default (modesCatalog.js's
+   * generic MIN_CREATURES/requireVisuallyDifferentiable/
+   * MIN_CREATURES_WITH_FIELD requirements) still evaluates Sombra/Clasifica
+   * against `buildCurrentResourceCatalog`'s placeholder, which marks every
+   * shipped dinosaur `visuallyDifferentiable: true` but leaves `diet`
+   * undefined until a future ticket wires the real creature sheet into that
+   * generic engine (see modesCatalog.js's own doc comment) -- so today it can
+   * report Sombra "available" even when fewer than 12 creatures have
+   * actually cleared visual review, and always reports Clasifica "blocked"
+   * even though the real roster already covers carnivoro/herbivoro/omnivoro.
+   * This wraps the real `evaluateModes` and replaces the Sombra verdict with
+   * the real `isShadowModeUnlocked` check (TRIOFSND-265) and the Clasifica
+   * verdict with the real `isClassifyModeUnlocked` check (TRIOFSND-282),
+   * leaving every other mode's verdict untouched.
+   */
+  function evaluateModesWithShadowOverride(catalog, modes) {
+    var modesCatalog = resolveModesCatalog();
+    var results = modesCatalog.evaluateModes(catalog, modes);
+    var isShadowModeUnlocked = resolveIsShadowModeUnlocked();
+    var isClassifyModeUnlocked = resolveIsClassifyModeUnlocked();
+
+    return results.map(function (verdict) {
+      if (verdict.modeId === SOMBRA_MODE_ID) {
+        if (isShadowModeUnlocked()) {
+          return { modeId: SOMBRA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: SOMBRA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES,
+          details: null,
+        };
+      }
+
+      if (verdict.modeId === CLASIFICA_MODE_ID) {
+        if (isClassifyModeUnlocked()) {
+          return { modeId: CLASIFICA_MODE_ID, available: true, cause: null, details: null };
+        }
+        return {
+          modeId: CLASIFICA_MODE_ID,
+          available: false,
+          cause: modesCatalog.AVAILABILITY_CAUSES.MISSING_CREATURE_FIELD,
+          details: null,
+        };
+      }
+
+      return verdict;
+    });
+  }
+
+  /**
    * Resolves public/scripts/modeStorage.js (TRIOFSND-230/234), the
    * last-selected-mode persistence service -- same require-or-`window.DinoQuiz`
    * pattern as `resolveGameFlow`/`resolveMazeGame` above. `startLevelGame`
@@ -365,6 +562,49 @@
     if (modeStorage) {
       modeStorage.setLastMode(modeId, storageObj);
     }
+  }
+
+  /**
+   * Resolves public/scripts/modeProgressStorage.js's `ModeProgressStorage`
+   * (TRIOFSND-250, PRD "Progresión independiente por modo"): the per-mode
+   * local persistence of a mode's highest unlocked level and its latest
+   * finished-game result (score/percentage/stars), keyed by modeId under
+   * `dinoquiz:modeProgress:<modeId>` -- unlike `storage`'s (StorageClient's)
+   * single, mode-agnostic `maxUnlockedLevel`, this is what `finishLevel`
+   * below reads/writes so one mode's progression never reads, overwrites or
+   * resets another's (TRIOFSND-253).
+   *
+   * Same require-or-`window.DinoQuiz` fallback shape as `resolveModeStorage`/
+   * `resolveMazeGame` above. Node/Jest resolves the canonical
+   * `src/services/storage` module's own shared `modeProgressStorage`
+   * singleton; the real, bundler-less browser instantiates its own singleton
+   * from the `<script>`-loaded constructor once and caches it in
+   * `browserModeProgressStorage` below, so every level completed in the same
+   * session shares the same resolved backend adapter instead of re-probing
+   * IndexedDB/localStorage availability on every call.
+   */
+  var browserModeProgressStorage = null;
+
+  function resolveModeProgressStorage(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/storage').modeProgressStorage;
+    }
+
+    var ModeProgressStorageCtor =
+      win &&
+      win.DinoQuiz &&
+      win.DinoQuiz.services &&
+      win.DinoQuiz.services.modeProgressStorage &&
+      win.DinoQuiz.services.modeProgressStorage.ModeProgressStorage;
+    if (typeof ModeProgressStorageCtor !== 'function') {
+      return null;
+    }
+    if (!browserModeProgressStorage) {
+      browserModeProgressStorage = new ModeProgressStorageCtor();
+    }
+    return browserModeProgressStorage;
   }
 
   /**
@@ -454,9 +694,30 @@
         navigateToMaze();
         return;
       }
+      if (modeId === OIDO_JURASICO_MODE_ID) {
+        navigateToOidoJurasico();
+        return;
+      }
+      if (modeId === SOMBRA_MODE_ID) {
+        // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
+        // procedural round generator (shadowGuessGame.js) instead of the
+        // question-bank-driven orchestrator below -- see
+        // startShadowGuessLevelGame's own doc comment.
+        startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
+      if (modeId === CLASIFICA_MODE_ID) {
+        // TRIOFSND-282: Clasifica has its own fixed-level round generator
+        // (classifyGame.js) instead of the question-bank-driven orchestrator
+        // below -- see startClassifyGame's own doc comment.
+        startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
       // Every other mode (Quiz included) still routes through the existing
-      // multi-level orchestrator until its own game engine ships.
-      startLevelGame(container, renderers, questions, doc, fetchFn, ctx);
+      // multi-level orchestrator until its own game engine ships -- `modeId`
+      // (TRIOFSND-253) is what keeps each mode's level-unlock progression and
+      // finished-game result independent (see startLevelGame/finishLevel).
+      startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
     }
 
     var gameSessionStorage = resolveGameSessionStorage();
@@ -1024,6 +1285,10 @@
           level: levelGame.level,
           answers: finalState.answers,
           ageBand: ctx.ageBand,
+          // TRIOFSND-253: scopes the unlock threshold looked up (and thus
+          // whether the next level unlocks) strictly to this mode -- see
+          // gameFlow.js's own doc comment on resolveLevelOutcome/completeLevel.
+          modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
         });
@@ -1055,26 +1320,76 @@
    * reason); 'Salir' goes to Inicio, exactly like the flat flow's Resultados.
    */
   function finishLevel(container, renderers, questions, doc, fetchFn, level, finalState, outcome, ctx) {
-    var storage = ctx.storage;
+    var gameFlow = resolveGameFlow();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId;
 
-    var persistUnlock = function () {
-      if (!outcome.gameOver && storage && typeof storage.setMaxUnlockedLevel === 'function') {
-        return Promise.resolve(storage.setMaxUnlockedLevel(outcome.nextLevel));
-      }
-      return Promise.resolve(null);
-    };
+    // TRIOFSND-253: writes this mode's own level-unlock/result progress via
+    // modeProgressStorage.js, fire-and-forget -- mirrors persistBestScoreAndStreak's
+    // own recordScore/recordStreak calls (in playLevel, above) not being
+    // awaited before Resultados renders either. Awaiting a fresh read/write
+    // round trip here would queue behind the *other*, already-busy
+    // per-question storage client (recordQuestionAnswered/markFunFactDiscovered,
+    // fired once per answered question) on the same underlying IndexedDB
+    // database, adding real, user-visible latency right when Resultados is
+    // about to render -- exactly the moment a child is waiting to see their
+    // score. `ModeProgressStorage`'s own writes degrade to an in-memory
+    // adapter rather than rejecting (see its `_write`), so this never needs
+    // a `.catch()`. The two writes are chained (never fired concurrently):
+    // both are read-modify-write calls against the same stored record, so
+    // racing them would let whichever lands second silently clobber the
+    // other's field with its own stale read of the record (e.g.
+    // `recordResult`'s snapshot of `maxUnlockedLevel` taken before
+    // `recordLevelUnlocked`'s write had landed).
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
+          level: level,
+        });
+      });
+    }
 
-    var readMaxUnlockedLevel = function () {
-      return storage && typeof storage.getMaxUnlockedLevel === 'function'
-        ? Promise.resolve(storage.getMaxUnlockedLevel())
-        : Promise.resolve(null);
-    };
+    // TRIOFSND-253: the value to *display* right now, resolved the same way
+    // persistBestScoreAndStreak resolves bestScore/maxStreak above -- never
+    // awaiting the fire-and-forget writes just above (their effect isn't
+    // observable synchronously), but combining this level's own outcome with
+    // the value already read once, before any per-question write could
+    // contend with it (`ctx.maxUnlockedLevelPromise`, kicked off in
+    // startLevelGame). Advancing it in place (rather than replacing it) is
+    // what lets a later level in the same chain ("Volver a jugar" continuing
+    // into the next level, so finishLevel runs again against the same `ctx`)
+    // see this level's own unlock too, without a second storage read.
+    // Undefined (never a resolved promise) when no modeProgressStorage was
+    // ever configured for this chain, so `maxLevelUnlocked` stays unset
+    // exactly like every other caller-supplied-storage-gated option here
+    // (`bestScore`/`bestStreak`/`adsRemoved`).
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
 
-    return persistUnlock()
-      .then(readMaxUnlockedLevel)
+    return Promise.resolve(ctx.maxUnlockedLevelPromise)
       .then(function (maxLevelUnlocked) {
         return renderers.renderResultsScreen(container, {
           score: finalState.score,
+          // TRIOFSND-253: generalizes the score scale this mode's level is
+          // played against -- QUESTIONS_PER_GAME (10) for every mode using
+          // this shared orchestrator today, same value resultsScreen.js
+          // already defaults to, made explicit here since it now also drives
+          // `modeProgressStorage.recordResult`'s maxScore above.
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
           maxStreak: finalState.maxStreak,
           // TRIOFSND-96: the best score/longest racha achieved on this
           // device so far, resolved in playLevel right before this function
@@ -1136,16 +1451,35 @@
     }
 
     var getQuestionsByLevel = ctx.getQuestionsByLevel || buildGetQuestionsByLevel(questions);
+    // TRIOFSND-253: which mode's progression this game chain reads/writes
+    // through modeProgressStorage.js -- defaults to gameFlow's own default
+    // mode (quiz) so every pre-existing caller that never set ctx.modeId
+    // (this orchestrator predates the mode selector) keeps behaving exactly
+    // as before.
+    var modeId = ctx.modeId || gameFlow.DEFAULT_MODE_ID || QUIZ_MODE_ID;
     var resolvedCtx = {
       ageBand: ctx.ageBand !== undefined ? ctx.ageBand : resolveCurrentAgeBand(),
       randomFn: ctx.randomFn,
       storageObj: ctx.storageObj,
       analyticsStorage: ctx.analyticsStorage,
       storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      // TRIOFSND-253: this mode's highest-unlocked-level, read exactly once
+      // here -- before this fresh game's first question renders and long
+      // before any per-question storage write could contend with it (see
+      // finishLevel's own doc comment) -- so Resultados can display it with
+      // no I/O left to do once the 10th question is answered. finishLevel
+      // advances this same promise in place as the chain progresses through
+      // further levels.
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
       getQuestionsByLevel: getQuestionsByLevel,
     };
 
-    persistLastMode(QUIZ_MODE_ID, ctx.storageObj);
+    persistLastMode(modeId, ctx.storageObj);
 
     var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
       getQuestionsByLevel: getQuestionsByLevel,
@@ -1337,6 +1671,518 @@
   }
 
   /**
+  /**
+   * Adivina la sombra mode integration (TRIOFSND-265): unlike Laberinto
+   * (a single fixed-level game per hash route), this mode plays through the
+   * same multi-level unlock chain as Quiz (`playLevel`/`finishLevel`/
+   * `startLevelGame` above) -- `playShadowGuessLevel`/`finishShadowGuessLevel`/
+   * `startShadowGuessLevelGame` mirror that same shape exactly, but drive
+   * shadowGuessGame.js's procedural rounds and shadowGuessScreen.js instead
+   * of the question bank and questionScreen.js.
+   */
+
+  /** Renders `levelGame.rounds[levelGame.state.questionIndex]` and recurses (or completes the level) once 'Siguiente' is tapped -- mirrors `renderQuestionAt`'s own advance loop. */
+  function renderShadowRoundAt(container, renderers, levelGame, onGameComplete) {
+    var round = levelGame.rounds[levelGame.state.questionIndex];
+
+    return renderers.renderShadowGuessScreen(container, round, {
+      score: levelGame.state.score,
+      roundNumber: levelGame.state.questionIndex + 1,
+      totalRounds: levelGame.rounds.length,
+      onAnswer: function (result) {
+        levelGame.state.score = result.score;
+        levelGame.state.answers = levelGame.state.answers.concat([
+          { correctId: result.correctId, selectedId: result.selectedId, isCorrect: result.isCorrect },
+        ]);
+      },
+      onNext: function () {
+        levelGame.state.questionIndex += 1;
+        if (levelGame.state.questionIndex >= levelGame.rounds.length) {
+          onGameComplete(levelGame.state);
+        } else {
+          renderShadowRoundAt(container, renderers, levelGame, onGameComplete);
+        }
+      },
+    });
+  }
+
+  /** Plays one already-started Sombra level end to end, then resolves what happens next via shadowGuessGame.js's `completeLevel` and hands off to `finishShadowGuessLevel` -- mirrors `playLevel` exactly. */
+  function playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, ctx) {
+    var gameFlow = resolveGameFlow();
+
+    return renderShadowRoundAt(container, renderers, levelGame, function (finalState) {
+      finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+      var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+      finalState.bestScore = bestScoreAndStreak.bestScore;
+      finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+      var shadowGuessGameApi = resolveShadowGuessGame();
+      var outcome = shadowGuessGameApi.completeLevel({
+        level: levelGame.level,
+        answers: finalState.answers,
+        randomFn: ctx.randomFn,
+      });
+
+      if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+        exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+        return;
+      }
+
+      finishShadowGuessLevel(container, renderers, doc, fetchFn, levelGame.level, finalState, outcome, ctx);
+    });
+  }
+
+  /** Renders Resultados for the Sombra level just finished, persisting/reading progress through the same per-mode modeProgressStorage.js instance every mode uses -- mirrors `finishLevel` exactly (see that function's own doc comment). */
+  function finishShadowGuessLevel(container, renderers, doc, fetchFn, level, finalState, outcome, ctx) {
+    var gameFlow = resolveGameFlow();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId;
+
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: gameFlow.QUESTIONS_PER_GAME,
+          level: level,
+        });
+      });
+    }
+
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return Promise.resolve(ctx.maxUnlockedLevelPromise).then(function (maxLevelUnlocked) {
+      return renderers.renderResultsScreen(container, {
+        score: finalState.score,
+        maxScore: gameFlow.QUESTIONS_PER_GAME,
+        maxStreak: finalState.maxStreak,
+        bestScore: finalState.bestScore,
+        bestStreak: finalState.bestStreak,
+        level: level,
+        levelOutcome: outcome,
+        maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+        adsRemoved: loadAdsRemovedState(ctx.storageObj),
+        onPlayAgain: function () {
+          if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+            ctx.analyticsStorage.recordEvent('replay_pulsado');
+          }
+          if (!outcome.gameOver && outcome.nextLevelGame) {
+            playShadowGuessLevel(container, renderers, doc, fetchFn, outcome.nextLevelGame, ctx);
+          } else {
+            startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx);
+          }
+        },
+        onExit: function () {
+          var homeStorage = resolveHomeStorage();
+          renderHome(
+            doc,
+            renderers.renderHomeScreen,
+            fetchFn,
+            homeStorage,
+            function () {
+              navigateToPrivacyPolicy();
+            },
+            homeStorage
+          );
+        },
+      });
+    });
+  }
+
+  /** Starts (or restarts) the Sombra multi-level game at `ctx.level` (level 1 by default) -- mirrors `startLevelGame` exactly, using shadowGuessGame.js's own procedural rounds instead of the question bank. */
+  function startShadowGuessLevelGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var shadowGuessGameApi = resolveShadowGuessGame();
+    var gameFlow = resolveGameFlow();
+    if (!shadowGuessGameApi || !gameFlow || !renderers || typeof renderers.renderShadowGuessScreen !== 'function') {
+      return null;
+    }
+
+    var modeId = SOMBRA_MODE_ID;
+    var resolvedCtx = {
+      randomFn: ctx.randomFn,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
+    };
+
+    persistLastMode(modeId, ctx.storageObj);
+
+    var levelGame = shadowGuessGameApi.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
+      randomFn: ctx.randomFn,
+    });
+
+    if (levelGame && levelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, levelGame);
+    }
+
+    return playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, resolvedCtx);
+  }
+
+  /**
+   * Clasifica mode integration (TRIOFSND-282): like Laberinto (a single,
+   * fixed-level ROUNDS_PER_GAME "partida", no cross-game level-unlock chain
+   * -- classifyGame.js's own `startGame`/`completeRound` share that exact
+   * shape with mazeGame.js's, see that module's doc comment) rather than the
+   * Quiz/Sombra multi-level unlock chain. Unlike mazeScreen.js (which only
+   * reports moves and leaves scoring to main.js's `advance()`),
+   * classifyScreen.js evaluates each round itself the instant a category is
+   * tapped (so it can show feedback immediately) and hands the already-
+   * evaluated round/gameState back via `onAnswer` -- so `onNext`/`onGameOver`
+   * below only need to feed that evaluated round back into
+   * classifyGame.js's `completeRound` to generate the next round;
+   * `completeRound`'s own `round.evaluated` guard makes the re-evaluation a
+   * no-op that simply returns the gameState already updated by the screen
+   * (see classifyGame.js's `evaluateRound` doc comment).
+   */
+
+  /** Renders `round` and drives it to completion (or the next round, or Resultados once the game is over). */
+  function playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, round, gameState, ctx) {
+    var totalRounds = classifyGameApi.ROUNDS_PER_GAME;
+    var evaluatedRound = round;
+    var latestGameState = gameState;
+
+    function advance() {
+      var result = classifyGameApi.completeRound({
+        round: evaluatedRound,
+        gameState: latestGameState,
+        level: ctx.level,
+        category: evaluatedRound.category,
+        randomFn: ctx.randomFn,
+        dinosaurPool: ctx.dinosaurPool,
+        getCreatureSheet: ctx.getCreatureSheet,
+        logService: ctx.logService,
+      });
+
+      if (result.gameOver) {
+        finishClassifyGame(container, renderers, doc, fetchFn, result.state, ctx);
+      } else {
+        playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, result.nextRound, result.state, ctx);
+      }
+    }
+
+    return renderers.renderClassifyScreen(container, round, {
+      score: gameState.score,
+      roundNumber: round.roundIndex + 1,
+      totalRounds: totalRounds,
+      gameState: gameState,
+      getCreatureSheet: ctx.getCreatureSheet,
+      logService: ctx.logService,
+      onAnswer: function (result) {
+        evaluatedRound = result.round;
+        latestGameState = result.gameState;
+      },
+      onNext: function () {
+        advance();
+      },
+      onGameOver: function () {
+        advance();
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Clasifica game; 'Volver a jugar' starts a fresh one at the same level, 'Salir' goes to Inicio. */
+  function finishClassifyGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startClassifyGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        var homeStorage = resolveHomeStorage();
+        renderHome(
+          doc,
+          renderers.renderHomeScreen,
+          fetchFn,
+          homeStorage,
+          function () {
+            navigateToPrivacyPolicy();
+          },
+          homeStorage
+        );
+      },
+    });
+  }
+
+  /**
+   * Starts a fresh Clasifica game at `ctx.level` (defaults to
+   * gameFlow.MIN_LEVEL, mirrors `startShadowGuessLevelGame`'s own default).
+   * Persists the last-selected mode (`dinoquiz:lastMode`) before the first
+   * round renders, same as every other mode's own start function.
+   */
+  function startClassifyGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var classifyGameApi = resolveClassifyGame();
+    var gameFlow = resolveGameFlow();
+    if (!classifyGameApi || !gameFlow || !renderers || typeof renderers.renderClassifyScreen !== 'function') {
+      return null;
+    }
+
+    var level = ctx.level || gameFlow.MIN_LEVEL;
+    var resolvedCtx = {
+      level: level,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      getCreatureSheet: ctx.getCreatureSheet,
+      logService: ctx.logService,
+    };
+
+    persistLastMode(CLASIFICA_MODE_ID, ctx.storageObj);
+
+    var game = classifyGameApi.startGame({
+      level: level,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+    });
+
+    return playClassifyRound(container, renderers, doc, fetchFn, classifyGameApi, game.round, game.state, resolvedCtx);
+  }
+
+  /**
+   * Oído Jurásico mode integration (TRIOFSND-270): a fixed, level-less
+   * ROUNDS_PER_GAME-round "partida" (mirrors Laberinto's own flat game
+   * shape, `startMazeGame`/`playMazeRound`/`finishMazeGame` above), but
+   * driven by public/scripts/roundContract.js's shared start/evaluate/
+   * advance contract instead of a bespoke per-mode game module -- Oído
+   * Jurásico's own round generation
+   * (oidoJurasicoScreen.js's `generateOidoJurasicoRound`) is exactly the one
+   * piece that contract asks a mode to supply.
+   */
+
+  /**
+   * Renders `session.round` and drives it to completion (answer -> feedback
+   * -> "Siguiente"), then either the next round or Resultados, exactly
+   * mirroring `playMazeRound`'s shape. `roundContractApi.evaluateAnswer`
+   * rejects a second answer for the same round (AC: "selección de respuesta
+   * sin doble conteo") independently of the screen's own `answered` guard;
+   * `advanceRound` is the single place that decides the game is over once
+   * the round just answered was the 10th (AC: "bucle de exactamente 10
+   * rondas") -- this function never counts rounds itself.
+   */
+  function playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    return renderers.renderOidoJurasicoScreen(container, session.round, {
+      score: session.state.score,
+      roundNumber: session.roundIndex + 1,
+      totalRounds: session.roundCount,
+      storageObj: ctx.storageObj,
+      onAnswer: function (result) {
+        var evaluated = roundContractApi.evaluateAnswer(session, {
+          isCorrect: result.isCorrect,
+          selectedId: result.selectedId,
+          correctId: result.correctId,
+        });
+        if (evaluated.accepted) {
+          session = evaluated.session;
+        }
+      },
+      onNext: function () {
+        var advanced = roundContractApi.advanceRound(session);
+        if (!advanced.accepted) {
+          return;
+        }
+        session = advanced.session;
+
+        if (advanced.gameOver) {
+          finishOidoJurasicoGame(container, renderers, doc, fetchFn, session.state, ctx);
+        } else {
+          playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+        }
+      },
+      // AC: "bloqueo controlado y accesible con vuelta al selector si falta
+      // un recurso" / "aviso de dinoquiz:muted con opciones de ... volver".
+      onBack: function () {
+        returnToModeSelectorFromOidoJurasico(doc, fetchFn);
+      },
+      // Keeps the shared #mute-toggle button (outside #app) in sync after
+      // "Activar sonido" writes the mute flag directly via appShell.js.
+      onUnmute: function () {
+        renderMuteToggle(doc);
+      },
+    });
+  }
+
+  /** Renders Resultados for a finished Oído Jurásico game; 'Volver a jugar' starts a fresh one, 'Salir' goes to Inicio. Mirrors `finishMazeGame`. */
+  function finishOidoJurasicoGame(container, renderers, doc, fetchFn, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    finalState.maxStreak = gameFlow ? gameFlow.calculateMaxStreak(finalState.answers) : undefined;
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    // TRIOFSND-253: this mode's own result, scoped by modeId so it never
+    // reads/overwrites a different mode's progression (see finishLevel's own
+    // doc comment on the same modeProgressStorage).
+    if (ctx.modeProgressStorage && typeof ctx.modeProgressStorage.recordResult === 'function') {
+      var roundContractApi = resolveRoundContract();
+      ctx.modeProgressStorage.recordResult(OIDO_JURASICO_MODE_ID, {
+        score: finalState.score,
+        maxScore: roundContractApi ? roundContractApi.ROUNDS_PER_GAME : 10,
+      });
+    }
+
+    return renderers.renderResultsScreen(container, {
+      score: finalState.score,
+      maxStreak: finalState.maxStreak,
+      bestScore: finalState.bestScore,
+      bestStreak: finalState.bestStreak,
+      adsRemoved: loadAdsRemovedState(ctx.storageObj),
+      onPlayAgain: function () {
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
+      onExit: function () {
+        navigateHome();
+      },
+    });
+  }
+
+  /** Starts a fresh Oído Jurásico game: builds the round context/session via roundContract.js and renders its first round. Persists the last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`. */
+  function startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var roundContractApi = resolveRoundContract();
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    if (!roundContractApi || !oidoJurasicoGame || !renderers || typeof renderers.renderOidoJurasicoScreen !== 'function') {
+      return null;
+    }
+
+    persistLastMode(OIDO_JURASICO_MODE_ID, ctx.storageObj);
+
+    var context = oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn });
+    var session = roundContractApi.startGame({
+      generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+      context: context,
+    });
+
+    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+  }
+
+  /**
+   * "Volver al selector de juegos" (AC, from the blocked/muted/playback-error
+   * panels): the mode selector has no hash route of its own (it only ever
+   * renders as a step between the age gate and a chosen mode, see
+   * `renderModeSelector`), so this re-fetches the same i18n resources that
+   * step normally already has in hand and renders it directly into `#app`,
+   * clearing the Oído Jurásico hash first so a later refresh/back doesn't
+   * re-enter the game that was just left.
+   */
+  function returnToModeSelectorFromOidoJurasico(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      navigateHome();
+      return null;
+    }
+
+    navigateHome();
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    return loadHomeResources(fetchFn).then(function (resources) {
+      return renderModeSelector(container, renderers, loadQuestions(), doc, fetchFn, resources, ctx);
+    });
+  }
+
+  /**
+   * Renders the Oído Jurásico route (#/oido-jurasico): shows the localized
+   * pre-game explanation once, ever, before this device's first game (AC:
+   * "explicación previa localizada antes de la primera partida",
+   * `hasSeenIntro`/`markIntroSeen`), then starts a fresh game every time --
+   * mirrors `renderMazeRoute`'s full re-render on every entry.
+   */
+  function renderOidoJurasicoRoute(doc, fetchFn) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc) {
+      return null;
+    }
+
+    var container = doc.getElementById('app');
+    var renderers = resolveScreenRenderers();
+    if (!container || !renderers) {
+      return null;
+    }
+
+    var homeStorage = resolveHomeStorage(doc.defaultView);
+    var ctx = {
+      storageObj: homeStorage,
+      analyticsStorage: homeStorage,
+      storage: homeStorage,
+      modeProgressStorage: resolveModeProgressStorage(),
+      logger: resolveLogger(),
+    };
+
+    var oidoJurasicoGame = resolveOidoJurasicoGame();
+    var alreadySeenIntro =
+      oidoJurasicoGame && typeof oidoJurasicoGame.hasSeenIntro === 'function' && oidoJurasicoGame.hasSeenIntro(homeStorage);
+
+    if (alreadySeenIntro || typeof renderers.renderOidoJurasicoIntro !== 'function') {
+      return startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+    }
+
+    return renderers.renderOidoJurasicoIntro(container, {
+      onContinue: function () {
+        if (oidoJurasicoGame && typeof oidoJurasicoGame.markIntroSeen === 'function') {
+          oidoJurasicoGame.markIntroSeen(homeStorage);
+        }
+        startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx);
+      },
+    });
+  }
+
+  /**
    * Mode selector (TRIOFSND-232, PRD "Selector ilustrado de modos"): rendered
    * right after the age gate resolves and before any game starts, so the
    * player always picks a mode instead of always landing on Quiz. Selecting
@@ -1379,6 +2225,13 @@
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
+      // TRIOFSND-265/282: overrides the Sombra and Clasifica cards'
+      // availability verdicts with the real isShadowModeUnlocked/
+      // isClassifyModeUnlocked checks -- see evaluateModesWithShadowOverride's
+      // own doc comment. A missing modesCatalog.js (e.g. failed to load)
+      // falls back to modeSelectorScreen.js's own default resolution
+      // untouched.
+      evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
@@ -2163,6 +3016,11 @@
                   storageObj: resolvedMuteStorage,
                   analyticsStorage: storage,
                   storage: storage,
+                  // TRIOFSND-253: resolved once here so every mode reachable
+                  // from the selector reads/writes its own level progress and
+                  // finished-game result through the same modeProgressStorage
+                  // instance (see startLevelGame/finishLevel).
+                  modeProgressStorage: resolveModeProgressStorage(),
                 });
               });
             }
@@ -2289,6 +3147,10 @@
 
     if (isMazeRoute(loc)) {
       return renderMazeRoute(doc, fetchFn);
+    }
+
+    if (isOidoJurasicoRoute(loc)) {
+      return renderOidoJurasicoRoute(doc, fetchFn);
     }
 
     if (isPrivacyPolicyRoute(loc)) {
@@ -2429,6 +3291,7 @@
       renderMuteToggle: renderMuteToggle,
       resolveMazeGame: resolveMazeGame,
       resolveModeStorage: resolveModeStorage,
+      resolveModeProgressStorage: resolveModeProgressStorage,
       persistLastMode: persistLastMode,
       MAZE_HASH: MAZE_HASH,
       isMazeRoute: isMazeRoute,
@@ -2441,9 +3304,35 @@
       renderModeSelector: renderModeSelector,
       QUIZ_MODE_ID: QUIZ_MODE_ID,
       MAZE_MODE_ID: MAZE_MODE_ID,
+      SOMBRA_MODE_ID: SOMBRA_MODE_ID,
+      CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
+      resolveShadowGuessGame: resolveShadowGuessGame,
+      resolveClassifyGame: resolveClassifyGame,
+      resolveModesCatalog: resolveModesCatalog,
+      resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
+      resolveIsClassifyModeUnlocked: resolveIsClassifyModeUnlocked,
+      evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
+      renderShadowRoundAt: renderShadowRoundAt,
+      playShadowGuessLevel: playShadowGuessLevel,
+      finishShadowGuessLevel: finishShadowGuessLevel,
+      startShadowGuessLevelGame: startShadowGuessLevelGame,
+      playClassifyRound: playClassifyRound,
+      finishClassifyGame: finishClassifyGame,
+      startClassifyGame: startClassifyGame,
+      resolveOidoJurasicoGame: resolveOidoJurasicoGame,
+      resolveRoundContract: resolveRoundContract,
+      OIDO_JURASICO_HASH: OIDO_JURASICO_HASH,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      isOidoJurasicoRoute: isOidoJurasicoRoute,
+      navigateToOidoJurasico: navigateToOidoJurasico,
+      startOidoJurasicoGame: startOidoJurasicoGame,
+      playOidoJurasicoRound: playOidoJurasicoRound,
+      finishOidoJurasicoGame: finishOidoJurasicoGame,
+      returnToModeSelectorFromOidoJurasico: returnToModeSelectorFromOidoJurasico,
+      renderOidoJurasicoRoute: renderOidoJurasicoRoute,
     };
   }
 })();

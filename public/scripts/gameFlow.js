@@ -41,25 +41,35 @@
  * level-agnostic bank. `resolveLevelOutcome` then decides, once that level's
  * 10 questions are all answered, whether to unlock the next level or end the
  * game, purely from that level's own answers (never a cross-level running
- * tally) and the child's age band:
- *   - Ages 6-7 are restricted to level 1 and the game always ends after
- *     those 10 questions, whatever the score.
- *   - Age 8+: completing level 10 (MAX_LEVEL) always ends the game; below
- *     that, the mode/level's unlock threshold (TRIOFSND-248, see
- *     unlockThresholds.js) decides -- enough aciertos unlocks and starts the
- *     next level, otherwise it ends.
+ * tally) and, exclusively for `modeId`'s own progression:
+ *   - Completing level 10 (MAX_LEVEL) always ends the game (no mode has more
+ *     than MAX_LEVEL levels).
+ *   - Below that, `modeId`'s unlock threshold for `level` (TRIOFSND-248, see
+ *     unlockThresholds.js) decides -- enough aciertos on THAT level unlocks
+ *     and starts the next level of THAT SAME mode, otherwise it ends.
  * `completeLevel` composes the two: it resolves the outcome and, when a next
  * level unlocks, also starts it via `startLevel` in the same call.
+ *
+ * Per-mode independence (TRIOFSND-249): `resolveLevelOutcome`/`completeLevel`
+ * accept `params.modeId`, defaulting to `DEFAULT_MODE_ID` ('quiz'). Every
+ * decision -- the unlock threshold looked up and the next level offered --
+ * is scoped strictly to that one modeId; nothing here ever reads or mutates
+ * another mode's progress, and these functions carry no state of their own
+ * between calls (calling them twice with the same level/answers, e.g. a
+ * replayed already-cleared level, always returns the same outcome -- there
+ * is no counter here to double-increment). There is no age-band exception:
+ * `params.ageBand`, when a caller still passes it (e.g. main.js's quiz
+ * flow), is accepted but never consulted here -- progression for every
+ * mode, including quiz, is governed strictly by that mode/level's
+ * `unlockThresholds.js` entry, never by the child's age band.
  *
  * The score needed to unlock the next level (TRIOFSND-248) is no longer a
  * single constant applying to every level of the one mode that used to
  * exist: it is looked up per mode/level via `unlockThresholds.js`'s
  * `getUnlockThreshold(modeId, level)`, resolved the same lazy way
  * `resolveQuestionBank` resolves `src/data/questionBank` below.
- * `resolveLevelOutcome`/`completeLevel` accept `params.modeId`, defaulting to
- * `'quiz'` (the AGE_BAND_EIGHT_PLUS `LEVEL_UP_MIN_CORRECT` behaviour is
- * unchanged for that default). `LEVEL_UP_MIN_CORRECT` stays exported as the
- * quiz mode's own threshold value for existing callers.
+ * `LEVEL_UP_MIN_CORRECT` stays exported as the quiz mode's own threshold
+ * value for existing callers.
  *
  * Because `src/data/questionBank.js` reads the bank off disk with `fs`, it
  * cannot be loaded as a plain `<script>` in the no-bundler browser runtime
@@ -79,9 +89,9 @@
   var MAX_LEVEL = 10;
 
   // TRIOFSND-203 AC: >=6 aciertos (out of the level's 10 questions) unlocks
-  // the next level for an 8+ year old; <=5 ends the game. This is the quiz
-  // mode's own threshold in unlockThresholds.js's per-mode/level table
-  // (TRIOFSND-248) -- kept exported here as a constant for existing callers.
+  // the next level; <=5 ends the game. This is the quiz mode's own threshold
+  // in unlockThresholds.js's per-mode/level table (TRIOFSND-248) -- kept
+  // exported here as a constant for existing callers.
   var LEVEL_UP_MIN_CORRECT = 6;
 
   // resolveLevelOutcome/completeLevel default to the quiz mode when no
@@ -302,21 +312,23 @@
 
   /**
    * Decides what happens once a level's 10 questions are all answered
-   * (TRIOFSND-203): unlock the next level, or end the game. `params`:
+   * (TRIOFSND-203, generalized per-mode in TRIOFSND-249): unlock the next
+   * level, or end the game -- scoped strictly to `modeId`. `params`:
    *   - `level`: the level that was just completed (1-MAX_LEVEL).
    *   - `answers`: that level's own answers (never a cross-level total --
    *     `countCorrectAnswers` derives the tally from these alone).
-   *   - `ageBand`: the child's exact age band (see ageGateScreen.js); only
-   *     `'eight-plus'` counts as 8+, everything else (six/seven/unknown) is
-   *     treated as the 6-7 restriction.
    *   - `modeId`: which mode's unlock threshold to use (TRIOFSND-248, see
-   *     unlockThresholds.js); defaults to `'quiz'` (DEFAULT_MODE_ID).
+   *     unlockThresholds.js); defaults to `'quiz'` (DEFAULT_MODE_ID). Every
+   *     other mode's progress is untouched by this call.
+   *   - `ageBand`: accepted for callers that still pass it (e.g. main.js's
+   *     quiz flow, see ageGateScreen.js) but never consulted here -- it has
+   *     no effect on the outcome for any mode, quiz included (TRIOFSND-249).
    *
-   * Ages 6-7 are restricted to level 1 and the game always ends after those
-   * 10 questions, whatever the score. Age 8+: completing MAX_LEVEL always
-   * ends the game; below that, `level` unlocks `level + 1` once `answers`
-   * has at least `modeId`'s unlock threshold for `level` aciertos, otherwise
-   * the game ends.
+   * Completing MAX_LEVEL always ends the game (no mode has more than
+   * MAX_LEVEL levels); below that, `level` unlocks `level + 1` of the SAME
+   * mode once `answers` has at least `modeId`'s unlock threshold for `level`
+   * aciertos, otherwise the game ends. This applies uniformly to every mode,
+   * including quiz: there is no age-band exception.
    */
   function resolveLevelOutcome(params) {
     params = params || {};
@@ -328,10 +340,6 @@
 
     var modeId = params.modeId || DEFAULT_MODE_ID;
     var correctCount = countCorrectAnswers(params.answers);
-
-    if (!isEightPlusAgeBand(params.ageBand)) {
-      return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'age_restricted' };
-    }
 
     if (level >= MAX_LEVEL) {
       return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'completed_all_levels' };

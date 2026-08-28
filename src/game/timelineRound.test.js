@@ -16,7 +16,9 @@ const {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 } = require('./timelineRound');
+const gameFlow = require('./gameFlow');
 const { DINOSAURS, VALID_DINOSAURS } = require('../data/questionBank');
 const { PERIODS: SHEET_PERIODS, CLASSIFICATIONS, getCreatureSheet } = require('../data/creatureSheet');
 const { LogService } = require('../services/logging');
@@ -301,6 +303,50 @@ describe('a full 10-round game, played end to end', () => {
     expect(state.score).toBe(ROUNDS_PER_GAME);
     expect(state.answers).toHaveLength(ROUNDS_PER_GAME);
     expect(new Set(seenDinosaurs).size).toBe(ROUNDS_PER_GAME);
+  });
+});
+
+describe('completeLevel', () => {
+  test('unlocks and starts the next level once the answers clear this mode own unlock threshold', () => {
+    const threshold = gameFlow.getUnlockThreshold(MODE_ID, 1);
+    const answers = Array.from({ length: threshold }, (_, i) => ({ roundIndex: i, isCorrect: true }));
+
+    const outcome = completeLevel({ level: 1, answers, randomFn: () => 0.5 });
+
+    expect(outcome.gameOver).toBe(false);
+    expect(outcome.nextLevel).toBe(2);
+    expect(outcome.nextLevelGame.level).toBe(2);
+    expect(outcome.nextLevelGame.order).toHaveLength(ROUNDS_PER_GAME);
+  });
+
+  test('ends the game when the answers fall short of this mode own unlock threshold', () => {
+    const threshold = gameFlow.getUnlockThreshold(MODE_ID, 1);
+    const answers = Array.from({ length: threshold - 1 }, (_, i) => ({ roundIndex: i, isCorrect: true }));
+
+    const outcome = completeLevel({ level: 1, answers });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.nextLevelGame).toBeUndefined();
+  });
+
+  test('always ends the game once MAX_LEVEL is completed, never a next level', () => {
+    const answers = Array.from({ length: ROUNDS_PER_GAME }, (_, i) => ({ roundIndex: i, isCorrect: true }));
+
+    const outcome = completeLevel({ level: gameFlow.MAX_LEVEL, answers });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('completed_all_levels');
+    expect(outcome.nextLevelGame).toBeUndefined();
+  });
+
+  test('never reads or writes any other mode own unlock threshold', () => {
+    const threshold = gameFlow.getUnlockThreshold(MODE_ID, 1);
+    const quizThreshold = gameFlow.getUnlockThreshold('quiz', 1);
+    const answers = Array.from({ length: threshold }, (_, i) => ({ roundIndex: i, isCorrect: true }));
+
+    completeLevel({ level: 1, answers });
+
+    expect(gameFlow.getUnlockThreshold('quiz', 1)).toBe(quizThreshold);
   });
 });
 

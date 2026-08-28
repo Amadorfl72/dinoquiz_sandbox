@@ -37,11 +37,16 @@ describe('public/scripts/mazeGame.js mirrors the authoritative creature data', (
   });
 
   test('getGoalFood resolves the exact same diet/food as src/data/creatureSheet.js for every shipped dinosaur', () => {
+    const FOOD_BY_DIET = {
+      [DIETS.CARNIVORO]: FOODS.MEAT,
+      [DIETS.HERBIVORO]: FOODS.LEAVES,
+      [DIETS.OMNIVORO]: FOODS.MIXED,
+    };
     VALID_DINOSAURS.forEach((dinosaur) => {
       const sheet = CREATURE_SHEETS[dinosaur];
       expect(getGoalFood(dinosaur)).toEqual({
         diet: sheet.diet,
-        food: sheet.diet === DIETS.CARNIVORO ? FOODS.MEAT : FOODS.LEAVES,
+        food: FOOD_BY_DIET[sheet.diet],
       });
     });
   });
