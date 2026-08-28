@@ -2593,3 +2593,356 @@ body {
   font-weight: 700;
   color: var(--color-text);
 }
+
+/*
+ * Línea del tiempo screen (TRIOFSND-293). Layout mirrors .classify-screen
+ * (title/progress/score/instructions, then the creature, then a stacked
+ * options column) since the interaction is structurally the same "look at
+ * the creature, then pick one of three" shape -- the period buttons reuse
+ * the same width cap (min(100%, 320px)) already proven to fit 375px.
+ */
+.timeline-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.timeline-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.timeline-screen__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.timeline-screen__level,
+.timeline-screen__round {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.timeline-screen__level {
+  background-color: var(--color-focus-ring-on-light);
+}
+
+.timeline-screen__round {
+  background-color: var(--color-stars);
+}
+
+.timeline-screen__score {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.timeline-screen__creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: min(100%, 240px);
+}
+
+.timeline-screen__creature-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  object-fit: contain;
+}
+
+.timeline-screen__creature-name {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.timeline-screen__periods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 320px);
+  box-sizing: border-box;
+}
+
+.timeline-screen__period-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  box-sizing: border-box;
+  padding: 10px 16px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.timeline-screen__period-button:hover:not(:disabled) {
+  background-color: var(--color-option-bg-hover);
+}
+
+.timeline-screen__period-button:active:not(:disabled) {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__period-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.timeline-screen__period-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__period-label {
+  flex: 1;
+  text-align: left;
+}
+
+.timeline-screen__period-button:disabled {
+  cursor: default;
+}
+
+.timeline-screen__period-button--correct {
+  border-color: var(--color-primary);
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__period-button--correct .timeline-screen__period-label::after {
+  content: ' ✓';
+  color: var(--color-primary-pressed);
+}
+
+.timeline-screen__period-button--selected {
+  border-color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+.timeline-screen__feedback-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  border-radius: 16px;
+}
+
+.timeline-screen__feedback-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__feedback-message--correct {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.timeline-screen__feedback-message--incorrect {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
+}
+
+/* Educational explanation box (PRD G4): reuses the same yellow "dato
+ * curioso" tokens as .question-screen__fun-fact-box (contrast.test.js
+ * already guards that background/text pair at WCAG AA), so this never
+ * introduces a new, unverified color pairing.
+ */
+.timeline-screen__explanation {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 16px;
+  background-color: #fff9c4;
+  color: #5d4037;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.timeline-screen__explanation-heading {
+  margin: 0 0 6px;
+  font-size: var(--font-size-body);
+  color: inherit;
+}
+
+.timeline-screen__explanation-interval,
+.timeline-screen__explanation-classification {
+  margin: 4px 0 0;
+  font-size: var(--font-size-body);
+  color: inherit;
+}
+
+.timeline-screen__blocked-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 1.4em;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.timeline-screen__blocked-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.timeline-screen__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.timeline-screen__result-heading {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.timeline-screen__result-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 12px 32px;
+  font-size: var(--font-size-button-lg);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--color-primary-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.timeline-screen__next-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.timeline-screen__next-button:active {
+  background-color: var(--color-primary-pressed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-pressed);
+}
+
+.timeline-screen__next-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+/*
+ * Locked mode state (PRD: "fichas insuficientes ... acción localizada y
+ * accesible para volver al selector"), mirrors
+ * .shadow-guess-screen__blocked's text+icon+aria-live pattern plus a
+ * visible exit button styled like .results-screen__back-to-selector-button
+ * (transparent fill, green outline -- already AA-verified: contrast.test.js
+ * checks this exact color pair for the privacy policy back button).
+ */
+.timeline-screen__locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 16px;
+}
+
+.timeline-screen__locked-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.timeline-screen__locked-message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.timeline-screen__exit-button {
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 2px solid var(--color-text);
+  background-color: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.timeline-screen__exit-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.timeline-screen__exit-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.timeline-screen__exit-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}

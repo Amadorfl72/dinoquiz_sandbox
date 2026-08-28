@@ -74,6 +74,14 @@
   "timeline": {
     "modeName": "Timeline",
     "instruction": "In which period did this creature live? Choose Triassic, Jurassic, or Cretaceous.",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. In which period did {dinosaur} live?",
+    "scoreLabel": "Points",
+    "optionsGroupLabel": "Choose the period",
+    "correctOptionAriaLabelFormat": "Correct period: {period}",
+    "selectedOptionAriaLabelFormat": "Your answer: {period}",
+    "nextButton": "Next",
     "options": {
       "triasico": {
         "label": "Triassic",
@@ -93,12 +101,39 @@
       "incorrect": "That's not correct. It lived mainly in the {periodo}."
     },
     "explanation": {
+      "heading": "Fun fact",
       "interval": "Its approximate time range was {intervalo}.",
+      "intervalRangeFormat": "{startMya} to {endMya} million years ago",
       "pteranodon": "Pteranodon was a flying reptile, not a dinosaur."
+    },
+    "blockedRound": {
+      "message": "We couldn't verify this creature's period yet. Let's try another round!",
+      "announcementFormat": "Round blocked: we couldn't verify {dinosaur}'s period yet. Let's try another round."
+    },
+    "gameOver": {
+      "heading": "Timeline complete!",
+      "message": "Great job exploring when each creature lived! Keep playing to discover more.",
+      "announcementFormat": "You finished Timeline. You got {score} of {total} rounds right."
     },
     "locked": {
       "message": "Timeline isn't available because there aren't enough valid creature cards to complete a game.",
       "exitLabel": "Back to the game selector"
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
     }
   }
 }
