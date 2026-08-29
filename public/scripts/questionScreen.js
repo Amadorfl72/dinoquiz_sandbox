@@ -269,6 +269,29 @@
     );
   }
 
+  // TRIOFSND-311: a single reusable aria-live region for every spoken
+  // announcement this screen makes (round change, feedback + score,
+  // rewarded-ad status), instead of the several independent `aria-live`
+  // nodes this screen used to juggle -- see a11yAnnouncer.js for why that
+  // could make a screen reader announce things out of order or overlapping.
+  // A fresh instance per render mirrors `announcementEl` being a fresh node
+  // per render before this change; `options.a11yAnnouncer` lets tests inject
+  // one directly.
+  function resolveA11yAnnouncer(options) {
+    if (options.a11yAnnouncer) {
+      return options.a11yAnnouncer;
+    }
+    var createA11yAnnouncer =
+      typeof require === 'function'
+        ? require('../../src/services/a11yAnnouncer').createA11yAnnouncer
+        : (typeof window !== 'undefined' &&
+            window.DinoQuiz &&
+            window.DinoQuiz.services &&
+            window.DinoQuiz.services.createA11yAnnouncer) ||
+          null;
+    return typeof createA11yAnnouncer === 'function' ? createA11yAnnouncer() : null;
+  }
+
   function formatTemplate(template, values) {
     return Object.keys(values).reduce(function (result, key) {
       return result.split('{' + key + '}').join(values[key]);
@@ -421,6 +444,7 @@
     var strings = resolveStrings(options);
     var scoring = resolveScoring();
     var soundService = resolveSoundService(options);
+    var a11yAnnouncer = resolveA11yAnnouncer(options);
     var audio = resolveAudio();
     var playFailSound =
       typeof options.playFailSound === 'function'
@@ -488,6 +512,19 @@
         total: options.totalQuestions || DEFAULT_TOTAL_QUESTIONS,
       });
       progressRow.appendChild(progressEl);
+
+      // TRIOFSND-311: "avance de ronda" -- a screen reader user gets no
+      // visual cue that a new round started, so this announces it through
+      // the shared queue the moment the round mounts (queued behind any
+      // announcement still in flight, never overlapping it).
+      if (a11yAnnouncer && strings.roundAnnouncementFormat) {
+        a11yAnnouncer.announce(
+          formatTemplate(strings.roundAnnouncementFormat, {
+            current: options.questionNumber,
+            total: options.totalQuestions || DEFAULT_TOTAL_QUESTIONS,
+          })
+        );
+      }
     }
 
     var scoreEl = document.createElement('p');
@@ -499,18 +536,27 @@
     optionsGroup.setAttribute('role', 'group');
     optionsGroup.setAttribute('aria-label', strings.optionsGroupLabel);
 
+    // `feedback` is now a plain visual paragraph -- the spoken announcement
+    // for the same content goes through `a11yAnnouncer` below instead
+    // (TRIOFSND-311), so this text is never independently `aria-live`.
     var feedback = document.createElement('p');
     feedback.className = 'question-screen__feedback';
-    feedback.setAttribute('aria-live', 'polite');
 
-    // Single accessible result announcement (TRIOFSND-79, AC-14): `announcementEl`
-    // and `announcement` are two names for the SAME node (the return object
-    // below exposes both) -- there must be exactly one `role="status"`
-    // element per question, or a screen reader announces the outcome twice.
-    var announcementEl = document.createElement('p');
-    announcementEl.className = 'question-screen__announcement sr-only';
-    announcementEl.setAttribute('role', 'status');
-    announcementEl.setAttribute('aria-live', 'polite');
+    // Single accessible result announcement (TRIOFSND-79/TRIOFSND-311, AC-14):
+    // `announcementEl` and `announcement` are two names for the SAME node
+    // (the return object below exposes both) -- it is the ONE reusable
+    // `role="status"` region a11yAnnouncer owns, so every announcement this
+    // screen makes (round change, feedback + score, rewarded-ad status) goes
+    // through it instead of a screen reader juggling several independent
+    // `aria-live` nodes.
+    var announcementEl = a11yAnnouncer ? a11yAnnouncer.getRegion() : document.createElement('p');
+    announcementEl.classList.add('question-screen__announcement', 'sr-only');
+    if (!announcementEl.getAttribute('role')) {
+      announcementEl.setAttribute('role', 'status');
+    }
+    if (!announcementEl.getAttribute('aria-live')) {
+      announcementEl.setAttribute('aria-live', 'polite');
+    }
     var announcement = announcementEl;
 
     var funFactBox = document.createElement('div');
@@ -526,10 +572,6 @@
     funFactBox.appendChild(funFactHeading);
     funFactBox.appendChild(funFact);
 
-    // TRIOFSND-79 + TRIOFSND-90 each added "the single announcement region"
-    // and the merge kept both, so screen readers announced every answer twice
-    // and getByRole('status') found two nodes. One element, both names.
-    var announcement = announcementEl;
     var rewardedAdStrings = strings.rewardedAd || {};
 
     var rewardedAdCta = document.createElement('button');
@@ -539,9 +581,10 @@
     rewardedAdCta.setAttribute('aria-label', rewardedAdStrings.ctaAriaLabel);
     rewardedAdCta.hidden = true;
 
+    // Plain visual status paragraph -- its spoken equivalent is announced
+    // through the shared `a11yAnnouncer` region instead (TRIOFSND-311).
     var rewardedAdStatus = document.createElement('p');
     rewardedAdStatus.className = 'question-screen__rewarded-ad-status';
-    rewardedAdStatus.setAttribute('aria-live', 'polite');
     rewardedAdStatus.hidden = true;
 
     var extraFunFactBox = document.createElement('div');
@@ -552,9 +595,10 @@
     extraFunFactHeading.className = 'question-screen__fun-fact-heading';
     extraFunFactHeading.textContent = rewardedAdStrings.extraFactHeading;
 
+    // Plain visual paragraph -- its spoken equivalent is announced through
+    // the shared `a11yAnnouncer` region instead (TRIOFSND-311).
     var extraFunFact = document.createElement('p');
     extraFunFact.className = 'question-screen__fun-fact';
-    extraFunFact.setAttribute('aria-live', 'polite');
 
     extraFunFactBox.appendChild(extraFunFactHeading);
     extraFunFactBox.appendChild(extraFunFact);
@@ -564,6 +608,9 @@
       rewardedAdCta.disabled = true;
       rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
       rewardedAdStatus.hidden = false;
+      if (a11yAnnouncer) {
+        a11yAnnouncer.announce(rewardedAdStrings.loadingLabel);
+      }
 
       rewardedAdService.request().then(function (result) {
         if (result && result.granted) {
@@ -573,8 +620,14 @@
           rewardedAdStatus.textContent = '';
           rewardedAdStatus.hidden = true;
           rewardedAdCta.hidden = true;
+          if (a11yAnnouncer) {
+            a11yAnnouncer.announce((rewardedAdStrings.extraFactHeading || '') + ' ' + extraFact);
+          }
         } else {
           rewardedAdStatus.textContent = rewardedAdStrings.notCompletedMessage;
+          if (a11yAnnouncer) {
+            a11yAnnouncer.announce(rewardedAdStrings.notCompletedMessage);
+          }
         }
       });
     });
@@ -650,11 +703,16 @@
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
 
-      // Written synchronously, right here, so TalkBack/VoiceOver announce
+      // Queued synchronously, right here, so TalkBack/VoiceOver announce
       // acierto/fallo, the correct option's text, the dato curioso and the
       // updated score as one coherent sentence — it never waits on the
-      // fun-fact reveal, a sound cue, or a timer (TRIOFSND-79/TRIOFSND-90, AC-14).
-      announcementEl.textContent = buildResultAnnouncement(strings, question, correct, score);
+      // fun-fact reveal, a sound cue, or a timer (TRIOFSND-79/TRIOFSND-90/
+      // TRIOFSND-311, AC-14). Queued rather than written directly so it never
+      // overlaps a still-in-flight round-change announcement from this same
+      // screen's mount.
+      if (a11yAnnouncer) {
+        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score));
+      }
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
       }
