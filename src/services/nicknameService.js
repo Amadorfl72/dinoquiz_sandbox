@@ -25,11 +25,15 @@ function resolveStorage(storageAdapter) {
   if (storageAdapter) {
     return storageAdapter;
   }
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage;
-  }
-  if (typeof localStorage !== 'undefined') {
-    return localStorage;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof localStorage !== 'undefined') {
+      return localStorage;
+    }
+  } catch (error) {
+    return null;
   }
   return null;
 }

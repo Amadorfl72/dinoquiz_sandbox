@@ -110,6 +110,23 @@ describe('nicknameService — local nickname ("apodo") persistence', () => {
     }
   });
 
+  it('degrades to a no-op false/null when accessing window.localStorage itself throws', () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('blocked');
+      },
+    });
+    try {
+      expect(getNickname()).toBeNull();
+      expect(saveNickname('Rex')).toBe(false);
+      expect(clearNickname()).toBe(false);
+    } finally {
+      Object.defineProperty(window, 'localStorage', originalDescriptor);
+    }
+  });
+
   it('surfaces a throwing setItem as a false return instead of throwing', () => {
     const storage = {
       getItem: () => null,
