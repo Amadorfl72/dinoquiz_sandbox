@@ -26,6 +26,16 @@ const { MODE_IDS } = require('../game/modesCatalog');
 const IMAGE_BASE_PATH = '/assets/images/';
 const OIDO_JURASICO_SOUND_BASE_PATH = '/assets/sounds/oido-jurasico/';
 
+// Línea del tiempo period-selection illustrations (TRIOFSND-295): decorative
+// icons for the three eras the player picks from before each round (see
+// public/assets/images/periods/CREDITS.md). Static per-period assets, not
+// derived from the creature catalog like MODES_WITH_CREATURE_CARTOON_ART.
+const TIMELINE_PERIOD_IMAGES = Object.freeze([
+  `${IMAGE_BASE_PATH}periods/triasico.svg`,
+  `${IMAGE_BASE_PATH}periods/jurasico.svg`,
+  `${IMAGE_BASE_PATH}periods/cretacico.svg`,
+]);
+
 // Loaded by every mode via public/index.html's app-shell/common-flow scripts
 // (home, age gate, privacy, feedback, scoring, mode selector/progression,
 // results, main). A mode-specific screen never duplicates these.
@@ -177,6 +187,10 @@ function getModeManifest(modeId, options = {}) {
     audio.push(...dinosaurs.map((id) => `${OIDO_JURASICO_SOUND_BASE_PATH}${id}.wav`));
   }
 
+  if (modeId === MODE_IDS.LINEA_DEL_TIEMPO) {
+    images.push(...TIMELINE_PERIOD_IMAGES);
+  }
+
   return {
     modeId,
     scripts: dedupe(scripts),
@@ -216,6 +230,7 @@ module.exports = {
   SHARED_AUDIO,
   MODE_SPECIFIC_SCRIPTS,
   MODES_WITH_CREATURE_CARTOON_ART,
+  TIMELINE_PERIOD_IMAGES,
   getModeManifest,
   getAllModeManifests,
   collectAllManifestUrls,
