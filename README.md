@@ -597,6 +597,14 @@ imágenes e iconos (`homeScreen.js`, `questionScreen.js`) y el patrón de disclo
 controles globales (`aria-expanded`/`aria-controls`). Si una PR futura introduce una regresión,
 `npm run test:a11y` la reproduce en local con el mismo detalle que en el `expect` de la suite.
 
+**Complemento manual (TRIOFSND-315):** axe-core no puede verificar si la navegación por teclado
+sigue un orden comprensible, si lo que anuncia un lector de pantalla tiene sentido, o si algún
+modo depende en exclusiva de color/sonido/animación para transmitir información — eso exige una
+persona probando la app. [`tests/a11y/manual-review-checklist.md`](tests/a11y/manual-review-checklist.md)
+recoge esa checklist manual para los ocho modos, enlazada a los criterios de aceptación de la
+historia; la Definition of Done exige repasarla, además de la auditoría automatizada, antes de
+desplegar un modo nuevo o un cambio de UI en uno existente.
+
 **Enganchada al pipeline de CI:** el workflow gestionado por TrioForge
 (`.github/workflows/trioforge-tests.yml`) ejecuta `npx jest --ci` contra todo el repo, y
 `tests/e2e/accessibility.test.js` cae dentro de `testMatch` (`tests/**/*.test.js`) como un test
@@ -605,6 +613,27 @@ igual que cualquier otro test, sin necesitar un paso de CI dedicado a Playwright
 pipeline necesita para poder lanzar Chromium es el binario del navegador: el script
 `postinstall` (`npm run test:e2e:install`) lo instala automáticamente en cada `npm ci`/`npm
 install`, antes de que corra `jest`.
+
+## Auditoría de contraste 4.5:1 en jsdom (TRIOFSND-313)
+
+[`tests/e2e/accessibility.test.js`](tests/e2e/accessibility.test.js) (arriba) es la auditoría de
+referencia porque solo un motor de pintado real puede calcular el contraste "pintado" que ve un
+navegador — pero necesita Chromium, así que solo corre como parte de `test:a11y`/`npm test`, no
+como un test jsdom cualquiera. [`tests/a11y/contrast-audit.test.js`](tests/a11y/contrast-audit.test.js)
+cubre el mismo requisito (`constraints`: "El texto debe cumplir WCAG AA con una relación de
+contraste mínima de 4.5:1") con un camino independiente y sin esa dependencia: renderiza
+`homeScreen`, `questionScreen` y `resultsScreen` (en su estado por defecto y en los estados
+alcanzables — pregunta respondida bien/mal, paneles de Inicio abiertos, filas opcionales de
+Resultados) directamente en jsdom, y para cada bloque de texto visible resuelve él mismo el
+color/fondo efectivos parseando `public/styles/main.css` — la selección de reglas usa
+`Element.matches()` del propio DOM (así que estados no alcanzados como `:hover`/`:focus-visible`
+nunca "matchean" contra un render sin interacción) y una implementación mínima de especificidad
+CSS + orden de declaración para resolver conflictos, más un recorrido hacia arriba del árbol para
+heredar `color`/dejar ver el `background-color` a través de cajas `transparent`, igual que haría
+un navegador. `src/theme/contrast.js` (la misma utilidad de `contrast.test.js`) calcula la
+relación WCAG a partir de esos colores resueltos. El test falla listando exactamente qué
+selector/texto/par de colores incumple el umbral, así que una regresión de color en
+`main.css` para cualquiera de las tres pantallas se detecta sin necesitar Chromium.
 
 ## Auditoría de privacidad y tráfico de red (TRIOFSND-119)
 

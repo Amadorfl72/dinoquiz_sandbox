@@ -7,6 +7,8 @@ const {
   LEVEL_UP_MIN_CORRECT,
   AGE_BAND_EIGHT_PLUS,
   createInitialGameState,
+  createInitialLevelState,
+  applyAnswerToLevelState,
   shuffle,
   calculateMaxStreak,
   selectGameQuestions,
@@ -305,7 +307,7 @@ describe('startLevel (TRIOFSND-203)', () => {
 
     expect(game.error).toBeUndefined();
     expect(game.level).toBe(1);
-    expect(game.state).toEqual(createInitialGameState());
+    expect(game.state).toEqual(createInitialLevelState());
     expect(game.questions).toHaveLength(QUESTIONS_PER_GAME);
     expect(game.questions.every((question) => question.level === 1)).toBe(true);
     const ids = game.questions.map((question) => question.id);
@@ -372,6 +374,96 @@ describe('startLevel (TRIOFSND-203)', () => {
     expect(game.error).toBeUndefined();
     expect(game.questions).toHaveLength(QUESTIONS_PER_GAME);
     expect(game.questions.every((question) => question.level === 1)).toBe(true);
+  });
+
+  test('resets levelPoints to 0 for the game\'s first level when no gameAccumulatedPoints is given (new-game reset)', () => {
+    const questions = buildLevelQuestions(1, 30);
+
+    const game = startLevel(1, { questions, logService: buildMemoryLogService() });
+
+    expect(game.state).toEqual({ levelPoints: 0, gameAccumulatedPoints: 0, questionIndex: 0, answers: [] });
+  });
+
+  test('carries options.gameAccumulatedPoints forward while still resetting levelPoints to 0', () => {
+    const questions = buildLevelQuestions(4, 30);
+
+    const game = startLevel(4, { questions, gameAccumulatedPoints: 23, logService: buildMemoryLogService() });
+
+    expect(game.state).toEqual({ levelPoints: 0, gameAccumulatedPoints: 23, questionIndex: 0, answers: [] });
+  });
+
+  test('an invalid (negative/non-integer) gameAccumulatedPoints is treated as 0 rather than trusted verbatim', () => {
+    const questions = buildLevelQuestions(1, 30);
+
+    [-5, 1.5, 'oops', null, NaN].forEach((invalid) => {
+      const game = startLevel(1, { questions, gameAccumulatedPoints: invalid, logService: buildMemoryLogService() });
+      expect(game.state.gameAccumulatedPoints).toBe(0);
+    });
+  });
+});
+
+describe('createInitialLevelState (TRIOFSND-254)', () => {
+  test('starts both counters at 0 when no gameAccumulatedPoints is given', () => {
+    expect(createInitialLevelState()).toEqual({ levelPoints: 0, gameAccumulatedPoints: 0, questionIndex: 0, answers: [] });
+  });
+
+  test('carries a given gameAccumulatedPoints forward, levelPoints always starts at 0', () => {
+    expect(createInitialLevelState(17)).toEqual({ levelPoints: 0, gameAccumulatedPoints: 17, questionIndex: 0, answers: [] });
+  });
+
+  test('returns a fresh object each call so callers cannot share mutable state', () => {
+    expect(createInitialLevelState()).not.toBe(createInitialLevelState());
+  });
+});
+
+describe('applyAnswerToLevelState (TRIOFSND-254)', () => {
+  test('a correct answer increments both levelPoints and gameAccumulatedPoints by the same +1 delta (reuses scoring.js)', () => {
+    const state = createInitialLevelState(9);
+
+    const next = applyAnswerToLevelState(state, true);
+
+    expect(next.levelPoints).toBe(1);
+    expect(next.gameAccumulatedPoints).toBe(10);
+  });
+
+  test('an incorrect answer leaves both counters untouched (AC-7: no penalty)', () => {
+    const state = { levelPoints: 3, gameAccumulatedPoints: 12, questionIndex: 3, answers: [] };
+
+    const next = applyAnswerToLevelState(state, false);
+
+    expect(next.levelPoints).toBe(3);
+    expect(next.gameAccumulatedPoints).toBe(12);
+  });
+
+  test('does not mutate the input state', () => {
+    const state = createInitialLevelState(5);
+    const copy = { ...state };
+
+    applyAnswerToLevelState(state, true);
+
+    expect(state).toEqual(copy);
+  });
+
+  test('leaves questionIndex/answers untouched -- advancing those is the caller\'s job', () => {
+    const state = { levelPoints: 0, gameAccumulatedPoints: 0, questionIndex: 4, answers: buildAnswers('CCFC') };
+
+    const next = applyAnswerToLevelState(state, true);
+
+    expect(next.questionIndex).toBe(4);
+    expect(next.answers).toBe(state.answers);
+  });
+
+  test('accumulates correctly over a full 10-question level, matching countCorrectAnswers', () => {
+    const pattern = 'CCFCFFCCCC'; // 7 correct
+    let state = createInitialLevelState(20);
+
+    pattern.split('').forEach((mark) => {
+      state = applyAnswerToLevelState(state, mark === 'C');
+    });
+
+    const correctCount = countCorrectAnswers(buildAnswers(pattern));
+    expect(state.levelPoints).toBe(correctCount);
+    expect(state.gameAccumulatedPoints).toBe(20 + correctCount);
   });
 });
 
@@ -510,6 +602,165 @@ describe('completeLevel (TRIOFSND-203)', () => {
 
     expect(outcome.gameOver).toBe(false);
     expect(outcome.nextLevelGame).toEqual({ error: 'level_generation_failed', level: 2, validQuestionCount: 0 });
+  });
+
+  test('preserves gameAccumulatedPoints across the level transition while resetting levelPoints (TRIOFSND-254)', () => {
+    const questions = [...buildLevelQuestions(1, 30), ...buildLevelQuestions(2, 30)];
+    const logService = buildMemoryLogService();
+
+    const outcome = completeLevel({
+      level: 1,
+      answers: buildAnswers('CCCCCCFFFF'), // 6 correct
+      ageBand: AGE_BAND_EIGHT_PLUS,
+      gameAccumulatedPoints: 6, // this level's own finishing total, from state.gameAccumulatedPoints
+      questions,
+      logService,
+    });
+
+    expect(outcome.nextLevelGame.state).toEqual({ levelPoints: 0, gameAccumulatedPoints: 6, questionIndex: 0, answers: [] });
+  });
+
+  test('a brand-new game (no gameAccumulatedPoints passed) starts the next level at gameAccumulatedPoints 0', () => {
+    const questions = [...buildLevelQuestions(1, 30), ...buildLevelQuestions(2, 30)];
+
+    const outcome = completeLevel({
+      level: 1,
+      answers: buildAnswers('CCCCCCFFFF'),
+      ageBand: AGE_BAND_EIGHT_PLUS,
+      questions,
+      logService: buildMemoryLogService(),
+    });
+
+    expect(outcome.nextLevelGame.state.gameAccumulatedPoints).toBe(0);
+  });
+});
+
+describe('level-chaining continuity: levelPoints/gameAccumulatedPoints across a full multi-level game (TRIOFSND-254)', () => {
+  function playLevel(level, questions, gameAccumulatedPoints, pattern) {
+    const game = startLevel(level, { questions, gameAccumulatedPoints, logService: buildMemoryLogService() });
+    let state = game.state;
+
+    pattern.split('').forEach((mark) => {
+      const isCorrect = mark === 'C';
+      state = applyAnswerToLevelState(state, isCorrect);
+      state = {
+        levelPoints: state.levelPoints,
+        gameAccumulatedPoints: state.gameAccumulatedPoints,
+        questionIndex: state.questionIndex + 1,
+        answers: state.answers.concat([{ isCorrect }]),
+      };
+    });
+
+    return state;
+  }
+
+  test('gameAccumulatedPoints keeps growing level over level while levelPoints resets each time', () => {
+    const questions = [
+      ...buildLevelQuestions(1, 30),
+      ...buildLevelQuestions(2, 30),
+      ...buildLevelQuestions(3, 30),
+    ];
+
+    // Level 1: a brand-new game, 8 correct out of 10.
+    const level1Final = playLevel(1, questions, undefined, 'CCCCCCCCFF');
+    expect(level1Final).toEqual({ levelPoints: 8, gameAccumulatedPoints: 8, questionIndex: 10, answers: expect.any(Array) });
+
+    const outcome1 = completeLevel({
+      level: 1,
+      answers: level1Final.answers,
+      gameAccumulatedPoints: level1Final.gameAccumulatedPoints,
+      ageBand: AGE_BAND_EIGHT_PLUS,
+      questions,
+      logService: buildMemoryLogService(),
+    });
+    expect(outcome1.gameOver).toBe(false);
+    expect(outcome1.nextLevelGame.state).toEqual({ levelPoints: 0, gameAccumulatedPoints: 8, questionIndex: 0, answers: [] });
+
+    // Level 2, chained from level 1's carried-over total: 6 correct out of 10.
+    const level2Final = playLevel(2, questions, outcome1.nextLevelGame.state.gameAccumulatedPoints, 'CCCCCCFFFF');
+    expect(level2Final.levelPoints).toBe(6);
+    expect(level2Final.gameAccumulatedPoints).toBe(14); // 8 carried + 6 earned this level
+
+    const outcome2 = completeLevel({
+      level: 2,
+      answers: level2Final.answers,
+      gameAccumulatedPoints: level2Final.gameAccumulatedPoints,
+      ageBand: AGE_BAND_EIGHT_PLUS,
+      questions,
+      logService: buildMemoryLogService(),
+    });
+    expect(outcome2.gameOver).toBe(false);
+    expect(outcome2.nextLevelGame.state).toEqual({ levelPoints: 0, gameAccumulatedPoints: 14, questionIndex: 0, answers: [] });
+
+    // Level 3: too few correct answers to unlock a 4th level -- the game ends,
+    // but the final level's own levelPoints/gameAccumulatedPoints are unaffected.
+    const level3Final = playLevel(3, questions, outcome2.nextLevelGame.state.gameAccumulatedPoints, 'CCFFFFFFFF');
+    expect(level3Final.levelPoints).toBe(2);
+    expect(level3Final.gameAccumulatedPoints).toBe(16);
+
+    const outcome3 = completeLevel({
+      level: 3,
+      answers: level3Final.answers,
+      gameAccumulatedPoints: level3Final.gameAccumulatedPoints,
+      ageBand: AGE_BAND_EIGHT_PLUS,
+      questions,
+      logService: buildMemoryLogService(),
+    });
+    expect(outcome3.gameOver).toBe(true);
+    expect(outcome3.nextLevelGame).toBeUndefined();
+  });
+});
+
+describe('resuming an interrupted game restores both counters (TRIOFSND-254)', () => {
+  test('continuing from a persisted mid-level state accumulates identically to an uninterrupted run', () => {
+    const pattern = 'CCFCCFCCFC'; // 7 correct
+    const startingGameAccumulatedPoints = 30;
+
+    // Uninterrupted control run: apply every answer in one go.
+    let control = createInitialLevelState(startingGameAccumulatedPoints);
+    pattern.split('').forEach((mark) => {
+      control = applyAnswerToLevelState(control, mark === 'C');
+    });
+
+    // Interrupted run: play the first half, "persist" (serialize) the state,
+    // simulate an app restart by restoring it from that plain data, then
+    // resume by applying the second half against the restored copy.
+    const [firstHalf, secondHalf] = [pattern.slice(0, 5), pattern.slice(5)];
+
+    let midGame = createInitialLevelState(startingGameAccumulatedPoints);
+    firstHalf.split('').forEach((mark) => {
+      midGame = applyAnswerToLevelState(midGame, mark === 'C');
+    });
+
+    const persisted = JSON.parse(JSON.stringify(midGame));
+    expect(persisted).toEqual(midGame); // the state round-trips through persistence with no data loss
+
+    let resumed = persisted;
+    secondHalf.split('').forEach((mark) => {
+      resumed = applyAnswerToLevelState(resumed, mark === 'C');
+    });
+
+    expect(resumed.levelPoints).toBe(control.levelPoints);
+    expect(resumed.gameAccumulatedPoints).toBe(control.gameAccumulatedPoints);
+  });
+
+  test('resuming never loses progress already made before the interruption', () => {
+    let state = createInitialLevelState(12);
+    'CCC'.split('').forEach(() => {
+      state = applyAnswerToLevelState(state, true);
+    });
+    expect(state).toEqual({ levelPoints: 3, gameAccumulatedPoints: 15, questionIndex: 0, answers: [] });
+
+    // Simulate restoring exactly this persisted snapshot after an interruption.
+    const restored = JSON.parse(JSON.stringify(state));
+
+    const afterOneMoreMiss = applyAnswerToLevelState(restored, false);
+    expect(afterOneMoreMiss.levelPoints).toBe(3);
+    expect(afterOneMoreMiss.gameAccumulatedPoints).toBe(15);
+
+    const afterOneMoreHit = applyAnswerToLevelState(restored, true);
+    expect(afterOneMoreHit.levelPoints).toBe(4);
+    expect(afterOneMoreHit.gameAccumulatedPoints).toBe(16);
   });
 });
 

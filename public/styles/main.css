@@ -796,6 +796,14 @@ body {
   cursor: default;
 }
 
+/* TRIOFSND-310: the CTA's purple fill (#6A1B9A) is dark, so it takes the
+   same on-dark ring as the green "Siguiente" button below (~5.7:1 against
+   the fill, see contrast.test.js's rewarded-ad-cta AA check). */
+.question-screen__rewarded-ad-cta:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
 .question-screen__rewarded-ad-status {
   margin: 8px 0 0;
   font-size: 18px;
@@ -3661,6 +3669,146 @@ body {
 
 .oido-jurasico-screen__unmute-button:focus-visible,
 .oido-jurasico-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+/*
+ * Nickname request screen (public/scripts/nicknameScreen.js) -- shown
+ * before the first question when no nickname is saved yet. Layout mirrors
+ * .age-gate-screen (centered column, same title/instructions treatment);
+ * the error text reuses var(--color-stars), already proven >=4.5:1 on both
+ * the page background and white in designTokens.test.js, so the "muy
+ * largo"/"escribe un apodo" message is never conveyed by color alone --
+ * it always ships with a warning glyph and the readable error text itself.
+ */
+.nickname-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.nickname-screen__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.nickname-screen__title:focus {
+  outline: none;
+}
+
+.nickname-screen__instructions {
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+
+.nickname-screen__field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.nickname-screen__label {
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  text-align: left;
+}
+
+.nickname-screen__input {
+  min-height: var(--tap-target-min);
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background-color: var(--color-white);
+  border: 3px solid var(--color-primary);
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.nickname-screen__input:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
+.nickname-screen__input[aria-invalid='true'] {
+  border-color: var(--color-stars);
+}
+
+.nickname-screen__hint {
+  margin: 0;
+  font-size: var(--font-size-min);
+  text-align: left;
+}
+
+.nickname-screen__error {
+  margin: 0;
+  font-size: var(--font-size-min);
+  font-weight: 700;
+  color: var(--color-stars);
+  text-align: left;
+}
+
+.nickname-screen__error::before {
+  content: '⚠️ ';
+}
+
+.nickname-screen__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.nickname-screen__continue-button,
+.nickname-screen__guest-button {
+  min-height: var(--tap-target-min);
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.nickname-screen__continue-button {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+}
+
+.nickname-screen__continue-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.nickname-screen__continue-button:active {
+  background-color: var(--color-primary-pressed);
+}
+
+.nickname-screen__continue-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.nickname-screen__guest-button {
+  color: var(--color-neutral-text);
+  background-color: var(--color-neutral-bg);
+  border: none;
+}
+
+.nickname-screen__guest-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }

@@ -170,6 +170,28 @@
     return bundle ? bundle.results : null;
   }
 
+  // TRIOFSND-311: the final-summary announcement now goes through the same
+  // shared-queue service questionScreen.js uses, instead of this screen
+  // hand-rolling its own `aria-live` region -- see a11yAnnouncer.js for why
+  // several independent live regions across the app can announce out of
+  // order or overlap. A fresh instance per render mirrors `announcementEl`
+  // being a fresh node per render before this change; `options.a11yAnnouncer`
+  // lets tests inject one directly.
+  function resolveA11yAnnouncer(options) {
+    if (options.a11yAnnouncer) {
+      return options.a11yAnnouncer;
+    }
+    var createA11yAnnouncer =
+      typeof require === 'function'
+        ? require('../../src/services/a11yAnnouncer').createA11yAnnouncer
+        : (typeof window !== 'undefined' &&
+            window.DinoQuiz &&
+            window.DinoQuiz.services &&
+            window.DinoQuiz.services.createA11yAnnouncer) ||
+          null;
+    return typeof createA11yAnnouncer === 'function' ? createA11yAnnouncer() : null;
+  }
+
   // Quiz's own score is always an integer out of MAX_SCORE (10); a mode with
   // its own scoring scale passes its own maxScore (TRIOFSND-252). Either way
   // the actual percentage/tier math is the shared, mode-agnostic scoring.js
@@ -237,6 +259,23 @@
     return Object.keys(values).reduce(function (result, key) {
       return result.split('{' + key + '}').join(values[key]);
     }, template);
+  }
+
+  /**
+   * Binds a control to fire `handler` on click AND on an Enter/Espacio
+   * `keydown` (TRIOFSND-310). See the matching helper in homeScreen.js for
+   * why this is explicit rather than left to the browser's own default
+   * action on Enter/Espacio.
+   */
+  function bindActivation(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('keydown', function (event) {
+      if (element.disabled) return;
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        handler(event);
+      }
+    });
   }
 
   // Level progression outcome (TRIOFSND-206): `options.levelOutcome` mirrors
@@ -393,10 +432,17 @@
       bestStreakEl.textContent = formatTemplate(strings.bestStreakFormat, { bestStreak: options.bestStreak });
     }
 
-    var announcementEl = document.createElement('p');
-    announcementEl.className = 'results-screen__announcement sr-only';
-    announcementEl.setAttribute('role', 'status');
-    announcementEl.setAttribute('aria-live', 'polite');
+    // TRIOFSND-311: the single reusable aria-live region a11yAnnouncer owns,
+    // instead of this screen creating its own independent one.
+    var a11yAnnouncer = resolveA11yAnnouncer(options);
+    var announcementEl = a11yAnnouncer ? a11yAnnouncer.getRegion() : document.createElement('p');
+    announcementEl.classList.add('results-screen__announcement', 'sr-only');
+    if (!announcementEl.getAttribute('role')) {
+      announcementEl.setAttribute('role', 'status');
+    }
+    if (!announcementEl.getAttribute('aria-live')) {
+      announcementEl.setAttribute('aria-live', 'polite');
+    }
     var announcementParts = [
       formatTemplate(strings.summaryAnnouncement, {
         score: score,
@@ -425,7 +471,12 @@
     if (bestStreakEl) {
       announcementParts.push(bestStreakEl.textContent);
     }
-    announcementEl.textContent = announcementParts.join(' ');
+    // "Fin de partida" (TRIOFSND-311): queued through the shared service so
+    // it never overlaps a still-in-flight announcement (e.g. the previous
+    // question's feedback, if this render follows one immediately).
+    if (a11yAnnouncer) {
+      a11yAnnouncer.announce(announcementParts.join(' '));
+    }
 
     var actions = document.createElement('div');
     actions.className = 'results-screen__actions';
@@ -435,7 +486,7 @@
     playAgainButton.className = 'results-screen__play-again-button';
     playAgainButton.textContent = resolvePlayAgainButtonLabel(strings, options.levelOutcome);
     if (typeof options.onPlayAgain === 'function') {
-      playAgainButton.addEventListener('click', options.onPlayAgain);
+      bindActivation(playAgainButton, options.onPlayAgain);
     }
     actions.appendChild(playAgainButton);
 
@@ -446,7 +497,7 @@
       exitButton.className = 'results-screen__exit-button';
       exitButton.textContent = strings.exitButton;
       if (typeof options.onExit === 'function') {
-        exitButton.addEventListener('click', options.onExit);
+        bindActivation(exitButton, options.onExit);
       }
       actions.appendChild(exitButton);
     }
@@ -547,7 +598,7 @@
       rewardedAdButton.appendChild(rewardedAdBadge);
       rewardedAdButton.appendChild(rewardedAdLabel);
       if (typeof options.onWatchRewardedAd === 'function') {
-        rewardedAdButton.addEventListener('click', options.onWatchRewardedAd);
+        bindActivation(rewardedAdButton, options.onWatchRewardedAd);
       }
 
       adsSection.appendChild(adBanner);

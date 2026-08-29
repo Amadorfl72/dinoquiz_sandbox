@@ -13,8 +13,13 @@
  *
  * Bump SW_VERSION whenever precached files change so old caches are dropped
  * on activate.
+ *
+ * src/data/modeResourceManifest.js declares, per game mode, every script/
+ * i18n/image/audio/fallback resource it needs -- PRECACHE_URLS below must
+ * stay a superset of that manifest (one entry per resource); see that
+ * module's test for the completeness check.
  */
-const SW_VERSION = 'v32';
+const SW_VERSION = 'v33';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -34,10 +39,12 @@ const PRECACHE_URLS = [
   '/scripts/network.js',
   '/scripts/logging.js',
   '/scripts/roundDiagnosticsService.js',
+  '/scripts/a11yAnnouncer.js',
   '/scripts/appShell.js',
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
   '/scripts/ageGateScreen.js',
+  '/scripts/nicknameScreen.js',
   '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
   '/scripts/mazeGenerator.js',

@@ -54,6 +54,34 @@ const DEFAULT_STATE = {
 };
 
 /**
+ * Schema version for the per-mode persisted state snapshot below
+ * (TRIOFSND-297). Bump whenever `PersistedModeState`'s shape changes
+ * incompatibly -- a stored snapshot under any other version must be
+ * discarded by its validator/reader rather than migrated or guessed at
+ * (mirrors GameSessionStorage.js's SESSION_SCHEMA_VERSION and
+ * ModeProgressStorage.js's MODE_PROGRESS_SCHEMA_VERSION).
+ * @type {number}
+ */
+const MODE_STATE_SCHEMA_VERSION = 1;
+
+/**
+ * Versioned, per-mode persisted-state snapshot (TRIOFSND-297, PRD "Definir e
+ * implementar un contrato técnico común para todos los modos"): just enough
+ * to identify and resume one mode's in-progress game -- which mode, which
+ * level, which round it is on, and how many responses have been counted so
+ * far. Deliberately excludes any creature-specific fact (diet, body length,
+ * geologic period, ...): those are verified once per creature in the
+ * creature sheet (src/data/creatureSheet.js) and must never be re-declared
+ * here.
+ * @typedef {Object} PersistedModeState
+ * @property {number} schemaVersion
+ * @property {string} modeId
+ * @property {number} level
+ * @property {number} currentRound
+ * @property {number} answeredCount
+ */
+
+/**
  * @typedef {'indexedDB' | 'localStorage' | 'memory'} StorageBackendName
  */
 
@@ -75,4 +103,4 @@ const DEFAULT_STATE = {
  * @property {number | null} lastErrorAt
  */
 
-module.exports = { DEFAULT_STATE };
+module.exports = { DEFAULT_STATE, MODE_STATE_SCHEMA_VERSION };

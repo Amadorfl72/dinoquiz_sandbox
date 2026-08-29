@@ -78,6 +78,26 @@
  * `src/i18n` -- via `require` under Node/Jest -- and accepts an injectable
  * `options.getQuestionsByLevel` override for callers (e.g. a future browser
  * wiring) that can't rely on `require`.
+ *
+ * Level points vs. game-accumulated points (TRIOFSND-254): a level session's
+ * `state` (as returned by `startLevel`, distinct from the flat
+ * `createInitialGameState` other modes share) carries two counters instead
+ * of one running score. `levelPoints` is that level's own total -- always 0
+ * at the start of a level, including the game's first one. `gameAccumulatedPoints`
+ * is the running total across every level played so far in the same game --
+ * `startLevel` carries it forward via `options.gameAccumulatedPoints`
+ * (0 when omitted, which is what makes starting level 1 with nothing to
+ * carry a brand-new game), and `completeLevel` preserves it across the
+ * transition simply by forwarding `params.gameAccumulatedPoints` through to
+ * the `nextLevelGame` it starts (see its own doc comment). Every answer
+ * updates both via `applyAnswerToLevelState`, which reuses scoring.js's
+ * `applyAnswerToScore` for each counter -- a correct answer credits both by
+ * the same delta, a wrong one leaves both untouched (AC-7). Because a level
+ * session's `state` is plain, serializable data, resuming an interrupted
+ * game is just restoring that same object (whatever persisted it, e.g. a
+ * future `GameSessionStorage`-style backend) and continuing to call
+ * `applyAnswerToLevelState` against it -- neither counter needs any special
+ * resume path of its own.
  */
 
 (function () {
@@ -220,6 +240,60 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.game && window.DinoQuiz.game.unlockThresholds) || null;
   }
 
+  /** Resolves `src/game/scoring` under Node/Jest, or `window.DinoQuiz.scoring` in the browser -- same fallback shape as resolveUnlockThresholds above. */
+  function resolveScoring() {
+    if (typeof require === 'function') {
+      return require('./scoring');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
+
+  /**
+   * A level session's own state (TRIOFSND-254): `levelPoints` is this
+   * level's own running total -- always 0 at the start of a level, including
+   * the game's very first one -- while `gameAccumulatedPoints` is the
+   * running total across every level played so far in the same game.
+   * `startLevel` is the only place that resets `levelPoints`; it carries
+   * `gameAccumulatedPoints` forward via `gameAccumulatedPoints` (defaulting
+   * to 0, which is what makes starting level 1 with no prior total a
+   * brand-new game). A negative or non-integer value is treated the same as
+   * "none given" so a caller can never seed a corrupt running total.
+   */
+  function createInitialLevelState(gameAccumulatedPoints) {
+    return {
+      levelPoints: 0,
+      gameAccumulatedPoints: Number.isInteger(gameAccumulatedPoints) && gameAccumulatedPoints >= 0 ? gameAccumulatedPoints : 0,
+      questionIndex: 0,
+      answers: [],
+    };
+  }
+
+  /**
+   * Records one answer against a level session's two counters: `levelPoints`
+   * and `gameAccumulatedPoints` both move by the exact same delta -- scoring.js's
+   * own +1/+0 rule via `applyAnswerToScore`, reused rather than
+   * reimplemented -- so a correct answer credits the level and the game by
+   * the same amount, and a wrong answer (AC-7: never penalized) leaves both
+   * untouched. `questionIndex`/`answers` pass through unchanged; advancing
+   * those is the caller's job, exactly as for every other per-answer field
+   * this module doesn't own (see renderQuestionAt in main.js).
+   */
+  function applyAnswerToLevelState(state, isCorrect) {
+    state = state || createInitialLevelState();
+
+    var scoring = resolveScoring();
+    if (!scoring || typeof scoring.applyAnswerToScore !== 'function') {
+      throw new Error('scoring module is not available');
+    }
+
+    return {
+      levelPoints: scoring.applyAnswerToScore(state.levelPoints, isCorrect),
+      gameAccumulatedPoints: scoring.applyAnswerToScore(state.gameAccumulatedPoints, isCorrect),
+      questionIndex: state.questionIndex,
+      answers: state.answers,
+    };
+  }
+
   /** The aciertos needed to unlock `level + 1` for `modeId`, via unlockThresholds.js's per-mode/level table. */
   function getUnlockThreshold(modeId, level) {
     var unlockThresholds = resolveUnlockThresholds();
@@ -294,7 +368,7 @@
 
     return {
       level: level,
-      state: createInitialGameState(),
+      state: createInitialLevelState(options.gameAccumulatedPoints),
       questions: selectGameQuestions(pool, QUESTIONS_PER_GAME, options.randomFn, options.previousQuestionIds),
     };
   }
@@ -358,7 +432,12 @@
    * unlocks, also starts it (attached as `nextLevelGame`) so callers get a
    * ready-to-play session in one call. `params` is forwarded to `startLevel`
    * as its `options` (so `randomFn`/`previousQuestionIds`/`logService`/
-   * `getQuestionsByLevel` all apply to the next level too).
+   * `getQuestionsByLevel` all apply to the next level too) -- this is also
+   * how `gameAccumulatedPoints` survives the transition: a caller passes the
+   * level just finished own `state.gameAccumulatedPoints` as
+   * `params.gameAccumulatedPoints`, and `startLevel` carries it into
+   * `nextLevelGame.state.gameAccumulatedPoints` unchanged while resetting
+   * `levelPoints` to 0 for the new level (see `createInitialLevelState`).
    */
   function completeLevel(params) {
     params = params || {};
@@ -380,6 +459,8 @@
     DEFAULT_MODE_ID: DEFAULT_MODE_ID,
     AGE_BAND_EIGHT_PLUS: AGE_BAND_EIGHT_PLUS,
     createInitialGameState: createInitialGameState,
+    createInitialLevelState: createInitialLevelState,
+    applyAnswerToLevelState: applyAnswerToLevelState,
     shuffle: shuffle,
     calculateMaxStreak: calculateMaxStreak,
     selectGameQuestions: selectGameQuestions,
