@@ -470,14 +470,17 @@ describe('QuestionScreen', () => {
       expect(findBannedWords(feedback.textContent)).toEqual([]);
     });
 
-    test('the aria-live feedback announcement spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
+    test('the visual feedback text spells out the correct answer text, not just "esta" (TRIOFSND-90, AC-14)', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
       const { optionButtons, feedback } = renderQuestionScreen(container, question);
 
       optionButtons[wrongIndex].click();
 
-      expect(feedback).toHaveAttribute('aria-live', 'polite');
+      // TRIOFSND-311: `feedback` is a plain visual paragraph now -- its
+      // spoken equivalent is announced through the shared `announcement`
+      // region instead (see the "single reusable region" tests below).
+      expect(feedback).not.toHaveAttribute('aria-live');
       expect(feedback).toHaveTextContent(question.options[question.correctAnswerIndex]);
     });
 
@@ -887,6 +890,88 @@ describe('QuestionScreen', () => {
       const announcementText = buildResultAnnouncement(strings, question, true, 1);
 
       expect(announcementText).not.toMatch(/undefined/);
+    });
+  });
+
+  describe('a11yAnnouncer integration (TRIOFSND-311): shared queue instead of independent aria-live nodes', () => {
+    function createRecordingAnnouncer() {
+      const messages = [];
+      const region = document.createElement('p');
+      region.setAttribute('role', 'status');
+      region.setAttribute('aria-live', 'polite');
+      return {
+        messages,
+        announce(message) {
+          messages.push(message);
+          region.textContent = message;
+        },
+        getRegion: () => region,
+        clear: () => {
+          messages.length = 0;
+          region.textContent = '';
+        },
+      };
+    }
+
+    test('announces "avance de ronda" through the service as soon as the round mounts', () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      renderQuestionScreen(container, buildQuestion(), { questionNumber: 3, totalQuestions: 10, a11yAnnouncer });
+
+      expect(a11yAnnouncer.messages).toEqual([strings.roundAnnouncementFormat.replace('{current}', '3').replace('{total}', '10')]);
+    });
+
+    test('does not announce a round change when questionNumber is not provided (legacy flat flow, unchanged)', () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      renderQuestionScreen(container, buildQuestion(), { a11yAnnouncer });
+
+      expect(a11yAnnouncer.messages).toEqual([]);
+    });
+
+    test('feeds the acierto/error + score announcement through the same service instance used for the round change', () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question, {
+        questionNumber: 2,
+        totalQuestions: 10,
+        a11yAnnouncer,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(a11yAnnouncer.messages).toHaveLength(2);
+      expect(a11yAnnouncer.messages[0]).toBe(strings.roundAnnouncementFormat.replace('{current}', '2').replace('{total}', '10'));
+      expect(a11yAnnouncer.messages[1]).toContain(strings.feedback.correct);
+    });
+
+    test('routes the rewarded-ad loading/result status through the service instead of a separate aria-live node', async () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      const question = buildQuestion();
+      const rewardedAdService = {
+        isAvailable: () => true,
+        request: () => Promise.resolve({ granted: true }),
+      };
+      const { optionButtons, rewardedAdCta } = renderQuestionScreen(container, question, {
+        rewardedAdService,
+        a11yAnnouncer,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+      rewardedAdCta.click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(a11yAnnouncer.messages).toContain(strings.rewardedAd.loadingLabel);
+      expect(a11yAnnouncer.messages.some((message) => message.includes(strings.rewardedAd.extraFacts.trex))).toBe(true);
+    });
+
+    test('the rewarded-ad status and extra fun fact are plain visual paragraphs, no longer independently aria-live', () => {
+      const question = buildQuestion();
+      const { rewardedAdStatus, extraFunFact } = renderQuestionScreen(container, question, {
+        rewardedAdService: { isAvailable: () => true, request: () => Promise.resolve({ granted: true }) },
+      });
+
+      expect(rewardedAdStatus).not.toHaveAttribute('aria-live');
+      expect(extraFunFact).not.toHaveAttribute('aria-live');
     });
   });
 

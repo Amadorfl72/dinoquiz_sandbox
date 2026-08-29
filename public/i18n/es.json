@@ -274,6 +274,7 @@
     "imageAltFormat": "Ilustración de un {dinosaur}",
     "levelFormat": "Nivel {level}",
     "progressFormat": "{current} de {total}",
+    "roundAnnouncementFormat": "Ronda {current} de {total}",
     "feedback": {
       "correct": "¡Genial, acertaste!",
       "incorrect": "¡Buen intento!"

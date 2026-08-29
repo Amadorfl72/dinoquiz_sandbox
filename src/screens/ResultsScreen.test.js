@@ -160,6 +160,43 @@ describe('ResultsScreen rendering', () => {
     expect(announcementEl).toHaveTextContent('Mensaje de prueba');
   });
 
+  describe('a11yAnnouncer integration (TRIOFSND-311): "fin de partida" through the shared queue', () => {
+    function createRecordingAnnouncer() {
+      const messages = [];
+      const region = document.createElement('p');
+      region.setAttribute('role', 'status');
+      region.setAttribute('aria-live', 'polite');
+      return {
+        messages,
+        announce(message) {
+          messages.push(message);
+          region.textContent = message;
+        },
+        getRegion: () => region,
+        clear: () => {
+          messages.length = 0;
+          region.textContent = '';
+        },
+      };
+    }
+
+    test('queues the final summary through the injected service instead of writing a standalone aria-live node', () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      renderResultsScreen(container, { score: 8, message: 'Mensaje de prueba', a11yAnnouncer });
+
+      expect(a11yAnnouncer.messages).toHaveLength(1);
+      expect(a11yAnnouncer.messages[0]).toContain('8');
+      expect(a11yAnnouncer.messages[0]).toContain('Mensaje de prueba');
+    });
+
+    test('the returned announcementEl is the service-provided region', () => {
+      const a11yAnnouncer = createRecordingAnnouncer();
+      const { announcementEl } = renderResultsScreen(container, { score: 5, a11yAnnouncer });
+
+      expect(announcementEl).toBe(a11yAnnouncer.getRegion());
+    });
+  });
+
   test('renders a prominent "Volver a jugar" button that calls onPlayAgain when clicked', () => {
     const onPlayAgain = jest.fn();
     const { playAgainButton } = renderResultsScreen(container, { score: 6, onPlayAgain });
