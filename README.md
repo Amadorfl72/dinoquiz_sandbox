@@ -597,6 +597,14 @@ imágenes e iconos (`homeScreen.js`, `questionScreen.js`) y el patrón de disclo
 controles globales (`aria-expanded`/`aria-controls`). Si una PR futura introduce una regresión,
 `npm run test:a11y` la reproduce en local con el mismo detalle que en el `expect` de la suite.
 
+**Complemento manual (TRIOFSND-315):** axe-core no puede verificar si la navegación por teclado
+sigue un orden comprensible, si lo que anuncia un lector de pantalla tiene sentido, o si algún
+modo depende en exclusiva de color/sonido/animación para transmitir información — eso exige una
+persona probando la app. [`tests/a11y/manual-review-checklist.md`](tests/a11y/manual-review-checklist.md)
+recoge esa checklist manual para los ocho modos, enlazada a los criterios de aceptación de la
+historia; la Definition of Done exige repasarla, además de la auditoría automatizada, antes de
+desplegar un modo nuevo o un cambio de UI en uno existente.
+
 **Enganchada al pipeline de CI:** el workflow gestionado por TrioForge
 (`.github/workflows/trioforge-tests.yml`) ejecuta `npx jest --ci` contra todo el repo, y
 `tests/e2e/accessibility.test.js` cae dentro de `testMatch` (`tests/**/*.test.js`) como un test
