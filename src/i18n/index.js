@@ -18,11 +18,17 @@ const LOCALES = Object.freeze({
 
 const DEFAULT_LOCALE = 'es';
 
+// The canonical list of runtime-supported locales, derived from the single
+// LOCALES registry above so callers (e.g. the PRECACHE completeness gate) never
+// maintain their own parallel locale list. v1 exposes only 'es'.
+const SUPPORTED_LOCALES = Object.freeze(Object.keys(LOCALES));
+
 function getStrings(locale) {
   return LOCALES[locale] || LOCALES[DEFAULT_LOCALE];
 }
 
 module.exports = {
   DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
   getStrings,
 };
