@@ -1,4 +1,5 @@
-const { DEFAULT_STATE } = require('./types');
+const { DEFAULT_STATE, MODE_STATE_SCHEMA_VERSION } = require('./types');
+const { isValidModeState } = require('./stateSchema');
 const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
@@ -22,6 +23,8 @@ const modeProgressStorage = new ModeProgressStorage();
 
 module.exports = {
   DEFAULT_STATE,
+  MODE_STATE_SCHEMA_VERSION,
+  isValidModeState,
   createIndexedDbAdapter,
   createLocalStorageAdapter,
   createMemoryAdapter,
