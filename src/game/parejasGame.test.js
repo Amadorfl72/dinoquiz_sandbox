@@ -23,6 +23,7 @@ const {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 } = require('./parejasGame');
 const { DINOSAURS, VALID_DINOSAURS } = require('../data/questionBank');
 const { AVAILABILITY_CAUSES } = require('./modesCatalog');
@@ -485,5 +486,48 @@ describe('a full 10-round game, played end to end', () => {
     expect(result.gameOver).toBe(true);
     expect(state.score).toBe(ROUNDS_PER_GAME);
     expect(state.answers).toHaveLength(ROUNDS_PER_GAME);
+  });
+});
+
+describe('completeLevel', () => {
+  test('unlocks the next level once enough rounds are acertadas (not exceeding the soft limit), and chains a fresh set of rounds', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(false);
+    expect(outcome.nextLevel).toBe(2);
+    expect(outcome.correctCount).toBe(10);
+    expect(outcome.nextLevelGame.error).toBeUndefined();
+    expect(outcome.nextLevelGame.level).toBe(2);
+    expect(outcome.nextLevelGame.round.roundIndex).toBe(0);
+  });
+
+  test('a round completed after exceeding the soft limit never counts as acertada for the unlock tally', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: true }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.correctCount).toBe(0);
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('insufficient_score');
+  });
+
+  test('ends the game with insufficient acertadas', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: false, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('insufficient_score');
+  });
+
+  test('always ends the game at the max level', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 10, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('completed_all_levels');
   });
 });

@@ -450,6 +450,41 @@ function completeRound(params) {
   };
 }
 
+/**
+ * Composes `gameFlow.resolveLevelOutcome` (scoped to Parejas' own
+ * unlockThresholds.js entry, MODE_ID) with `startGame`: resolves what
+ * happens once a level's ROUNDS_PER_GAME rounds are all played and, when a
+ * next level unlocks, also starts it (attached as `nextLevelGame`). Mirrors
+ * shadowGuessGame.js's own `completeLevel` exactly.
+ *
+ * A round only counts toward the common aciertos/unlock tally
+ * (`params.answers`, `state.answers` as produced by `evaluateRound`) when its
+ * board was completed without exceeding the level's soft attempt limit (PRD:
+ * "El porcentaje final es rondas acertadas / 10 x 100") -- never the mode's
+ * own always-succeeds `isCorrect`/`state.score` (see `evaluateRound`'s doc
+ * comment on why completing a board is always a success for the mode's own
+ * scoring, regardless of how many attempts it took).
+ */
+function completeLevel(params) {
+  params = params || {};
+  const answers = (params.answers || []).map((answer) => ({
+    isCorrect: Boolean(answer && answer.isCorrect) && !(answer && answer.softLimitReached),
+  }));
+
+  const outcome = gameFlow.resolveLevelOutcome({
+    level: params.level,
+    answers,
+    modeId: MODE_ID,
+  });
+
+  if (outcome.gameOver) {
+    return outcome;
+  }
+
+  outcome.nextLevelGame = startGame(Object.assign({}, params, { level: outcome.nextLevel }));
+  return outcome;
+}
+
 module.exports = {
   ROUNDS_PER_GAME,
   MODE_ID,
@@ -473,4 +508,5 @@ module.exports = {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 };
