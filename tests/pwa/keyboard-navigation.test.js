@@ -7,25 +7,22 @@ require('@testing-library/jest-dom');
  * every interactive control must be reachable with Tab in a logical
  * (top-to-bottom, left-to-right) order and activatable with Enter/Espacio.
  *
- * The three screens under audit render only native `<button>` elements for
- * every action (see public/scripts/homeScreen.js, questionScreen.js,
- * resultsScreen.js), so Tab-reachability and Enter/Space activation are
- * already native browser behaviour — nothing here adds tabindex or keydown
- * handling to the screens themselves. What this suite actually proves is
- * that (a) each screen's DOM order matches its visual reading order (so the
- * browser's native Tab order is the logical one) and (b) every control still
- * responds correctly when driven purely by focus + a keydown, with no
- * `.click()` calls anywhere in the test body.
- *
- * jsdom does not implement the browser-default "Enter/Space on a focused
- * button dispatches a click" behaviour (real browsers do this outside of any
- * JS, which is exactly why it can't be asserted by dispatching keydown
- * alone) — `pressActivationKey` below reproduces just that UA default, the
- * same bridge `@testing-library/user-event` implements internally. Tab
- * itself moves focus natively too; `pressTabTo` walks the already-asserted
- * focusable-element order one control at a time via `.focus()`, dispatching
- * the real `keydown` at each step, to prove the controls are visited in that
- * exact sequence rather than merely present somewhere in the DOM.
+ * The three screens under audit render native `<button>` elements for every
+ * action (see public/scripts/homeScreen.js, questionScreen.js,
+ * resultsScreen.js), so Tab-reachability is already native browser
+ * behaviour — nothing here adds tabindex to the screens themselves. Every
+ * control's Enter/Espacio activation, however, is real, explicit JS: each
+ * button is wired via that file's local `bindActivation` helper, which
+ * attaches a `keydown` listener (Enter/Espacio -> `preventDefault` + call
+ * the same handler `click` uses) alongside the `click` listener, instead of
+ * leaning on the browser's own default action for keyboard activation. That
+ * makes the behaviour something this suite can actually exercise: `pressTabTo`
+ * walks the already-asserted focusable-element order one control at a time
+ * via `.focus()`, dispatching the real `keydown` for Tab at each step, and
+ * `pressActivationKey` dispatches only a `keydown` for Enter/Espacio at the
+ * target control — no `.click()` call anywhere in this file — so a passing
+ * assertion is proof the control's own keydown handling produced the effect,
+ * not a stand-in for it.
  */
 
 const { renderHomeScreen } = require('../../public/scripts/homeScreen');
@@ -79,13 +76,16 @@ function pressTabTo(target, tabOrder) {
   }
 }
 
-/** Reproduces the native "Enter/Space on a focused button fires a click" UA default that jsdom doesn't implement. Never called with a control the DOM already excludes from the tab order. */
+/**
+ * Dispatches only a `keydown` for Enter/Espacio at `element` — no `.click()`
+ * call. Every control under audit wires its own Enter/Espacio handling via
+ * `bindActivation` (see homeScreen.js/questionScreen.js/resultsScreen.js),
+ * so this purely exercises that keydown handler; it never falls back to a
+ * synthetic click.
+ */
 function pressActivationKey(element, key) {
   const event = new KeyboardEvent('keydown', { key: key, bubbles: true, cancelable: true });
-  const notPrevented = element.dispatchEvent(event);
-  if (notPrevented && element.tagName === 'BUTTON' && !element.disabled) {
-    element.click();
-  }
+  element.dispatchEvent(event);
 }
 
 describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (Inicio -> 10 preguntas -> Resultados)', () => {

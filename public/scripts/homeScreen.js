@@ -93,6 +93,28 @@
   var PRIVACY_ICON = '🔒';
   var PURCHASE_ICON = '🛍️';
 
+  /**
+   * Binds a control to fire `handler` on click AND on an Enter/Espacio
+   * `keydown` (TRIOFSND-310). Native `<button>`s already get Enter/Espacio
+   * activation for free in a real browser via the UA's default action on
+   * `click`, but that default action is a browser behaviour jsdom does not
+   * implement, so relying on it alone leaves keyboard operability
+   * unverifiable in tests. Handling the keydown explicitly here (and
+   * `preventDefault`-ing it, which also suppresses the browser's own
+   * synthetic click so the handler never runs twice) makes every control's
+   * keyboard path real, first-class behaviour instead of an assumption.
+   */
+  function bindActivation(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('keydown', function (event) {
+      if (element.disabled) return;
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        handler(event);
+      }
+    });
+  }
+
   function resolveDefaultStrings(locale) {
     if (typeof require === 'function') {
       var i18n = require('../../src/i18n');
@@ -172,14 +194,14 @@
       button.setAttribute('aria-expanded', String(open));
     }
 
-    button.addEventListener('click', function () {
+    bindActivation(button, function () {
       setOpen(panel.hidden);
       if (!panel.hidden) {
         closeButton.focus();
       }
     });
 
-    closeButton.addEventListener('click', function () {
+    bindActivation(closeButton, function () {
       setOpen(false);
       button.focus();
     });
@@ -238,7 +260,7 @@
     purchaseButton.type = 'button';
     purchaseButton.className = 'home-screen__purchase-confirm-button';
     purchaseButton.textContent = strings.purchaseButton;
-    purchaseButton.addEventListener('click', function (event) {
+    bindActivation(purchaseButton, function (event) {
       if (typeof isOnline === 'function' && !isOnline()) {
         offlineNotice.hidden = false;
         return;
@@ -300,7 +322,7 @@
     privacyPolicyButton.appendChild(privacyPolicyIcon);
     privacyPolicyButton.appendChild(privacyPolicyLabel);
     if (typeof options.onOpenPrivacyPolicy === 'function') {
-      privacyPolicyButton.addEventListener('click', options.onOpenPrivacyPolicy);
+      bindActivation(privacyPolicyButton, options.onOpenPrivacyPolicy);
     }
 
     var parentalNotice = document.createElement('p');
@@ -373,7 +395,7 @@
       dismissScope.addEventListener('click', dismissTooltip);
     }
 
-    playButton.addEventListener('click', function () {
+    bindActivation(playButton, function () {
       dismissTooltip();
       if (typeof options.onPlayButtonClick === 'function') {
         options.onPlayButtonClick();
@@ -405,7 +427,7 @@
       );
     }
 
-    muteButton.addEventListener('click', function () {
+    bindActivation(muteButton, function () {
       muted = !muted;
       updateMuteButton();
       if (typeof options.onToggleMute === 'function') {

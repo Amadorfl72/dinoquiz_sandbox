@@ -204,6 +204,23 @@
     }, template);
   }
 
+  /**
+   * Binds a control to fire `handler` on click AND on an Enter/Espacio
+   * `keydown` (TRIOFSND-310). See the matching helper in homeScreen.js for
+   * why this is explicit rather than left to the browser's own default
+   * action on Enter/Espacio.
+   */
+  function bindActivation(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('keydown', function (event) {
+      if (element.disabled) return;
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        handler(event);
+      }
+    });
+  }
+
   // Level progression outcome (TRIOFSND-206): `options.levelOutcome` mirrors
   // the shape `gameFlow.js`'s `resolveLevelOutcome`/`completeLevel` already
   // return -- `{ gameOver, nextLevel, level, correctCount, reason }` -- so a
@@ -384,7 +401,7 @@
     playAgainButton.className = 'results-screen__play-again-button';
     playAgainButton.textContent = resolvePlayAgainButtonLabel(strings, options.levelOutcome);
     if (typeof options.onPlayAgain === 'function') {
-      playAgainButton.addEventListener('click', options.onPlayAgain);
+      bindActivation(playAgainButton, options.onPlayAgain);
     }
     actions.appendChild(playAgainButton);
 
@@ -395,7 +412,7 @@
       exitButton.className = 'results-screen__exit-button';
       exitButton.textContent = strings.exitButton;
       if (typeof options.onExit === 'function') {
-        exitButton.addEventListener('click', options.onExit);
+        bindActivation(exitButton, options.onExit);
       }
       actions.appendChild(exitButton);
     }
@@ -443,7 +460,7 @@
       rewardedAdButton.appendChild(rewardedAdBadge);
       rewardedAdButton.appendChild(rewardedAdLabel);
       if (typeof options.onWatchRewardedAd === 'function') {
-        rewardedAdButton.addEventListener('click', options.onWatchRewardedAd);
+        bindActivation(rewardedAdButton, options.onWatchRewardedAd);
       }
 
       adsSection.appendChild(adBanner);
