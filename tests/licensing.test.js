@@ -65,6 +65,16 @@ function normalizeHeaderName(cell) {
   return stripAccents(cell).toLowerCase().trim();
 }
 
+// A cell that only holds a placeholder ("-", "—", "N/A", "n/d", "?", "TBD")
+// is not real attribution, so it is treated as empty for the author/source
+// checks below — otherwise a row could satisfy the attribution requirement
+// with a dash where a creator's name belongs.
+function isAttributedValue(cell) {
+  const value = (cell || '').trim();
+  if (value.length === 0) return false;
+  return !/^(?:[-—–]+|n\s*\/?\s*a|n\s*\/?\s*d|tbd|\?+)$/i.test(stripAccents(value));
+}
+
 // Returns one entry per data row: { fileName, byHeader }, where byHeader maps
 // normalized column names (e.g. "autor", "licencia", "fuente / obra
 // original") to that row's cell text.
@@ -129,14 +139,14 @@ describe('every image/audio asset is credited in its folder CREDITS.md', () => {
 
             // The table must have an "Autor" column at all...
             expect(entry.byHeader).toHaveProperty('autor');
-            // ...and this specific file's cell in it must be non-empty. This
-            // is the actual attribution: unlike checking "any cell in the
-            // row", a filled-in license or description cell can no longer
+            // ...and this specific file's cell in it must carry a real name.
+            // This is the actual attribution: unlike checking "any cell in
+            // the row", a filled-in license or description cell can no longer
             // stand in for a missing author (e.g. a row like
             // "| spinosaurus.jpg | Spinosaurus | | CC BY 2.5 | |" must fail
-            // even though it has non-empty cells besides the filename).
-            const author = entry.byHeader.autor || '';
-            expect(author.length).toBeGreaterThan(0);
+            // even though it has non-empty cells besides the filename), and a
+            // bare placeholder ("-", "N/A") does not count as attribution.
+            expect(isAttributedValue(entry.byHeader.autor)).toBe(true);
 
             const license = entry.byHeader.licencia || '';
             expect(license).toMatch(COMPATIBLE_LICENSE_PATTERN);
@@ -150,7 +160,7 @@ describe('every image/audio asset is credited in its folder CREDITS.md', () => {
             const requiresAttribution = /\bCC[\s-]?BY\b/i.test(license);
             const sourceHeader = Object.keys(entry.byHeader).find((name) => name.startsWith('fuente'));
             if (requiresAttribution && sourceHeader) {
-              expect((entry.byHeader[sourceHeader] || '').length).toBeGreaterThan(0);
+              expect(isAttributedValue(entry.byHeader[sourceHeader])).toBe(true);
             }
           });
         }
