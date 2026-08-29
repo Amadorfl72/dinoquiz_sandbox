@@ -42,15 +42,28 @@
 const STORAGE_KEY = 'dinoquiz:hallOfFame';
 const MAX_ENTRIES = 10;
 
+/**
+ * Resolves the localStorage-like adapter to use. Wrapped in try/catch
+ * because merely *accessing* `window.localStorage` can throw a
+ * SecurityError in browsers where storage is blocked (e.g. some private
+ * browsing modes, or a `localStorage` getter that throws) -- not just
+ * calling `getItem`/`setItem` on it. Without this guard that throw would
+ * escape from `getEntries`/`addEntry`/`clearAll` before their own
+ * try/catch around the storage operation ever runs, violating AW8.
+ */
 function resolveStorage(storageAdapter) {
   if (storageAdapter) {
     return storageAdapter;
   }
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage;
-  }
-  if (typeof localStorage !== 'undefined') {
-    return localStorage;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof localStorage !== 'undefined') {
+      return localStorage;
+    }
+  } catch (error) {
+    return null;
   }
   return null;
 }

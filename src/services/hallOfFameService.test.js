@@ -177,6 +177,25 @@ describe('hallOfFameService — top-10 local scores', () => {
       expect(result).toEqual([{ name: 'Ana', score: 4, timestamp: 1 }]);
     });
 
+    it('degrades silently when merely accessing window.localStorage throws (e.g. a SecurityError)', () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        get() {
+          throw new Error('blocked');
+        },
+      });
+      try {
+        expect(getEntries(null)).toEqual([]);
+        expect(addEntry({ name: 'Ana', score: 1, timestamp: 1 }, null)).toEqual([
+          { name: 'Ana', score: 1, timestamp: 1 },
+        ]);
+        expect(clearAll(null)).toBe(false);
+      } finally {
+        Object.defineProperty(window, 'localStorage', originalDescriptor);
+      }
+    });
+
     it('degrades to a no-op empty/false result when no storage is available at all', () => {
       const originalLocalStorage = window.localStorage;
       Object.defineProperty(window, 'localStorage', { value: undefined, configurable: true });
