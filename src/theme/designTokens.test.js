@@ -2,6 +2,7 @@
 
 const { contrastRatio, meetsWcagAA, WCAG_AA_LARGE_TEXT } = require('./contrast');
 const { FONT_SIZES, TAP_TARGET_MIN, COLORS } = require('./designTokens');
+const { QUESTION_SCREEN_COLORS } = require('./questionScreenColors');
 
 describe('design tokens: typography and touch targets (PRD AC-2, AC-4)', () => {
   test('no font size token is below the 18sp floor', () => {
@@ -67,6 +68,7 @@ describe('design tokens: focus ring is visible against whatever it sits on (non-
     ['primary', COLORS.primary],
     ['primary hover', COLORS.primaryHover],
     ['primary pressed', COLORS.primaryPressed],
+    ['rewarded-ad CTA', QUESTION_SCREEN_COLORS.rewardedAdCta.background],
   ])('the on-dark focus ring meets 3:1 against the %s button fill', (_label, background) => {
     expect(contrastRatio(COLORS.focusRingOnDark, background)).toBeGreaterThanOrEqual(3);
   });

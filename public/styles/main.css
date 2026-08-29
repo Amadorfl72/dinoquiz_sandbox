@@ -796,6 +796,14 @@ body {
   cursor: default;
 }
 
+/* TRIOFSND-310: the CTA's purple fill (#6A1B9A) is dark, so it takes the
+   same on-dark ring as the green "Siguiente" button below (~5.7:1 against
+   the fill, see contrast.test.js's rewarded-ad-cta AA check). */
+.question-screen__rewarded-ad-cta:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
 .question-screen__rewarded-ad-status {
   margin: 8px 0 0;
   font-size: 18px;

@@ -185,6 +185,23 @@
     return format.replace('{answer}', answerText);
   }
 
+  /**
+   * Binds a control to fire `handler` on click AND on an Enter/Espacio
+   * `keydown` (TRIOFSND-310). See the matching helper in homeScreen.js for
+   * why this is explicit rather than left to the browser's own default
+   * action on Enter/Espacio.
+   */
+  function bindActivation(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('keydown', function (event) {
+      if (element.disabled) return;
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        handler(event);
+      }
+    });
+  }
+
   function resolveImageAlt(strings, dinosaur, funFact) {
     var dinosaurName = (strings.dinosaurNames && strings.dinosaurNames[dinosaur]) || dinosaur;
     var alt = strings.imageAlt.replace('{dinosaur}', dinosaurName);
@@ -542,7 +559,7 @@
     extraFunFactBox.appendChild(extraFunFactHeading);
     extraFunFactBox.appendChild(extraFunFact);
 
-    rewardedAdCta.addEventListener('click', function () {
+    bindActivation(rewardedAdCta, function () {
       if (rewardedAdCta.disabled) return;
       rewardedAdCta.disabled = true;
       rewardedAdStatus.textContent = rewardedAdStrings.loadingLabel;
@@ -572,7 +589,7 @@
       button.type = 'button';
       button.className = OPTION_CLASS;
       button.textContent = optionText;
-      button.addEventListener('click', function () {
+      bindActivation(button, function () {
         handleSelect(index);
       });
       optionsGroup.appendChild(button);
@@ -662,7 +679,7 @@
       }
     }
 
-    nextButton.addEventListener('click', function () {
+    bindActivation(nextButton, function () {
       if (typeof options.onNext === 'function') {
         options.onNext(score);
       }
