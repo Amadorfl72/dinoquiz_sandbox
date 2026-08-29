@@ -41,11 +41,19 @@
  * into `scoring.js`/`gameFlow.js` for anything score/progress related.
  */
 
+const fs = require('fs');
+const path = require('path');
 const scoring = require('./scoring');
 const gameFlow = require('./gameFlow');
 const { getCreatureVisualFamily } = require('../data/creatureSheet');
 const { VALID_DINOSAURS } = require('../data/questionBank');
 const { MODE_IDS, getModeById, evaluateModeAvailability, buildCurrentResourceCatalog } = require('./modesCatalog');
+
+// The dinosaur card front a board actually renders (public/scripts/parejasScreen.js's
+// `/assets/images/dinosaurs/<id>.svg`) -- checked against the real filesystem so a
+// duplicated/invalid/imageless id in a caller-supplied pool can never count toward
+// the mode's own >=8 elegible-creatures gate nor be dealt onto a real board.
+const DINOSAUR_CARD_IMAGE_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'images', 'dinosaurs');
 
 const ROUNDS_PER_GAME = 10;
 const MODE_ID = MODE_IDS.PAREJAS;
@@ -79,17 +87,59 @@ const DIFFICULTY_BIAS = Object.freeze({
 // families (easy to tell apart even before flipping a single card).
 const SIMILARITY_LEVEL_THRESHOLD = 7;
 
+/** Whether `id` has a real, usable card-front image under public/assets/images/dinosaurs/. */
+function hasUsableCardImage(id) {
+  return typeof id === 'string' && id.length > 0 && fs.existsSync(path.join(DINOSAUR_CARD_IMAGE_DIR, `${id}.svg`));
+}
+
+/**
+ * Filters `pool` down to elegible creatures for a Parejas board: unique ids
+ * (a duplicate never counts twice) with a real, usable card-front image
+ * (PRD: "el gate no cuenta fichas duplicadas, fichas inválidas ni imágenes
+ * ausentes como criaturas elegibles"). Used both by `validateCatalog` (the
+ * >=8 gate) and `selectCreaturesForBoard`/`startRound` (actual board
+ * generation), so a malformed pool can neither pass the gate nor be dealt
+ * onto a real board.
+ */
+function eligibleCardCreatureIds(pool) {
+  const seen = new Set();
+  return (Array.isArray(pool) ? pool : []).filter((id) => {
+    if (seen.has(id) || !hasUsableCardImage(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+}
+
 /**
  * Whether the current creature catalog satisfies Parejas' own requirement
- * (>=8 creatures, declared once in `modesCatalog.js`'s MODES_CATALOG --
- * never re-declared here). Returns `{ modeId, available, cause, details }`;
- * `cause` is the machine-readable block reason
+ * (>=8 elegible creatures, declared once in `modesCatalog.js`'s
+ * MODES_CATALOG -- never re-declared here). Returns `{ modeId, available,
+ * cause, details }`; `cause` is the machine-readable block reason
  * (`modesCatalog.js`'s AVAILABILITY_CAUSES) a caller can log/display when
  * `available` is false, exactly like every other mode's availability check.
+ *
+ * `options.catalog`, when given, is never trusted as-is: `modesCatalog.js`'s
+ * generic MIN_CREATURES requirement only counts `catalog.creatures.length`,
+ * with no notion of a Parejas card image -- so an injected/current catalog
+ * whose creature ids are duplicated, invalid or imageless would otherwise
+ * count toward the >=8 gate despite never being dealable onto a real board
+ * (`eligibleCardCreatureIds` is the single source of truth for "elegible"
+ * both here and in `selectCreaturesForBoard`). This re-derives `creatures`
+ * from that same eligibility filter before evaluating, exactly as the
+ * `options.dinosaurPool`/default path below already does.
  */
 function validateCatalog(options) {
   options = options || {};
-  const catalog = options.catalog || buildCurrentResourceCatalog({ dinosaurs: options.dinosaurPool });
+  const providedCatalog = options.catalog;
+  const rawIds = providedCatalog
+    ? (Array.isArray(providedCatalog.creatures) ? providedCatalog.creatures : []).map((creature) => creature && creature.id)
+    : options.dinosaurPool || VALID_DINOSAURS;
+  const eligibleIds = eligibleCardCreatureIds(rawIds);
+  const catalog = providedCatalog
+    ? Object.assign({}, providedCatalog, { creatures: eligibleIds.map((id) => ({ id })) })
+    : buildCurrentResourceCatalog({ dinosaurs: eligibleIds });
   return evaluateModeAvailability(getModeById(MODE_ID), catalog);
 }
 
@@ -174,7 +224,7 @@ function orderForSimilarity(groups, randomFn) {
 function selectCreaturesForBoard(options) {
   options = options || {};
   const { pairCount, level } = options;
-  const pool = options.dinosaurPool || VALID_DINOSAURS;
+  const pool = eligibleCardCreatureIds(options.dinosaurPool || VALID_DINOSAURS);
   const randomFn = options.randomFn || Math.random;
   const getFamily = options.getCreatureVisualFamily || getCreatureVisualFamily;
 
@@ -450,6 +500,41 @@ function completeRound(params) {
   };
 }
 
+/**
+ * Composes `gameFlow.resolveLevelOutcome` (scoped to Parejas' own
+ * unlockThresholds.js entry, MODE_ID) with `startGame`: resolves what
+ * happens once a level's ROUNDS_PER_GAME rounds are all played and, when a
+ * next level unlocks, also starts it (attached as `nextLevelGame`). Mirrors
+ * shadowGuessGame.js's own `completeLevel` exactly.
+ *
+ * A round only counts toward the common aciertos/unlock tally
+ * (`params.answers`, `state.answers` as produced by `evaluateRound`) when its
+ * board was completed without exceeding the level's soft attempt limit (PRD:
+ * "El porcentaje final es rondas acertadas / 10 x 100") -- never the mode's
+ * own always-succeeds `isCorrect`/`state.score` (see `evaluateRound`'s doc
+ * comment on why completing a board is always a success for the mode's own
+ * scoring, regardless of how many attempts it took).
+ */
+function completeLevel(params) {
+  params = params || {};
+  const answers = (params.answers || []).map((answer) => ({
+    isCorrect: Boolean(answer && answer.isCorrect) && !(answer && answer.softLimitReached),
+  }));
+
+  const outcome = gameFlow.resolveLevelOutcome({
+    level: params.level,
+    answers,
+    modeId: MODE_ID,
+  });
+
+  if (outcome.gameOver) {
+    return outcome;
+  }
+
+  outcome.nextLevelGame = startGame(Object.assign({}, params, { level: outcome.nextLevel }));
+  return outcome;
+}
+
 module.exports = {
   ROUNDS_PER_GAME,
   MODE_ID,
@@ -461,6 +546,8 @@ module.exports = {
   MAX_VISIBLE_UNMATCHED,
   CARD_STATES,
   DIFFICULTY_BIAS,
+  hasUsableCardImage,
+  eligibleCardCreatureIds,
   validateCatalog,
   pairCountForLevel,
   computeColumns,
@@ -473,4 +560,5 @@ module.exports = {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 };

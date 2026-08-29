@@ -19,7 +19,7 @@
  * stay a superset of that manifest (one entry per resource); see that
  * module's test for the completeness check.
  */
-const SW_VERSION = 'v31';
+const SW_VERSION = 'v33';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -50,6 +50,7 @@ const PRECACHE_URLS = [
   '/scripts/mazeGenerator.js',
   '/scripts/mazeGame.js',
   '/scripts/mazeScreen.js',
+  '/scripts/parejasGame.js',
   '/scripts/parejasScreen.js',
   '/scripts/sizeOrderGame.js',
   '/scripts/sizeOrderScreen.js',

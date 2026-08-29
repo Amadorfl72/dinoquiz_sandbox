@@ -11,6 +11,8 @@ const {
   MAX_VISIBLE_UNMATCHED,
   CARD_STATES,
   DIFFICULTY_BIAS,
+  hasUsableCardImage,
+  eligibleCardCreatureIds,
   validateCatalog,
   pairCountForLevel,
   computeColumns,
@@ -23,6 +25,7 @@ const {
   evaluateRound,
   startGame,
   completeRound,
+  completeLevel,
 } = require('./parejasGame');
 const { DINOSAURS, VALID_DINOSAURS } = require('../data/questionBank');
 const { AVAILABILITY_CAUSES } = require('./modesCatalog');
@@ -78,8 +81,11 @@ function buildBoardRound(overrides = {}) {
 }
 
 describe('validateCatalog', () => {
-  test('blocks Parejas with a machine-readable cause when the catalog has fewer than 8 creatures', () => {
-    const catalog = { questionsCount: 0, creatures: Array.from({ length: 7 }, (_, i) => ({ id: `c${i}` })) };
+  test('blocks Parejas with a machine-readable cause when the catalog has fewer than 8 elegible creatures', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: VALID_DINOSAURS.slice(0, 7).map((id) => ({ id })),
+    };
     const result = validateCatalog({ catalog });
 
     expect(result.modeId).toBe(MODE_ID);
@@ -88,13 +94,78 @@ describe('validateCatalog', () => {
     expect(result.details).toEqual({ need: 8, have: 7 });
   });
 
-  test('is available with exactly 8 creatures', () => {
-    const catalog = { questionsCount: 0, creatures: Array.from({ length: 8 }, (_, i) => ({ id: `c${i}` })) };
+  test('is available with exactly 8 elegible creatures', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: VALID_DINOSAURS.slice(0, 8).map((id) => ({ id })),
+    };
     expect(validateCatalog({ catalog })).toEqual({ modeId: MODE_ID, available: true, cause: null, details: null });
   });
 
   test('defaults to the real shipped creature roster (14 creatures, always available today)', () => {
     expect(validateCatalog({}).available).toBe(true);
+  });
+
+  test('a duplicated id in dinosaurPool only counts once toward the >=8 gate', () => {
+    const eightUniquePlusOneDuplicate = [...VALID_DINOSAURS.slice(0, 8), VALID_DINOSAURS[0]];
+    const sevenUniquePlusOneDuplicate = [...VALID_DINOSAURS.slice(0, 7), VALID_DINOSAURS[0]];
+
+    expect(validateCatalog({ dinosaurPool: eightUniquePlusOneDuplicate }).available).toBe(true);
+    expect(validateCatalog({ dinosaurPool: sevenUniquePlusOneDuplicate }).available).toBe(false);
+  });
+
+  test('an invalid or imageless id in dinosaurPool never counts toward the >=8 gate', () => {
+    const sevenRealPlusGarbage = [...VALID_DINOSAURS.slice(0, 7), 'not-a-real-dinosaur', '', null];
+    const result = validateCatalog({ dinosaurPool: sevenRealPlusGarbage });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 7 });
+  });
+
+  test('an injected catalog with 8 creatures but no valid card image never satisfies the >=8 gate', () => {
+    // TRIOFSND-276 rework: a caller-supplied `options.catalog` must be
+    // re-validated through the same eligibility filter as `dinosaurPool` --
+    // a catalog can't just declare 8 arbitrary creature records into
+    // availability when none of them has a real, usable Parejas card image.
+    const catalog = { questionsCount: 0, creatures: Array.from({ length: 8 }, (_, i) => ({ id: `c${i}` })) };
+    const result = validateCatalog({ catalog });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 0 });
+  });
+
+  test('an injected catalog never double-counts a duplicated creature id toward the >=8 gate', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: [...VALID_DINOSAURS.slice(0, 7), VALID_DINOSAURS[0]].map((id) => ({ id })),
+    };
+    const result = validateCatalog({ catalog });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 7 });
+  });
+});
+
+describe('hasUsableCardImage / eligibleCardCreatureIds', () => {
+  test('every shipped dinosaur has a real, usable card-front image', () => {
+    VALID_DINOSAURS.forEach((id) => {
+      expect(hasUsableCardImage(id)).toBe(true);
+    });
+  });
+
+  test('rejects invalid ids without touching the filesystem check', () => {
+    expect(hasUsableCardImage('not-a-real-dinosaur')).toBe(false);
+    expect(hasUsableCardImage('')).toBe(false);
+    expect(hasUsableCardImage(null)).toBe(false);
+    expect(hasUsableCardImage(undefined)).toBe(false);
+  });
+
+  test('dedupes and drops invalid/imageless ids, preserving first-seen order', () => {
+    const pool = [DINOSAURS.TREX, 'bogus', DINOSAURS.TRICERATOPS, DINOSAURS.TREX];
+    expect(eligibleCardCreatureIds(pool)).toEqual([DINOSAURS.TREX, DINOSAURS.TRICERATOPS]);
   });
 });
 
@@ -485,5 +556,48 @@ describe('a full 10-round game, played end to end', () => {
     expect(result.gameOver).toBe(true);
     expect(state.score).toBe(ROUNDS_PER_GAME);
     expect(state.answers).toHaveLength(ROUNDS_PER_GAME);
+  });
+});
+
+describe('completeLevel', () => {
+  test('unlocks the next level once enough rounds are acertadas (not exceeding the soft limit), and chains a fresh set of rounds', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(false);
+    expect(outcome.nextLevel).toBe(2);
+    expect(outcome.correctCount).toBe(10);
+    expect(outcome.nextLevelGame.error).toBeUndefined();
+    expect(outcome.nextLevelGame.level).toBe(2);
+    expect(outcome.nextLevelGame.round.roundIndex).toBe(0);
+  });
+
+  test('a round completed after exceeding the soft limit never counts as acertada for the unlock tally', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: true }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.correctCount).toBe(0);
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('insufficient_score');
+  });
+
+  test('ends the game with insufficient acertadas', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: false, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 1, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('insufficient_score');
+  });
+
+  test('always ends the game at the max level', () => {
+    const answers = Array.from({ length: 10 }, () => ({ isCorrect: true, softLimitReached: false }));
+
+    const outcome = completeLevel({ level: 10, answers, dinosaurPool: VALID_DINOSAURS, randomFn: () => 0.4 });
+
+    expect(outcome.gameOver).toBe(true);
+    expect(outcome.reason).toBe('completed_all_levels');
   });
 });

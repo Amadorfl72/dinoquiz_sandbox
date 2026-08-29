@@ -247,6 +247,7 @@
   var SOMBRA_MODE_ID = 'sombra'; // mirrors src/game/modesCatalog.js MODE_IDS.SOMBRA
   var CLASIFICA_MODE_ID = 'clasifica'; // mirrors src/game/modesCatalog.js MODE_IDS.CLASIFICA
   var SIZE_ORDER_MODE_ID = 'ordenaPorTamano'; // mirrors src/game/modesCatalog.js MODE_IDS.ORDENA_POR_TAMANO
+  var PAREJAS_MODE_ID = 'parejas'; // mirrors src/game/modesCatalog.js MODE_IDS.PAREJAS
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -305,6 +306,8 @@
           fromWindow.renderClassifyScreen || require('../../src/screens/ClassifyScreen').renderClassifyScreen,
         renderSizeOrderScreen:
           fromWindow.renderSizeOrderScreen || require('../../src/screens/SizeOrderScreen').renderSizeOrderScreen,
+        renderParejasScreen:
+          fromWindow.renderParejasScreen || require('../../src/screens/ParejasScreen').renderParejasScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -454,6 +457,23 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.sizeOrder) || null;
+  }
+
+  /**
+   * Resolves public/scripts/parejasGame.js (TRIOFSND-276), the
+   * browser-runnable Parejas jurásicas round/level orchestrator -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveMazeGame`/
+   * `resolveClassifyGame` above. Registered nested under
+   * `window.DinoQuiz.game.parejas`.
+   */
+  function resolveParejasGame(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('./parejasGame');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.parejas) || null;
   }
 
   /**
@@ -785,6 +805,14 @@
         // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape
         // as Oído Jurásico -- see startSizeOrderGame's own doc comment.
         startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
+      if (modeId === PAREJAS_MODE_ID) {
+        // TRIOFSND-276: Parejas jurásicas has its own multi-level unlock
+        // chain and procedural board generator (parejasGame.js) instead of
+        // the question-bank-driven orchestrator below -- see
+        // startParejasLevelGame's own doc comment.
+        startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -1913,6 +1941,253 @@
     }
 
     return playShadowGuessLevel(container, renderers, doc, fetchFn, levelGame, resolvedCtx);
+  }
+
+  /**
+   * Parejas jurásicas mode integration (TRIOFSND-276): like Sombra, this
+   * mode plays through its own multi-level unlock chain (level-scaled pair
+   * count/visual similarity/soft attempt limit, parejasGame.js's own
+   * `pairCountForLevel`/`difficultyBiasForLevel`/`softAttemptLimitForLevel`)
+   * instead of Laberinto/Clasifica's single fixed-level "partida" --
+   * `playParejasRound`/`finishParejasLevel`/`startParejasLevelGame` mirror
+   * `playShadowGuessLevel`/`finishShadowGuessLevel`/
+   * `startShadowGuessLevelGame` exactly, but drive parejasGame.js's
+   * procedural boards and parejasScreen.js's card grid instead of Sombra's
+   * silhouette rounds.
+   *
+   * Round accounting (PRD "una ronda acertada sólo si no excede el límite
+   * suave"): parejasScreen.js reports every reveal/resolve via
+   * `onReveal`/`onResolve` so `currentRound` here is mirrored into
+   * parejasGame.js's own `revealCard`/`resolveSelection` -- the same
+   * canonical round object `completeRound`/`evaluateRound` then score,
+   * exactly once per round (`round.evaluated`), the moment every pair is
+   * matched. Completing a board is always a success for the mode's *own*
+   * score (`gameState.score`, parejasGame.js's `evaluateRound` always
+   * applies `isCorrect: true` -- there is no "wrong" board, only slower/
+   * faster), but the *common* aciertos/percentage/unlock tally must not
+   * count a round that exceeded its level's soft attempt limit -- that
+   * distinction lives in parejasGame.js's own `completeLevel` (never
+   * reimplemented here), which maps each answer's `isCorrect &&
+   * !softLimitReached` before handing off to gameFlow.resolveLevelOutcome.
+   */
+
+  /** Renders `currentRound` and drives it to completion (or the next round, or Resultados once the level is over) -- mirrors `playShadowGuessLevel`'s per-round loop, but keeps `currentRound` in sync with parejasGame.js via onReveal/onResolve instead of a screen-computed `onAnswer`. */
+  function playParejasRound(container, renderers, doc, fetchFn, parejasGameApi, currentRound, gameState, ctx) {
+    var totalRounds = parejasGameApi.ROUNDS_PER_GAME;
+    // The level being played always comes from the round itself (set once by
+    // parejasGameApi.startGame/completeLevel), never re-read off `ctx` --
+    // `ctx` is shared/mutated across the whole level chain (see
+    // `finishParejasLevel`'s own `maxUnlockedLevelPromise`) and never carries
+    // its own `level` field, mirroring how `playShadowGuessLevel` threads
+    // `levelGame.level` explicitly instead of through `ctx`.
+    var level = currentRound.level;
+
+    function advance() {
+      var result = parejasGameApi.completeRound({
+        round: currentRound,
+        gameState: gameState,
+        level: level,
+        seed: ctx.seed,
+        dinosaurPool: ctx.dinosaurPool,
+        randomFn: ctx.randomFn,
+        getCreatureVisualFamily: ctx.getCreatureVisualFamily,
+      });
+
+      if (result.gameOver) {
+        finishParejasLevel(container, renderers, doc, fetchFn, level, result.state, ctx);
+      } else {
+        playParejasRound(container, renderers, doc, fetchFn, parejasGameApi, result.nextRound, result.state, ctx);
+      }
+    }
+
+    return renderers.renderParejasScreen(container, currentRound, {
+      score: gameState.score,
+      roundNumber: currentRound.roundIndex + 1,
+      totalRounds: totalRounds,
+      onReveal: function (revealResult) {
+        if (!revealResult.blocked) {
+          currentRound = parejasGameApi.revealCard(currentRound, revealResult.cardId);
+        }
+      },
+      onResolve: function () {
+        currentRound = parejasGameApi.resolveSelection(currentRound);
+      },
+      onNext: function () {
+        advance();
+      },
+      onGameOver: function () {
+        advance();
+      },
+    });
+  }
+
+  /** Renders Resultados for the Parejas level just finished, persisting/reading progress through the same per-mode modeProgressStorage.js instance every mode uses -- mirrors `finishShadowGuessLevel` exactly, but resolves the level-unlock outcome via parejasGame.js's own `completeLevel` (never gameFlow.completeLevel directly, since a next level's board is procedural, not question-bank-driven). */
+  function finishParejasLevel(container, renderers, doc, fetchFn, level, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    var parejasGameApi = resolveParejasGame();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId || PAREJAS_MODE_ID;
+
+    var outcome = parejasGameApi.completeLevel({
+      level: level,
+      answers: finalState.answers,
+      dinosaurPool: ctx.dinosaurPool,
+      randomFn: ctx.randomFn,
+      seed: ctx.seed,
+      getCreatureVisualFamily: ctx.getCreatureVisualFamily,
+    });
+
+    if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+    }
+
+    // Common score/percentage (PRD "el porcentaje final es rondas
+    // acertadas / 10 x 100, nunca el porcentaje de parejas encontradas"):
+    // outcome.correctCount is parejasGame.js's own soft-limit-aware tally,
+    // never the mode's own always-succeeds finalState.score.
+    var commonAnswers = finalState.answers.map(function (answer) {
+      return { isCorrect: Boolean(answer.isCorrect) && !answer.softLimitReached };
+    });
+    var commonState = {
+      score: outcome.correctCount,
+      maxStreak: gameFlow.calculateMaxStreak(commonAnswers),
+    };
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, commonState);
+
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: commonState.score,
+          maxScore: parejasGameApi.ROUNDS_PER_GAME,
+          level: level,
+        });
+      });
+    }
+
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(commonState.score);
+    }
+
+    return Promise.resolve(writesSettled)
+      .then(function () {
+        return ctx.maxUnlockedLevelPromise;
+      })
+      .then(function (maxLevelUnlocked) {
+        return renderers.renderResultsScreen(container, {
+          score: commonState.score,
+          maxScore: parejasGameApi.ROUNDS_PER_GAME,
+          maxStreak: commonState.maxStreak,
+          bestScore: bestScoreAndStreak.bestScore,
+          bestStreak: bestScoreAndStreak.bestStreak,
+          level: level,
+          levelOutcome: outcome,
+          maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+          adsRemoved: loadAdsRemovedState(ctx.storageObj),
+          onPlayAgain: function () {
+            if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+              ctx.analyticsStorage.recordEvent('replay_pulsado');
+            }
+            if (!outcome.gameOver && outcome.nextLevelGame) {
+              playParejasRound(
+                container,
+                renderers,
+                doc,
+                fetchFn,
+                parejasGameApi,
+                outcome.nextLevelGame.round,
+                outcome.nextLevelGame.state,
+                ctx
+              );
+            } else {
+              startParejasLevelGame(container, renderers, doc, fetchFn, ctx);
+            }
+          },
+          onExit: function () {
+            var homeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderers.renderHomeScreen,
+              fetchFn,
+              homeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              homeStorage
+            );
+          },
+        });
+      });
+  }
+
+  /**
+   * Starts (or restarts) the Parejas multi-level game at `ctx.level` (level
+   * 1 by default) -- mirrors `startShadowGuessLevelGame` exactly, using
+   * parejasGame.js's own procedural boards instead of Sombra's silhouettes.
+   * A catalog with fewer than 8 elegible creatures (PRD gate) makes
+   * `startGame` return `{ error, details }` instead of a round -- handled the
+   * same safe-exit way as every other mode's own catalog/generation failure
+   * (`exitToHomeSafely`); in practice this never fires from the mode
+   * selector, since a mode card is only tappable once
+   * `evaluateModesWithShadowOverride` already reports Parejas available
+   * against the very same catalog.
+   */
+  function startParejasLevelGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var parejasGameApi = resolveParejasGame();
+    var gameFlow = resolveGameFlow();
+    if (!parejasGameApi || !gameFlow || !renderers || typeof renderers.renderParejasScreen !== 'function') {
+      return null;
+    }
+
+    var level = ctx.level || gameFlow.MIN_LEVEL;
+    var modeId = PAREJAS_MODE_ID;
+    var resolvedCtx = {
+      level: level,
+      seed: ctx.seed,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      getCreatureVisualFamily: ctx.getCreatureVisualFamily,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      modeId: modeId,
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
+    };
+
+    persistLastMode(modeId, ctx.storageObj);
+
+    var game = parejasGameApi.startGame({
+      level: level,
+      seed: ctx.seed,
+      dinosaurPool: ctx.dinosaurPool,
+      randomFn: ctx.randomFn,
+      getCreatureVisualFamily: ctx.getCreatureVisualFamily,
+    });
+
+    if (game && game.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, game);
+    }
+
+    return playParejasRound(container, renderers, doc, fetchFn, parejasGameApi, game.round, game.state, resolvedCtx);
   }
 
   /**
@@ -3562,6 +3837,11 @@
       playSizeOrderRound: playSizeOrderRound,
       finishSizeOrderGame: finishSizeOrderGame,
       startSizeOrderGame: startSizeOrderGame,
+      PAREJAS_MODE_ID: PAREJAS_MODE_ID,
+      resolveParejasGame: resolveParejasGame,
+      playParejasRound: playParejasRound,
+      finishParejasLevel: finishParejasLevel,
+      startParejasLevelGame: startParejasLevelGame,
     };
   }
 })();
