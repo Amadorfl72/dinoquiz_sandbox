@@ -44,6 +44,7 @@ const PRECACHE_URLS = [
   '/scripts/homeScreen.js',
   '/scripts/privacyPolicyScreen.js',
   '/scripts/ageGateScreen.js',
+  '/scripts/nicknameScreen.js',
   '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
   '/scripts/mazeGenerator.js',
