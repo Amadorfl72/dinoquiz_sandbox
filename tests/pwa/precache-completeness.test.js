@@ -14,11 +14,17 @@
  *     commits to, in order).
  *   - images: public/scripts/modeSelectorScreen.js's MODE_ILLUSTRATION_SRCS
  *     (one card illustration per mode, PRD "Selector ilustrado de modos"),
- *     plus every file under any public/assets/images/<dir>/ that isn't one
- *     of the sets shared across every mode (creature art reused by several
- *     modes, or the selector illustrations already covered above) --
- *     e.g. public/assets/images/cards/ holds the Parejas jurásicas card-back
- *     art (see that folder's CREDITS.md) and has no other check covering it.
+ *     plus *every* image file on disk under public/assets/images/ (walked
+ *     recursively). Nothing is excluded: the creature art in dinosaurs/,
+ *     fallback/ and realistic/ is reused by several modes (the quiz shows the
+ *     cartoon/realistic drawings, Parejas jurásicas pairs them, Sombra derives
+ *     silhouettes from them -- see each folder's CREDITS.md), and mode-specific
+ *     art such as public/assets/images/cards/back.svg (the Parejas card back)
+ *     lives here too, so all of it must be precached to work offline. Asserting
+ *     the *whole* tree -- rather than allow-listing "shared" directories to
+ *     skip -- means a future PR that drops a referenced asset from
+ *     PRECACHE_URLS (e.g. dinosaurs/trex.svg) fails this gate even if it
+ *     refreshes the snapshot and bumps SW_VERSION.
  *   - i18n: public/i18n/es.json's `modes.<id>` entries (PRD constraint "todo
  *     texto debe proceder de public/i18n/") -- checks the *file* is
  *     precached and that every mode actually has copy backing it.
@@ -51,14 +57,6 @@ const { SOUND_SOURCES } = require('../../public/scripts/audio');
 
 const IMAGES_DIR = path.resolve(__dirname, '../../public/assets/images');
 
-// Directories under public/assets/images/ whose contents are shared across
-// several modes rather than belonging to one: the creature art (reused by
-// the quiz, sombra, laberinto, etc.) and the selector illustrations
-// (already asserted per-mode above). Any other directory holds art specific
-// to a single mode -- e.g. `cards/` for Parejas jurásicas's card back -- and
-// isn't covered by any of the other checks in this file.
-const SHARED_IMAGE_DIRS = new Set(['dinosaurs', 'fallback', 'realistic', 'modes']);
-
 const MODE_IDS = MODES_CATALOG.map((mode) => mode.id);
 
 function readIndexScriptSrcs() {
@@ -66,16 +64,23 @@ function readIndexScriptSrcs() {
   return Array.from(indexHtml.matchAll(/<script\s+src="([^"]+)"/g)).map((match) => match[1]);
 }
 
-function readModeSpecificImageAssets() {
-  return fs
-    .readdirSync(IMAGES_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !SHARED_IMAGE_DIRS.has(entry.name))
-    .flatMap((dirEntry) =>
-      fs
-        .readdirSync(path.join(IMAGES_DIR, dirEntry.name), { withFileTypes: true })
-        .filter((fileEntry) => fileEntry.isFile() && fileEntry.name !== 'CREDITS.md')
-        .map((fileEntry) => `/assets/images/${dirEntry.name}/${fileEntry.name}`)
-    );
+// Walk *every* image file under public/assets/images/ (recursively), skipping
+// only the per-folder CREDITS.md attribution files. Nothing is allow-listed
+// out: the creature art (dinosaurs/, fallback/, realistic/) is referenced by
+// several modes and must be precached to work offline, just like the
+// mode-specific art (cards/) and the top-level mascot.
+function readAllImageAssets(dir = IMAGES_DIR) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return readAllImageAssets(absolute);
+    }
+    if (!entry.isFile() || entry.name === 'CREDITS.md') {
+      return [];
+    }
+    const relative = path.relative(IMAGES_DIR, absolute).split(path.sep).join('/');
+    return [`/assets/images/${relative}`];
+  });
 }
 
 describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
@@ -100,10 +105,16 @@ describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
     });
   });
 
-  test('every mode-specific image asset (beyond selector illustrations and shared creature art) is precached', () => {
-    const modeSpecificAssets = readModeSpecificImageAssets();
-    expect(modeSpecificAssets).toContain('/assets/images/cards/back.svg');
-    modeSpecificAssets.forEach((src) => {
+  test('every image asset referenced by the modes is precached (shared creature art included)', () => {
+    const imageAssets = readAllImageAssets();
+    // Sanity-check the walk reaches both the shared creature art (reused by
+    // Quiz/Parejas/Sombra) and the mode-specific card back, so removing any of
+    // them from PRECACHE_URLS would fail this test rather than slip through.
+    expect(imageAssets).toContain('/assets/images/dinosaurs/trex.svg');
+    expect(imageAssets).toContain('/assets/images/fallback/generic.svg');
+    expect(imageAssets).toContain('/assets/images/realistic/trex.jpg');
+    expect(imageAssets).toContain('/assets/images/cards/back.svg');
+    imageAssets.forEach((src) => {
       expect(PRECACHE_URLS).toContain(src);
     });
   });
