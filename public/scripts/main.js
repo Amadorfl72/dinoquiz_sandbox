@@ -2768,12 +2768,67 @@
     return installer(win && win.document, win);
   }
 
+  /**
+   * Mirrors public/service-worker.js's own `SW_ACTIVATE_COMPLETE_MESSAGE_TYPE`
+   * constant -- posted by that file's `activate` listener to every client
+   * once precache is guaranteed fully populated (install's
+   * `cache.addAll(PRECACHE_URLS)` already succeeded before `activate` can
+   * fire at all). Kept as a literal here rather than `require`d from
+   * service-worker.js because that file runs in its own worker global scope,
+   * never loaded as a `<script>` alongside this one.
+   */
+  var SW_ACTIVATE_COMPLETE_MESSAGE_TYPE = 'dinoquiz:sw-activate-complete';
+
+  /**
+   * Resolves public/scripts/offlineStatus.js (TRIOFSND-305), the local
+   * dinoquiz:swVersion/dinoquiz:lastPreloadAt tracking service -- same
+   * require-or-`window.DinoQuiz` pattern as `resolveModeStorage` above.
+   */
+  function resolveOfflineStatus(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/services/offlineStatus');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.offlineStatus) || null;
+  }
+
+  /**
+   * Handles the service worker's "activate complete" message (TRIOFSND-305):
+   * once the SW confirms its own `activate` handler finished, precache is
+   * guaranteed fully populated, so this is the single point that records the
+   * active version and completion timestamp locally via offlineStatus.js.
+   * Ignores any other message shape and never throws, so a malformed or
+   * unrelated message from the SW never breaks the app shell.
+   */
+  function handleServiceWorkerMessage(event) {
+    var data = event && event.data;
+    if (!data || data.type !== SW_ACTIVATE_COMPLETE_MESSAGE_TYPE) {
+      return;
+    }
+
+    var offlineStatus = resolveOfflineStatus();
+    if (offlineStatus && typeof offlineStatus.recordPrecacheComplete === 'function') {
+      offlineStatus.recordPrecacheComplete(data.version);
+    }
+  }
+
   function registerServiceWorker(nav, swPath) {
     nav = nav || (typeof navigator !== 'undefined' ? navigator : undefined);
     swPath = swPath || '/service-worker.js';
 
     if (!nav || !('serviceWorker' in nav)) {
       return Promise.resolve(null);
+    }
+
+    // TRIOFSND-305: listens for the "activate complete" message posted by
+    // public/service-worker.js's `activate` handler (see
+    // handleServiceWorkerMessage above) -- installed once per registration
+    // call, tolerating browsers/test doubles that don't expose
+    // `addEventListener` on `serviceWorker`.
+    if (nav.serviceWorker && typeof nav.serviceWorker.addEventListener === 'function') {
+      nav.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
     }
 
     // TRIOFSND-113: `register` can reject asynchronously (handled by the
@@ -3745,6 +3800,9 @@
     module.exports = {
       PRIVACY_POLICY_HASH: PRIVACY_POLICY_HASH,
       registerServiceWorker: registerServiceWorker,
+      SW_ACTIVATE_COMPLETE_MESSAGE_TYPE: SW_ACTIVATE_COMPLETE_MESSAGE_TYPE,
+      resolveOfflineStatus: resolveOfflineStatus,
+      handleServiceWorkerMessage: handleServiceWorkerMessage,
       resolvePlatformSupport: resolvePlatformSupport,
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,

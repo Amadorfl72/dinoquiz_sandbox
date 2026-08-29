@@ -23,6 +23,14 @@ const SW_VERSION = 'v34';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
+// Posted to every client once `activate` finishes (see the listener below):
+// this is the point precache is guaranteed fully populated, since `install`'s
+// `cache.addAll(PRECACHE_URLS)` must already have succeeded (and won
+// `skipWaiting`) before `activate` can fire at all. main.js's
+// public/scripts/offlineStatus.js records SW_VERSION/the timestamp locally
+// when it receives this message (TRIOFSND-305).
+const SW_ACTIVATE_COMPLETE_MESSAGE_TYPE = 'dinoquiz:sw-activate-complete';
+
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -70,6 +78,7 @@ const PRECACHE_URLS = [
   '/scripts/modeChangeConfirmScreen.js',
   '/scripts/modeBlockedScreen.js',
   '/scripts/oidoJurasicoAudioService.js',
+  '/scripts/offlineStatus.js',
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',
@@ -239,6 +248,12 @@ self.addEventListener('activate', (event) => {
         )
       )
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll())
+      .then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: SW_ACTIVATE_COMPLETE_MESSAGE_TYPE, version: SW_VERSION });
+        });
+      })
   );
 });
 
@@ -279,6 +294,7 @@ if (typeof module !== 'undefined' && module.exports) {
     PRECACHE_NAME,
     RUNTIME_CACHE_NAME,
     PRECACHE_URLS,
+    SW_ACTIVATE_COMPLETE_MESSAGE_TYPE,
     isRuntimeCacheable,
   };
 }
