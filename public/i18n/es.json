@@ -113,6 +113,18 @@
     "sevenOption": "7 años o menos",
     "eightPlusOption": "8 años o más"
   },
+  "nicknameRequest": {
+    "screenTitle": "¿Cómo quieres que te llamemos?",
+    "instructions": "Escribe un apodo para jugar. Puede ser el que tú quieras.",
+    "lastNameWarning": "No escribas tu apellido, solo un apodo o tu primer nombre.",
+    "inputLabel": "Tu apodo",
+    "continueButtonLabel": "Continuar",
+    "guestButtonLabel": "Jugar como invitado",
+    "errors": {
+      "empty": "Escribe un apodo antes de continuar.",
+      "tooLong": "Tu apodo es muy largo. Usa como máximo 20 letras."
+    }
+  },
   "modeChange": {
     "title": "¿Cambiar de juego?",
     "message": "Todavía no has terminado esta partida. Si cambias de juego ahora, perderás lo que llevas jugado.",
