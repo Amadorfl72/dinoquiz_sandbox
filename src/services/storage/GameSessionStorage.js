@@ -5,6 +5,7 @@ const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { LogService } = require('../logging');
 const { ROUNDS_PER_GAME } = require('../../game/roundContract');
+const { MODE_STATE_SCHEMA_VERSION } = require('./types');
 
 const NAMESPACE = 'dinoquiz:';
 const SESSION_KEY = `${NAMESPACE}session`;
@@ -12,8 +13,11 @@ const SESSION_KEY = `${NAMESPACE}session`;
 // Bump whenever the persisted shape below changes incompatibly. restoreSession
 // discards (rather than tries to migrate/guess) anything saved under an older
 // or newer version, so a shape change never hands a stale/foreign session back
-// to roundContract.js.
-const SESSION_SCHEMA_VERSION = 1;
+// to roundContract.js. Sourced from types.js's MODE_STATE_SCHEMA_VERSION
+// (TRIOFSND-297/298) so this transient, per-mode envelope and
+// ModeProgressStorage.js's completed-progress envelope share the same
+// versioning source of truth instead of drifting independently.
+const SESSION_SCHEMA_VERSION = MODE_STATE_SCHEMA_VERSION;
 
 // The only statuses roundContract.js sessions can resume into (see pauseGame/
 // advanceRound in public/scripts/roundContract.js). A 'finished' session has
@@ -140,9 +144,12 @@ function isValidEnvelope(envelope) {
  * Local persistence and versioned restoration of the *in-progress* game
  * session (TRIOFSND-242), i.e. the transient round-by-round state
  * roundContract.js (src/game/roundContract.js) produces -- as distinct from
- * the durable, per-mode progress/results StorageClient.js already persists
- * (bestScore, maxStreak, scoreMetrics, maxUnlockedLevel...), which this
- * module never reads or writes.
+ * the durable, per-mode progress/results StorageClient.js and
+ * ModeProgressStorage.js already persist (bestScore, maxStreak,
+ * scoreMetrics, maxUnlockedLevel, per-mode results/desbloqueos...), which
+ * this module never reads or writes (TRIOFSND-298: completed progress and
+ * transient state stay under separate `dinoquiz:`-namespaced keys per mode,
+ * so one is never read or written as the other).
  *
  * Storage-key note: this stores exactly one session at a time, under the
  * single namespaced key `dinoquiz:session`, because only one game can be
