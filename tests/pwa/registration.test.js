@@ -63,6 +63,92 @@ describe('TRIOFSND-110: service worker registration', () => {
   });
 });
 
+describe('TRIOFSND-305: local SW status recorded once the SW confirms activate complete', () => {
+  test('installs a message listener on navigator.serviceWorker when supported', async () => {
+    const { registerServiceWorker } = require(MAIN_JS_PATH);
+    const registration = { scope: '/' };
+    const register = jest.fn().mockResolvedValue(registration);
+    const addEventListener = jest.fn();
+    const nav = { serviceWorker: { register, addEventListener } };
+
+    await registerServiceWorker(nav);
+
+    expect(addEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+  });
+
+  test('does not throw when navigator.serviceWorker has no addEventListener', async () => {
+    const { registerServiceWorker } = require(MAIN_JS_PATH);
+    const register = jest.fn().mockResolvedValue({ scope: '/' });
+    const nav = { serviceWorker: { register } };
+
+    await expect(registerServiceWorker(nav)).resolves.toEqual({ scope: '/' });
+  });
+
+  test('handleServiceWorkerMessage records the version via offlineStatus on an activate-complete message', () => {
+    const { handleServiceWorkerMessage, SW_ACTIVATE_COMPLETE_MESSAGE_TYPE } = require(MAIN_JS_PATH);
+    const offlineStatus = require('../../src/services/offlineStatus');
+    const recordSpy = jest.spyOn(offlineStatus, 'recordPrecacheComplete').mockImplementation(() => true);
+
+    handleServiceWorkerMessage({ data: { type: SW_ACTIVATE_COMPLETE_MESSAGE_TYPE, version: 'v34' } });
+
+    expect(recordSpy).toHaveBeenCalledWith('v34');
+    recordSpy.mockRestore();
+  });
+
+  test('ignores messages of a different/missing type without throwing', () => {
+    const { handleServiceWorkerMessage } = require(MAIN_JS_PATH);
+    const offlineStatus = require('../../src/services/offlineStatus');
+    const recordSpy = jest.spyOn(offlineStatus, 'recordPrecacheComplete').mockImplementation(() => true);
+
+    expect(() => handleServiceWorkerMessage({ data: { type: 'something-else' } })).not.toThrow();
+    expect(() => handleServiceWorkerMessage({})).not.toThrow();
+    expect(() => handleServiceWorkerMessage(null)).not.toThrow();
+    expect(recordSpy).not.toHaveBeenCalled();
+    recordSpy.mockRestore();
+  });
+
+  test('the SW message type constant matches public/service-worker.js own constant', () => {
+    const { SW_ACTIVATE_COMPLETE_MESSAGE_TYPE } = require(MAIN_JS_PATH);
+    const SW_PATH = path.resolve(__dirname, '../../public/service-worker.js');
+    const { SW_ACTIVATE_COMPLETE_MESSAGE_TYPE: swConstant } = require(SW_PATH);
+
+    expect(SW_ACTIVATE_COMPLETE_MESSAGE_TYPE).toBe(swConstant);
+  });
+
+  test('service-worker.js posts the activate-complete message (with its version) to every client once activate finishes', async () => {
+    const SW_PATH = path.resolve(__dirname, '../../public/service-worker.js');
+    const swModule = require(SW_PATH);
+
+    const postMessage = jest.fn();
+    self.caches = {
+      keys: async () => [],
+      delete: async () => true,
+    };
+    self.clients = {
+      claim: jest.fn().mockResolvedValue(undefined),
+      matchAll: jest.fn().mockResolvedValue([{ postMessage }]),
+    };
+
+    try {
+      const activateEvent = new Event('activate');
+      let activatePromise = Promise.resolve();
+      activateEvent.waitUntil = (promise) => {
+        activatePromise = promise;
+      };
+      self.dispatchEvent(activateEvent);
+      await activatePromise;
+
+      expect(postMessage).toHaveBeenCalledWith({
+        type: swModule.SW_ACTIVATE_COMPLETE_MESSAGE_TYPE,
+        version: swModule.SW_VERSION,
+      });
+    } finally {
+      delete self.caches;
+      delete self.clients;
+    }
+  });
+});
+
 describe('TRIOFSND-64: Home screen rendered by the bootstrap script', () => {
   test('loadHomeResources fetches the i18n resource and returns the home, privacy and purchase sections', async () => {
     const { loadHomeResources } = require(MAIN_JS_PATH);
