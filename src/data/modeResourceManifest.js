@@ -63,6 +63,7 @@ const SHARED_SCRIPTS = Object.freeze([
   '/scripts/modeProgressStorage.js',
   '/scripts/modeSelectorScreen.js',
   '/scripts/modeChangeConfirmScreen.js',
+  '/scripts/modeBlockedScreen.js',
   '/scripts/main.js',
 ]);
 

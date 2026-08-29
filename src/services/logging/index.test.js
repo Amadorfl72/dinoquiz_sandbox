@@ -849,6 +849,50 @@ describe('LogService — structured access & PWA install logging', () => {
     });
   });
 
+  describe('logModeResourceMissing / getModeResourceMissingCounts (TRIOFSND-306)', () => {
+    it('tallies missing resources per "modeId:resourceUrl"', () => {
+      expect(service.logModeResourceMissing('laberinto', '/scripts/mazeGame.js')).toBe(1);
+      expect(service.logModeResourceMissing('laberinto', '/scripts/mazeGame.js')).toBe(2);
+      expect(service.logModeResourceMissing('quiz', '/scripts/mazeGame.js')).toBe(1);
+      expect(service.getModeResourceMissingCounts()).toEqual({
+        'laberinto:/scripts/mazeGame.js': 2,
+        'quiz:/scripts/mazeGame.js': 1,
+      });
+    });
+
+    it('ignores a call without a valid modeId or resourceUrl', () => {
+      expect(service.logModeResourceMissing('', '/scripts/mazeGame.js')).toBe(0);
+      expect(service.logModeResourceMissing('laberinto', '')).toBe(0);
+      expect(service.logModeResourceMissing(undefined, undefined)).toBe(0);
+      expect(service.getModeResourceMissingCounts()).toEqual({});
+    });
+
+    it('persists counts under their own dinoquiz: key and round-trips through storage', () => {
+      service.logModeResourceMissing('laberinto', '/scripts/mazeGame.js');
+      expect(storage.getItem('dinoquiz:modeResourceMissingCounts')).toBe('{"laberinto:/scripts/mazeGame.js":1}');
+      const reloaded = new LogService(storage);
+      expect(reloaded.getModeResourceMissingCounts()).toEqual({ 'laberinto:/scripts/mazeGame.js': 1 });
+    });
+
+    it('is unaffected by clearLogs', () => {
+      service.logModeResourceMissing('laberinto', '/scripts/mazeGame.js');
+      service.clearLogs();
+      expect(service.getModeResourceMissingCounts()).toEqual({ 'laberinto:/scripts/mazeGame.js': 1 });
+    });
+
+    it('is never included in the transmittable logs payload', () => {
+      service.logModeResourceMissing('laberinto', '/scripts/mazeGame.js');
+      const payload = service.getLogsPayload();
+      expect(JSON.stringify(payload)).not.toContain('modeResourceMissing');
+    });
+
+    it('tolerates a corrupted or incompatible stored entry without throwing', () => {
+      storage.setItem('dinoquiz:modeResourceMissingCounts', '"not an object"');
+      expect(() => new LogService(storage)).not.toThrow();
+      expect(new LogService(storage).getModeResourceMissingCounts()).toEqual({});
+    });
+  });
+
   describe('getLogsPayload', () => {
     it('builds a transmission payload with version, count and the logs', () => {
       service.logAppAccess({});
