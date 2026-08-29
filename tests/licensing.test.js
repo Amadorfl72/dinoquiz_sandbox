@@ -75,6 +75,26 @@ function isAttributedValue(cell) {
   return !/^(?:[-—–]+|n\s*\/?\s*a|n\s*\/?\s*d|tbd|\?+)$/i.test(stripAccents(value));
 }
 
+// Column names are matched by PREFIX, never by exact equality: the repo's
+// CREDITS.md tables were written independently and name the same column in
+// different ways ("Autor" vs "Autor / entidad creadora", "Fichero" vs "Ruta
+// local exacta"). Exact matching silently dropped whole tables — a folder
+// whose header said "Ruta local exacta" parsed to zero entries, so every one
+// of its assets looked uncredited even though the table was complete.
+function findHeader(byHeader, ...prefixes) {
+  return Object.keys(byHeader).find((name) =>
+    prefixes.some((prefix) => name.startsWith(prefix))
+  );
+}
+
+// The first column identifies the file, but not always the same way: some
+// tables hold a bare name ("trex.jpg"), others the full repo path wrapped in
+// backticks ("`public/assets/sounds/oido-jurasico/trex.wav`"). Both name the
+// same asset, so the cell is reduced to its basename before comparing.
+function normalizeFileCell(cell) {
+  return path.basename((cell || '').replace(/`/g, '').trim());
+}
+
 // Returns one entry per data row: { fileName, byHeader }, where byHeader maps
 // normalized column names (e.g. "autor", "licencia", "fuente / obra
 // original") to that row's cell text.
@@ -92,7 +112,8 @@ function parseCreditEntries(markdown) {
     if (!cells.some((cell) => cell.length > 0)) continue;
     if (cells.every((cell) => /^:?-+:?$/.test(cell))) continue; // separator row
 
-    if (normalizeHeaderName(cells[0]) === 'fichero') {
+    const firstHeader = normalizeHeaderName(cells[0]);
+    if (['fichero', 'ruta', 'archivo'].some((prefix) => firstHeader.startsWith(prefix))) {
       header = cells.map(normalizeHeaderName);
       continue;
     }
@@ -103,7 +124,7 @@ function parseCreditEntries(markdown) {
     header.forEach((name, index) => {
       byHeader[name] = cells[index] !== undefined ? cells[index] : '';
     });
-    entries.push({ fileName: cells[0], byHeader });
+    entries.push({ fileName: normalizeFileCell(cells[0]), byHeader });
   }
 
   return entries;
@@ -137,8 +158,9 @@ describe('every image/audio asset is credited in its folder CREDITS.md', () => {
             const entry = entries.find((candidate) => candidate.fileName === fileName);
             expect(entry).toBeDefined();
 
-            // The table must have an "Autor" column at all...
-            expect(entry.byHeader).toHaveProperty('autor');
+            // The table must have an author column at all...
+            const authorHeader = findHeader(entry.byHeader, 'autor');
+            expect(authorHeader).toBeDefined();
             // ...and this specific file's cell in it must carry a real name.
             // This is the actual attribution: unlike checking "any cell in
             // the row", a filled-in license or description cell can no longer
@@ -146,9 +168,10 @@ describe('every image/audio asset is credited in its folder CREDITS.md', () => {
             // "| spinosaurus.jpg | Spinosaurus | | CC BY 2.5 | |" must fail
             // even though it has non-empty cells besides the filename), and a
             // bare placeholder ("-", "N/A") does not count as attribution.
-            expect(isAttributedValue(entry.byHeader.autor)).toBe(true);
+            expect(isAttributedValue(entry.byHeader[authorHeader])).toBe(true);
 
-            const license = entry.byHeader.licencia || '';
+            const licenseHeader = findHeader(entry.byHeader, 'licencia');
+            const license = (licenseHeader && entry.byHeader[licenseHeader]) || '';
             expect(license).toMatch(COMPATIBLE_LICENSE_PATTERN);
 
             // Licenses that legally require attribution to a named creator
@@ -158,7 +181,7 @@ describe('every image/audio asset is credited in its folder CREDITS.md', () => {
             // (DinoQuiz's own original artwork) don't need this, since no
             // external work is being attributed.
             const requiresAttribution = /\bCC[\s-]?BY\b/i.test(license);
-            const sourceHeader = Object.keys(entry.byHeader).find((name) => name.startsWith('fuente'));
+            const sourceHeader = findHeader(entry.byHeader, 'fuente');
             if (requiresAttribution && sourceHeader) {
               expect(isAttributedValue(entry.byHeader[sourceHeader])).toBe(true);
             }
