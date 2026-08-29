@@ -7,22 +7,13 @@
  *
  * Two independent checks live here:
  *
- * 1. i18n key completeness across public/i18n/*.json. Per
- *    src/i18n/index.js, 'es' is the only *runtime-supported* locale (v1
- *    ships only Spanish) -- other locale files under public/i18n/ (today
- *    just en.json) are translated section-by-section as individual modes
- *    ship (see tests/pwa/i18n-timeline.test.js, i18n-shadowGuess.test.js),
- *    not as a full site-wide translation (out of scope per the PRD: "no
- *    traducción a idiomas adicionales"). So the completeness contract is:
- *      a) every key path any non-default locale defines MUST also exist in
- *         es.json -- the default locale can never be missing something
- *         another locale promises;
- *      b) for a top-level section that is already translated into more than
- *         one locale, that section's key paths must match EXACTLY across
- *         every locale that translates it -- once bilingual, a section can
- *         never drift out of sync again.
- *    This generalizes the ad hoc per-mode parity tests into one gate that
- *    automatically covers every current and future bilingual section.
+ * 1. i18n key completeness across public/i18n/*.json: every locale file
+ *    under public/i18n/ MUST define the exact same set of visible key
+ *    paths as every other locale file. A locale is never allowed to be
+ *    missing a whole section (or a single leaf key) that another locale
+ *    defines -- there is no "partially translated" exemption, so a section
+ *    like modeSelector can't silently exist in es.json while being absent
+ *    from en.json.
  *
  * 2. Absence of hardcoded visible-text literals in public/scripts/*.js.
  *    Scans every browser-loaded script for string/template literals that
@@ -38,11 +29,26 @@ const path = require('path');
 const I18N_DIR = path.resolve(__dirname, '../public/i18n');
 const SCRIPTS_DIR = path.resolve(__dirname, '../public/scripts');
 
+// Recurses through both plain objects and arrays so a key path like
+// "privacyPolicy.sections[0].paragraphs[2]" is treated as its own leaf --
+// arrays are not collapsed into a single opaque leaf, otherwise a locale
+// could satisfy "same paths" while holding a shorter/longer array of
+// paragraphs, or the "no empty string" check below would try to compare a
+// whole array against `typeof value === 'string'` and always fail.
 function collectLeafPaths(node, prefix) {
+  if (Array.isArray(node)) {
+    return node.reduce((paths, item, index) => {
+      const currentPath = `${prefix}[${index}]`;
+      if (item && typeof item === 'object') {
+        return paths.concat(collectLeafPaths(item, currentPath));
+      }
+      return paths.concat([currentPath]);
+    }, []);
+  }
   return Object.keys(node).reduce((paths, key) => {
     const value = node[key];
     const currentPath = prefix ? `${prefix}.${key}` : key;
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (value && typeof value === 'object') {
       return paths.concat(collectLeafPaths(value, currentPath));
     }
     return paths.concat([currentPath]);
@@ -50,7 +56,8 @@ function collectLeafPaths(node, prefix) {
 }
 
 function getByPath(node, dottedPath) {
-  return dottedPath.split('.').reduce((current, key) => current[key], node);
+  const tokens = dottedPath.match(/[^.[\]]+/g);
+  return tokens.reduce((current, token) => current[token], node);
 }
 
 function loadLocales() {
@@ -72,50 +79,22 @@ describe('i18n key completeness across public/i18n locales', () => {
     expect(localeNames.length).toBeGreaterThan(1);
   });
 
-  test(`${DEFAULT_LOCALE}.json defines every key path present in any other locale file`, () => {
-    const defaultPaths = new Set(collectLeafPaths(locales[DEFAULT_LOCALE], ''));
-    localeNames
-      .filter((locale) => locale !== DEFAULT_LOCALE)
-      .forEach((locale) => {
-        collectLeafPaths(locales[locale], '').forEach((leafPath) => {
-          expect(defaultPaths.has(leafPath)).toBe(true);
-        });
-      });
-  });
+  const defaultPaths = collectLeafPaths(locales[DEFAULT_LOCALE], '').sort();
+  const otherLocaleNames = localeNames.filter((locale) => locale !== DEFAULT_LOCALE);
 
-  const objectSections = Object.keys(locales[DEFAULT_LOCALE]).filter((section) => {
-    const value = locales[DEFAULT_LOCALE][section];
-    return value && typeof value === 'object' && !Array.isArray(value);
-  });
-
-  const sharedSections = objectSections.filter(
-    (section) => localeNames.filter((locale) => locales[locale][section] !== undefined).length > 1
+  test.each(otherLocaleNames)(
+    `%s.json defines the exact same visible key paths as ${DEFAULT_LOCALE}.json (no missing or extra section)`,
+    (locale) => {
+      const localePaths = collectLeafPaths(locales[locale], '').sort();
+      expect(localePaths).toEqual(defaultPaths);
+    }
   );
 
-  test('at least one section is currently translated into more than one locale', () => {
-    expect(sharedSections.length).toBeGreaterThan(0);
-  });
-
-  describe.each(sharedSections)('bilingual section "%s"', (section) => {
-    const localesWithSection = localeNames.filter((locale) => locales[locale][section] !== undefined);
-
-    test('defines the exact same key paths in every locale that translates it', () => {
-      const [referenceLocale, ...restLocales] = localesWithSection;
-      const referencePaths = collectLeafPaths(locales[referenceLocale][section], '').sort();
-      restLocales.forEach((locale) => {
-        const paths = collectLeafPaths(locales[locale][section], '').sort();
-        expect(paths).toEqual(referencePaths);
-      });
-    });
-
-    test('no visible string is empty in any locale that translates it', () => {
-      localesWithSection.forEach((locale) => {
-        collectLeafPaths(locales[locale][section], '').forEach((leafPath) => {
-          const value = getByPath(locales[locale][section], leafPath);
-          expect(typeof value).toBe('string');
-          expect(value.trim().length).toBeGreaterThan(0);
-        });
-      });
+  test.each(localeNames)('no visible string is empty in %s.json', (locale) => {
+    collectLeafPaths(locales[locale], '').forEach((leafPath) => {
+      const value = getByPath(locales[locale], leafPath);
+      expect(typeof value).toBe('string');
+      expect(value.trim().length).toBeGreaterThan(0);
     });
   });
 });
