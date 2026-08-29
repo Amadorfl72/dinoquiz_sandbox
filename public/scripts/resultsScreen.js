@@ -58,6 +58,23 @@
  * resolved by the caller (`persistBestScoreAndStreak` in
  * public/scripts/main.js), same read-only rationale as the other optional
  * pieces above. Each is independently optional.
+ *
+ * Own-mode score, percentage, stars and level-progress actions (TRIOFSND-252,
+ * PRD "Resultados comunes con porcentaje y estrellas"): a mode's own game need
+ * not score out of 10 -- `options.maxScore` generalizes the score/star scale
+ * this screen renders against (defaults to `MAX_SCORE`, preserving Quiz's
+ * existing 0-10 behaviour). `calculateStars`/the percentage shown alongside
+ * it both delegate to scoring.js's mode-agnostic `normalizeOutcome(score,
+ * maxScore)` (TRIOFSND-251), so every mode's result -- however it arrived at
+ * its own score -- lands on the same 0-100%/1-3 star scale. Three further
+ * optional actions round out per-mode level progress, alongside the existing
+ * `options.level`/`options.maxLevelUnlocked`: `options.onRepeatLevel` replays
+ * the level just played; `options.onGoToNextUnlockedLevel` jumps straight to
+ * `options.level + 1` and only renders while that level is already unlocked
+ * (`options.maxLevelUnlocked > options.level`); `options.onBackToSelector`
+ * returns to the illustrated mode selector. Each is independently optional
+ * and, like every other option above, this screen never resolves them
+ * itself -- the caller supplies the level/maxLevelUnlocked/callbacks.
  */
 
 (function () {
@@ -65,12 +82,15 @@
   var MAX_SCORE = 10;
   var MAX_STARS = 3;
 
-  // Star tiers per the PRD: 0-3 -> 1 star, 4-6 -> 2 stars, 7-10 -> 3 stars.
-  var STAR_TIERS = Object.freeze([
-    { maxScore: 3, stars: 1 },
-    { maxScore: 6, stars: 2 },
-    { maxScore: MAX_SCORE, stars: 3 },
-  ]);
+  // Resolves scoring.js the same way resolveContentGuide (below) resolves
+  // the content guide: `require` under Node/Jest, `window.DinoQuiz.scoring`
+  // for the `<script>`-loaded PWA.
+  function resolveScoring() {
+    if (typeof require === 'function') {
+      return require('../../src/game/scoring');
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
 
   // Content-guide guard: words that would read as negative/discouraging to a
   // 6-8 year old. Motivational messages must never contain any of these
@@ -150,15 +170,30 @@
     return bundle ? bundle.results : null;
   }
 
-  function calculateStars(score) {
-    if (!Number.isInteger(score) || score < MIN_SCORE || score > MAX_SCORE) {
-      throw new Error('score must be an integer between ' + MIN_SCORE + ' and ' + MAX_SCORE + ', got ' + score);
+  // Quiz's own score is always an integer out of MAX_SCORE (10); a mode with
+  // its own scoring scale passes its own maxScore (TRIOFSND-252). Either way
+  // the actual percentage/tier math is the shared, mode-agnostic scoring.js
+  // helper (TRIOFSND-251) so every mode's results map onto the same visual
+  // scale instead of this screen keeping its own separate tier table.
+  function normalizeScore(score, maxScore) {
+    var total = typeof maxScore === 'number' ? maxScore : MAX_SCORE;
+    if (!Number.isInteger(total) || total <= 0) {
+      throw new Error('maxScore must be a positive integer, got ' + maxScore);
+    }
+    if (!Number.isInteger(score) || score < MIN_SCORE || score > total) {
+      throw new Error('score must be an integer between ' + MIN_SCORE + ' and ' + total + ', got ' + score);
     }
 
-    var tier = STAR_TIERS.find(function (candidate) {
-      return score <= candidate.maxScore;
-    });
-    return tier.stars;
+    var scoring = resolveScoring();
+    if (!scoring || typeof scoring.normalizeOutcome !== 'function') {
+      throw new Error('calculateStars requires scoring.js to be available');
+    }
+
+    return scoring.normalizeOutcome(score, total);
+  }
+
+  function calculateStars(score, maxScore) {
+    return normalizeScore(score, maxScore).stars;
   }
 
   function validateMotivationalMessages(messages) {
@@ -202,6 +237,23 @@
     return Object.keys(values).reduce(function (result, key) {
       return result.split('{' + key + '}').join(values[key]);
     }, template);
+  }
+
+  /**
+   * Binds a control to fire `handler` on click AND on an Enter/Espacio
+   * `keydown` (TRIOFSND-310). See the matching helper in homeScreen.js for
+   * why this is explicit rather than left to the browser's own default
+   * action on Enter/Espacio.
+   */
+  function bindActivation(element, handler) {
+    element.addEventListener('click', handler);
+    element.addEventListener('keydown', function (event) {
+      if (element.disabled) return;
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        handler(event);
+      }
+    });
   }
 
   // Level progression outcome (TRIOFSND-206): `options.levelOutcome` mirrors
@@ -249,13 +301,21 @@
     options = options || {};
     var strings = resolveStrings(options);
 
-    if (!Number.isInteger(options.score) || options.score < MIN_SCORE || options.score > MAX_SCORE) {
-      throw new Error('options.score must be an integer between ' + MIN_SCORE + ' and ' + MAX_SCORE);
+    // TRIOFSND-252: a mode's own game need not score out of 10 -- defaults to
+    // MAX_SCORE so existing Quiz callers (which never pass maxScore) are
+    // unaffected.
+    var total = options.maxScore === undefined ? MAX_SCORE : options.maxScore;
+    if (!Number.isInteger(total) || total <= 0) {
+      throw new Error('options.maxScore must be a positive integer');
+    }
+    if (!Number.isInteger(options.score) || options.score < MIN_SCORE || options.score > total) {
+      throw new Error('options.score must be an integer between ' + MIN_SCORE + ' and ' + total);
     }
 
     var score = options.score;
-    var total = MAX_SCORE;
-    var stars = calculateStars(score);
+    var normalizedOutcome = normalizeScore(score, total);
+    var stars = normalizedOutcome.stars;
+    var percentage = normalizedOutcome.percentage;
     var showExitButton = options.showExitButton !== false;
     var message = options.message || selectMotivationalMessage(strings.messages, options.randomFn);
 
@@ -280,6 +340,13 @@
     var scoreEl = document.createElement('p');
     scoreEl.className = 'results-screen__score';
     scoreEl.textContent = formatTemplate(strings.scoreFormat, { score: score, total: total });
+
+    // TRIOFSND-252: the shared 0-100 percentage every mode's result maps
+    // onto (scoring.js's normalizeOutcome), shown alongside the mode's own
+    // score/total so a non-out-of-10 score is still easy to read at a glance.
+    var percentageEl = document.createElement('p');
+    percentageEl.className = 'results-screen__percentage';
+    percentageEl.textContent = formatTemplate(strings.percentageFormat, { percentage: percentage });
 
     var starsEl = document.createElement('div');
     starsEl.className = 'results-screen__stars';
@@ -351,6 +418,7 @@
       formatTemplate(strings.summaryAnnouncement, {
         score: score,
         total: total,
+        percentage: percentage,
         stars: stars,
         maxStars: MAX_STARS,
         message: message,
@@ -384,7 +452,7 @@
     playAgainButton.className = 'results-screen__play-again-button';
     playAgainButton.textContent = resolvePlayAgainButtonLabel(strings, options.levelOutcome);
     if (typeof options.onPlayAgain === 'function') {
-      playAgainButton.addEventListener('click', options.onPlayAgain);
+      bindActivation(playAgainButton, options.onPlayAgain);
     }
     actions.appendChild(playAgainButton);
 
@@ -395,9 +463,62 @@
       exitButton.className = 'results-screen__exit-button';
       exitButton.textContent = strings.exitButton;
       if (typeof options.onExit === 'function') {
-        exitButton.addEventListener('click', options.onExit);
+        bindActivation(exitButton, options.onExit);
       }
       actions.appendChild(exitButton);
+    }
+
+    // TRIOFSND-252: replays the level just played. Only rendered when the
+    // caller supplies onRepeatLevel -- like onPlayAgain/onExit above, this
+    // screen never decides on its own what "repeat" means for a mode.
+    var repeatLevelButton = null;
+    if (typeof options.onRepeatLevel === 'function') {
+      repeatLevelButton = document.createElement('button');
+      repeatLevelButton.type = 'button';
+      repeatLevelButton.className = 'results-screen__repeat-level-button';
+      repeatLevelButton.textContent =
+        typeof options.level === 'number'
+          ? formatTemplate(strings.repeatLevelButtonFormat, { level: options.level })
+          : strings.repeatLevelButton;
+      repeatLevelButton.addEventListener('click', options.onRepeatLevel);
+      actions.appendChild(repeatLevelButton);
+    }
+
+    // TRIOFSND-252: jumps straight to the next level of this mode, but only
+    // when that level is already unlocked on this device (options.level and
+    // options.maxLevelUnlocked are both required to tell) -- otherwise there
+    // is nothing to jump to yet, so the button does not render at all.
+    var nextUnlockedLevel =
+      typeof options.level === 'number' &&
+      typeof options.maxLevelUnlocked === 'number' &&
+      options.maxLevelUnlocked > options.level
+        ? options.level + 1
+        : null;
+
+    var goToNextUnlockedLevelButton = null;
+    if (nextUnlockedLevel !== null && typeof options.onGoToNextUnlockedLevel === 'function') {
+      goToNextUnlockedLevelButton = document.createElement('button');
+      goToNextUnlockedLevelButton.type = 'button';
+      goToNextUnlockedLevelButton.className = 'results-screen__go-to-next-level-button';
+      goToNextUnlockedLevelButton.textContent = formatTemplate(strings.goToNextLevelButtonFormat, {
+        level: nextUnlockedLevel,
+      });
+      goToNextUnlockedLevelButton.addEventListener('click', function () {
+        options.onGoToNextUnlockedLevel(nextUnlockedLevel);
+      });
+      actions.appendChild(goToNextUnlockedLevelButton);
+    }
+
+    // TRIOFSND-252: returns to the illustrated mode selector. Only rendered
+    // when the caller supplies onBackToSelector.
+    var backToSelectorButton = null;
+    if (typeof options.onBackToSelector === 'function') {
+      backToSelectorButton = document.createElement('button');
+      backToSelectorButton.type = 'button';
+      backToSelectorButton.className = 'results-screen__back-to-selector-button';
+      backToSelectorButton.textContent = strings.backToSelectorButton;
+      backToSelectorButton.addEventListener('click', options.onBackToSelector);
+      actions.appendChild(backToSelectorButton);
     }
 
     // AC-20/AC-21: hidden once the remove-ads purchase has been made.
@@ -443,7 +564,7 @@
       rewardedAdButton.appendChild(rewardedAdBadge);
       rewardedAdButton.appendChild(rewardedAdLabel);
       if (typeof options.onWatchRewardedAd === 'function') {
-        rewardedAdButton.addEventListener('click', options.onWatchRewardedAd);
+        bindActivation(rewardedAdButton, options.onWatchRewardedAd);
       }
 
       adsSection.appendChild(adBanner);
@@ -455,6 +576,7 @@
       root.appendChild(levelEl);
     }
     root.appendChild(scoreEl);
+    root.appendChild(percentageEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
     if (levelOutcomeEl) {
@@ -483,6 +605,7 @@
       root: root,
       levelEl: levelEl,
       scoreEl: scoreEl,
+      percentageEl: percentageEl,
       starsEl: starsEl,
       messageEl: messageEl,
       levelOutcomeEl: levelOutcomeEl,
@@ -493,6 +616,9 @@
       announcementEl: announcementEl,
       playAgainButton: playAgainButton,
       exitButton: exitButton,
+      repeatLevelButton: repeatLevelButton,
+      goToNextUnlockedLevelButton: goToNextUnlockedLevelButton,
+      backToSelectorButton: backToSelectorButton,
       adsSection: adsSection,
       adBanner: adBanner,
       rewardedAdButton: rewardedAdButton,
@@ -503,10 +629,10 @@
     MIN_SCORE: MIN_SCORE,
     MAX_SCORE: MAX_SCORE,
     MAX_STARS: MAX_STARS,
-    STAR_TIERS: STAR_TIERS,
     BANNED_WORDS: BANNED_WORDS,
     normalizeToWords: normalizeToWords,
     calculateStars: calculateStars,
+    normalizeScore: normalizeScore,
     validateMotivationalMessages: validateMotivationalMessages,
     selectMotivationalMessage: selectMotivationalMessage,
     resolveLevelOutcomeMessage: resolveLevelOutcomeMessage,

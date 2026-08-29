@@ -46,6 +46,23 @@
  * identifiable. `SHADOW_INDISTINGUISHABLE_PAIRS` separately lists specific
  * pairs whose outlines are so close that they must never appear together as
  * target/decoy in the same round even though each is individually approved.
+ *
+ * `mainPeriod` and `classification` back the "Línea del tiempo" mode
+ * (src/game/timelineRound.js): the geologic period the creature is
+ * best-known from (one of PERIODS -- Triásico/Jurásico/Cretácico) and
+ * whether it is a true dinosaur, a flying reptile (e.g. Pteranodon, a
+ * pterosaur -- not a dinosaur, PRD G4: no false scientific claims) or
+ * something else. Both mirror the same `funFacts` used for `lengthMeters`
+ * (e.g. "trex-14": "...hace 66 millones de años..." + "trex-03": "...hace
+ * unos 68 millones de años..." -> Cretácico; "pteranodon-10": "...Cretácico
+ * Superior" together with Pteranodon being a pterosaur, not a dinosaur, ->
+ * `CLASSIFICATIONS.REPTIL_VOLADOR`), so no mode ever contradicts the dato
+ * curioso shown for the same creature. `temporalRangeMillionsOfYears` is
+ * only ever set when `funFacts` states an explicit "hace unos X a Y
+ * millones de años" range for that creature (e.g. "diplodocus-05": "...hace
+ * unos 154 a 152 millones de años") -- never a single approximate figure,
+ * so a mode can show a precise interval only when one is actually verified
+ * instead of inventing precision the source data doesn't have.
  */
 
 const { DINOSAURS } = require('./questionBank');
@@ -62,6 +79,23 @@ const VISUAL_FAMILIES = Object.freeze({
   ARMORED_QUADRUPED: 'armored_quadruped',
   LONG_NECK_QUADRUPED: 'long_neck_quadruped',
   FLYING_REPTILE: 'flying_reptile',
+});
+
+// Línea del tiempo's three answer categories -- a creature's `mainPeriod`
+// must be exactly one of these to be eligible for that mode's rounds.
+const PERIODS = Object.freeze({
+  TRIASICO: 'triasico',
+  JURASICO: 'jurasico',
+  CRETACICO: 'cretacico',
+});
+
+// Línea del tiempo's classification explanation categories. REPTIL_VOLADOR
+// covers pterosaurs (e.g. Pteranodon), which lived alongside dinosaurs but
+// are not dinosaurs -- kept distinct so the mode never states that as fact.
+const CLASSIFICATIONS = Object.freeze({
+  DINOSAURIO: 'dinosaurio',
+  REPTIL_VOLADOR: 'reptil_volador',
+  OTRO: 'otro',
 });
 
 // Body-plan buckets used to judge silhouette similarity: two approved
@@ -121,6 +155,11 @@ const UNAPPROVED_SHADOW = Object.freeze({
   allowedTransforms: Object.freeze([]),
 });
 
+/** `{ startMya, endMya }`, or `undefined` when funFacts only gives a single approximate figure -- never fabricated precision. */
+function temporalRange(startMya, endMya) {
+  return Object.freeze({ startMya, endMya });
+}
+
 const CREATURE_SHEETS = Object.freeze({
   [DINOSAURS.TREX]: Object.freeze({
     id: DINOSAURS.TREX,
@@ -128,6 +167,9 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 12,
     visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(68, 66),
   }),
   [DINOSAURS.TRICERATOPS]: Object.freeze({
     id: DINOSAURS.TRICERATOPS,
@@ -135,6 +177,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 9,
     visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_HORNED),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.VELOCIRAPTOR]: Object.freeze({
     id: DINOSAURS.VELOCIRAPTOR,
@@ -142,6 +186,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 2,
     visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.ESTEGOSAURIO]: Object.freeze({
     id: DINOSAURS.ESTEGOSAURIO,
@@ -149,6 +195,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 9,
     visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_PLATED),
+    mainPeriod: PERIODS.JURASICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.BRAQUIOSAURIO]: Object.freeze({
     id: DINOSAURS.BRAQUIOSAURIO,
@@ -156,6 +204,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 21,
     visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK),
+    mainPeriod: PERIODS.JURASICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.ANKYLOSAURUS]: Object.freeze({
     id: DINOSAURS.ANKYLOSAURUS,
@@ -163,6 +213,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 7,
     visualFamily: VISUAL_FAMILIES.ARMORED_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_ARMORED),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.PTERANODON]: Object.freeze({
     id: DINOSAURS.PTERANODON,
@@ -170,6 +222,10 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 1.8,
     visualFamily: VISUAL_FAMILIES.FLYING_REPTILE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.FLYER, FLYER_TRANSFORMS),
+    mainPeriod: PERIODS.CRETACICO,
+    // A pterosaur, not a dinosaur -- Línea del tiempo's classification
+    // explanation must say so explicitly (PRD G4).
+    classification: CLASSIFICATIONS.REPTIL_VOLADOR,
   }),
   [DINOSAURS.SPINOSAURUS]: Object.freeze({
     id: DINOSAURS.SPINOSAURUS,
@@ -177,6 +233,9 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 15,
     visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_LARGE),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(99, 93),
   }),
   [DINOSAURS.DILOPHOSAURUS]: Object.freeze({
     id: DINOSAURS.DILOPHOSAURUS,
@@ -184,13 +243,24 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 6.5,
     visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.BIPED_CARNIVORE_MEDIUM),
+    mainPeriod: PERIODS.JURASICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.PACHYCEPHALOSAURUS]: Object.freeze({
     id: DINOSAURS.PACHYCEPHALOSAURUS,
-    diet: DIETS.HERBIVORO,
+    // Omnivoro, not herbivoro: funFacts "pachycephalosaurus-02" ("se
+    // alimentaba principalmente de plantas, aunque también pudo comer algún
+    // insecto ocasional") and "-16" ("dientes ... sugieren que podía tener
+    // una dieta mixta, con plantas y posiblemente pequeños animales o
+    // insectos") already verify a mixed plant-and-animal diet -- this sheet
+    // must match, per this file's own doc comment.
+    diet: DIETS.OMNIVORO,
     lengthMeters: 4.5,
     visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.DOME_HEAD),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(70, 66),
   }),
   [DINOSAURS.COMPSOGNATHUS]: Object.freeze({
     id: DINOSAURS.COMPSOGNATHUS,
@@ -198,6 +268,8 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 1,
     visualFamily: VISUAL_FAMILIES.BIPED_CARNIVORE,
     shadowMeta: UNAPPROVED_SHADOW,
+    mainPeriod: PERIODS.JURASICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
   }),
   [DINOSAURS.DIPLODOCUS]: Object.freeze({
     id: DINOSAURS.DIPLODOCUS,
@@ -205,6 +277,9 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 25,
     visualFamily: VISUAL_FAMILIES.LONG_NECK_QUADRUPED,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_LONGNECK),
+    mainPeriod: PERIODS.JURASICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(154, 152),
   }),
   [DINOSAURS.IGUANODON]: Object.freeze({
     id: DINOSAURS.IGUANODON,
@@ -212,6 +287,9 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 10,
     visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(125, 120),
   }),
   [DINOSAURS.PARASAUROLOPHUS]: Object.freeze({
     id: DINOSAURS.PARASAUROLOPHUS,
@@ -219,6 +297,9 @@ const CREATURE_SHEETS = Object.freeze({
     lengthMeters: 10,
     visualFamily: VISUAL_FAMILIES.BIPED_HERBIVORE,
     shadowMeta: approvedShadow(SHADOW_COMPATIBILITY_GROUPS.QUADRUPED_DUCKBILL),
+    mainPeriod: PERIODS.CRETACICO,
+    classification: CLASSIFICATIONS.DINOSAURIO,
+    temporalRangeMillionsOfYears: temporalRange(76, 73),
   }),
 });
 
@@ -257,6 +338,24 @@ function getCreatureVisualFamily(dinosaurId) {
   return sheet ? sheet.visualFamily : undefined;
 }
 
+/** Convenience accessor for just the `mainPeriod` field of `getCreatureSheet(dinosaurId)`. */
+function getCreatureMainPeriod(dinosaurId) {
+  const sheet = getCreatureSheet(dinosaurId);
+  return sheet ? sheet.mainPeriod : undefined;
+}
+
+/** Convenience accessor for just the `classification` field of `getCreatureSheet(dinosaurId)`. */
+function getCreatureClassification(dinosaurId) {
+  const sheet = getCreatureSheet(dinosaurId);
+  return sheet ? sheet.classification : undefined;
+}
+
+/** Convenience accessor for just the `temporalRangeMillionsOfYears` field of `getCreatureSheet(dinosaurId)` -- `undefined` when no precise range is verified. */
+function getCreatureTemporalRange(dinosaurId) {
+  const sheet = getCreatureSheet(dinosaurId);
+  return sheet ? sheet.temporalRangeMillionsOfYears : undefined;
+}
+
 /**
  * Ids of every creature whose `shadowMeta.approved` is true, in
  * `CREATURE_SHEETS` order. `sheets` defaults to the canonical
@@ -281,18 +380,102 @@ function isShadowModeUnlocked(catalog) {
   return getApprovedShadowCreatures(catalog).length >= SHADOW_MODE_MIN_APPROVED;
 }
 
+// Mirrors src/game/modesCatalog.js's MODES_CATALOG entry for MODE_IDS.CLASIFICA
+// (minCreaturesWithField on "diet", minCount 6, requireAllCategories the
+// three DIETS) -- kept here too so this module can answer "is Clasifica
+// actually unlocked?" against the real, verified roster.
+const CLASSIFY_MODE_MIN_CREATURES = 6;
+const CLASSIFY_MODE_REQUIRED_DIETS = Object.freeze(Object.values(DIETS));
+
+/**
+ * Ids of every creature with a verified `diet` (one of DIETS' three values),
+ * in `CREATURE_SHEETS` order. `sheets` follows the same optional-override
+ * shape as `getApprovedShadowCreatures`.
+ */
+function getCreaturesWithVerifiedDiet(sheets) {
+  const source = sheets || CREATURE_SHEETS;
+  return Object.keys(source).filter((id) => {
+    const sheet = source[id];
+    return Boolean(sheet && Object.values(DIETS).includes(sheet.diet));
+  });
+}
+
+/**
+ * Whether "Clasifica" has enough verified creatures to unlock (PRD/
+ * MODES_CATALOG requirement: >=6 creatures with a verified diet, covering
+ * carnivoro/herbivoro/omnivoro so no round is ever unsolvable). `catalog` is
+ * optional and follows the same shape as `sheets` in
+ * `getCreaturesWithVerifiedDiet` -- omit it to evaluate the live roster.
+ */
+function isClassifyModeUnlocked(catalog) {
+  const source = catalog || CREATURE_SHEETS;
+  const withDiet = getCreaturesWithVerifiedDiet(source);
+  if (withDiet.length < CLASSIFY_MODE_MIN_CREATURES) {
+    return false;
+  }
+  return CLASSIFY_MODE_REQUIRED_DIETS.every((diet) =>
+    withDiet.some((id) => source[id].diet === diet)
+  );
+}
+
+// Mirrors src/game/modesCatalog.js's MODES_CATALOG entry for
+// MODE_IDS.ORDENA_POR_TAMANO (minCreaturesWithField on "size", minCount 4) --
+// kept here too so this module can answer "is Ordena por tamaño actually
+// unlocked?" against the real, verified roster, the same way
+// CLASSIFY_MODE_MIN_CREATURES does for Clasifica.
+const SIZE_ORDER_MODE_MIN_CREATURES = 4;
+
+/**
+ * Ids of every creature with a verified, positive `lengthMeters`, in
+ * `CREATURE_SHEETS` order -- the exact pool
+ * src/game/sizeOrderRoundGenerator.js draws from. `sheets` follows the same
+ * optional-override shape as `getCreaturesWithVerifiedDiet`.
+ */
+function getCreaturesWithVerifiedLength(sheets) {
+  const source = sheets || CREATURE_SHEETS;
+  return Object.keys(source).filter((id) => {
+    const sheet = source[id];
+    return Boolean(
+      sheet && typeof sheet.lengthMeters === 'number' && Number.isFinite(sheet.lengthMeters) && sheet.lengthMeters > 0
+    );
+  });
+}
+
+/**
+ * Whether "Ordena por tamaño" has enough verified creatures to unlock (PRD/
+ * MODES_CATALOG requirement: >=4 creatures with a verified `lengthMeters`).
+ * `catalog` is optional and follows the same shape as `sheets` in
+ * `getCreaturesWithVerifiedLength` -- omit it to evaluate the live roster.
+ */
+function isSizeOrderModeUnlocked(catalog) {
+  const source = catalog || CREATURE_SHEETS;
+  return getCreaturesWithVerifiedLength(source).length >= SIZE_ORDER_MODE_MIN_CREATURES;
+}
+
 module.exports = {
   DIETS,
   VISUAL_FAMILIES,
+  PERIODS,
+  CLASSIFICATIONS,
   SHADOW_COMPATIBILITY_GROUPS,
   SHADOW_TRANSFORMS,
   SHADOW_INDISTINGUISHABLE_PAIRS,
   SHADOW_MODE_MIN_APPROVED,
+  CLASSIFY_MODE_MIN_CREATURES,
+  CLASSIFY_MODE_REQUIRED_DIETS,
+  SIZE_ORDER_MODE_MIN_CREATURES,
   CREATURE_SHEETS,
   getCreatureSheet,
   getCreatureDiet,
   getCreatureLengthMeters,
   getCreatureVisualFamily,
+  getCreatureMainPeriod,
+  getCreatureClassification,
+  getCreatureTemporalRange,
   getApprovedShadowCreatures,
   isShadowModeUnlocked,
+  getCreaturesWithVerifiedDiet,
+  isClassifyModeUnlocked,
+  getCreaturesWithVerifiedLength,
+  isSizeOrderModeUnlocked,
 };

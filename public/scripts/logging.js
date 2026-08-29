@@ -59,13 +59,129 @@
  * Same aggregated, local-only, never-transmitted-by-sendLogs shape as every
  * counter above.
  *
+ * Parejas jurásicas diagnostics (TRIOFSND-277, PRD "Diagnóstico y métricas
+ * agregadas almacenadas únicamente en el dispositivo"): "partidas
+ * iniciadas/completadas ... por nivel de Parejas" and its local board-
+ * generation-failure codes are already covered by the generic
+ * `logRoundGameStarted`/`logRoundGameCompleted`/`logRoundGameAbandoned`/
+ * `logRoundGenerationFailure` above -- Parejas is just another `modeId`
+ * ('parejas', src/game/parejasGame.js's MODE_ID) through that same
+ * modeId+level/modeId+code family, so this never re-declares a parallel set
+ * of Parejas-only counters. Two round-contract-family counters genuinely
+ * didn't exist yet and are added here, generalized the same way (any mode,
+ * not just Parejas): `logRoundCorrectAnswer(modeId, level)`/
+ * `getRoundCorrectAnswersByModeLevel()` tally one more "acierto" (a correct
+ * match/answer within a round -- for Parejas, one more matched pair) per
+ * "modeId:level", and `logRoundStarsEarned(modeId, level, stars)`/
+ * `getRoundStarsEarnedByModeLevel()` tally the running total of stars
+ * (resultsScreen.js's 1-3 star tiers) earned per "modeId:level" -- unlike
+ * every other counter here this one accumulates an arbitrary non-negative
+ * amount per call (`_addToLevelCount`) instead of always +1, since a single
+ * game awards 1-3 stars at once. A third counter,
+ * `logRoundGridLimitViolation(modeId, code)`/
+ * `getRoundGridLimitViolationCounts()`, tallies per "modeId:code" a stable,
+ * machine-readable local code for a hard rejilla/grid limit a mode enforced
+ * (e.g. Parejas' MAX_VISIBLE_UNMATCHED reveal cap in
+ * src/game/parejasGame.js's `revealCard`) -- kept in its own bucket rather
+ * than folded into `logRoundGenerationFailure`'s codes because a limit
+ * violation is a runtime rule the UI should never have let happen (a stuck
+ * click handler, a stale board), not a generator that failed to build a
+ * round in the first place. Same aggregated, local-only,
+ * never-transmitted-by-sendLogs shape as every counter above.
+ *
+ * Clasifica diagnóstico y métricas agregadas (TRIOFSND-283, PRD "Diagnóstico
+ * y métricas agregadas almacenadas únicamente en el dispositivo"): unlike
+ * every generic per-"modeId:level" counter above, Clasifica's results screen
+ * needs a *derived* percentage/estrellas-promedio per level from integer
+ * totals (never an average of previously-rounded percentages -- see
+ * `getClasificaLevelStats`), and the "one completed game" event must be
+ * idempotent by the caller's own local match id (a screen may call the
+ * register operation more than once for the same finished game). Neither
+ * property exists on the generic counters above, so this is a dedicated,
+ * small pair of local-only, never-transmitted stores instead of overloading
+ * them:
+ *
+ * `recordClasificaGame({ matchId, level, correct, stars })` validates its
+ * input (`matchId` a non-empty string, `level` present, `correct` an integer
+ * 0-10, `stars` one of scoring.js's own `PERCENTAGE_STAR_TIERS` values --
+ * this never defines an alternate star scale, only validates the one the
+ * shared results contract produces) and, the first time a given `matchId` is
+ * seen, adds one to that level's `partidasCompletadas` and folds `correct`/
+ * `stars` into that level's integer totals (`dinoquiz:clasificaLevelStats`).
+ * A repeat call with an already-seen `matchId` (tracked in
+ * `dinoquiz:clasificaProcessedMatchIds`, rotated at MAX_LOGS like every other
+ * array here) is a no-op -- registering the same finished game twice leaves
+ * the stored state identical to registering it once. An invalid call mutates
+ * nothing. `getClasificaLevelStats(level)`/`getClasificaAggregates()` derive
+ * `porcentajeAciertos` (`100 * totalAciertos / (10 * partidasCompletadas)`)
+ * and `estrellasPromedio` (`totalEstrellas / partidasCompletadas`) from the
+ * stored integer totals on every read, both `0` (never `NaN`/`Infinity`)
+ * with zero completed games -- never persisted pre-rounded, so precision is
+ * never lost.
+ *
+ * `recordClasificaDiagnostic({ code, level, creatureId, context })` covers
+ * the round's own controlled guard (a missing creature card, or one whose
+ * diet isn't carnivoro/herbivoro/omnivoro) -- the only two codes this scope
+ * defines, exported as `CLASIFICA_MISSING_CREATURE_RECORD`/
+ * `CLASIFICA_INVALID_DIET`; never a cronómetro/timing code, none is defined
+ * for this scope. Entries are structured (`code`, `mode: 'clasifica'`,
+ * `level`, `creatureId`, a local timestamp, non-sensitive technical
+ * `context`) and stored under their own `dinoquiz:clasificaDiagnostics` key,
+ * same array-with-MAX_LOGS-rotation shape as `modeBlockedLogs` above --
+ * never the player's chosen category, never pushed into the transmittable
+ * `logs` array, so never reachable via `getLogsPayload()`/`sendLogs()`.
+ * Recording a diagnostic never touches `clasificaLevelStats` -- a blocked
+ * round is not a completed game.
+ *
+ * `clearLogs()` -- the diagnostics service's existing local reset operation
+ * -- also wipes all three Clasifica stores below (unlike the generic
+ * counters above, which `clearLogs()` deliberately leaves alone), so a
+ * parent/dev reset clears Clasifica's aggregates the same way it clears the
+ * transmittable log array.
+ *
+ * Oído Jurásico diagnostics and aggregated metrics (TRIOFSND-271, PRD
+ * "Diagnóstico y métricas agregadas almacenadas únicamente en el
+ * dispositivo"): its partidas iniciadas/completadas/abandonadas por nivel
+ * and aciertos/estrellas reuse the same generic round-contract-family
+ * counters as Parejas above (`OIDO_JURASICO_MODE_ID` is just another
+ * modeId through that family), so this never re-declares a parallel set of
+ * Oído-Jurásico-only counters for those. `logOidoJurasicoPlaybackError(code)`/
+ * `getOidoJurasicoPlaybackErrors()` record one entry per failed attempt to
+ * play the round's sound (oidoJurasicoAudioService.js's `STATUS.ERROR`) --
+ * only a stable `code` (`OIDO_JURASICO_AUDIO_UNAVAILABLE`/
+ * `OIDO_JURASICO_PLAYBACK_FAILED`, the audio service's only two failure
+ * branches), `mode` and today's local calendar date, never the round's
+ * creature id, sound file or any other player content.
+ * `logOidoJurasicoMissingCacheResource(resourceId)`/
+ * `getOidoJurasicoMissingCacheResourceCounts()` tally, per precached sound
+ * file path, how many times it was looked for in the Cache Storage precache
+ * (service-worker.js's `PRECACHE_URLS`) and not found. Same aggregated,
+ * local-only, never-transmitted-by-sendLogs shape as every counter above;
+ * neither store is reset by `clearLogs()` (same choice as the generic
+ * round-contract counters and `modeBlockedLogs`).
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
  * src/services/logging/index.js re-exports this file.
+ *
+ * Catalog validation cause codes (TRIOFSND-223, PRD foundation "Ficha única
+ * y verificable para todas las criaturas jugables"): src/data/creatureCatalog.js's
+ * `validateCatalog()` logs one `logEvent(cause, { id, rule })` per structured
+ * violation it finds in public/data/creatures.json, using one of the three
+ * `CATALOG_*_CAUSE` codes exported below instead of a free-text message --
+ * `id` is the affected creature's catalog id and `rule` the violated field/
+ * check name, never a human-readable sentence or other identifiable data.
+ * These are plain eventType strings for the existing generic `logEvent()`
+ * (mirrors questionBank.js's unexported `'content_validation_failed'`
+ * literal); exported here only so creatureCatalog.js and its tests reference
+ * a shared constant instead of duplicating the string.
  */
 
 (function () {
+  var CATALOG_FIELD_INVALID_CAUSE = 'catalog_field_invalid';
+  var CATALOG_REFERENCE_BROKEN_CAUSE = 'catalog_reference_broken';
+  var CATALOG_DUPLICATE_ID_CAUSE = 'catalog_duplicate_id';
   var LOGS_STORAGE_KEY = 'dinoquiz:logs';
   var SELECTOR_OPEN_COUNT_KEY = 'dinoquiz:selectorOpenCount';
   var MODE_BLOCKED_LOGS_STORAGE_KEY = 'dinoquiz:modeBlockedLogs';
@@ -79,8 +195,37 @@
   var ROUND_GAMES_ABANDONED_KEY = 'dinoquiz:roundGamesAbandonedByModeLevel';
   var ROUND_GENERATION_FAILURE_CODES_KEY = 'dinoquiz:roundGenerationFailureCodes';
   var STATE_DISCARD_CODES_KEY = 'dinoquiz:stateDiscardCodes';
+  var ROUND_CORRECT_ANSWERS_KEY = 'dinoquiz:roundCorrectAnswersByModeLevel';
+  var ROUND_STARS_EARNED_KEY = 'dinoquiz:roundStarsEarnedByModeLevel';
+  var ROUND_GRID_LIMIT_VIOLATION_CODES_KEY = 'dinoquiz:roundGridLimitViolationCodes';
+  var CLASIFICA_LEVEL_STATS_KEY = 'dinoquiz:clasificaLevelStats';
+  var CLASIFICA_PROCESSED_MATCH_IDS_KEY = 'dinoquiz:clasificaProcessedMatchIds';
+  var CLASIFICA_DIAGNOSTICS_KEY = 'dinoquiz:clasificaDiagnostics';
+  var OIDO_JURASICO_PLAYBACK_ERRORS_KEY = 'dinoquiz:oidoJurasicoPlaybackErrors';
+  var OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY = 'dinoquiz:oidoJurasicoMissingCacheResourceCounts';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
+
+  var CLASIFICA_MODE_ID = 'clasifica';
+  var CLASIFICA_ROUNDS_PER_GAME = 10;
+
+  // The only two diagnostic codes this scope defines -- no cronómetro/timing
+  // code exists, none should be invented here (PRD "Diagnóstico y métricas
+  // agregadas ... locales de Clasifica").
+  var CLASIFICA_MISSING_CREATURE_RECORD = 'CLASIFICA_MISSING_CREATURE_RECORD';
+  var CLASIFICA_INVALID_DIET = 'CLASIFICA_INVALID_DIET';
+  var CLASIFICA_DIAGNOSTIC_CODES = Object.freeze([CLASIFICA_MISSING_CREATURE_RECORD, CLASIFICA_INVALID_DIET]);
+
+  var OIDO_JURASICO_MODE_ID = 'oidoJurasico';
+
+  // The only two failure branches oidoJurasicoAudioService.js's `attempt()`
+  // ever reports (TRIOFSND-271): no audio source/player available at all, or
+  // an available player that failed to start/continue (Audio() construction
+  // throwing, or play() rejecting/throwing synchronously). No cronómetro/
+  // timing code exists for this scope, none should be invented here.
+  var OIDO_JURASICO_AUDIO_UNAVAILABLE = 'OIDO_JURASICO_AUDIO_UNAVAILABLE';
+  var OIDO_JURASICO_PLAYBACK_FAILED = 'OIDO_JURASICO_PLAYBACK_FAILED';
+  var OIDO_JURASICO_PLAYBACK_ERROR_CODES = Object.freeze([OIDO_JURASICO_AUDIO_UNAVAILABLE, OIDO_JURASICO_PLAYBACK_FAILED]);
 
   function generateRequestId() {
     return 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -117,6 +262,50 @@
     if (/Chrome OS/.test(ua)) return 'chromeos';
 
     return 'unknown';
+  }
+
+  function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  /** `YYYY-MM-DD` from the device's local calendar (getFullYear/getMonth/getDate, never the UTC getters) -- deliberately date-only, no time-of-day, for the Oído Jurásico playback-error diagnostics below (TRIOFSND-271). */
+  function localDateString(dateObj) {
+    var d = dateObj instanceof Date ? dateObj : new Date();
+    var month = String(d.getMonth() + 1);
+    var day = String(d.getDate());
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+    return d.getFullYear() + '-' + month + '-' + day;
+  }
+
+  /** Resolves scoring.js under Node/Jest via `require`, or `window.DinoQuiz.scoring` in the browser -- same fallback shape as roundDiagnosticsService.js's own resolveRoundContract. */
+  function resolveScoring(options) {
+    options = options || {};
+    if (options.scoring) {
+      return options.scoring;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('./scoring');
+      } catch (error) {
+        return null;
+      }
+    }
+    return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.scoring) || null;
+  }
+
+  /** Validates `stars` against scoring.js's own PERCENTAGE_STAR_TIERS values -- never a locally-defined alternate scale. Fails closed (rejects) if scoring.js can't be resolved, rather than guessing a fallback range. */
+  function isValidClasificaStars(stars, options) {
+    if (!Number.isInteger(stars)) {
+      return false;
+    }
+    var scoringModule = resolveScoring(options);
+    if (!scoringModule || !Array.isArray(scoringModule.PERCENTAGE_STAR_TIERS)) {
+      return false;
+    }
+    return scoringModule.PERCENTAGE_STAR_TIERS.some(function (tier) {
+      return tier.stars === stars;
+    });
   }
 
   function createLocalStorageAdapter() {
@@ -171,6 +360,14 @@
     this.roundGamesAbandonedByModeLevel = this._loadLevelCounts(ROUND_GAMES_ABANDONED_KEY);
     this.roundGenerationFailureCounts = this._loadLevelCounts(ROUND_GENERATION_FAILURE_CODES_KEY);
     this.stateDiscardCounts = this._loadLevelCounts(STATE_DISCARD_CODES_KEY);
+    this.roundCorrectAnswersByModeLevel = this._loadLevelCounts(ROUND_CORRECT_ANSWERS_KEY);
+    this.roundStarsEarnedByModeLevel = this._loadLevelCounts(ROUND_STARS_EARNED_KEY);
+    this.roundGridLimitViolationCounts = this._loadLevelCounts(ROUND_GRID_LIMIT_VIOLATION_CODES_KEY);
+    this.clasificaLevelStats = this._loadClasificaLevelStats();
+    this.clasificaProcessedMatchIds = this._loadClasificaProcessedMatchIds();
+    this.clasificaDiagnostics = this._loadClasificaDiagnostics();
+    this.oidoJurasicoPlaybackErrors = this._loadOidoJurasicoPlaybackErrors();
+    this.oidoJurasicoMissingCacheResourceCounts = this._loadLevelCounts(OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY);
   }
 
   LogService.prototype._loadLogs = function () {
@@ -291,8 +488,13 @@
 
   /** Increments `counts[level]` by one, persists it under `key`, and returns the new count. */
   LogService.prototype._incrementLevelCount = function (key, counts, level) {
+    return this._addToLevelCount(key, counts, level, 1);
+  };
+
+  /** Adds `amount` to `counts[level]`, persists it under `key`, and returns the new total. */
+  LogService.prototype._addToLevelCount = function (key, counts, level, amount) {
     var levelKey = String(level);
-    counts[levelKey] = (counts[levelKey] || 0) + 1;
+    counts[levelKey] = (counts[levelKey] || 0) + amount;
     this._saveLevelCounts(key, counts);
     return counts[levelKey];
   };
@@ -421,6 +623,324 @@
     return Object.assign({}, this.stateDiscardCounts);
   };
 
+  /** Tallies one more "acierto" (a correct match/answer within a round -- for Parejas, one more matched pair) for `modeId` at `level` (TRIOFSND-277). */
+  LogService.prototype.logRoundCorrectAnswer = function (modeId, level) {
+    return this._incrementLevelCount(ROUND_CORRECT_ANSWERS_KEY, this.roundCorrectAnswersByModeLevel, this._modeKey(modeId, level));
+  };
+
+  LogService.prototype.getRoundCorrectAnswersByModeLevel = function () {
+    return Object.assign({}, this.roundCorrectAnswersByModeLevel);
+  };
+
+  /** Adds `stars` (a non-negative integer, e.g. resultsScreen.js's 1-3 star tiers) to the running total for `modeId` at `level`. */
+  LogService.prototype.logRoundStarsEarned = function (modeId, level, stars) {
+    if (!Number.isInteger(stars) || stars < 0) {
+      console.warn('DinoQuiz: logRoundStarsEarned requires a non-negative integer stars count');
+      return 0;
+    }
+    return this._addToLevelCount(ROUND_STARS_EARNED_KEY, this.roundStarsEarnedByModeLevel, this._modeKey(modeId, level), stars);
+  };
+
+  LogService.prototype.getRoundStarsEarnedByModeLevel = function () {
+    return Object.assign({}, this.roundStarsEarnedByModeLevel);
+  };
+
+  /** Tallies one more local hard rejilla/grid-limit violation for `modeId`, identified only by a stable, machine-readable `code` (e.g. Parejas' MAX_VISIBLE_UNMATCHED reveal cap -- never any round content). */
+  LogService.prototype.logRoundGridLimitViolation = function (modeId, code) {
+    if (typeof code !== 'string' || code.length === 0) {
+      console.warn('DinoQuiz: logRoundGridLimitViolation requires a valid code');
+      return 0;
+    }
+    return this._incrementLevelCount(ROUND_GRID_LIMIT_VIOLATION_CODES_KEY, this.roundGridLimitViolationCounts, this._modeKey(modeId, code));
+  };
+
+  LogService.prototype.getRoundGridLimitViolationCounts = function () {
+    return Object.assign({}, this.roundGridLimitViolationCounts);
+  };
+
+  /** Reads `{ [level]: { partidasCompletadas, totalAciertos, totalEstrellas } }`, defaulting to `{}` for anything missing/corrupted -- never lets a bad entry for one level erase another mode's data (a different key entirely). */
+  LogService.prototype._loadClasificaLevelStats = function () {
+    try {
+      var stored = this.storageAdapter.getItem(CLASIFICA_LEVEL_STATS_KEY);
+      var parsed = stored ? JSON.parse(stored) : {};
+      return isPlainObject(parsed) ? parsed : {};
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load Clasifica level stats from storage', error);
+      return {};
+    }
+  };
+
+  LogService.prototype._saveClasificaLevelStats = function () {
+    try {
+      this.storageAdapter.setItem(CLASIFICA_LEVEL_STATS_KEY, JSON.stringify(this.clasificaLevelStats));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save Clasifica level stats to storage', error);
+    }
+  };
+
+  LogService.prototype._loadClasificaProcessedMatchIds = function () {
+    try {
+      var stored = this.storageAdapter.getItem(CLASIFICA_PROCESSED_MATCH_IDS_KEY);
+      var parsed = stored ? JSON.parse(stored) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load Clasifica processed match ids from storage', error);
+      return [];
+    }
+  };
+
+  /** Same MAX_LOGS rotation as every other array this file persists -- a match id old enough to have rotated out is documented as out of scope for repeat-idempotency (see class doc comment): `recordClasificaGame` is expected to run once per finished game, not retried across many later games. */
+  LogService.prototype._saveClasificaProcessedMatchIds = function () {
+    try {
+      if (this.clasificaProcessedMatchIds.length > MAX_LOGS) {
+        this.clasificaProcessedMatchIds = this.clasificaProcessedMatchIds.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(CLASIFICA_PROCESSED_MATCH_IDS_KEY, JSON.stringify(this.clasificaProcessedMatchIds));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save Clasifica processed match ids to storage', error);
+    }
+  };
+
+  LogService.prototype._loadClasificaDiagnostics = function () {
+    try {
+      var stored = this.storageAdapter.getItem(CLASIFICA_DIAGNOSTICS_KEY);
+      var parsed = stored ? JSON.parse(stored) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load Clasifica diagnostics from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveClasificaDiagnostics = function () {
+    try {
+      if (this.clasificaDiagnostics.length > MAX_LOGS) {
+        this.clasificaDiagnostics = this.clasificaDiagnostics.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(CLASIFICA_DIAGNOSTICS_KEY, JSON.stringify(this.clasificaDiagnostics));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save Clasifica diagnostics to storage', error);
+    }
+  };
+
+  /**
+   * Registers the aggregated result of one completed Clasifica game (exactly
+   * ROUNDS_PER_GAME rounds evaluated) at `level`: `matchId` (a non-empty
+   * string local match id, required), `level` (required), `correct` (an
+   * integer 0-10) and `stars` (validated against scoring.js's own star
+   * scale, never a locally-defined one). Rejects -- without mutating any
+   * stored aggregate -- when any field is missing or out of range.
+   *
+   * Idempotent by `matchId`: the first call for a given id adds one to that
+   * level's `partidasCompletadas` and folds `correct`/`stars` into that
+   * level's integer totals; every later call with the same `matchId` is a
+   * no-op that still returns `true` (the game is, correctly, registered).
+   * Never stores the round-by-round answers or the player's chosen category
+   * -- only the three integer totals per level.
+   */
+  LogService.prototype.recordClasificaGame = function (params) {
+    params = params || {};
+    var matchId = params.matchId;
+    var level = params.level;
+    var correct = params.correct;
+    var stars = params.stars;
+
+    if (typeof matchId !== 'string' || matchId.length === 0) {
+      console.warn('DinoQuiz: recordClasificaGame requires a valid matchId');
+      return false;
+    }
+    if (level === undefined || level === null || level === '') {
+      console.warn('DinoQuiz: recordClasificaGame requires a valid level');
+      return false;
+    }
+    if (!Number.isInteger(correct) || correct < 0 || correct > CLASIFICA_ROUNDS_PER_GAME) {
+      console.warn('DinoQuiz: recordClasificaGame requires correct to be an integer between 0 and ' + CLASIFICA_ROUNDS_PER_GAME);
+      return false;
+    }
+    if (!isValidClasificaStars(stars, params)) {
+      console.warn('DinoQuiz: recordClasificaGame requires a stars value from the shared results scale');
+      return false;
+    }
+
+    if (this.clasificaProcessedMatchIds.indexOf(matchId) !== -1) {
+      return true;
+    }
+
+    var levelKey = String(level);
+    var current = this.clasificaLevelStats[levelKey] || { partidasCompletadas: 0, totalAciertos: 0, totalEstrellas: 0 };
+    this.clasificaLevelStats[levelKey] = {
+      partidasCompletadas: current.partidasCompletadas + 1,
+      totalAciertos: current.totalAciertos + correct,
+      totalEstrellas: current.totalEstrellas + stars,
+    };
+    this._saveClasificaLevelStats();
+
+    this.clasificaProcessedMatchIds.push(matchId);
+    this._saveClasificaProcessedMatchIds();
+
+    return true;
+  };
+
+  /**
+   * Derives `{ partidasCompletadas, porcentajeAciertos, estrellasPromedio }`
+   * for `level` from the stored integer totals -- never from a previously
+   * persisted percentage. `porcentajeAciertos` is
+   * `100 * totalAciertos / (10 * partidasCompletadas)`, `estrellasPromedio`
+   * is `totalEstrellas / partidasCompletadas`; both `0` (never `NaN`/
+   * `Infinity`) when `partidasCompletadas` is `0`. Rounding for display is
+   * left to the caller.
+   */
+  LogService.prototype.getClasificaLevelStats = function (level) {
+    var levelKey = String(level);
+    var stats = this.clasificaLevelStats[levelKey];
+    var partidasCompletadas = (stats && stats.partidasCompletadas) || 0;
+    var totalAciertos = (stats && stats.totalAciertos) || 0;
+    var totalEstrellas = (stats && stats.totalEstrellas) || 0;
+
+    return {
+      partidasCompletadas: partidasCompletadas,
+      porcentajeAciertos: partidasCompletadas === 0 ? 0 : (100 * totalAciertos) / (CLASIFICA_ROUNDS_PER_GAME * partidasCompletadas),
+      estrellasPromedio: partidasCompletadas === 0 ? 0 : totalEstrellas / partidasCompletadas,
+    };
+  };
+
+  /** `getClasificaLevelStats` for every level that has at least one recorded game, keyed by the same level id used to register it. */
+  LogService.prototype.getClasificaAggregates = function () {
+    var self = this;
+    var result = {};
+    Object.keys(this.clasificaLevelStats).forEach(function (levelKey) {
+      result[levelKey] = self.getClasificaLevelStats(levelKey);
+    });
+    return result;
+  };
+
+  /**
+   * Records a Clasifica controlled-guard diagnostic: `code` must be one of
+   * `CLASIFICA_MISSING_CREATURE_RECORD`/`CLASIFICA_INVALID_DIET` (this
+   * scope's only two codes -- no cronómetro/timing code exists). The entry
+   * carries only `code`, `mode: 'clasifica'`, `level`, `creatureId` (if
+   * available) and non-sensitive structured `context` -- never the player's
+   * chosen category or any free text. Stored under its own key, local-only
+   * and never included in `getLogsPayload()`/`sendLogs()`; never touches
+   * `clasificaLevelStats` (a blocked round is not a completed game).
+   */
+  LogService.prototype.recordClasificaDiagnostic = function (params) {
+    params = params || {};
+    var code = params.code;
+
+    if (CLASIFICA_DIAGNOSTIC_CODES.indexOf(code) === -1) {
+      console.warn('DinoQuiz: recordClasificaDiagnostic requires one of the supported Clasifica diagnostic codes');
+      return false;
+    }
+
+    var metadata = {
+      mode: CLASIFICA_MODE_ID,
+      level: params.level !== undefined ? params.level : null,
+      creatureId: params.creatureId !== undefined ? params.creatureId : null,
+      context: params.context !== undefined ? params.context : null,
+    };
+
+    var entry = createLogEntry(code, metadata);
+    this.clasificaDiagnostics.push(entry);
+    this._saveClasificaDiagnostics();
+    return true;
+  };
+
+  LogService.prototype.getClasificaDiagnostics = function () {
+    return this.clasificaDiagnostics.slice();
+  };
+
+  /**
+   * Oído Jurásico diagnostics and aggregated metrics (TRIOFSND-271, PRD
+   * "Diagnóstico y métricas agregadas almacenadas únicamente en el
+   * dispositivo"). "Partidas iniciadas/completadas/abandonadas por nivel" and
+   * "aciertos"/"estrellas" are already covered by the generic round-contract-
+   * family counters above (`logRoundGameStarted`/`logRoundGameCompleted`/
+   * `logRoundGameAbandoned`/`logRoundCorrectAnswer`/`logRoundStarsEarned`) --
+   * Oído Jurásico is just another `modeId` (`OIDO_JURASICO_MODE_ID`, exported
+   * below) through that same modeId+level family, same as Parejas above, so
+   * this never re-declares a parallel set of Oído-Jurásico-only counters for
+   * those. Two genuinely new, mode-specific stores are added here:
+   *
+   * `logOidoJurasicoPlaybackError(code)`/`getOidoJurasicoPlaybackErrors()`
+   * record one entry per failed attempt to play the round's sound
+   * (oidoJurasicoAudioService.js's `STATUS.ERROR`), each carrying only
+   * `code` (one of the two exported `OIDO_JURASICO_AUDIO_UNAVAILABLE`/
+   * `OIDO_JURASICO_PLAYBACK_FAILED` codes -- no other code is accepted),
+   * `mode` (`OIDO_JURASICO_MODE_ID`) and a local calendar `date`
+   * (`localDateString`, `YYYY-MM-DD` from the device's own clock, never a
+   * full timestamp) -- deliberately never the round's creature id, its
+   * sound file or any other player content. Stored under their own
+   * `dinoquiz:oidoJurasicoPlaybackErrors` key, same array-with-MAX_LOGS-
+   * rotation shape as `clasificaDiagnostics`, never pushed into the
+   * transmittable `logs` array, so never reachable via
+   * `getLogsPayload()`/`sendLogs()`.
+   *
+   * `logOidoJurasicoMissingCacheResource(resourceId)`/
+   * `getOidoJurasicoMissingCacheResourceCounts()` tally, per stable resource
+   * identifier (e.g. the precached sound's file path -- a technical asset
+   * name, never round content), how many times the mode looked for that
+   * resource in the Cache Storage populated by service-worker.js's
+   * `PRECACHE_URLS` and didn't find it. Same aggregated, local-only,
+   * never-transmitted-by-sendLogs counter shape as
+   * `roundGenerationFailureCounts` above.
+   *
+   * Neither store is reset by `clearLogs()` -- same choice already made for
+   * the generic round-contract counters and `modeBlockedLogs` above, which
+   * `clearLogs()` deliberately leaves alone.
+   */
+  LogService.prototype._loadOidoJurasicoPlaybackErrors = function () {
+    try {
+      var stored = this.storageAdapter.getItem(OIDO_JURASICO_PLAYBACK_ERRORS_KEY);
+      var parsed = stored ? JSON.parse(stored) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load Oído Jurásico playback errors from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveOidoJurasicoPlaybackErrors = function () {
+    try {
+      if (this.oidoJurasicoPlaybackErrors.length > MAX_LOGS) {
+        this.oidoJurasicoPlaybackErrors = this.oidoJurasicoPlaybackErrors.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(OIDO_JURASICO_PLAYBACK_ERRORS_KEY, JSON.stringify(this.oidoJurasicoPlaybackErrors));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save Oído Jurásico playback errors to storage', error);
+    }
+  };
+
+  /** Records one failed Oído Jurásico playback attempt: `code` must be one of `OIDO_JURASICO_AUDIO_UNAVAILABLE`/`OIDO_JURASICO_PLAYBACK_FAILED`. Never any round content -- only `code`, `mode` and today's local date. */
+  LogService.prototype.logOidoJurasicoPlaybackError = function (code) {
+    if (OIDO_JURASICO_PLAYBACK_ERROR_CODES.indexOf(code) === -1) {
+      console.warn('DinoQuiz: logOidoJurasicoPlaybackError requires one of the supported Oído Jurásico playback error codes');
+      return false;
+    }
+
+    var entry = { code: code, mode: OIDO_JURASICO_MODE_ID, date: localDateString() };
+    this.oidoJurasicoPlaybackErrors.push(entry);
+    this._saveOidoJurasicoPlaybackErrors();
+    return true;
+  };
+
+  LogService.prototype.getOidoJurasicoPlaybackErrors = function () {
+    return this.oidoJurasicoPlaybackErrors.slice();
+  };
+
+  /** Tallies one more Oído Jurásico sound resource that was looked for in the Cache Storage precache and not found, identified only by a stable `resourceId` (e.g. its precached file path -- never round content). */
+  LogService.prototype.logOidoJurasicoMissingCacheResource = function (resourceId) {
+    if (typeof resourceId !== 'string' || resourceId.length === 0) {
+      console.warn('DinoQuiz: logOidoJurasicoMissingCacheResource requires a valid resourceId');
+      return 0;
+    }
+    return this._incrementLevelCount(OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY, this.oidoJurasicoMissingCacheResourceCounts, resourceId);
+  };
+
+  LogService.prototype.getOidoJurasicoMissingCacheResourceCounts = function () {
+    return Object.assign({}, this.oidoJurasicoMissingCacheResourceCounts);
+  };
+
   LogService.prototype.logAppAccess = function (metadata) {
     this.logEvent('app_access', metadata);
   };
@@ -469,9 +989,23 @@
     });
   };
 
+  /**
+   * Clears the transmittable log array (as before) and also resets
+   * Clasifica's aggregated stats/diagnostics (TRIOFSND-283) -- the
+   * diagnostics service's one existing local reset operation, so a parent/
+   * dev reset clears Clasifica's local-only data the same way it clears
+   * everything else this method already owns. Unlike this reset, the
+   * generic per-"modeId:level" counters above are deliberately left alone.
+   */
   LogService.prototype.clearLogs = function () {
     this.logs = [];
     this._saveLogs();
+    this.clasificaLevelStats = {};
+    this._saveClasificaLevelStats();
+    this.clasificaProcessedMatchIds = [];
+    this._saveClasificaProcessedMatchIds();
+    this.clasificaDiagnostics = [];
+    this._saveClasificaDiagnostics();
   };
 
   LogService.prototype.getLogsPayload = function () {
@@ -532,6 +1066,9 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
       createLogEntry: createLogEntry,
       generateRequestId: generateRequestId,
       detectPlatform: detectPlatform,
@@ -550,6 +1087,21 @@
       ROUND_GAMES_ABANDONED_KEY: ROUND_GAMES_ABANDONED_KEY,
       ROUND_GENERATION_FAILURE_CODES_KEY: ROUND_GENERATION_FAILURE_CODES_KEY,
       STATE_DISCARD_CODES_KEY: STATE_DISCARD_CODES_KEY,
+      ROUND_CORRECT_ANSWERS_KEY: ROUND_CORRECT_ANSWERS_KEY,
+      ROUND_STARS_EARNED_KEY: ROUND_STARS_EARNED_KEY,
+      ROUND_GRID_LIMIT_VIOLATION_CODES_KEY: ROUND_GRID_LIMIT_VIOLATION_CODES_KEY,
+      CLASIFICA_LEVEL_STATS_KEY: CLASIFICA_LEVEL_STATS_KEY,
+      CLASIFICA_PROCESSED_MATCH_IDS_KEY: CLASIFICA_PROCESSED_MATCH_IDS_KEY,
+      CLASIFICA_DIAGNOSTICS_KEY: CLASIFICA_DIAGNOSTICS_KEY,
+      CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
+      CLASIFICA_ROUNDS_PER_GAME: CLASIFICA_ROUNDS_PER_GAME,
+      CLASIFICA_MISSING_CREATURE_RECORD: CLASIFICA_MISSING_CREATURE_RECORD,
+      CLASIFICA_INVALID_DIET: CLASIFICA_INVALID_DIET,
+      OIDO_JURASICO_PLAYBACK_ERRORS_KEY: OIDO_JURASICO_PLAYBACK_ERRORS_KEY,
+      OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY: OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
+      OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };
@@ -560,6 +1112,15 @@
     window.DinoQuiz.services = window.DinoQuiz.services || {};
     window.DinoQuiz.services.logging = {
       LogService: LogService,
+      CATALOG_FIELD_INVALID_CAUSE: CATALOG_FIELD_INVALID_CAUSE,
+      CATALOG_REFERENCE_BROKEN_CAUSE: CATALOG_REFERENCE_BROKEN_CAUSE,
+      CATALOG_DUPLICATE_ID_CAUSE: CATALOG_DUPLICATE_ID_CAUSE,
+      CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
+      CLASIFICA_MISSING_CREATURE_RECORD: CLASIFICA_MISSING_CREATURE_RECORD,
+      CLASIFICA_INVALID_DIET: CLASIFICA_INVALID_DIET,
+      OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
+      OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
+      OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
     };
