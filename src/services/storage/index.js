@@ -4,7 +4,7 @@ const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { DinoQuizStorage } = require('./StorageClient');
-const { GameSessionStorage, SESSION_SCHEMA_VERSION, SESSION_STORAGE_KEY } = require('./GameSessionStorage');
+const { GameSessionStorage, SESSION_SCHEMA_VERSION, SESSION_KEY_PREFIX, sessionKey } = require('./GameSessionStorage');
 const {
   ModeProgressStorage,
   MODE_PROGRESS_SCHEMA_VERSION,
@@ -33,7 +33,8 @@ module.exports = {
   GameSessionStorage,
   gameSessionStorage,
   SESSION_SCHEMA_VERSION,
-  SESSION_STORAGE_KEY,
+  SESSION_KEY_PREFIX,
+  sessionKey,
   ModeProgressStorage,
   modeProgressStorage,
   MODE_PROGRESS_SCHEMA_VERSION,

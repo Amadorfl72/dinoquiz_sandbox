@@ -57,9 +57,14 @@ const DEFAULT_STATE = {
  * Schema version for the per-mode persisted state snapshot below
  * (TRIOFSND-297). Bump whenever `PersistedModeState`'s shape changes
  * incompatibly -- a stored snapshot under any other version must be
- * discarded by its validator/reader rather than migrated or guessed at
- * (mirrors GameSessionStorage.js's SESSION_SCHEMA_VERSION and
- * ModeProgressStorage.js's MODE_PROGRESS_SCHEMA_VERSION).
+ * discarded by its validator/reader rather than migrated or guessed at.
+ * GameSessionStorage.js's SESSION_SCHEMA_VERSION (the transient, per-mode
+ * "ronda en curso" envelope) is sourced directly from this constant
+ * (TRIOFSND-298), so a future incompatible change to the shared per-mode
+ * contract invalidates every persisted transient session at once instead of
+ * drifting out of sync. ModeProgressStorage.js's MODE_PROGRESS_SCHEMA_VERSION
+ * (completed progress: results/desbloqueos) versions its own,
+ * differently-shaped envelope independently -- see that file's doc comment.
  * @type {number}
  */
 const MODE_STATE_SCHEMA_VERSION = 1;
