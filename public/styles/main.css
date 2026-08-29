@@ -3812,3 +3812,71 @@ body {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
+
+/*
+ * Blocked-mode screen (TRIOFSND-306): the generic, mode-agnostic version of
+ * .oido-jurasico-screen__blocked/.shadow-guess-screen__blocked -- same
+ * icon+title+message+back-button shape, reused verbatim here since it is
+ * shown as a full screen rather than embedded inside a mode's own board.
+ */
+.mode-blocked-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.mode-blocked-screen__icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.mode-blocked-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.mode-blocked-screen__message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mode-blocked-screen__back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.mode-blocked-screen__back-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.mode-blocked-screen__back-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.mode-blocked-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}

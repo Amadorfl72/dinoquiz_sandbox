@@ -131,6 +131,11 @@
     "confirmButtonLabel": "Sí, cambiar de juego",
     "cancelButtonLabel": "No, seguir jugando"
   },
+  "modeBlocked": {
+    "screenTitle": "Modo no disponible",
+    "message": "Este modo no está disponible ahora mismo. Vuelve a intentarlo más tarde o elige otro modo desde el selector.",
+    "backButtonLabel": "Volver al selector de juegos"
+  },
   "privacyPolicy": {
     "screenTitle": "Política de privacidad",
     "backButtonLabel": "Volver a la pantalla de inicio",

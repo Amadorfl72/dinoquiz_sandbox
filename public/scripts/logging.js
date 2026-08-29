@@ -160,6 +160,17 @@
  * neither store is reset by `clearLogs()` (same choice as the generic
  * round-contract counters and `modeBlockedLogs`).
  *
+ * Per-mode resource validation (TRIOFSND-306): `logModeResourceMissing
+ * (modeId, resourceUrl)`/`getModeResourceMissingCounts()` generalize the
+ * Oído-Jurásico-only counter above to every mode --
+ * src/services/modeResourceValidation.js checks each URL
+ * src/data/modeResourceManifest.js declares for a mode against the Cache
+ * Storage precache (`caches.match`) and tallies one more miss per
+ * "modeId:resourceUrl", identified only by the stable precached file path
+ * (never round content). Same aggregated, local-only,
+ * never-transmitted-by-sendLogs shape, and likewise not reset by
+ * `clearLogs()`.
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -203,6 +214,7 @@
   var CLASIFICA_DIAGNOSTICS_KEY = 'dinoquiz:clasificaDiagnostics';
   var OIDO_JURASICO_PLAYBACK_ERRORS_KEY = 'dinoquiz:oidoJurasicoPlaybackErrors';
   var OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY = 'dinoquiz:oidoJurasicoMissingCacheResourceCounts';
+  var MODE_RESOURCE_MISSING_COUNTS_KEY = 'dinoquiz:modeResourceMissingCounts';
   var MAX_LOGS = 1000;
   var LOG_VERSION = '1.0';
 
@@ -368,6 +380,7 @@
     this.clasificaDiagnostics = this._loadClasificaDiagnostics();
     this.oidoJurasicoPlaybackErrors = this._loadOidoJurasicoPlaybackErrors();
     this.oidoJurasicoMissingCacheResourceCounts = this._loadLevelCounts(OIDO_JURASICO_MISSING_CACHE_RESOURCE_COUNTS_KEY);
+    this.modeResourceMissingCounts = this._loadLevelCounts(MODE_RESOURCE_MISSING_COUNTS_KEY);
   }
 
   LogService.prototype._loadLogs = function () {
@@ -941,6 +954,23 @@
     return Object.assign({}, this.oidoJurasicoMissingCacheResourceCounts);
   };
 
+  /** Tallies one more resource declared for `modeId` in modeResourceManifest.js that was looked for in the Cache Storage precache and not found, identified only by `modeId` plus the stable precached `resourceUrl` (never round content). */
+  LogService.prototype.logModeResourceMissing = function (modeId, resourceUrl) {
+    if (typeof modeId !== 'string' || modeId.length === 0) {
+      console.warn('DinoQuiz: logModeResourceMissing requires a valid modeId');
+      return 0;
+    }
+    if (typeof resourceUrl !== 'string' || resourceUrl.length === 0) {
+      console.warn('DinoQuiz: logModeResourceMissing requires a valid resourceUrl');
+      return 0;
+    }
+    return this._incrementLevelCount(MODE_RESOURCE_MISSING_COUNTS_KEY, this.modeResourceMissingCounts, this._modeKey(modeId, resourceUrl));
+  };
+
+  LogService.prototype.getModeResourceMissingCounts = function () {
+    return Object.assign({}, this.modeResourceMissingCounts);
+  };
+
   LogService.prototype.logAppAccess = function (metadata) {
     this.logEvent('app_access', metadata);
   };
@@ -1102,6 +1132,7 @@
       OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
       OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
       OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
+      MODE_RESOURCE_MISSING_COUNTS_KEY: MODE_RESOURCE_MISSING_COUNTS_KEY,
       MAX_LOGS: MAX_LOGS,
       LOG_VERSION: LOG_VERSION,
     };

@@ -76,6 +76,7 @@ const PRECACHE_URLS = [
   '/scripts/modeProgressStorage.js',
   '/scripts/modeSelectorScreen.js',
   '/scripts/modeChangeConfirmScreen.js',
+  '/scripts/modeBlockedScreen.js',
   '/scripts/oidoJurasicoAudioService.js',
   '/scripts/offlineStatus.js',
   '/scripts/main.js',
