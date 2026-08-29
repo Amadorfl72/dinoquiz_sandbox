@@ -83,6 +83,16 @@ function readAllImageAssets(dir = IMAGES_DIR) {
   });
 }
 
+// Completeness is computed independently of any snapshot/version state: given a
+// precache list it returns the image assets referenced on disk that the list
+// fails to declare. Because it reads nothing from the snapshot fixture or
+// SW_VERSION, refreshing the snapshot or bumping the version can never hide a
+// missing asset -- exactly the escape hatch the reviewer flagged.
+function missingImageAssets(precacheList) {
+  const precached = new Set(precacheList);
+  return readAllImageAssets().filter((src) => !precached.has(src));
+}
+
 describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
   test('the catalog commits to exactly the eight PRD modes', () => {
     expect(MODE_IDS).toEqual([
@@ -114,9 +124,29 @@ describe('TRIOFSND-326: precache completeness for the eight game modes', () => {
     expect(imageAssets).toContain('/assets/images/fallback/generic.svg');
     expect(imageAssets).toContain('/assets/images/realistic/trex.jpg');
     expect(imageAssets).toContain('/assets/images/cards/back.svg');
-    imageAssets.forEach((src) => {
-      expect(PRECACHE_URLS).toContain(src);
-    });
+    // No directory (dinosaurs/, fallback/, realistic/, modes/) is allow-listed
+    // out as "shared": every image on disk must be declared in PRECACHE_URLS.
+    expect(missingImageAssets(PRECACHE_URLS)).toEqual([]);
+  });
+
+  // Regression for the reviewer's exact escape hatch: dropping a shared creature
+  // image from PRECACHE_URLS must fail completeness even if the snapshot is
+  // refreshed to the mutated list and SW_VERSION is bumped. The completeness
+  // check is independent of both, so neither can approve the incomplete list.
+  test('removing a referenced shared image from PRECACHE_URLS fails completeness even with a refreshed snapshot and bumped SW_VERSION', () => {
+    const SHARED_IMAGE = '/assets/images/dinosaurs/trex.svg';
+    // It is genuinely referenced today and precached in the approved state.
+    expect(readAllImageAssets()).toContain(SHARED_IMAGE);
+    expect(PRECACHE_URLS).toContain(SHARED_IMAGE);
+
+    // A future PR drops it from the precache list...
+    const mutatedPrecache = PRECACHE_URLS.filter((url) => url !== SHARED_IMAGE);
+    // ...and tries to launder the change past the version gate by re-recording
+    // the snapshot and bumping SW_VERSION. None of that touches completeness:
+    const mutatedSnapshot = { swVersion: 'v999', precacheUrls: [...mutatedPrecache].sort() };
+    void mutatedSnapshot; // the completeness computation never reads it
+
+    expect(missingImageAssets(mutatedPrecache)).toContain(SHARED_IMAGE);
   });
 
   test('the i18n bundle is precached and carries copy for every mode', () => {
