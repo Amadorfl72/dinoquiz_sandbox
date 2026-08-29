@@ -81,8 +81,11 @@ function buildBoardRound(overrides = {}) {
 }
 
 describe('validateCatalog', () => {
-  test('blocks Parejas with a machine-readable cause when the catalog has fewer than 8 creatures', () => {
-    const catalog = { questionsCount: 0, creatures: Array.from({ length: 7 }, (_, i) => ({ id: `c${i}` })) };
+  test('blocks Parejas with a machine-readable cause when the catalog has fewer than 8 elegible creatures', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: VALID_DINOSAURS.slice(0, 7).map((id) => ({ id })),
+    };
     const result = validateCatalog({ catalog });
 
     expect(result.modeId).toBe(MODE_ID);
@@ -91,8 +94,11 @@ describe('validateCatalog', () => {
     expect(result.details).toEqual({ need: 8, have: 7 });
   });
 
-  test('is available with exactly 8 creatures', () => {
-    const catalog = { questionsCount: 0, creatures: Array.from({ length: 8 }, (_, i) => ({ id: `c${i}` })) };
+  test('is available with exactly 8 elegible creatures', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: VALID_DINOSAURS.slice(0, 8).map((id) => ({ id })),
+    };
     expect(validateCatalog({ catalog })).toEqual({ modeId: MODE_ID, available: true, cause: null, details: null });
   });
 
@@ -111,6 +117,31 @@ describe('validateCatalog', () => {
   test('an invalid or imageless id in dinosaurPool never counts toward the >=8 gate', () => {
     const sevenRealPlusGarbage = [...VALID_DINOSAURS.slice(0, 7), 'not-a-real-dinosaur', '', null];
     const result = validateCatalog({ dinosaurPool: sevenRealPlusGarbage });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 7 });
+  });
+
+  test('an injected catalog with 8 creatures but no valid card image never satisfies the >=8 gate', () => {
+    // TRIOFSND-276 rework: a caller-supplied `options.catalog` must be
+    // re-validated through the same eligibility filter as `dinosaurPool` --
+    // a catalog can't just declare 8 arbitrary creature records into
+    // availability when none of them has a real, usable Parejas card image.
+    const catalog = { questionsCount: 0, creatures: Array.from({ length: 8 }, (_, i) => ({ id: `c${i}` })) };
+    const result = validateCatalog({ catalog });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 0 });
+  });
+
+  test('an injected catalog never double-counts a duplicated creature id toward the >=8 gate', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: [...VALID_DINOSAURS.slice(0, 7), VALID_DINOSAURS[0]].map((id) => ({ id })),
+    };
+    const result = validateCatalog({ catalog });
 
     expect(result.available).toBe(false);
     expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);

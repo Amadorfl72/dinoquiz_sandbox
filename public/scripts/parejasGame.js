@@ -152,13 +152,29 @@
    * Whether the current creature catalog satisfies Parejas' own requirement
    * (>=8 creatures, declared once in modesCatalog.js's MODES_CATALOG --
    * never re-declared here). Returns `{ modeId, available, cause, details }`,
-   * mirrors src/game/parejasGame.js's own `validateCatalog` exactly.
+   * mirrors src/game/parejasGame.js's own `validateCatalog` exactly, including
+   * never trusting `options.catalog` as-is: its `creatures` are re-derived
+   * through `eligibleCardCreatureIds` (unique id + usable card image) before
+   * evaluating, so an injected/current catalog with duplicated, invalid or
+   * imageless creature ids can never satisfy the >=8 gate.
    */
   function validateCatalog(options) {
     options = options || {};
     var modesCatalog = resolveModesCatalog();
-    var eligiblePool = eligibleCardCreatureIds(options.dinosaurPool || DEFAULT_DINOSAUR_POOL);
-    var catalog = options.catalog || modesCatalog.buildCurrentResourceCatalog({ dinosaurs: eligiblePool });
+    var providedCatalog = options.catalog;
+    var rawIds = providedCatalog
+      ? (Array.isArray(providedCatalog.creatures) ? providedCatalog.creatures : []).map(function (creature) {
+          return creature && creature.id;
+        })
+      : options.dinosaurPool || DEFAULT_DINOSAUR_POOL;
+    var eligibleIds = eligibleCardCreatureIds(rawIds);
+    var catalog = providedCatalog
+      ? Object.assign({}, providedCatalog, {
+          creatures: eligibleIds.map(function (id) {
+            return { id: id };
+          }),
+        })
+      : modesCatalog.buildCurrentResourceCatalog({ dinosaurs: eligibleIds });
     return modesCatalog.evaluateModeAvailability(modesCatalog.getModeById(MODE_ID), catalog);
   }
 

@@ -94,6 +94,27 @@ describe('validateCatalog (gate: >=8 elegible creatures)', () => {
     expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
     expect(result.details).toEqual({ need: 8, have: 7 });
   });
+
+  test('an injected options.catalog with 8 creatures but no valid card image never satisfies the gate', () => {
+    const catalog = { questionsCount: 0, creatures: Array.from({ length: 8 }, (_, i) => ({ id: `c${i}` })) };
+    const result = validateCatalog({ catalog });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 0 });
+  });
+
+  test('an injected options.catalog never double-counts a duplicated creature id toward the gate', () => {
+    const catalog = {
+      questionsCount: 0,
+      creatures: DEFAULT_DINOSAUR_POOL.slice(0, 7).concat([DEFAULT_DINOSAUR_POOL[0]]).map((id) => ({ id })),
+    };
+    const result = validateCatalog({ catalog });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 7 });
+  });
 });
 
 describe('hasUsableCardImage / eligibleCardCreatureIds', () => {

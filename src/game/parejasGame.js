@@ -119,11 +119,27 @@ function eligibleCardCreatureIds(pool) {
  * cause, details }`; `cause` is the machine-readable block reason
  * (`modesCatalog.js`'s AVAILABILITY_CAUSES) a caller can log/display when
  * `available` is false, exactly like every other mode's availability check.
+ *
+ * `options.catalog`, when given, is never trusted as-is: `modesCatalog.js`'s
+ * generic MIN_CREATURES requirement only counts `catalog.creatures.length`,
+ * with no notion of a Parejas card image -- so an injected/current catalog
+ * whose creature ids are duplicated, invalid or imageless would otherwise
+ * count toward the >=8 gate despite never being dealable onto a real board
+ * (`eligibleCardCreatureIds` is the single source of truth for "elegible"
+ * both here and in `selectCreaturesForBoard`). This re-derives `creatures`
+ * from that same eligibility filter before evaluating, exactly as the
+ * `options.dinosaurPool`/default path below already does.
  */
 function validateCatalog(options) {
   options = options || {};
-  const eligiblePool = eligibleCardCreatureIds(options.dinosaurPool || VALID_DINOSAURS);
-  const catalog = options.catalog || buildCurrentResourceCatalog({ dinosaurs: eligiblePool });
+  const providedCatalog = options.catalog;
+  const rawIds = providedCatalog
+    ? (Array.isArray(providedCatalog.creatures) ? providedCatalog.creatures : []).map((creature) => creature && creature.id)
+    : options.dinosaurPool || VALID_DINOSAURS;
+  const eligibleIds = eligibleCardCreatureIds(rawIds);
+  const catalog = providedCatalog
+    ? Object.assign({}, providedCatalog, { creatures: eligibleIds.map((id) => ({ id })) })
+    : buildCurrentResourceCatalog({ dinosaurs: eligibleIds });
   return evaluateModeAvailability(getModeById(MODE_ID), catalog);
 }
 
