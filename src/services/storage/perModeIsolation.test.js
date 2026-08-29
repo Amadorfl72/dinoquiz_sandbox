@@ -14,7 +14,7 @@
  */
 
 const { ModeProgressStorage, MODE_PROGRESS_KEY_PREFIX } = require('./ModeProgressStorage');
-const { GameSessionStorage, SESSION_SCHEMA_VERSION, SESSION_STORAGE_KEY } = require('./GameSessionStorage');
+const { GameSessionStorage, SESSION_SCHEMA_VERSION, sessionKey } = require('./GameSessionStorage');
 const { MODE_STATE_SCHEMA_VERSION } = require('./types');
 const { isValidModeState } = require('./stateSchema');
 const { startGame, evaluateAnswer } = require('../../game/roundContract');
@@ -83,8 +83,22 @@ describe('per-mode isolation across ModeProgressStorage and GameSessionStorage (
     expect(await sessionStorage.hasIncompleteSession(MODE_A)).toBe(true);
     const restoredA = await sessionStorage.restoreSession(MODE_A);
     expect(restoredA).not.toBeNull();
-    expect(adapter.keys()).toEqual([SESSION_STORAGE_KEY]);
-    expect(SESSION_STORAGE_KEY.startsWith(NAMESPACE)).toBe(true);
+    expect(adapter.keys()).toEqual([sessionKey(MODE_A)]);
+    expect(sessionKey(MODE_A).startsWith(NAMESPACE)).toBe(true);
+  });
+
+  it('keeps a transient round for each mode resumable independently, so saving one mode\'s round never overwrites another\'s', async () => {
+    const adapter = createSharedAdapter();
+    const sessionStorage = new GameSessionStorage([adapter]);
+
+    await sessionStorage.saveSession(MODE_A, playingSession(2));
+    await sessionStorage.saveSession(MODE_B, playingSession(1));
+
+    const restoredA = await sessionStorage.restoreSession(MODE_A);
+    const restoredB = await sessionStorage.restoreSession(MODE_B);
+    expect(restoredA).not.toBeNull();
+    expect(restoredB).not.toBeNull();
+    expect(adapter.keys().sort()).toEqual([sessionKey(MODE_A), sessionKey(MODE_B)].sort());
   });
 
   it('keeps completed progress and transient state under distinct keys for the same mode, neither overwriting the other', async () => {
@@ -101,7 +115,7 @@ describe('per-mode isolation across ModeProgressStorage and GameSessionStorage (
     const restored = await sessionStorage.restoreSession(MODE_A);
     expect(restored.state.answers).toHaveLength(1);
 
-    expect(adapter.keys().sort()).toEqual([`${MODE_PROGRESS_KEY_PREFIX}${MODE_A}`, SESSION_STORAGE_KEY].sort());
+    expect(adapter.keys().sort()).toEqual([`${MODE_PROGRESS_KEY_PREFIX}${MODE_A}`, sessionKey(MODE_A)].sort());
   });
 
   it('a transient snapshot built from a restored session satisfies the shared per-mode PersistedModeState contract (TRIOFSND-297)', async () => {

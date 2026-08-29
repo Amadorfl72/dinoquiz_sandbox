@@ -1,7 +1,7 @@
 const {
   GameSessionStorage,
   SESSION_SCHEMA_VERSION,
-  SESSION_STORAGE_KEY,
+  sessionKey,
   SESSION_DISCARD_INCOMPATIBLE_CODE,
 } = require('./GameSessionStorage');
 const { startGame, evaluateAnswer, advanceRound, ROUNDS_PER_GAME } = require('../../game/roundContract');
@@ -114,22 +114,22 @@ describe('GameSessionStorage', () => {
       const storage = new GameSessionStorage([adapter]);
       await storage.saveSession('quiz', playingSession());
 
-      const raw = await adapter.getItem(SESSION_STORAGE_KEY);
+      const raw = await adapter.getItem(sessionKey('quiz'));
       const envelope = JSON.parse(raw);
       envelope.schemaVersion = SESSION_SCHEMA_VERSION + 1;
-      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
     });
 
     it('discards and returns null for corrupted JSON', async () => {
       const adapter = createFakeAdapter();
       const storage = new GameSessionStorage([adapter]);
-      await adapter.setItem(SESSION_STORAGE_KEY, '{not-json');
+      await adapter.setItem(sessionKey('quiz'), '{not-json');
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
     });
 
     it('discards and returns null for a structurally invalid envelope (out-of-range roundIndex)', async () => {
@@ -137,12 +137,12 @@ describe('GameSessionStorage', () => {
       const storage = new GameSessionStorage([adapter]);
       await storage.saveSession('quiz', playingSession());
 
-      const envelope = JSON.parse(await adapter.getItem(SESSION_STORAGE_KEY));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
       envelope.session.roundIndex = 999;
-      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
     });
 
     it('discards and returns null when session.roundIndex and session.round.roundIndex disagree', async () => {
@@ -150,13 +150,13 @@ describe('GameSessionStorage', () => {
       const storage = new GameSessionStorage([adapter]);
       await storage.saveSession('quiz', playingSession());
 
-      const envelope = JSON.parse(await adapter.getItem(SESSION_STORAGE_KEY));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
       envelope.session.roundIndex = 0;
       envelope.session.round.roundIndex = 9;
-      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
     });
 
     it('discards a finished session instead of restoring it, without touching other persisted keys', async () => {
@@ -166,43 +166,37 @@ describe('GameSessionStorage', () => {
       await adapter.setItem('dinoquiz:bestScore', JSON.stringify(10));
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
       expect(await adapter.getItem('dinoquiz:bestScore')).toBe('10');
     });
   });
 
-  describe('discardSession', () => {
-    it('clears the stored session when switching to a different mode', async () => {
+  describe('per-mode session independence (TRIOFSND-298)', () => {
+    it('keeps a quiz round resumable after a laberinto round is saved, and vice versa', async () => {
       const adapter = createFakeAdapter();
       const storage = new GameSessionStorage([adapter]);
-      await storage.saveSession('quiz', playingSession());
 
-      await storage.discardSession('laberinto');
+      await storage.saveSession('quiz', playingSession({ level: 1 }));
+      await storage.saveSession('laberinto', playingSession({ level: 3 }));
 
-      expect(await storage.restoreSession('quiz')).toBeNull();
+      const restoredQuiz = await storage.restoreSession('quiz');
+      const restoredLaberinto = await storage.restoreSession('laberinto');
+      expect(restoredQuiz).not.toBeNull();
+      expect(restoredQuiz.context).toEqual({ level: 1 });
+      expect(restoredLaberinto).not.toBeNull();
+      expect(restoredLaberinto.context).toEqual({ level: 3 });
     });
 
-    it('keeps the stored session when re-entering the same mode', async () => {
-      const storage = new GameSessionStorage([createFakeAdapter()]);
+    it('stores each mode under its own dinoquiz:-namespaced key rather than a single shared key', async () => {
+      const adapter = createFakeAdapter();
+      const storage = new GameSessionStorage([adapter]);
+
       await storage.saveSession('quiz', playingSession());
+      await storage.saveSession('laberinto', playingSession());
 
-      await storage.discardSession('quiz');
-
-      expect(await storage.restoreSession('quiz')).not.toBeNull();
-    });
-
-    it('unconditionally clears the stored session when called without a mode', async () => {
-      const storage = new GameSessionStorage([createFakeAdapter()]);
-      await storage.saveSession('quiz', playingSession());
-
-      await storage.discardSession();
-
-      expect(await storage.restoreSession('quiz')).toBeNull();
-    });
-
-    it('is a no-op when nothing is stored', async () => {
-      const storage = new GameSessionStorage([createFakeAdapter()]);
-      await expect(storage.discardSession('quiz')).resolves.toBeUndefined();
+      expect(await adapter.getItem(sessionKey('quiz'))).not.toBeNull();
+      expect(await adapter.getItem(sessionKey('laberinto'))).not.toBeNull();
+      expect(sessionKey('quiz')).not.toBe(sessionKey('laberinto'));
     });
   });
 
@@ -225,7 +219,7 @@ describe('GameSessionStorage', () => {
       await storage.saveSession('quiz', playingSession());
 
       expect(await storage.hasIncompleteSession('laberinto')).toBe(false);
-      expect(await adapter.getItem(SESSION_STORAGE_KEY)).not.toBeNull();
+      expect(await adapter.getItem(sessionKey('quiz'))).not.toBeNull();
       expect(await storage.hasIncompleteSession('quiz')).toBe(true);
     });
 
@@ -267,7 +261,7 @@ describe('GameSessionStorage', () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
-      await adapter.setItem(SESSION_STORAGE_KEY, '{not-json');
+      await adapter.setItem(sessionKey('quiz'), '{not-json');
 
       await storage.restoreSession('quiz');
 
@@ -279,24 +273,37 @@ describe('GameSessionStorage', () => {
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
       await storage.saveSession('quiz', playingSession());
-      const envelope = JSON.parse(await adapter.getItem(SESSION_STORAGE_KEY));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
       envelope.schemaVersion = SESSION_SCHEMA_VERSION + 1;
-      await adapter.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope));
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
 
       await storage.restoreSession('quiz');
 
       expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
     });
 
-    it('logs the discard code, tagged with the requested modeId, for a wrong-mode restore', async () => {
+    it('does not restore or log anything when a different mode\'s key was never written (per-mode keys, TRIOFSND-298)', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
       await storage.saveSession('quiz', playingSession());
 
-      await storage.restoreSession('laberinto');
+      expect(await storage.restoreSession('laberinto')).toBeNull();
+      expect(logService.stateDiscardedCalls).toEqual([]);
+    });
 
-      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'laberinto', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+    it('logs the discard code, tagged with the requested modeId, when an envelope\'s internal modeId disagrees with its own storage key', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService);
+      await storage.saveSession('quiz', playingSession());
+
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.modeId = 'laberinto';
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
     });
 
     it('never logs when nothing was ever saved', async () => {
@@ -318,14 +325,14 @@ describe('GameSessionStorage', () => {
       expect(logService.stateDiscardedCalls).toEqual([]);
     });
 
-    it('never logs the deliberate discardModeSession/discardSession flows (already tracked by logGameAbandonedByMode)', async () => {
+    it('never logs the deliberate discardModeSession flow (already tracked by logGameAbandonedByMode)', async () => {
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([createFakeAdapter()], logService);
       await storage.saveSession('quiz', playingSession());
 
       await storage.discardModeSession('quiz');
       await storage.saveSession('laberinto', playingSession());
-      await storage.discardSession('quiz');
+      await storage.discardModeSession('laberinto');
 
       expect(logService.stateDiscardedCalls).toEqual([]);
     });
