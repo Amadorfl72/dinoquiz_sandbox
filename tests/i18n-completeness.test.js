@@ -110,9 +110,20 @@ describe('no hardcoded visible-text literals in public/scripts/*.js', () => {
   // A "visible phrase" is plain prose: letters/digits/spaces and ordinary
   // punctuation only (no braces, angle brackets, slashes, `=`) with at least
   // two alphabetic words. This naturally excludes CSS class lists, markup
-  // strings, template-literal interpolation (`${...}`), file paths and
-  // BEM-style tokens (which also carry a telltale "__").
+  // strings, file paths and BEM-style tokens (which also carry a telltale
+  // "__"). Template literals are handled specially below: their `${...}`
+  // interpolations are stripped first and each remaining static text segment
+  // is checked on its own, so visible copy embedded AROUND an interpolation
+  // (e.g. `Best score: ${score} points`) is still detected -- the segment
+  // itself must still be pure prose, which is what this regex enforces.
   const WORDY_RE = /^[A-Za-zÀ-ÿ0-9 ¿?¡!.,;:'’()-]+$/;
+
+  // Splits a template literal's inner content on its `${...}` interpolations
+  // so the surrounding static text is scanned segment by segment. A literal
+  // regex (never `new RegExp(...)`) keeps the SAST gate happy; `[^{}]*` stops
+  // this from swallowing text past the interpolation on the common
+  // single-expression case (`${score}`, `${count} points`).
+  const TEMPLATE_INTERP_RE = /\$\{[^{}]*\}/g;
 
   // Developer-only diagnostics: thrown/logged/validation-error strings are
   // never rendered or announced to the player, so they are exempt from the
@@ -151,12 +162,21 @@ describe('no hardcoded visible-text literals in public/scripts/*.js', () => {
     while ((match = TOKEN_RE.exec(src))) {
       const token = match[0];
       if (token.startsWith('/*') || token.startsWith('//')) continue;
-      const value = token.slice(1, -1);
-      if (value === 'use strict') continue;
-      if (!looksLikeVisiblePhrase(value)) continue;
+      const inner = token.slice(1, -1);
       if (isDeveloperDiagnostic(src, match.index)) continue;
-      if (CONTRACT_PHRASING_RE.test(value)) continue;
-      hits.push(value);
+      // For template literals, strip `${...}` interpolations and inspect each
+      // remaining static text segment independently, so hardcoded UI copy that
+      // sits next to an interpolation is not masked by the `$`/`{`/`}` that
+      // WORDY_RE forbids. Plain quoted strings have a single segment.
+      const segments = token.startsWith('`')
+        ? inner.split(TEMPLATE_INTERP_RE)
+        : [inner];
+      segments.forEach((segment) => {
+        if (segment === 'use strict') return;
+        if (!looksLikeVisiblePhrase(segment)) return;
+        if (CONTRACT_PHRASING_RE.test(segment)) return;
+        hits.push(segment.trim());
+      });
     }
     return hits;
   }
