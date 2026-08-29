@@ -11,6 +11,8 @@ const {
   MAX_VISIBLE_UNMATCHED,
   CARD_STATES,
   DIFFICULTY_BIAS,
+  hasUsableCardImage,
+  eligibleCardCreatureIds,
   validateCatalog,
   pairCountForLevel,
   computeColumns,
@@ -96,6 +98,43 @@ describe('validateCatalog', () => {
 
   test('defaults to the real shipped creature roster (14 creatures, always available today)', () => {
     expect(validateCatalog({}).available).toBe(true);
+  });
+
+  test('a duplicated id in dinosaurPool only counts once toward the >=8 gate', () => {
+    const eightUniquePlusOneDuplicate = [...VALID_DINOSAURS.slice(0, 8), VALID_DINOSAURS[0]];
+    const sevenUniquePlusOneDuplicate = [...VALID_DINOSAURS.slice(0, 7), VALID_DINOSAURS[0]];
+
+    expect(validateCatalog({ dinosaurPool: eightUniquePlusOneDuplicate }).available).toBe(true);
+    expect(validateCatalog({ dinosaurPool: sevenUniquePlusOneDuplicate }).available).toBe(false);
+  });
+
+  test('an invalid or imageless id in dinosaurPool never counts toward the >=8 gate', () => {
+    const sevenRealPlusGarbage = [...VALID_DINOSAURS.slice(0, 7), 'not-a-real-dinosaur', '', null];
+    const result = validateCatalog({ dinosaurPool: sevenRealPlusGarbage });
+
+    expect(result.available).toBe(false);
+    expect(result.cause).toBe(AVAILABILITY_CAUSES.INSUFFICIENT_CREATURES);
+    expect(result.details).toEqual({ need: 8, have: 7 });
+  });
+});
+
+describe('hasUsableCardImage / eligibleCardCreatureIds', () => {
+  test('every shipped dinosaur has a real, usable card-front image', () => {
+    VALID_DINOSAURS.forEach((id) => {
+      expect(hasUsableCardImage(id)).toBe(true);
+    });
+  });
+
+  test('rejects invalid ids without touching the filesystem check', () => {
+    expect(hasUsableCardImage('not-a-real-dinosaur')).toBe(false);
+    expect(hasUsableCardImage('')).toBe(false);
+    expect(hasUsableCardImage(null)).toBe(false);
+    expect(hasUsableCardImage(undefined)).toBe(false);
+  });
+
+  test('dedupes and drops invalid/imageless ids, preserving first-seen order', () => {
+    const pool = [DINOSAURS.TREX, 'bogus', DINOSAURS.TRICERATOPS, DINOSAURS.TREX];
+    expect(eligibleCardCreatureIds(pool)).toEqual([DINOSAURS.TREX, DINOSAURS.TRICERATOPS]);
   });
 });
 

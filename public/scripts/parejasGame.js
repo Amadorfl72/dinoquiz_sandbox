@@ -96,6 +96,34 @@
     return DINOSAUR_VISUAL_FAMILIES[id];
   }
 
+  /**
+   * Whether `id` has a real card-front image under public/assets/images/dinosaurs/
+   * (this browser twin has no filesystem access, so it checks against
+   * DINOSAUR_VISUAL_FAMILIES -- the same hand-maintained, test-guarded mirror
+   * of the shipped, image-backed roster used everywhere else in this file).
+   */
+  function hasUsableCardImage(id) {
+    return typeof id === 'string' && Object.prototype.hasOwnProperty.call(DINOSAUR_VISUAL_FAMILIES, id);
+  }
+
+  /**
+   * Filters `pool` down to elegible creatures for a Parejas board: unique ids
+   * with a real, usable card-front image (PRD: "el gate no cuenta fichas
+   * duplicadas, fichas inválidas ni imágenes ausentes como criaturas
+   * elegibles"). Used both by `validateCatalog` (the >=8 gate) and
+   * `selectCreaturesForBoard` (actual board generation).
+   */
+  function eligibleCardCreatureIds(pool) {
+    var seen = {};
+    return (Array.isArray(pool) ? pool : []).filter(function (id) {
+      if (Object.prototype.hasOwnProperty.call(seen, id) || !hasUsableCardImage(id)) {
+        return false;
+      }
+      seen[id] = true;
+      return true;
+    });
+  }
+
   /** Resolves public/scripts/scoring.js the require-or-window way every public/scripts module does. */
   function resolveScoring() {
     if (typeof require === 'function') {
@@ -129,7 +157,8 @@
   function validateCatalog(options) {
     options = options || {};
     var modesCatalog = resolveModesCatalog();
-    var catalog = options.catalog || modesCatalog.buildCurrentResourceCatalog({ dinosaurs: options.dinosaurPool });
+    var eligiblePool = eligibleCardCreatureIds(options.dinosaurPool || DEFAULT_DINOSAUR_POOL);
+    var catalog = options.catalog || modesCatalog.buildCurrentResourceCatalog({ dinosaurs: eligiblePool });
     return modesCatalog.evaluateModeAvailability(modesCatalog.getModeById(MODE_ID), catalog);
   }
 
@@ -226,7 +255,7 @@
     options = options || {};
     var pairCount = options.pairCount;
     var level = options.level;
-    var pool = options.dinosaurPool || DEFAULT_DINOSAUR_POOL;
+    var pool = eligibleCardCreatureIds(options.dinosaurPool || DEFAULT_DINOSAUR_POOL);
     var randomFn = options.randomFn || Math.random;
     var getFamily = options.getCreatureVisualFamily || getCreatureVisualFamily;
 
@@ -553,6 +582,8 @@
     DEFAULT_DINOSAUR_POOL: DEFAULT_DINOSAUR_POOL,
     DINOSAUR_VISUAL_FAMILIES: DINOSAUR_VISUAL_FAMILIES,
     getCreatureVisualFamily: getCreatureVisualFamily,
+    hasUsableCardImage: hasUsableCardImage,
+    eligibleCardCreatureIds: eligibleCardCreatureIds,
     validateCatalog: validateCatalog,
     pairCountForLevel: pairCountForLevel,
     computeColumns: computeColumns,

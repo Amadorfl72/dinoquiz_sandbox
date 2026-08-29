@@ -41,11 +41,19 @@
  * into `scoring.js`/`gameFlow.js` for anything score/progress related.
  */
 
+const fs = require('fs');
+const path = require('path');
 const scoring = require('./scoring');
 const gameFlow = require('./gameFlow');
 const { getCreatureVisualFamily } = require('../data/creatureSheet');
 const { VALID_DINOSAURS } = require('../data/questionBank');
 const { MODE_IDS, getModeById, evaluateModeAvailability, buildCurrentResourceCatalog } = require('./modesCatalog');
+
+// The dinosaur card front a board actually renders (public/scripts/parejasScreen.js's
+// `/assets/images/dinosaurs/<id>.svg`) -- checked against the real filesystem so a
+// duplicated/invalid/imageless id in a caller-supplied pool can never count toward
+// the mode's own >=8 elegible-creatures gate nor be dealt onto a real board.
+const DINOSAUR_CARD_IMAGE_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'images', 'dinosaurs');
 
 const ROUNDS_PER_GAME = 10;
 const MODE_ID = MODE_IDS.PAREJAS;
@@ -79,17 +87,43 @@ const DIFFICULTY_BIAS = Object.freeze({
 // families (easy to tell apart even before flipping a single card).
 const SIMILARITY_LEVEL_THRESHOLD = 7;
 
+/** Whether `id` has a real, usable card-front image under public/assets/images/dinosaurs/. */
+function hasUsableCardImage(id) {
+  return typeof id === 'string' && id.length > 0 && fs.existsSync(path.join(DINOSAUR_CARD_IMAGE_DIR, `${id}.svg`));
+}
+
+/**
+ * Filters `pool` down to elegible creatures for a Parejas board: unique ids
+ * (a duplicate never counts twice) with a real, usable card-front image
+ * (PRD: "el gate no cuenta fichas duplicadas, fichas inválidas ni imágenes
+ * ausentes como criaturas elegibles"). Used both by `validateCatalog` (the
+ * >=8 gate) and `selectCreaturesForBoard`/`startRound` (actual board
+ * generation), so a malformed pool can neither pass the gate nor be dealt
+ * onto a real board.
+ */
+function eligibleCardCreatureIds(pool) {
+  const seen = new Set();
+  return (Array.isArray(pool) ? pool : []).filter((id) => {
+    if (seen.has(id) || !hasUsableCardImage(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+}
+
 /**
  * Whether the current creature catalog satisfies Parejas' own requirement
- * (>=8 creatures, declared once in `modesCatalog.js`'s MODES_CATALOG --
- * never re-declared here). Returns `{ modeId, available, cause, details }`;
- * `cause` is the machine-readable block reason
+ * (>=8 elegible creatures, declared once in `modesCatalog.js`'s
+ * MODES_CATALOG -- never re-declared here). Returns `{ modeId, available,
+ * cause, details }`; `cause` is the machine-readable block reason
  * (`modesCatalog.js`'s AVAILABILITY_CAUSES) a caller can log/display when
  * `available` is false, exactly like every other mode's availability check.
  */
 function validateCatalog(options) {
   options = options || {};
-  const catalog = options.catalog || buildCurrentResourceCatalog({ dinosaurs: options.dinosaurPool });
+  const eligiblePool = eligibleCardCreatureIds(options.dinosaurPool || VALID_DINOSAURS);
+  const catalog = options.catalog || buildCurrentResourceCatalog({ dinosaurs: eligiblePool });
   return evaluateModeAvailability(getModeById(MODE_ID), catalog);
 }
 
@@ -174,7 +208,7 @@ function orderForSimilarity(groups, randomFn) {
 function selectCreaturesForBoard(options) {
   options = options || {};
   const { pairCount, level } = options;
-  const pool = options.dinosaurPool || VALID_DINOSAURS;
+  const pool = eligibleCardCreatureIds(options.dinosaurPool || VALID_DINOSAURS);
   const randomFn = options.randomFn || Math.random;
   const getFamily = options.getCreatureVisualFamily || getCreatureVisualFamily;
 
@@ -496,6 +530,8 @@ module.exports = {
   MAX_VISIBLE_UNMATCHED,
   CARD_STATES,
   DIFFICULTY_BIAS,
+  hasUsableCardImage,
+  eligibleCardCreatureIds,
   validateCatalog,
   pairCountForLevel,
   computeColumns,
