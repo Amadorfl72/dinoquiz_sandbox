@@ -1,5 +1,5 @@
 {
-  "swVersion": "v36",
+  "swVersion": "v37",
   "precacheUrls": [
     "/",
     "/assets/images/cards/back.svg",
@@ -125,6 +125,7 @@
   ],
   "contentHashes": {
     "/": "d033909c63f19237febdc1339268b6a461585d5cc6db288e78fdf3688f378a1f",
+    "/assets/images/cards/back.svg": "a8b9086d6958f58fc83c5f157e31d7f629f1f0d17572a0b75dd4721c13241dcc",
     "/index.html": "d033909c63f19237febdc1339268b6a461585d5cc6db288e78fdf3688f378a1f",
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
     "/styles/main.css": "92f2bda0bb12e2a797e55caebe44864f8354658f0e0ed5671ba180a92de56535",
