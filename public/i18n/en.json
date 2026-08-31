@@ -4,6 +4,12 @@
     "muteLabel": "Mute sound",
     "unmuteLabel": "Unmute sound"
   },
+  "audioAccessNotice": {
+    "heading": "Sound is muted",
+    "message": "This mode needs sound turned on to play. Turn it on to continue.",
+    "unmuteButton": "Turn on sound",
+    "backButton": "Back to the game selector"
+  },
   "home": {
     "title": "DinoQuiz",
     "mascotAlt": "Dino, the DinoQuiz mascot: a friendly green dinosaur waving hello",
