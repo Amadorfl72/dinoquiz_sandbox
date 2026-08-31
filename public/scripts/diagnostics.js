@@ -40,6 +40,13 @@
  * implementation now lives here instead of directly under `src/services/`;
  * the canonical `src/services/diagnostics.js` re-exports this file so
  * Node/Jest keep a single source of truth.
+ *
+ * Manual export (TRIOFSND-320, PRD "ningún dato generado por el jugador
+ * puede salir del dispositivo"): `buildExportSummary` turns this module's
+ * own aggregated counters/errors/retention into a single non-identifiable
+ * snapshot -- counts only, never the dated/raw error list, never a name or
+ * free-text answer -- for the diagnostics screen to hand to the adult
+ * locally (clipboard/download). It never transmits anything itself.
  */
 
 (function () {
@@ -283,6 +290,32 @@
     });
   }
 
+  /**
+   * A single aggregated, non-identifiable snapshot of this device's local
+   * diagnostics for manual export: the counters map as-is (already opaque
+   * aggregate names/counts, see `incrementCounter`'s doc comment), the
+   * recorded errors collapsed into a `mode:category:code` tally (a count,
+   * never the individual dated entries), the total error count and the
+   * seven-day retention flag. No name, no per-round answer/selection, no
+   * free text and no date-stamped entry ever appears here.
+   */
+  function buildExportSummary(storageAdapter) {
+    var errors = getErrors(storageAdapter);
+    var errorCounts = {};
+    errors.forEach(function (entry) {
+      var key = entry.mode + ':' + entry.category + ':' + entry.code;
+      errorCounts[key] = (errorCounts[key] || 0) + 1;
+    });
+
+    return {
+      generatedAt: localDateString(),
+      counters: getCounters(storageAdapter),
+      errorCounts: errorCounts,
+      totalErrors: errors.length,
+      sevenDayRetention: computeSevenDayRetention(storageAdapter),
+    };
+  }
+
   var api = {
     incrementCounter: incrementCounter,
     getCounters: getCounters,
@@ -291,6 +324,7 @@
     recordError: recordError,
     getErrors: getErrors,
     resetDiagnostics: resetDiagnostics,
+    buildExportSummary: buildExportSummary,
     COUNTERS_KEY: COUNTERS_KEY,
     ERRORS_KEY: ERRORS_KEY,
     RETENTION_KEY: RETENTION_KEY,
