@@ -2338,6 +2338,58 @@
    */
 
   /**
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): fire-and-forget
+   * persistence of a live roundContract.js session under `modeId`, via
+   * `gameSessionStorage.saveSession` -- called only from the top of
+   * `playOidoJurasicoRound`/`playSizeOrderRound`, i.e. only at a round's
+   * *start* (`session.round.answered` is always false there, whether that
+   * round came from `startGame` or `advanceRound`), never mid-round right
+   * after `evaluateAnswer`. This is deliberate: it guarantees a restored
+   * session's current round is always unanswered, so resuming never hands
+   * the player a round whose "already counted" answer buttons would then
+   * silently reject a second tap. A missing/unavailable service (see
+   * `resolveGameSessionStorage`) is a no-op; a failed write is swallowed --
+   * the game itself never needs to know or wait for its own save.
+   */
+  function persistRoundContractSession(gameSessionStorage, modeId, session) {
+    if (!gameSessionStorage || typeof gameSessionStorage.saveSession !== 'function') {
+      return;
+    }
+    Promise.resolve(gameSessionStorage.saveSession(modeId, session)).catch(function () {});
+  }
+
+  /** Fire-and-forget discard of `modeId`'s transient session once its game has ended (TRIOFSND-299) -- never the durable per-mode result/progress `finishOidoJurasicoGame`/`finishSizeOrderGame` just recorded. */
+  function discardRoundContractSession(gameSessionStorage, modeId) {
+    if (!gameSessionStorage || typeof gameSessionStorage.discardTransientState !== 'function') {
+      return;
+    }
+    Promise.resolve(gameSessionStorage.discardTransientState(modeId)).catch(function () {});
+  }
+
+  /**
+   * Consumes (reads, then clears) the session restored for `modeId` at
+   * startup (TRIOFSND-299, see `restoreLastGameSession`), so a later replay
+   * ("Volver a jugar") or a second call never resumes the same stale round
+   * twice. `ctx.restoredSession`, when explicitly set (including `null`),
+   * always wins over `win.DinoQuiz.restoredGameState` -- the injectable
+   * override every test in this file uses instead of reaching into
+   * `window.DinoQuiz` directly.
+   */
+  function consumeRestoredSession(win, ctx, modeId) {
+    if (ctx && ctx.restoredSession !== undefined) {
+      return ctx.restoredSession;
+    }
+
+    var restoredGameState = win && win.DinoQuiz && win.DinoQuiz.restoredGameState;
+    if (!restoredGameState || restoredGameState.modeId !== modeId) {
+      return null;
+    }
+
+    win.DinoQuiz.restoredGameState = null;
+    return restoredGameState;
+  }
+
+  /**
    * Renders `session.round` and drives it to completion (answer -> feedback
    * -> "Siguiente"), then either the next round or Resultados, exactly
    * mirroring `playMazeRound`'s shape. `roundContractApi.evaluateAnswer`
@@ -2348,6 +2400,8 @@
    * rondas") -- this function never counts rounds itself.
    */
   function playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    persistRoundContractSession(ctx.gameSessionStorage, OIDO_JURASICO_MODE_ID, session);
+
     return renderers.renderOidoJurasicoScreen(container, session.round, {
       score: session.state.score,
       roundNumber: session.roundIndex + 1,
@@ -2397,6 +2451,11 @@
     finalState.bestScore = bestScoreAndStreak.bestScore;
     finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+    // TRIOFSND-299: the game is over -- its result is now durable via
+    // modeProgressStorage.recordResult below, so the transient round-by-round
+    // session that led here has nothing left to resume.
+    discardRoundContractSession(ctx.gameSessionStorage, OIDO_JURASICO_MODE_ID);
+
     if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
       ctx.analyticsStorage.recordGameCompleted(finalState.score);
     }
@@ -2427,7 +2486,24 @@
     });
   }
 
-  /** Starts a fresh Oído Jurásico game: builds the round context/session via roundContract.js and renders its first round. Persists the last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`. */
+  /**
+   * Starts Oído Jurásico: builds the round context/session via
+   * roundContract.js and renders its first round. Persists the
+   * last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`.
+   *
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): before starting a
+   * brand-new game, `consumeRestoredSession` checks for a schema-validated,
+   * still-resumable Oído Jurásico session restored at startup
+   * (`restoreLastGameSession`). When there is one, its plain-data session
+   * (score, answers and the round it was on -- see
+   * `gameSessionStorage.restoreGameState`'s own doc comment) is reused
+   * as-is, re-attaching only the fields that can't survive persistence --
+   * `generateRound`, a fresh `hooks`, and `context.randomFn` (a function,
+   * same as the other two, dropped by `saveSession`'s `JSON.stringify`,
+   * re-defaulted to `Math.random` exactly like
+   * `buildOidoJurasicoRoundContext` itself does) -- never re-scored or
+   * re-generated, so nothing already contabilized is duplicated.
+   */
   function startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx) {
     ctx = ctx || {};
     var roundContractApi = resolveRoundContract();
@@ -2438,13 +2514,22 @@
 
     persistLastMode(OIDO_JURASICO_MODE_ID, ctx.storageObj);
 
-    var context = oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn });
-    var session = roundContractApi.startGame({
-      generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
-      context: context,
-    });
+    var win = typeof window !== 'undefined' ? window : undefined;
+    var resolvedCtx = Object.assign({}, ctx, { gameSessionStorage: resolveGameSessionStorage(win) });
+    var restored = consumeRestoredSession(win, ctx, OIDO_JURASICO_MODE_ID);
 
-    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+    var session = restored
+      ? Object.assign({}, restored.session, {
+          generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+          hooks: roundContractApi.createHooks(),
+          context: Object.assign({}, restored.session.context, { randomFn: ctx.randomFn || Math.random }),
+        })
+      : roundContractApi.startGame({
+          generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+          context: oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn }),
+        });
+
+    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, resolvedCtx);
   }
 
   /**
@@ -2480,6 +2565,8 @@
    * this function never counts rounds itself.
    */
   function playSizeOrderRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    persistRoundContractSession(ctx.gameSessionStorage, SIZE_ORDER_MODE_ID, session);
+
     return renderers.renderSizeOrderScreen(container, session.round, {
       roundNumber: session.roundIndex + 1,
       totalRounds: session.roundCount,
@@ -2517,6 +2604,11 @@
     finalState.bestScore = bestScoreAndStreak.bestScore;
     finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+    // TRIOFSND-299: the game is over -- its result is now durable via
+    // modeProgressStorage.recordResult below, so the transient round-by-round
+    // session that led here has nothing left to resume.
+    discardRoundContractSession(ctx.gameSessionStorage, SIZE_ORDER_MODE_ID);
+
     if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
       ctx.analyticsStorage.recordGameCompleted(finalState.score);
     }
@@ -2552,10 +2644,15 @@
   }
 
   /**
-   * Starts a fresh Ordena por tamaño game: builds the round context/session
-   * via roundContract.js, attaches roundDiagnosticsService.js to it and
-   * renders its first round. Persists the last-selected mode
-   * (`dinoquiz:lastMode`, TRIOFSND-230/288), mirrors `startOidoJurasicoGame`.
+   * Starts Ordena por tamaño: builds the round context/session via
+   * roundContract.js, attaches roundDiagnosticsService.js to it and renders
+   * its first round. Persists the last-selected mode (`dinoquiz:lastMode`,
+   * TRIOFSND-230/288), mirrors `startOidoJurasicoGame`.
+   *
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): resumes a
+   * schema-validated, still-resumable Ordena por tamaño session restored at
+   * startup instead of starting fresh, exactly like `startOidoJurasicoGame`
+   * -- see that function's own doc comment.
    */
   function startSizeOrderGame(container, renderers, doc, fetchFn, ctx) {
     ctx = ctx || {};
@@ -2567,16 +2664,28 @@
 
     persistLastMode(SIZE_ORDER_MODE_ID, ctx.storageObj);
 
-    var context = sizeOrderGame.buildSizeOrderRoundContext({
-      randomFn: ctx.randomFn,
-      creatures: ctx.creatures,
-      creatureCount: ctx.creatureCount,
-      minRelativeDifference: ctx.minRelativeDifference,
-    });
-    var session = roundContractApi.startGame({
-      generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
-      context: context,
-    });
+    var win = typeof window !== 'undefined' ? window : undefined;
+    var resolvedCtx = Object.assign({}, ctx, { gameSessionStorage: resolveGameSessionStorage(win) });
+    var restored = consumeRestoredSession(win, ctx, SIZE_ORDER_MODE_ID);
+
+    var session = restored
+      ? Object.assign({}, restored.session, {
+          generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
+          hooks: roundContractApi.createHooks(),
+          // context.randomFn doesn't survive saveSession's JSON.stringify --
+          // re-attached exactly like startOidoJurasicoGame does (see its own
+          // doc comment).
+          context: Object.assign({}, restored.session.context, { randomFn: ctx.randomFn || Math.random }),
+        })
+      : roundContractApi.startGame({
+          generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
+          context: sizeOrderGame.buildSizeOrderRoundContext({
+            randomFn: ctx.randomFn,
+            creatures: ctx.creatures,
+            creatureCount: ctx.creatureCount,
+            minRelativeDifference: ctx.minRelativeDifference,
+          }),
+        });
 
     var diagnosticsService = resolveRoundDiagnosticsService();
     var sizeOrderDiagnostics =
@@ -2591,7 +2700,7 @@
       fetchFn,
       roundContractApi,
       session,
-      Object.assign({}, ctx, { sizeOrderDiagnostics: sizeOrderDiagnostics })
+      Object.assign({}, resolvedCtx, { sizeOrderDiagnostics: sizeOrderDiagnostics })
     );
   }
 
@@ -3725,6 +3834,50 @@
   }
 
   /**
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): resolves the last
+   * mode the player picked (`dinoquiz:lastMode`, via modeStorage.js) and asks
+   * `gameSessionStorage.restoreGameState` (src/services/gameSessionStorage.js)
+   * for its in-progress round -- schema-validated (stateSchema.js) and
+   * integrity-checked (GameSessionStorage.js) there, never re-derived here.
+   * The result (or null, when there is nothing resumable) is stashed on
+   * `win.DinoQuiz.restoredGameState` for `startOidoJurasicoGame`/
+   * `startSizeOrderGame` to consume synchronously once this promise settles
+   * -- those two are the only modes currently driven by roundContract.js,
+   * the shape GameSessionStorage.js's envelope is built around (see that
+   * file's own doc comment); every other mode keeps starting fresh exactly
+   * as before this feature existed. Never throws: a missing service, a
+   * missing/unavailable last mode, or a failed lookup all resolve to null,
+   * so a broken restore can never block the app from starting.
+   */
+  function restoreLastGameSession(win) {
+    if (win) {
+      win.DinoQuiz = win.DinoQuiz || {};
+      win.DinoQuiz.restoredGameState = null;
+    }
+
+    var gameSessionStorage = resolveGameSessionStorage(win);
+    var modeStorage = resolveModeStorage(win);
+    if (!gameSessionStorage || typeof gameSessionStorage.restoreGameState !== 'function' || !modeStorage) {
+      return Promise.resolve(null);
+    }
+
+    var lastMode = typeof modeStorage.getLastMode === 'function' ? modeStorage.getLastMode() : null;
+    if (!lastMode) {
+      return Promise.resolve(null);
+    }
+
+    return Promise.resolve(gameSessionStorage.restoreGameState(lastMode))
+      .then(function (restored) {
+        win.DinoQuiz.restoredGameState = restored || null;
+        return restored;
+      })
+      .catch(function () {
+        win.DinoQuiz.restoredGameState = null;
+        return null;
+      });
+  }
+
+  /**
    * Browser-only startup: fetch the i18n strings and the question bank once
    * and stash the play-ready data on `window.DinoQuiz` so `loadQuestions()`
    * and the screens can read it synchronously. Runs after the screen/game
@@ -3752,6 +3905,9 @@
       })
       .then(function (rawQuestions) {
         window.DinoQuiz.questions = prepareBrowserQuestions(rawQuestions, window.DinoQuiz.strings);
+      })
+      .then(function () {
+        return restoreLastGameSession(window);
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to prepare the game data', error);
@@ -3862,6 +4018,8 @@
       SOMBRA_MODE_ID: SOMBRA_MODE_ID,
       CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
+      restoreLastGameSession: restoreLastGameSession,
+      consumeRestoredSession: consumeRestoredSession,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
       resolveShadowGuessGame: resolveShadowGuessGame,
