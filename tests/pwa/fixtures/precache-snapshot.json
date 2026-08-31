@@ -1,5 +1,5 @@
 {
-  "swVersion": "v36",
+  "swVersion": "v38",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -48,6 +48,8 @@
     "/scripts/modeBlockedScreen.js",
     "/scripts/oidoJurasicoAudioService.js",
     "/scripts/offlineStatus.js",
+    "/scripts/modeResourceValidation.js",
+    "/scripts/offlineDiagnosticsPanel.js",
     "/scripts/diagnostics.js",
     "/scripts/diagnosticsScreen.js",
     "/scripts/main.js",
@@ -124,10 +126,11 @@
     "/offline.html"
   ],
   "contentHashes": {
-    "/": "d033909c63f19237febdc1339268b6a461585d5cc6db288e78fdf3688f378a1f",
-    "/index.html": "d033909c63f19237febdc1339268b6a461585d5cc6db288e78fdf3688f378a1f",
+    "/": "e061c0269e623f71e5cd0c07dc23232a3de0c253cdbc2e3bcd00766efd98eb00",
+    "/assets/images/cards/back.svg": "a8b9086d6958f58fc83c5f157e31d7f629f1f0d17572a0b75dd4721c13241dcc",
+    "/index.html": "e061c0269e623f71e5cd0c07dc23232a3de0c253cdbc2e3bcd00766efd98eb00",
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
-    "/styles/main.css": "c2304899fbf15c26005ce01aeb7a48242c104f81309ae3fff31738b9e90c981a",
+    "/styles/main.css": "18f9d82093200de9e01c219c1dd01a807a66da4f95efc8ec6a84168280dfd1e2",
     "/scripts/scoring.js": "e4bf1edd3c843106032ebba0d0eedc80bd608a39152a5b9ac41652131d852e0f",
     "/scripts/soundService.js": "f8795492b374ea80f0d8618c631708ea615b35c93928b94951bb439f62f19e12",
     "/scripts/adsService.js": "b57d05e1ce844690d3b6b7ddea0bca32b8ea9f077321def35e1e8653d2331528",
@@ -171,9 +174,11 @@
     "/scripts/modeBlockedScreen.js": "cc8c22322ed0e754ac45c510449d13897d83a09a44b4f250198adcfb522c6f1a",
     "/scripts/oidoJurasicoAudioService.js": "689ad66e71a6a0174a7ef74c29a0ead566d514e8de9ce646f106ff8d52970bfa",
     "/scripts/offlineStatus.js": "02b770723d6acf25815498132757c30350604542726dff19a0d7f982e0ca35b2",
+    "/scripts/modeResourceValidation.js": "c11d2cb97e28080d6c4183a34399979b4ef93c2c55bfec65d2df4e82df7ab074",
+    "/scripts/offlineDiagnosticsPanel.js": "65808e262bfe9cd70687bf116dda42703e45fee1c3c139127678470873208b9e",
     "/scripts/diagnostics.js": "446ef8524d20c86b828724d8bd8b8312d0ea0fbc27accf7fcbef15caa2e14f66",
     "/scripts/diagnosticsScreen.js": "c14c77e7b03d375b3eb5e7191db1de720cb57238665404a1474ecb1dabe06c10",
-    "/scripts/main.js": "a808264e4a8ddc787f9f177541836f448518d03a022e0813366574224004a571",
+    "/scripts/main.js": "6afed11d35ed92f213a7f1401ff0ab4e1fea6aa84fb25f2a19737e1c62338285",
     "/icons/icon.svg": "17da64ccfd4edae6de8813fbc4a3126df29a80250e005c34e708487a400a3653",
     "/assets/images/mascot.svg": "6ae1a73c12a193fe74b07d6c51def00cc2d122bf5ee77d4b4a4b4666e6550b94",
     "/assets/images/dinosaurs/trex.svg": "a8130b220650eec59d2d20aaecda55b1897abde244c41603a0f74fb37cc7c560",
@@ -244,6 +249,5 @@
     "/i18n/es.json": "317ac329a55d4db5a7a19f00cc5346c4262bfaeaa73a1c3125fa6386e1f7ab6f",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
-    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b"
   }
 }

@@ -136,6 +136,28 @@
     "message": "Este modo no está disponible ahora mismo. Vuelve a intentarlo más tarde o elige otro modo desde el selector.",
     "backButtonLabel": "Volver al selector de juegos"
   },
+  "offlineDiagnostics": {
+    "screenTitle": "Diagnóstico sin conexión",
+    "introText": "Estos datos se calculan y se guardan solo en este dispositivo. Nunca se envían a internet.",
+    "backButtonLabel": "Volver",
+    "swState": {
+      "heading": "Estado del service worker",
+      "versionLabel": "Versión de caché instalada",
+      "lastPreloadLabel": "Última precarga completa",
+      "notAvailableText": "Todavía no hay datos guardados en este dispositivo."
+    },
+    "modeMatrix": {
+      "heading": "Recursos por modo de juego",
+      "modeColumnLabel": "Modo",
+      "statusColumnLabel": "Estado",
+      "checkingText": "Comprobando…",
+      "statusOkText": "Todo listo",
+      "statusMissingFormat": "Faltan {count} recursos",
+      "statusUnavailableText": "No se pudo comprobar en este dispositivo",
+      "missingResourcesLabel": "Recursos que faltan:",
+      "summaryFormat": "Comprobación completa: {okCount}/{totalCount} modos listos"
+    }
+  },
   "privacyPolicy": {
     "screenTitle": "Política de privacidad",
     "backButtonLabel": "Volver a la pantalla de inicio",
