@@ -1,36 +1,298 @@
 {
   "locale": "en",
-  "shadowGuess": {
-    "name": "Guess the Shadow",
-    "instructions": "Look at the silhouette and choose, among four creatures, the one you think is hiding behind it.",
-    "options": {
-      "option1Label": "Option 1: {creature}",
-      "option2Label": "Option 2: {creature}",
-      "option3Label": "Option 3: {creature}",
-      "option4Label": "Option 4: {creature}"
+  "muteButton": {
+    "muteLabel": "Mute sound",
+    "unmuteLabel": "Unmute sound"
+  },
+  "home": {
+    "title": "DinoQuiz",
+    "mascotAlt": "Dino, the DinoQuiz mascot: a friendly green dinosaur waving hello",
+    "playButton": "Play!",
+    "parentalNotice": {
+      "label": "Note for parents",
+      "message": "This app doesn't use accounts or store data in the cloud: all progress (score, streak, and discovered fun facts) is saved only on this device. If you reinstall the app or switch devices, that progress will be lost."
     },
-    "feedback": {
-      "correct": "Correct! You guessed the shadow.",
-      "incorrect": "Incorrect. Keep trying!",
-      "correctAnswer": "The correct answer was {creature}."
+    "funFactsProgressFormat": "Fun facts discovered: {count}/{total}",
+    "bestScoreFormat": "Best score: {bestScore} points",
+    "bestStreakFormat": "Best streak: {bestStreak} correct answers in a row",
+    "globalControls": {
+      "groupLabel": "Global controls",
+      "muteButton": {
+        "muteLabel": "Mute sound",
+        "unmuteLabel": "Unmute sound"
+      },
+      "privacyButton": "Privacy summary",
+      "purchaseButton": "Remove ads"
     },
-    "blocked": {
-      "insufficientCatalog": "Guess the Shadow isn't available yet: it needs at least 12 approved creatures that are visually distinguishable from each other to unlock this mode."
+    "tooltip": {
+      "message": "Tap here to play!"
     },
-    "results": {
-      "title": "Guess the Shadow Results",
-      "score": "Guess the Shadow Score",
-      "percentage": "Accuracy Percentage",
-      "stars": "Stars Earned",
-      "progress": "Guess the Shadow Progress"
+    "privacyPolicyIconLabel": "Full privacy policy",
+    "privacyPolicyIconHint": "Tap here to read, together with your family, what we do with the app's information"
+  },
+  "modes": {
+    "quiz": {
+      "name": "Quiz",
+      "description": "Answer questions about prehistoric creatures by choosing among several answers."
     },
-    "optionsGroupLabel": "Answer options",
-    "correctOptionAriaLabelFormat": "Correct answer: {creature}",
-    "selectedOptionAriaLabelFormat": "Your answer: {creature}",
-    "scoreLabel": "Points",
+    "laberinto": {
+      "name": "Maze",
+      "description": "Guide a prehistoric creature through a maze until it reaches the goal."
+    },
+    "sombra": {
+      "name": "Guess the Shadow",
+      "description": "Look at a silhouette and guess which prehistoric creature it is."
+    },
+    "oidoJurasico": {
+      "name": "Jurassic Hearing",
+      "description": "Listen to an imagined sound and guess which prehistoric creature it belongs to."
+    },
+    "parejas": {
+      "name": "Jurassic Pairs",
+      "description": "Find the matching pairs of prehistoric creatures on the board."
+    },
+    "clasifica": {
+      "name": "Classify",
+      "description": "Classify each prehistoric creature as carnivore, herbivore, or omnivore."
+    },
+    "ordenaPorTamano": {
+      "name": "Sort by Size",
+      "description": "Sort the prehistoric creatures from smallest to largest."
+    },
+    "lineaDelTiempo": {
+      "name": "Timeline",
+      "description": "Place the prehistoric creatures in the order they lived."
+    }
+  },
+  "modeSelector": {
+    "screenTitle": "Choose your game",
+    "backButtonLabel": "Back to the home screen",
+    "lastPlayedBadge": "Last played",
+    "modes": {
+      "quiz": {
+        "accessibleLabel": "Quiz mode: answer questions about prehistoric creatures by choosing the correct answer"
+      },
+      "laberinto": {
+        "accessibleLabel": "Maze mode: guide a prehistoric creature through a maze until it finds the food"
+      },
+      "sombra": {
+        "accessibleLabel": "Guess the Shadow mode: recognize which prehistoric creature is hiding behind its silhouette"
+      },
+      "oidoJurasico": {
+        "accessibleLabel": "Jurassic Hearing mode: listen to an imagined sound and guess which prehistoric creature it is"
+      },
+      "parejas": {
+        "accessibleLabel": "Jurassic Pairs mode: find the prehistoric creature cards that match"
+      },
+      "clasifica": {
+        "accessibleLabel": "Classify mode: decide whether each prehistoric creature is a carnivore, herbivore, or omnivore"
+      },
+      "ordenaPorTamano": {
+        "accessibleLabel": "Sort by Size mode: arrange the prehistoric creatures from smallest to largest"
+      },
+      "lineaDelTiempo": {
+        "accessibleLabel": "Timeline mode: order the prehistoric creatures according to when they lived"
+      }
+    },
+    "status": {
+      "available": "Available",
+      "blocked": "Blocked"
+    },
+    "blockedReasons": {
+      "insufficient_questions": "We need more verified questions to unlock this mode. Please try again later!",
+      "insufficient_creatures": "We need more verified creatures to unlock this mode. Please try again later!",
+      "insufficient_creature_sounds": "We need more imagined creature sounds to unlock this mode. Please try again later!",
+      "missing_creature_field": "We need more verified creature data to unlock this mode. Please try again later!",
+      "round_generation_failed": "We couldn't prepare a new round for this mode. Please try again later!",
+      "state_discarded": "We had to restart this game due to a technical issue, but your saved progress and results are still safe. Please try again later!"
+    }
+  },
+  "ageGate": {
+    "screenTitle": "How old are you?",
+    "instructions": "Choose your age to start playing. It's only used for this game: we don't save or share it.",
+    "sevenOption": "7 years or younger",
+    "eightPlusOption": "8 years or older"
+  },
+  "modeChange": {
+    "title": "Change game?",
+    "message": "You haven't finished this game yet. If you change games now, you'll lose your current progress.",
+    "confirmButtonLabel": "Yes, change game",
+    "cancelButtonLabel": "No, keep playing"
+  },
+  "privacyPolicy": {
+    "screenTitle": "Privacy Policy",
+    "backButtonLabel": "Back to the home screen",
+    "updatedAt": "Last updated: July 2026",
+    "kidsCallout": {
+      "heading": "For you, little one 🦖",
+      "body": "DinoQuiz doesn't ask for your name, your photo, or where you live. We only save your best score and the fun facts you've already discovered on this device, so you can see them next time you play."
+    },
+    "sections": [
+      {
+        "id": "que-datos",
+        "heading": "What information do we use?",
+        "paragraphs": [
+          "DinoQuiz doesn't ask for or store personal data from children: there's no registration, no name, no photo, no location, and no contacts.",
+          "Everything the app needs to play (questions, images, sounds) is already included and works without an internet connection.",
+          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, and whether sound is muted. This information never leaves the device.",
+          "We may receive anonymous, aggregated technical information such as the device model, system version, language, or screen size, and usage statistics (for example, whether a game was completed). This data cannot identify any individual person."
+        ]
+      },
+      {
+        "id": "para-que",
+        "heading": "What do we use this information for?",
+        "paragraphs": [
+          "We use the anonymous, aggregated statistics only to improve the app: to know whether games are being completed, whether a question is too difficult, or whether there's a technical crash we need to fix.",
+          "We never use this information to show personalized advertising or to build profiles of children."
+        ]
+      },
+      {
+        "id": "terceros",
+        "heading": "Do we share information with third parties?",
+        "paragraphs": [
+          "We don't sell or share personal data with third parties because we don't collect it.",
+          "If ads are ever shown or an in-app purchase is offered, these services don't receive personal data from children and don't include personalized or individual-tracking advertising."
+        ]
+      },
+      {
+        "id": "derechos",
+        "heading": "Your rights (and your child's)",
+        "paragraphs": [
+          "Since we don't collect personal data, there's no profile to look up, correct, or delete in our systems.",
+          "All saved information lives only on the device: you can delete it at any time by uninstalling the app or clearing its data from the device or browser settings.",
+          "If you have any questions about privacy, or believe some data was collected that shouldn't have been, you can exercise your rights of access, rectification, erasure, objection, and portability by writing to the contact address below."
+        ]
+      },
+      {
+        "id": "responsable",
+        "heading": "Who is responsible?",
+        "paragraphs": [
+          "The party responsible for processing the information described in this policy is the DinoQuiz team.",
+          "You can contact us by email at privacidad@dinoquiz-app.com for any questions related to the app's privacy."
+        ]
+      },
+      {
+        "id": "cambios",
+        "heading": "Changes to this policy",
+        "paragraphs": [
+          "If this policy changes, we'll indicate it by updating the date on this page. We recommend checking it from time to time together with your child."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "heading": "Privacy Policy",
+    "closeButton": "Close",
+    "intro": "DinoQuiz is designed for children to play, so we take great care with their privacy. Here we explain, in simple language, what happens with information when you use the app.",
+    "sections": [
+      {
+        "heading": "What data do we collect?",
+        "body": "None that's personal. DinoQuiz doesn't ask for name, age, photo, email, or any other data that identifies the player. There are no accounts or logins."
+      },
+      {
+        "heading": "Where is progress saved?",
+        "body": "The score, the streak of correct answers, and the discovered fun facts are saved only on this device (localStorage/IndexedDB). They're never sent to any server."
+      },
+      {
+        "heading": "What anonymous data is used?",
+        "body": "Aggregated, anonymous statistics are collected (for example, games started or completed) to improve the app. This data doesn't include a name, exact location, or any advertising identifier, and is never used for personalized advertising purposes."
+      },
+      {
+        "heading": "Is it shared with third parties?",
+        "body": "No personal data is sold or shared with third parties. DinoQuiz doesn't include behavioral advertising or individual-tracking SDKs."
+      },
+      {
+        "heading": "What are your rights?",
+        "body": "Since we don't store personal data, there's nothing to delete, correct, or export at an individual level. If you have any questions, you can write to us."
+      },
+      {
+        "heading": "Contact",
+        "body": "For any privacy questions, write to privacidad@dinoquiz.app."
+      }
+    ]
+  },
+  "purchase": {
+    "heading": "Remove ads",
+    "closeButton": "Close",
+    "description": "With a single purchase you can remove DinoQuiz ads forever and unlock all question packs, now and in the future.",
+    "priceLabel": "One-time payment of €3.99",
+    "purchaseButton": "Buy now",
+    "offlineNotice": "There's no internet connection right now. Connect to wifi or mobile data and try again to complete the purchase."
+  },
+  "results": {
+    "heading": "Results!",
+    "scoreLabel": "Score",
+    "scoreFormat": "{score}/{total}",
+    "percentageFormat": "You got {percentage}% of the rounds right",
+    "starsLabel": "{stars} of {maxStars} stars earned",
+    "summaryAnnouncement": "You got {score} of {total} points, {percentage} percent correct, {stars} of {maxStars} stars. {message}",
     "levelFormat": "Level {level}",
-    "roundFormat": "Round {current} of {total}",
+    "maxLevelUnlockedFormat": "Highest level unlocked: {maxLevel}",
+    "funFactsProgressFormat": "Fun facts discovered: {count}/{total}",
+    "bestScoreFormat": "Best score: {bestScore} points",
+    "bestStreakFormat": "Best streak: {bestStreak} correct answers in a row",
+    "levelOutcome": {
+      "levelUp": "Great! You've unlocked level {nextLevel}.",
+      "completedAllLevels": "Congratulations! You've completed all DinoQuiz levels.",
+      "insufficientScore": "Good try! Keep playing to unlock the next level.",
+      "ageRestricted": "Game over! Thanks for playing with the dinosaurs."
+    },
+    "playAgainButton": "Play again",
+    "nextLevelButtonFormat": "Go to level {level}",
+    "repeatLevelButton": "Repeat this level",
+    "repeatLevelButtonFormat": "Repeat level {level}",
+    "goToNextLevelButtonFormat": "Go to level {level}",
+    "backToSelectorButton": "Back to mode selection",
+    "exitButton": "Exit",
+    "messages": [
+      "You did great! Keep discovering fun dinosaur facts.",
+      "What a fun game! You're getting to know the dinosaurs better every time.",
+      "Keep it up, champ! Learning about dinosaurs is so much fun.",
+      "Well played! Your curiosity about dinosaurs is huge.",
+      "Great effort! Play again to discover more fun facts.",
+      "You're an amazing explorer! The dinosaurs are proud of you."
+    ],
+    "ads": {
+      "groupLabel": "Ad space",
+      "bannerBadge": "Ad",
+      "bannerMessage": "Discover more dinosaur adventures.",
+      "rewardedBadge": "Ad",
+      "rewardedButton": "Watch an ad to discover an extra clue"
+    }
+  },
+  "feedback": {
+    "correct": {
+      "message": "Great, you got it right!"
+    },
+    "incorrect": {
+      "message": "Good try!"
+    },
+    "scoreAnnouncementFormat": "Points: {score}"
+  },
+  "question": {
+    "optionsGroupLabel": "Answer options",
+    "imageAltFormat": "Illustration of a {dinosaur}",
+    "levelFormat": "Level {level}",
+    "progressFormat": "{current} of {total}",
+    "feedback": {
+      "correct": "Great, you got it right!",
+      "incorrect": "Good try!"
+    },
+    "correctAnswerAnnouncementFormat": "The correct answer is: {answer}.",
+    "correctOptionAriaLabelFormat": "Correct answer: {answer}",
+    "selectedOptionAriaLabelFormat": "Your answer: {answer}",
+    "answerAnnouncement": {
+      "correct": "Great, you got it right! The correct answer was: {correctAnswer}",
+      "incorrect": "Good try! The correct answer was: {correctAnswer}"
+    },
+    "correctAnswerAnnouncement": "The correct answer was: {correctAnswer}.",
+    "correctOptionAriaLabel": "Correct answer: {answer}",
+    "selectedOptionAriaLabel": "Your answer: {answer}",
+    "funFactHeading": "Fun fact",
+    "scoreLabel": "Points",
     "nextButton": "Next",
+    "imageAlt": "Illustration of a {dinosaur}",
+    "imageAltFunFact": "Fun fact: {funFact}",
     "dinosaurNames": {
       "trex": "Tyrannosaurus Rex",
       "triceratops": "Triceratops",
@@ -40,12 +302,65 @@
       "ankylosaurus": "Ankylosaurus",
       "pteranodon": "Pteranodon",
       "spinosaurus": "Spinosaurus",
-      "dilophosaurus": "Dilophosaurus",
-      "pachycephalosaurus": "Pachycephalosaurus",
-      "compsognathus": "Compsognathus",
+      "parasaurolophus": "Parasaurolophus",
       "diplodocus": "Diplodocus",
       "iguanodon": "Iguanodon",
-      "parasaurolophus": "Parasaurolophus"
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus"
+    },
+    "rewardedAd": {
+      "ctaLabel": "🎬 Watch ad: extra fact!",
+      "ctaAriaLabel": "Watch an ad to unlock an extra fun fact about this dinosaur",
+      "loadingLabel": "Loading the ad…",
+      "notCompletedMessage": "The extra fact couldn't be unlocked this time. Keep playing!",
+      "extraFactHeading": "Extra fact unlocked!",
+      "extraFacts": {
+        "trex": "T-Rex could detect the smell of rotting meat from many kilometers away.",
+        "triceratops": "Triceratops could weigh up to 12 tons — as much as two African elephants!",
+        "velociraptor": "Velociraptor had an excellent sense of smell that helped it track its prey.",
+        "estegosaurio": "Stegosaurus measured up to 9 meters long — almost as long as a school bus!",
+        "braquiosaurio": "Brachiosaurus had its nostrils high on its head, between its eyes.",
+        "ankylosaurus": "Ankylosaurus had a body as wide as a small van.",
+        "pteranodon": "Pteranodon could measure more than 6 meters from wingtip to wingtip."
+      }
+    }
+  },
+  "maze": {
+    "screenTitle": "Maze",
+    "instructions": "Help the dinosaur reach the food by moving through the maze with the arrows.",
+    "boardLabel": "Maze",
+    "dinosaurAlt": "Dino, the dinosaur you need to guide through the maze",
+    "foodAlt": "Food the dinosaur must reach",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. Help the dinosaur find the food.",
+    "controls": {
+      "groupLabel": "Movement controls",
+      "up": "Up",
+      "down": "Down",
+      "left": "Left",
+      "right": "Right",
+      "upAriaLabel": "Move the dinosaur up",
+      "downAriaLabel": "Move the dinosaur down",
+      "leftAriaLabel": "Move the dinosaur left",
+      "rightAriaLabel": "Move the dinosaur right",
+      "unavailableState": "not available",
+      "unavailableAriaLabelFormat": "{direction}, not available: there is a wall"
+    },
+    "movementBlocked": {
+      "message": "There's a wall that way, try another arrow.",
+      "announcement": "Movement blocked: there's a wall that way. Try another arrow."
+    },
+    "roundResult": {
+      "correctMessage": "Great job! You brought the food to the dinosaur.",
+      "foodDeliveredAnnouncementFormat": "Great! You brought the food to the dinosaur in {moves} moves.",
+      "nextButton": "Next"
+    },
+    "gameOver": {
+      "heading": "Maze complete!",
+      "announcementFormat": "You finished the maze. You helped the dinosaur find the food in {score} of {total} rounds.",
+      "message": "Great job exploring the maze! Keep playing to discover more paths."
     }
   },
   "oidoJurasico": {
@@ -111,6 +426,538 @@
       "iguanodon": "Iguanodon",
       "parasaurolophus": "Parasaurolophus"
     }
+  },
+  "parejas": {
+    "screenTitle": "Jurassic Pairs",
+    "instructions": "Flip two cards to find the matching pair for each creature.",
+    "boardLabel": "Jurassic Pairs card board",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. Find the matching creature pairs.",
+    "progressFormat": "Pairs found: {matched} of {total}",
+    "card": {
+      "hiddenAriaLabelFormat": "Face-down card, position {position}",
+      "revealedAriaLabelFormat": "Face-up card, position {position}: {creature}",
+      "matchedAriaLabelFormat": "Pair found, position {position}: {creature}",
+      "matchedBadge": "Match"
+    },
+    "feedback": {
+      "blockedMessage": "Wait: you already have two cards face up.",
+      "blockedAnnouncement": "You already have two cards face up. Wait to see if they match before flipping another.",
+      "matchMessageFormat": "Great, pair found! Both cards were {creature}.",
+      "mismatchMessageFormat": "Not a match: {first} and {second}. Try again.",
+      "softLimitHint": "Tip: look closely at each card before flipping the next one."
+    },
+    "roundResult": {
+      "correctMessageFormat": "Great, you found all {total} pairs in {attempts} tries!",
+      "nextButton": "Next"
+    },
+    "gameOver": {
+      "heading": "Jurassic Pairs complete!",
+      "announcementFormat": "You finished Jurassic Pairs. You completed {score} of {total} rounds.",
+      "message": "Great job remembering where each creature was! Keep playing to improve your memory."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "sizeOrder": {
+    "screenTitle": "Sort by Size",
+    "instructions": "Tap two creatures to swap their places until they're ordered from smallest to largest. When you're done, tap \"Confirm order\".",
+    "boardLabel": "Creatures to sort by size",
+    "creatureAltFormat": "Illustration of a {dinosaur}",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. Sort the creatures from smallest to largest.",
+    "confirmButton": "Confirm order",
+    "selection": {
+      "selectAriaLabelFormat": "{dinosaur}, position {position} of {total}. Tap to select it and swap its place.",
+      "selectedAriaLabelFormat": "{dinosaur}, position {position} of {total}, selected. Tap another creature to swap it with this one.",
+      "lockedAriaLabelFormat": "{dinosaur}, position {position} of {total}.",
+      "selectedBadge": "Selected",
+      "selectedAnnouncementFormat": "You selected {dinosaur}, position {position} of {total}. Tap another creature to swap it with this one.",
+      "swapAnnouncementFormat": "You swapped {firstDinosaur} and {secondDinosaur}. Now {firstDinosaur} is in position {firstPosition} of {total} and {secondDinosaur} is in position {secondPosition} of {total}.",
+      "deselectAnnouncementFormat": "You deselected {dinosaur}."
+    },
+    "feedback": {
+      "correct": "Great, you sorted them correctly!",
+      "incorrect": "That wasn't the correct order yet, but that's how you learn! Here's the correct order.",
+      "correctLabel": "Correct",
+      "incorrectLabel": "Incorrect"
+    },
+    "roundResult": {
+      "correctAnnouncementFormat": "Great, you got it! The correct order, from smallest to largest, is: {order}.",
+      "incorrectAnnouncementFormat": "That wasn't the correct order yet. The correct order, from smallest to largest, is: {order}.",
+      "orderLabel": "Correct order, from smallest to largest",
+      "creatureLengthFormat": "{dinosaur}: {lengthMeters} meters",
+      "nextButton": "Next"
+    },
+    "generationError": {
+      "message": "We couldn't prepare this round because the available creatures were too similar in size. Let's try another round!",
+      "announcement": "This round couldn't be created because the available creatures were too similar in size. Let's try another round."
+    },
+    "dataError": {
+      "message": "We couldn't prepare this round because the received data wasn't valid. Let's try another round!",
+      "announcement": "We couldn't prepare this round because the received data wasn't valid."
+    },
+    "gameOver": {
+      "heading": "Sort by Size complete!",
+      "announcementFormat": "You finished Sort by Size. You correctly sorted {score} of {total} rounds.",
+      "message": "Great job sorting the creatures! Keep playing to discover more sizes."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "parasaurolophus": "Parasaurolophus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus"
+    }
+  },
+  "shadowGuess": {
+    "name": "Guess the Shadow",
+    "instructions": "Look at the silhouette and choose, among four creatures, the one you think is hiding behind it.",
+    "options": {
+      "option1Label": "Option 1: {creature}",
+      "option2Label": "Option 2: {creature}",
+      "option3Label": "Option 3: {creature}",
+      "option4Label": "Option 4: {creature}"
+    },
+    "feedback": {
+      "correct": "Correct! You guessed the shadow.",
+      "incorrect": "Incorrect. Keep trying!",
+      "correctAnswer": "The correct answer was {creature}."
+    },
+    "blocked": {
+      "insufficientCatalog": "Guess the Shadow isn't available yet: it needs at least 12 approved creatures that are visually distinguishable from each other to unlock this mode."
+    },
+    "results": {
+      "title": "Guess the Shadow Results",
+      "score": "Guess the Shadow Score",
+      "percentage": "Accuracy Percentage",
+      "stars": "Stars Earned",
+      "progress": "Guess the Shadow Progress"
+    },
+    "optionsGroupLabel": "Answer options",
+    "correctOptionAriaLabelFormat": "Correct answer: {creature}",
+    "selectedOptionAriaLabelFormat": "Your answer: {creature}",
+    "scoreLabel": "Points",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "nextButton": "Next",
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "classify": {
+    "screenTitle": "Classify",
+    "instructions": "Look at the creature and tap its category: carnivore, herbivore, or omnivore.",
+    "levelFormat": "Level {level}",
+    "roundFormat": "Round {current} of {total}",
+    "roundChangeAnnouncementFormat": "Round {current} of {total}. Look at {dinosaur} and choose its category.",
+    "categoriesGroupLabel": "Categories",
+    "categoryButtonAriaLabelFormat": "{label}: {description}. Tap to choose this category.",
+    "categoryCorrectAriaLabelFormat": "Correct category: {label}",
+    "categorySelectedAriaLabelFormat": "Your answer: {label}",
+    "categories": {
+      "carnivoro": {
+        "label": "Carnivore",
+        "description": "Eats the meat of other animals"
+      },
+      "herbivoro": {
+        "label": "Herbivore",
+        "description": "Eats only plants"
+      },
+      "omnivoro": {
+        "label": "Omnivore",
+        "description": "Eats plants and also the meat of other animals"
+      }
+    },
+    "feedback": {
+      "correctMessageFormat": "Great, you got it right! {dinosaur} is {category}.",
+      "incorrectMessageFormat": "Good try! {dinosaur} is {category}, not {yourCategory}.",
+      "bonusMessage": "Speed bonus earned!"
+    },
+    "blocked": {
+      "message": "We couldn't verify this creature's category yet. Let's try another round!",
+      "announcementFormat": "Round blocked: we couldn't verify {dinosaur}'s category yet. Let's try another round."
+    },
+    "roundResult": {
+      "nextButton": "Next"
+    },
+    "gameOver": {
+      "heading": "Classify complete!",
+      "announcementFormat": "You finished Classify. You got {score} of {total} rounds right.",
+      "message": "Great job classifying the creatures! Keep playing to learn about more diets."
+    },
+    "dinosaurNames": {
+      "trex": "Tyrannosaurus Rex",
+      "triceratops": "Triceratops",
+      "velociraptor": "Velociraptor",
+      "estegosaurio": "Stegosaurus",
+      "braquiosaurio": "Brachiosaurus",
+      "ankylosaurus": "Ankylosaurus",
+      "pteranodon": "Pteranodon",
+      "spinosaurus": "Spinosaurus",
+      "dilophosaurus": "Dilophosaurus",
+      "pachycephalosaurus": "Pachycephalosaurus",
+      "compsognathus": "Compsognathus",
+      "diplodocus": "Diplodocus",
+      "iguanodon": "Iguanodon",
+      "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "dinosaurNames": {
+    "trex": "Tyrannosaurus Rex",
+    "triceratops": "Triceratops",
+    "velociraptor": "Velociraptor",
+    "estegosaurio": "Stegosaurus",
+    "braquiosaurio": "Brachiosaurus",
+    "ankylosaurus": "Ankylosaurus",
+    "pteranodon": "Pteranodon",
+    "spinosaurus": "Spinosaurus",
+    "parasaurolophus": "Parasaurolophus",
+    "diplodocus": "Diplodocus",
+    "iguanodon": "Iguanodon",
+    "dilophosaurus": "Dilophosaurus",
+    "pachycephalosaurus": "Pachycephalosaurus",
+    "compsognathus": "Compsognathus"
+  },
+  "funFacts": {
+    "trex-01": "T-Rex had the strongest bite of all known carnivorous dinosaurs.",
+    "trex-02": "Even though its arms were tiny, they were surprisingly strong!",
+    "trex-03": "T-Rex lived about 68 million years ago, almost at the very end of the age of dinosaurs!",
+    "trex-04": "T-Rex used its huge tail to keep its balance while walking and running.",
+    "trex-05": "Its teeth were as thick as a banana and were used to crush bones.",
+    "trex-06": "Its name comes from Greek and Latin and means something like \"the king of the tyrant lizards\".",
+    "triceratops-01": "Its three horns could measure almost a meter long — longer than an adult's arm!",
+    "triceratops-02": "Triceratops used its sharp beak to cut tough plants, like small shrubs.",
+    "triceratops-03": "That bony shield is called a \"frill\" and also helped impress other Triceratops.",
+    "triceratops-04": "Triceratops walked on four sturdy legs, like a giant rhinoceros.",
+    "triceratops-05": "\"Triceratops\" comes from Greek and literally means \"three-horned face\".",
+    "triceratops-06": "Triceratops fossils have been found with T-Rex tooth marks — proof of their battles!",
+    "velociraptor-01": "Despite what some movies show, Velociraptor was about the size of a large turkey.",
+    "velociraptor-02": "That curved, sickle-shaped claw could measure several centimeters and was deadly for hunting.",
+    "velociraptor-03": "Velociraptor was a very fast and intelligent hunter that chased other small animals.",
+    "velociraptor-04": "Many scientists think Velociraptors hunted in groups to catch larger prey.",
+    "velociraptor-05": "Scientists have found marks on its bones showing it had feathers, like a bird!",
+    "velociraptor-06": "Velociraptor ran on its two hind legs and was very fast and agile.",
+    "estegosaurio-01": "Stegosaurus's plates formed two rows all along its back.",
+    "estegosaurio-02": "Those tail spikes could be used as a weapon to scare off predators.",
+    "estegosaurio-03": "Stegosaurus ate low-lying plants because it couldn't lift its head very high.",
+    "estegosaurio-04": "Stegosaurus's brain was the size of a walnut — very small for such a large animal!",
+    "estegosaurio-05": "Stegosaurus walked on four legs, with its hind legs longer than its front legs.",
+    "estegosaurio-06": "Scientists believe the plates helped release heat and regulate its body temperature.",
+    "braquiosaurio-01": "Brachiosaurus's very long neck let it eat leaves from the tallest trees.",
+    "braquiosaurio-02": "Brachiosaurus spent much of the day eating leaves to feed its enormous body.",
+    "braquiosaurio-03": "Brachiosaurus could stand more than 12 meters tall — like a four-story building!",
+    "braquiosaurio-04": "Unlike many dinosaurs, Brachiosaurus had front legs longer than its hind legs.",
+    "braquiosaurio-05": "Brachiosaurus needed its four sturdy legs to support its enormous weight.",
+    "braquiosaurio-06": "Brachiosaurus lived about 150 million years ago, during the Jurassic period.",
+    "ankylosaurus-01": "Its tail club was so hard and heavy it could break an attacker's bones.",
+    "ankylosaurus-02": "Ankylosaurus was covered in bony plates like real armor — even on its eyelids!",
+    "ankylosaurus-03": "Ankylosaurus ate plants close to the ground, since it couldn't lift its head very high.",
+    "ankylosaurus-04": "When a predator came close, Ankylosaurus struck hard using its tail club.",
+    "ankylosaurus-05": "Ankylosaurus walked on four short, strong legs, close to the ground.",
+    "pteranodon-01": "Although it lived alongside the dinosaurs, Pteranodon was a pterosaur — a different kind of flying reptile!",
+    "pteranodon-02": "Its wings were made of stretched skin, similar to a bat's but much larger.",
+    "pteranodon-03": "Pteranodon flew over the sea and caught fish with its long beak, like a giant pelican.",
+    "pteranodon-04": "That long crest on its head may have helped it fly better or recognize other Pteranodons.",
+    "pteranodon-05": "Despite its large beak, Pteranodon had no teeth — it swallowed fish whole!",
+    "trex-07": "Most T-Rex fossils have been found in North America, especially in Montana and Dakota.",
+    "trex-08": "An adult Tyrannosaurus Rex could measure about 12 meters long — as long as a bus!",
+    "trex-09": "T-Rex's eyes faced forward, giving it very good vision for judging distances.",
+    "trex-10": "T-Rex had a very keen sense of smell that helped it find food from far away.",
+    "trex-11": "An adult T-Rex could weigh as much as a large elephant.",
+    "trex-12": "Today's birds are distant relatives of dinosaurs like T-Rex.",
+    "trex-13": "Young T-Rexes are called juveniles, and they grew very fast until they became enormous.",
+    "trex-14": "66 million years ago, a great change on Earth caused T-Rex and other dinosaurs to go extinct.",
+    "trex-15": "T-Rex's hind legs were huge and strong, very different from its tiny arms.",
+    "trex-16": "T-Rex was a carnivore: it ate the meat of other animals.",
+    "trex-17": "The T-Rex fossil named \"Sue\" is one of the most complete skeletons known.",
+    "trex-18": "T-Rex's bite is among the strongest ever calculated for a land animal.",
+    "trex-19": "T-Rex's teeth were as thick as a banana, ideal for crushing bones.",
+    "trex-20": "It's believed that, besides hunting, T-Rex also scavenged animals that had already died.",
+    "trex-21": "The badlands of Montana and Dakota, in the United States, have yielded a huge number of T-Rex fossils.",
+    "trex-22": "T-Rex's brain was relatively large for a dinosaur and had a highly developed sense of smell.",
+    "triceratops-07": "Triceratops's beak was perfect for tearing off tough plants and low branches.",
+    "triceratops-08": "Triceratops had hundreds of small teeth grouped into \"batteries\" for grinding plants.",
+    "triceratops-09": "An adult Triceratops could measure about 9 meters long.",
+    "triceratops-10": "Although they're not related, Triceratops is sometimes compared to a rhinoceros because of its horns.",
+    "triceratops-11": "Triceratops lived in the Cretaceous, shortly before the dinosaurs went extinct.",
+    "triceratops-12": "Besides defending itself, Triceratops probably used its horns to compete with others of its species.",
+    "triceratops-13": "Most Triceratops fossils have been found in North America.",
+    "triceratops-14": "Triceratops walked on four legs, with slow, heavy steps due to its great size.",
+    "triceratops-15": "Triceratops's beak resembled a parrot's, ideal for cutting tough plants.",
+    "triceratops-16": "Triceratops's horns changed shape and grew as the animal aged.",
+    "triceratops-17": "Triceratops's skull, with its large bony frill, is one of the largest among land animals.",
+    "triceratops-18": "Some fossils suggest that Triceratops could gather in herds from time to time.",
+    "triceratops-19": "\"Tri\" means \"three\", for the three horns it had on its face.",
+    "triceratops-20": "Triceratops belonged to the ceratopsids, the family of dinosaurs with horns and a beak.",
+    "triceratops-21": "Faced with a threat, Triceratops probably lowered its head and aimed its horns.",
+    "triceratops-22": "Because of its great size, Triceratops needed to eat a large amount of plants every day.",
+    "velociraptor-07": "Velociraptor lived in Asia, in desert areas like those of Mongolia.",
+    "velociraptor-08": "Velociraptor is considered one of the most intelligent dinosaurs known.",
+    "velociraptor-09": "The \"fighting dinosaurs\" fossil shows a Velociraptor and a Protoceratops locked in battle.",
+    "velociraptor-10": "Velociraptor's long, stiff tail helped it keep its balance while running and turning.",
+    "velociraptor-11": "In real life, Velociraptor was much smaller than in the movies: barely the size of a large turkey.",
+    "velociraptor-12": "Marks on the bones of Velociraptor's arms show it had anchor points for feathers.",
+    "velociraptor-13": "Velociraptor's curved claw was used to grip and wound its prey while hunting.",
+    "velociraptor-14": "Velociraptor mostly hunted small and medium-sized animals, like lizards or mammals.",
+    "velociraptor-15": "Velociraptor lived in the Late Cretaceous, about 75 million years ago.",
+    "velociraptor-16": "Velociraptor lived in a dry, desert landscape with sand dunes.",
+    "velociraptor-17": "Velociraptor's brain was relatively large for its size, a sign it was a clever animal.",
+    "velociraptor-18": "Modern birds descend from the same large group of dinosaurs as Velociraptor.",
+    "velociraptor-19": "The name \"Velociraptor\" means \"swift thief\".",
+    "velociraptor-20": "Velociraptor had a long, narrow snout full of small, sharp teeth.",
+    "velociraptor-21": "Deinonychus was a close relative of Velociraptor, but quite a bit larger.",
+    "velociraptor-22": "Velociraptor laid eggs, just like birds and most dinosaurs.",
+    "estegosaurio-07": "Stegosaurus is believed to have had about 17 bony plates arranged in two rows along its back.",
+    "estegosaurio-08": "Stegosaurus could measure about 9 meters long.",
+    "estegosaurio-09": "Most Stegosaurus fossils have been found in North America.",
+    "estegosaurio-10": "Stegosaurus lived in the Late Jurassic, about 150 million years ago.",
+    "estegosaurio-11": "Stegosaurus's narrow beak was perfect for tearing leaves off low plants.",
+    "estegosaurio-12": "Stegosaurus lived alongside Allosaurus, a large predator from the same era.",
+    "estegosaurio-13": "Some Stegosaurus fossils show wound marks, proof that it defended itself from attackers.",
+    "estegosaurio-14": "Stegosaurus moved fairly slowly, walking on four legs.",
+    "estegosaurio-15": "When it felt threatened, Stegosaurus swung its tail forcefully to strike with its spikes.",
+    "estegosaurio-16": "The set of spikes on Stegosaurus's tail is known as the \"thagomizer\".",
+    "estegosaurio-17": "Besides defense, Stegosaurus's plates may have served to display to others of its species.",
+    "estegosaurio-18": "The name \"Stegosaurus\" means \"roofed lizard\", for the plates along its back.",
+    "estegosaurio-19": "Stegosaurus's plates were anchored in the skin, not directly attached to the spine.",
+    "estegosaurio-20": "The spikes on Stegosaurus's tail could measure close to a meter long.",
+    "estegosaurio-21": "Stegosaurus was an herbivore: it fed only on plants.",
+    "braquiosaurio-07": "By raising its neck, Brachiosaurus could reach more than 12 meters in height.",
+    "braquiosaurio-08": "Brachiosaurus's teeth were spoon- or peg-shaped, perfect for stripping leaves.",
+    "braquiosaurio-09": "An adult Brachiosaurus could weigh as much as several elephants combined.",
+    "braquiosaurio-10": "Brachiosaurus fossils have been found in both North America and Africa.",
+    "braquiosaurio-11": "Brachiosaurus's enormous body needed a huge amount of energy, so it ate plants almost all day long.",
+    "braquiosaurio-12": "Brachiosaurus's head was small compared to its gigantic body.",
+    "braquiosaurio-13": "Because of its long neck, Brachiosaurus's heart had to work very hard to pump blood up to its head.",
+    "braquiosaurio-14": "Brachiosaurus was a sauropod: a gigantic, very long-necked herbivore.",
+    "braquiosaurio-15": "The name \"Brachiosaurus\" means \"arm lizard\", for its long front legs.",
+    "braquiosaurio-16": "Brachiosaurus's enormous size protected it from most predators.",
+    "braquiosaurio-17": "Unlike other giant sauropods, Brachiosaurus's tail was shorter than usual.",
+    "braquiosaurio-18": "Brachiosaurus lived in forests and plains with tall trees, its main source of food.",
+    "braquiosaurio-19": "Some fossil footprints suggest that Brachiosaurus could move in groups.",
+    "braquiosaurio-20": "Brachiosaurus walked slowly, with big, heavy steps.",
+    "braquiosaurio-21": "Thanks to its very long neck, Brachiosaurus could reach the highest leaves in the trees.",
+    "ankylosaurus-06": "Ankylosaurus measured between 6 and 8 meters, like a small bus.",
+    "ankylosaurus-07": "Ankylosaurus's body was very wide and low, almost touching the ground.",
+    "ankylosaurus-08": "Ankylosaurus had bony plates even around its eyelids to protect its eyes.",
+    "ankylosaurus-09": "Ankylosaurus lived in the Late Cretaceous, near the end of the age of dinosaurs.",
+    "ankylosaurus-10": "Ankylosaurus fossils have been found in North America.",
+    "ankylosaurus-11": "Ankylosaurus had a wide beak, toothless at the front, ideal for tearing off low plants.",
+    "ankylosaurus-12": "Ankylosaurus's brain was quite small compared to its large body.",
+    "ankylosaurus-13": "Ankylosaurus had special bones in its ear that gave it very keen hearing.",
+    "ankylosaurus-14": "The blow from Ankylosaurus's tail club had enough force to injure a predator.",
+    "ankylosaurus-15": "Ankylosaurus was an herbivore: it ate low-lying plants.",
+    "ankylosaurus-16": "Ankylosaurus moved slowly, supported on its four short, sturdy legs.",
+    "ankylosaurus-17": "The name \"Ankylosaurus\" means \"fused lizard\", for its rigid armor.",
+    "ankylosaurus-18": "Ankylosaurus lived alongside Tyrannosaurus Rex, one of the great predators of its time.",
+    "ankylosaurus-19": "Under Ankylosaurus's skin were bony plates called osteoderms, which formed its armor.",
+    "ankylosaurus-20": "Ankylosaurus had rows of spikes and bony plates all along its back and sides.",
+    "ankylosaurus-21": "Ankylosaurus's body was completely covered in armor, which made it very hard to attack.",
+    "pteranodon-06": "Pteranodon could reach up to about 6 meters in wingspan with its wings extended.",
+    "pteranodon-07": "Pteranodon lived near seas and coasts, where it could fish easily.",
+    "pteranodon-08": "Male Pteranodons usually had a larger crest than females.",
+    "pteranodon-09": "Pteranodon's bones were hollow and light, like a bird's, to make flying easier.",
+    "pteranodon-10": "Pteranodon lived in the Late Cretaceous.",
+    "pteranodon-11": "Pteranodon flew low over the water and caught fish with its long beak.",
+    "pteranodon-12": "Although it wasn't a bird, Pteranodon resembled one in its ability to fly.",
+    "pteranodon-13": "On land, Pteranodon could walk supported on all four limbs.",
+    "pteranodon-14": "Pteranodon's wings were made of skin stretched between its body and one very long finger.",
+    "pteranodon-15": "Pteranodon probably laid its eggs in nests, gathered in colonies on cliffs.",
+    "pteranodon-16": "Pteranodon went extinct at the end of the Cretaceous, along with the dinosaurs.",
+    "pteranodon-17": "The name \"Pteranodon\" means \"toothless wing\", because it didn't have a single tooth.",
+    "pteranodon-18": "In Kansas, United States, many important Pteranodon fossils have been found.",
+    "pteranodon-19": "Pteranodon had very sharp eyesight, key for spotting fish from the air.",
+    "pteranodon-20": "Pteranodon used air currents to glide long distances with barely any effort.",
+    "pteranodon-21": "Pteranodon belonged to the pterosaurs, a group of flying reptiles distinct from dinosaurs.",
+    "spinosaurus-01": "Spinosaurus had cone-shaped teeth, ideal for catching slippery fish, and spent a lot of time near the water.",
+    "spinosaurus-02": "Spinosaurus's sail could measure more than a meter and a half tall.",
+    "spinosaurus-03": "Spinosaurus's long snout, with pointed teeth, resembled that of modern crocodiles.",
+    "spinosaurus-04": "Spinosaurus lived during the Cretaceous period, about 99 to 93 million years ago.",
+    "spinosaurus-05": "Spinosaurus fossils have been found in North African countries, such as Egypt and Morocco.",
+    "spinosaurus-06": "Spinosaurus is believed to have measured about 15 meters, longer than a Tyrannosaurus Rex.",
+    "spinosaurus-07": "\"Spinosaurus\" means \"spine lizard\", for the long bony spines of its sail.",
+    "spinosaurus-08": "Many scientists think Spinosaurus spent much of its life in rivers and watery areas, hunting fish.",
+    "spinosaurus-09": "Unlike T-Rex's serrated teeth, Spinosaurus's were smooth and cone-shaped, perfect for catching fish.",
+    "spinosaurus-10": "Giant fish scales have been found alongside Spinosaurus remains, supporting the idea that fish were a key part of its diet.",
+    "spinosaurus-11": "A 2020 study showed that Spinosaurus's tail was tall and flexible, ideal for propelling it through the water like a paddle.",
+    "spinosaurus-12": "German paleontologist Ernst Stromer discovered the first Spinosaurus fossils in Egypt in 1912.",
+    "spinosaurus-13": "The first Spinosaurus fossils were destroyed in 1944 in a fire at the Munich museum where they were kept.",
+    "spinosaurus-14": "Spinosaurus was probably longer than T-Rex, though not as heavy or with as powerful a bite.",
+    "spinosaurus-15": "Besides regulating temperature, the striking sail may have served to display to other Spinosaurus, for example during mating season.",
+    "spinosaurus-16": "Spinosaurus's bones were dense, similar to those of animals like hippopotamuses, which would help it sink and swim better.",
+    "spinosaurus-17": "Carcharodontosaurus, another large carnivore, lived alongside Spinosaurus, but mostly hunted prey on dry land.",
+    "spinosaurus-18": "Spinosaurus's nostrils were positioned further back, which let it breathe even with its snout underwater.",
+    "spinosaurus-19": "With the original fossils lost, scientists had to rely on drawings and notes for decades, until new remains were found in Morocco.",
+    "spinosaurus-20": "Although there are several hypotheses (display, temperature regulation, help with swimming), scientists still debate what the sail's main function was.",
+    "spinosaurus-21": "Spinosaurus belonged to the spinosaurids, a family of carnivorous dinosaurs with long snouts adapted for fishing.",
+    "spinosaurus-22": "Spinosaurus's skull was lower and longer than T-Rex's, a shape more like a crocodile's and suited for fishing.",
+    "parasaurolophus-01": "Parasaurolophus's crest could measure almost two meters long.",
+    "parasaurolophus-02": "Parasaurolophus was an herbivore and ate plants with a beak similar to a duck's.",
+    "parasaurolophus-03": "Parasaurolophus could walk on four legs to look for food and run on two legs if it needed to flee quickly.",
+    "parasaurolophus-04": "Parasaurolophus lived in the Cretaceous period, about 76 to 73 million years ago.",
+    "parasaurolophus-05": "Air passed through the inside of its hollow crest, and by blowing it could produce low sounds, like a trumpet.",
+    "parasaurolophus-06": "Parasaurolophus was a hadrosaur, a group of herbivorous dinosaurs with a duck-billed snout.",
+    "parasaurolophus-07": "Parasaurolophus had hundreds of small teeth grouped into tooth batteries, ideal for grinding tough plants.",
+    "parasaurolophus-08": "Parasaurolophus fossils have mostly been found in North America, in what is now the United States and Canada.",
+    "parasaurolophus-09": "\"Parasaurolophus\" roughly means \"near crested lizard\", due to its resemblance to another dinosaur called Saurolophus.",
+    "parasaurolophus-10": "Faced with danger, Parasaurolophus probably ran on its hind legs and could warn others with sounds from its crest.",
+    "parasaurolophus-11": "Like other dinosaurs, Parasaurolophus hatched from eggs, and the hatchlings were much smaller than the adults, growing little by little.",
+    "parasaurolophus-12": "An adult Parasaurolophus could reach about 10 meters long, roughly like two cars parked end to end.",
+    "parasaurolophus-13": "Both Parasaurolophus and Triceratops separately evolved teeth grouped into tooth batteries for grinding tough plants.",
+    "parasaurolophus-14": "Scientists believe the crest's size could vary with the animal's age, and perhaps also between males and females.",
+    "parasaurolophus-15": "Using scans and computer models of the hollow crest, scientists have recreated possible low sounds similar to a trumpet.",
+    "parasaurolophus-16": "Living in a herd helped Parasaurolophus detect predators sooner and better protect the group's young.",
+    "parasaurolophus-17": "Parasaurolophus lived in the same time and region as Tyrannosaurus Rex, one of its possible predators.",
+    "parasaurolophus-18": "The crest was actually an extension of the nasal bones, with passages through which air flowed while breathing.",
+    "parasaurolophus-19": "Many paleontologists think the crest served several functions at once: producing sound, helping tell species apart, and perhaps regulating heat.",
+    "parasaurolophus-20": "Unlike other hadrosaurs, Parasaurolophus developed a long, hollow nasal chamber inside its crest, unique of its kind.",
+    "parasaurolophus-21": "Parasaurolophus was an herbivore and ate plants, while Spinosaurus was a carnivore and fed mostly on fish and other animals.",
+    "parasaurolophus-22": "Sites have been discovered with numerous hadrosaur skeletons of different ages, suggesting they lived and perhaps migrated in large groups.",
+    "diplodocus-01": "Diplodocus's tail could have more than 70 bones and ended in a thin tip, like a whip.",
+    "diplodocus-02": "Diplodocus was an herbivore and spent much of the day eating large amounts of plants.",
+    "diplodocus-03": "Diplodocus's long neck helped it reach leaves from trees and low plants without moving much.",
+    "diplodocus-04": "Diplodocus walked on its four sturdy legs, like a giant elephant.",
+    "diplodocus-05": "Diplodocus lived during the Jurassic period, about 154 to 152 million years ago.",
+    "diplodocus-06": "Diplodocus could measure up to about 25 meters long, one of the longest dinosaurs known.",
+    "diplodocus-07": "\"Diplodocus\" means \"double beam\", for the special shape of the bones located under its tail.",
+    "diplodocus-08": "Diplodocus's teeth were small and peg-shaped, and were located only at the front of its mouth.",
+    "diplodocus-09": "Most Diplodocus fossils have been found in North America, in what is now the United States.",
+    "diplodocus-10": "Diplodocus swallowed stones, called gastroliths, that helped grind food inside its stomach.",
+    "diplodocus-11": "Some scientists believe Diplodocus could crack its tail like a whip, perhaps to defend itself or scare off predators.",
+    "diplodocus-12": "Recent studies suggest Diplodocus mostly kept its neck in a horizontal position, rather than upright as previously thought.",
+    "diplodocus-13": "An adult Diplodocus could weigh several tons, though less than other giant sauropods like Brachiosaurus.",
+    "diplodocus-14": "Diplodocus and Brachiosaurus belonged to the sauropods, a group of large, long-necked, four-legged herbivores.",
+    "diplodocus-15": "While Brachiosaurus could raise its neck to reach high leaves, Diplodocus's stayed more horizontal, close to the ground.",
+    "diplodocus-16": "Fossils almost never preserve the original skin color, so the colors of dinosaurs in illustrations are mostly an approximate reconstruction.",
+    "diplodocus-17": "Some studies suggest that the thin tip of Diplodocus's tail could move so fast it would produce a crack, like a real whip.",
+    "diplodocus-18": "By analyzing the flexibility of the neck vertebrae and comparing them with modern birds and reptiles, scientists continue to debate how high Diplodocus could raise its neck.",
+    "diplodocus-19": "Dinosaur National Monument, in Utah and Colorado (USA), has yielded numerous fossils of Diplodocus and other Jurassic sauropods.",
+    "diplodocus-20": "Plants provide less energy than meat, so an animal as enormous as Diplodocus needed to eat almost constantly to sustain itself.",
+    "diplodocus-21": "Diplodocus and Apatosaurus belong to the same family of sauropods, the diplodocids, and share several characteristics.",
+    "diplodocus-22": "With teeth so small and located only at the front, Diplodocus didn't chew well: it stripped off leaves and swallowed them almost whole.",
+    "iguanodon-01": "Iguanodon had a pointed spike on each thumb, perhaps used for defense.",
+    "iguanodon-02": "Iguanodon was an herbivore and ate leaves, seeds, and other plants.",
+    "iguanodon-03": "Iguanodon could walk on all four legs or rise up on its two hind legs.",
+    "iguanodon-04": "Iguanodon lived in the Cretaceous period, about 125 to 120 million years ago.",
+    "iguanodon-05": "\"Iguanodon\" means \"iguana tooth\", because its teeth resembled those of modern iguanas, though much larger.",
+    "iguanodon-06": "Many Iguanodon fossils have been found in Europe, especially in Belgium and England.",
+    "iguanodon-07": "Iguanodon had an elongated snout, with a face that reminds some scientists of a horse's.",
+    "iguanodon-08": "Like most dinosaurs, Iguanodon had four legs, though it could rise up on its hind legs.",
+    "iguanodon-09": "An adult Iguanodon could measure about 10 meters long, as big as an articulated bus.",
+    "iguanodon-10": "Physician and geologist Gideon Mantell first described Iguanodon in 1825, one of the first dinosaurs known to science.",
+    "iguanodon-11": "In 1878, in a coal mine in Bernissart (Belgium), dozens of nearly complete Iguanodon skeletons were discovered.",
+    "iguanodon-12": "In early reconstructions, scientists mistakenly placed the thumb spike on the nose, as if it were a horn.",
+    "iguanodon-13": "Iguanodon's teeth were wide and ridged, perfect for grinding fibrous plants before swallowing them.",
+    "iguanodon-14": "The discovery of so many skeletons together at Bernissart suggests Iguanodons could live and travel in herds.",
+    "iguanodon-15": "Scientists consider several possible functions for the thumb spike: defense against predators or help opening tough seeds and fruits.",
+    "iguanodon-16": "Iguanodon was one of the first fossil animals recognized as a dinosaur, and it influenced the creation of the word \"dinosaur\" in 1842.",
+    "iguanodon-17": "When walking on four legs, Iguanodon's middle toes acted almost like hooves, bearing the weight of its body.",
+    "iguanodon-18": "Early reconstructions showed a heavy animal with a horn on its nose; with more fossils, it's now depicted as a more agile herbivore, capable of walking on two or four legs.",
+    "iguanodon-19": "Iguanodon is a good example of how science advances: with each new fossil, researchers review and improve on what was known before.",
+    "iguanodon-20": "Iguanodon belonged to the iguanodontians, a group of ornithopods related to the later emergence of the hadrosaurs.",
+    "iguanodon-21": "Studying fossil footprints attributed to Iguanodon helps scientists calculate how it walked and roughly how fast it moved.",
+    "dilophosaurus-01": "\"Dilophosaurus\" means \"two-crested lizard\", for the two curved crests it had on its head.",
+    "dilophosaurus-02": "Dilophosaurus was a carnivore and hunted other animals for food.",
+    "dilophosaurus-03": "Dilophosaurus walked and ran on its two strong hind legs.",
+    "dilophosaurus-04": "Dilophosaurus lived in the early Jurassic period, about 193 million years ago.",
+    "dilophosaurus-05": "Since they were thin and fragile, the crests probably weren't used for fighting, but for recognition or display to other Dilophosaurus.",
+    "dilophosaurus-06": "Dilophosaurus could measure about 6 or 7 meters long, one of the largest predators of its time.",
+    "dilophosaurus-07": "Dilophosaurus fossils have mostly been found in what is now Arizona, in the United States.",
+    "dilophosaurus-08": "Dilophosaurus had a lighter, slimmer body than T-Rex, which probably helped it move quickly.",
+    "dilophosaurus-09": "There's no fossil evidence that Dilophosaurus spat venom; that idea is a movie invention with no scientific basis.",
+    "dilophosaurus-10": "Dilophosaurus's upper jaw had a small notch near the tip of its snout, an uncommon feature among large carnivores.",
+    "dilophosaurus-11": "As one of the largest predators of its time, Dilophosaurus probably hunted other dinosaurs and medium- to large-sized animals.",
+    "dilophosaurus-12": "Dilophosaurus belonged to the theropods, the large group of bipedal carnivorous dinosaurs that also includes T-Rex and Velociraptor.",
+    "dilophosaurus-13": "Dilophosaurus's crests were thin and fragile, so they probably weren't used for fighting, only for display.",
+    "dilophosaurus-14": "In movies it was portrayed with a neck frill and the ability to spit venom, something no fossil has ever shown.",
+    "dilophosaurus-15": "No structure, such as hollow teeth or glands, has been found to support the idea that Dilophosaurus was venomous.",
+    "dilophosaurus-16": "Dilophosaurus's skull was relatively large, but with thin bones that made it lighter than it looked.",
+    "dilophosaurus-17": "As one of the oldest known large theropods, Dilophosaurus helps scientists understand how later carnivores like T-Rex evolved.",
+    "dilophosaurus-18": "Dilophosaurus shows how movies can add traits with no scientific basis that many people later believe to be true, even though the fossils don't support them.",
+    "dilophosaurus-19": "By analyzing the thickness and bone structure of the crests, scientists conclude they were too delicate to withstand strong impacts.",
+    "dilophosaurus-20": "Dilophosaurus lived about 193 million years ago, long before T-Rex, which appeared more than 100 million years later.",
+    "dilophosaurus-21": "The Arizona site is key to understanding what the first large theropod predators were like at the start of the Jurassic period.",
+    "pachycephalosaurus-01": "Pachycephalosaurus had a skull with a very thick bony dome, up to 25 centimeters of bone.",
+    "pachycephalosaurus-02": "Pachycephalosaurus fed mainly on plants, though it may have also occasionally eaten insects.",
+    "pachycephalosaurus-03": "Pachycephalosaurus walked and ran supported on its two hind legs.",
+    "pachycephalosaurus-04": "Pachycephalosaurus lived at the end of the Cretaceous period, about 70 to 66 million years ago.",
+    "pachycephalosaurus-05": "\"Pachycephalosaurus\" means \"thick-headed lizard\", for its striking bony dome.",
+    "pachycephalosaurus-06": "Around the dome and on its snout, Pachycephalosaurus had small bony spikes and bumps.",
+    "pachycephalosaurus-07": "Pachycephalosaurus fossils have been found in North America, in what is now the United States and Canada.",
+    "pachycephalosaurus-08": "Pachycephalosaurus could measure between 4 and 5 meters long.",
+    "pachycephalosaurus-09": "Several hypotheses exist: the dome may have been used for head-butting between rivals, similar to some animals today, or simply for recognition.",
+    "pachycephalosaurus-10": "Scientists still debate whether they really butted heads head-on or whether the dome mainly served to display to others of their species.",
+    "pachycephalosaurus-11": "Pachycephalosaurus had a relatively slender body compared to its striking, thick head.",
+    "pachycephalosaurus-12": "Pachycephalosaurus was one of the last dinosaurs to live before the mass extinction 66 million years ago.",
+    "pachycephalosaurus-13": "Some more recent studies question whether the dome was really built to absorb large frontal impacts, and propose other possible functions.",
+    "pachycephalosaurus-14": "Pachycephalosaurus and Stegoceras belong to the same group, the pachycephalosaurs, dinosaurs with thickened skulls of different sizes.",
+    "pachycephalosaurus-15": "Fossils show that the dome thickened progressively with age, being flatter in young specimens.",
+    "pachycephalosaurus-16": "Pachycephalosaurus's small, varied teeth suggest it may have had a mixed diet, with plants and possibly small animals or insects.",
+    "pachycephalosaurus-17": "It has been proposed that some fossils of supposedly distinct species could actually be young Pachycephalosaurus, with the dome not yet fully developed.",
+    "pachycephalosaurus-18": "As one of the last known dinosaurs, Pachycephalosaurus helps scientists reconstruct what the world was like just before the great extinction 66 million years ago.",
+    "pachycephalosaurus-19": "Since they can't observe behavior directly, paleontologists compare the anatomy with modern animals and analyze bone strength to propose hypotheses.",
+    "pachycephalosaurus-20": "The spikes and bumps around the dome may have served, together with it, to intimidate rivals or potential predators.",
+    "pachycephalosaurus-21": "The changing views on the dome show how paleontology, like all science, revises and adjusts its ideas as new evidence and studies emerge.",
+    "compsognathus-01": "Compsognathus was one of the smallest dinosaurs known, about the size of a large chicken.",
+    "compsognathus-02": "Compsognathus hunted small animals, like lizards and insects, thanks to its speed.",
+    "compsognathus-03": "Compsognathus was agile and fast, and ran on its two hind legs to hunt.",
+    "compsognathus-04": "Compsognathus lived during the Jurassic period, about 150 million years ago.",
+    "compsognathus-05": "\"Compsognathus\" means \"elegant jaw\", for the delicate shape of its head and jaw.",
+    "compsognathus-06": "Compsognathus fossils have been found in Europe, in places like Germany and France.",
+    "compsognathus-07": "Compsognathus's body was small and light, perfect for chasing fast prey like lizards.",
+    "compsognathus-08": "An adult Compsognathus measured around 1 meter long including its long tail, though it weighed only a few kilograms.",
+    "compsognathus-09": "A famous Compsognathus fossil was preserved with the remains of a small lizard inside its stomach, revealing part of its diet.",
+    "compsognathus-10": "Compsognathus belonged to the theropods, the same large group of bipedal carnivores that includes T-Rex and Velociraptor.",
+    "compsognathus-11": "Like other small theropods, Compsognathus shares anatomical traits with the lineage that, over time, gave rise to birds.",
+    "compsognathus-12": "Its small size and light body let it move quickly and hide from larger predators.",
+    "compsognathus-13": "After close relatives with feathers were discovered, some scientists have suggested animals similar to Compsognathus might have had a simple body covering, though there's no direct evidence in its fossils.",
+    "compsognathus-14": "As a small, agile predator, Compsognathus helped control populations of tiny animals, like lizards and insects, in its habitat.",
+    "compsognathus-15": "For years it was debated whether one of the first fossils found belonged to a small adult Compsognathus or the hatchling of another species, a debate settled by later studies.",
+    "compsognathus-16": "Compsognathus proves that not all dinosaurs were giants: small, agile species also existed, about the size of birds today.",
+    "compsognathus-17": "Compsognathus is key to studying what small, fast theropods were like during the Jurassic period, an important group in dinosaur evolution.",
+    "compsognathus-18": "Compsognathus lived in the European Jurassic, while Velociraptor lived later, in the Asian Cretaceous, and had a distinctive curved claw on its second toe that Compsognathus lacked.",
+    "compsognathus-19": "The Solnhofen limestone, in Germany, preserves extraordinarily fine details thanks to its special composition, which has allowed thorough study of fossils like that of Compsognathus.",
+    "compsognathus-20": "Compsognathus and Archaeopteryx, one of the most primitive known birds, lived at roughly the same time and place, which helps in studying the transition toward birds.",
+    "compsognathus-21": "Small, delicate bones like Compsognathus's are harder to preserve, which makes it difficult to precisely calculate measurements like its exact weight."
   },
   "timeline": {
     "modeName": "Timeline",
@@ -179,6 +1026,64 @@
       "diplodocus": "Diplodocus",
       "iguanodon": "Iguanodon",
       "parasaurolophus": "Parasaurolophus"
+    }
+  },
+  "creatures": {
+    "trex": {
+      "name": "Tyrannosaurus Rex",
+      "habitat": "Plains and forests of North America"
+    },
+    "triceratops": {
+      "name": "Triceratops",
+      "habitat": "Plains and forests of North America"
+    },
+    "velociraptor": {
+      "name": "Velociraptor",
+      "habitat": "Deserts and dunes of Asia (present-day Mongolia)"
+    },
+    "estegosaurio": {
+      "name": "Stegosaurus",
+      "habitat": "Fern-and-conifer plains of North America"
+    },
+    "braquiosaurio": {
+      "name": "Brachiosaurus",
+      "habitat": "River plains and conifer forests of North America"
+    },
+    "ankylosaurus": {
+      "name": "Ankylosaurus",
+      "habitat": "Plains and forests of North America"
+    },
+    "pteranodon": {
+      "name": "Pteranodon",
+      "habitat": "Coasts and inland seas of North America"
+    },
+    "spinosaurus": {
+      "name": "Spinosaurus",
+      "habitat": "Rivers and marshes of North Africa"
+    },
+    "dilophosaurus": {
+      "name": "Dilophosaurus",
+      "habitat": "Forests and plains of North America"
+    },
+    "pachycephalosaurus": {
+      "name": "Pachycephalosaurus",
+      "habitat": "Forests and plains of North America"
+    },
+    "compsognathus": {
+      "name": "Compsognathus",
+      "habitat": "Coastal plains of Europe"
+    },
+    "diplodocus": {
+      "name": "Diplodocus",
+      "habitat": "Plains and rivers of North America"
+    },
+    "iguanodon": {
+      "name": "Iguanodon",
+      "habitat": "Plains and forests of Europe"
+    },
+    "parasaurolophus": {
+      "name": "Parasaurolophus",
+      "habitat": "Forests and plains of North America"
     }
   }
 }
