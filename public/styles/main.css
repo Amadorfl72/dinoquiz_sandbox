@@ -1190,6 +1190,144 @@ body {
 }
 
 /*
+ * Diagnostics screen (TRIOFSND-319) — adult/QA-only, reachable solely via
+ * the hidden `#/diagnostico` hash route. Reuses the privacy-policy screen's
+ * already AA-checked palette (#1b5e20 text / #fff8e1 background, #2e7d32
+ * accents, src/theme/contrast.test.js) instead of introducing a new one.
+ */
+.diagnostics-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 4px 32px;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1b5e20;
+}
+
+.diagnostics-screen__back-button {
+  align-self: flex-start;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.diagnostics-screen__back-button:hover {
+  background-color: #388e3c;
+}
+
+.diagnostics-screen__back-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.diagnostics-screen__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  color: #1b5e20;
+}
+
+.diagnostics-screen__title:focus {
+  outline: none;
+}
+
+.diagnostics-screen__section {
+  border-top: 2px solid #2e7d32;
+  padding-top: 16px;
+}
+
+.diagnostics-screen__section h2 {
+  margin-top: 0;
+  color: #1b5e20;
+  font-size: 1.1rem;
+}
+
+.diagnostics-screen__definition-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.diagnostics-screen__definition-list dt {
+  font-weight: 700;
+}
+
+.diagnostics-screen__definition-list dd {
+  margin: 0 0 8px;
+}
+
+.diagnostics-screen__availability-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diagnostics-screen__availability-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.diagnostics-screen__availability-name {
+  font-weight: 700;
+}
+
+.diagnostics-screen__availability-item--available .diagnostics-screen__availability-status {
+  color: #1b5e20;
+}
+
+.diagnostics-screen__availability-item--blocked .diagnostics-screen__availability-status {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.diagnostics-screen__counter-group {
+  margin-bottom: 12px;
+}
+
+.diagnostics-screen__counter-group h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: #1b5e20;
+}
+
+.diagnostics-screen__errors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.diagnostics-screen__errors-table th,
+.diagnostics-screen__errors-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #2e7d32;
+}
+
+.diagnostics-screen__errors-truncated-note {
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+/*
  * Age gate screen (TRIOFSND-193, exact-age capture TRIOFSND-204) — three big,
  * equally-weighted options so a 6-8 year old can pick their exact age at a
  * glance. All three reuse already AA-checked design tokens (the outline
