@@ -7,6 +7,13 @@ const { renderDiagnosticsScreen, groupCountersByMode } = require('./DiagnosticsS
 const { MODE_IDS, MODES_CATALOG } = require('../game/modesCatalog');
 const { diagnostics: strings, modes: modesStrings } = require('../../public/i18n/es.json');
 
+// Flushes every already-queued microtask (the export handler chains several
+// `.then`s over an injected promise) using a macrotask, which always runs
+// after all pending microtasks regardless of how many `.then` hops there are.
+function flushPromises() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function renderWithFixture(container, overrides) {
   return renderDiagnosticsScreen(
     container,
@@ -222,6 +229,178 @@ describe('DiagnosticsScreen rendering', () => {
           expect(getByRole(container, 'columnheader', { name: columnLabel })).toBeInTheDocument();
         }
       );
+    });
+  });
+
+  describe('delete with confirmation (TRIOFSND-320)', () => {
+    function makeFakeDiagnosticsService(overrides) {
+      return Object.assign(
+        {
+          getCounters: jest.fn(() => ({})),
+          getErrors: jest.fn(() => []),
+          resetDiagnostics: jest.fn(),
+          buildExportSummary: jest.fn(() => ({})),
+        },
+        overrides
+      );
+    }
+
+    test('clicking the reset button asks for confirmation instead of deleting immediately', () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const { resetButton, resetConfirmButton } = renderWithFixture(container, { diagnosticsService });
+
+      expect(resetConfirmButton).not.toBeVisible();
+      resetButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+      expect(diagnosticsService.resetDiagnostics).not.toHaveBeenCalled();
+      expect(resetConfirmButton).toBeVisible();
+      expect(resetButton).not.toBeVisible();
+    });
+
+    test('cancelling the confirmation never calls resetDiagnostics and restores the plain button', () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const { resetButton, resetCancelButton, resetConfirm } = renderWithFixture(container, { diagnosticsService });
+
+      resetButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      resetCancelButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+      expect(diagnosticsService.resetDiagnostics).not.toHaveBeenCalled();
+      expect(resetConfirm).not.toBeVisible();
+      expect(resetButton).toBeVisible();
+    });
+
+    test('confirming calls diagnostics.resetDiagnostics(), shows a success message and refreshes the counters/errors sections', () => {
+      const diagnosticsService = makeFakeDiagnosticsService({
+        getCounters: jest
+          .fn()
+          .mockReturnValueOnce({ 'gameStarted:parejas': 4 })
+          .mockReturnValue({}),
+        getErrors: jest
+          .fn()
+          .mockReturnValueOnce([{ date: '2026-08-20', mode: 'parejas', category: 'render', code: 'BOARD_RENDER_FAILED' }])
+          .mockReturnValue([]),
+      });
+
+      const { resetButton, resetConfirmButton, resetStatus } = renderWithFixture(container, {
+        diagnosticsService,
+        counters: undefined,
+        errors: undefined,
+      });
+
+      expect(container.textContent).toContain('BOARD_RENDER_FAILED');
+
+      resetButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      resetConfirmButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+      expect(diagnosticsService.resetDiagnostics).toHaveBeenCalledTimes(1);
+      expect(resetStatus.textContent).toBe(strings.actions.resetSuccessMessage);
+      expect(container.textContent).toContain(strings.counters.emptyMessage);
+      expect(container.textContent).toContain(strings.errors.emptyMessage);
+      expect(container.textContent).not.toContain('BOARD_RENDER_FAILED');
+      expect(resetButton).toBeVisible();
+    });
+
+    test('resetting never touches game progress -- only the injected diagnostics service is called', () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const { resetButton, resetConfirmButton } = renderWithFixture(container, { diagnosticsService });
+
+      resetButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      resetConfirmButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+      expect(diagnosticsService.resetDiagnostics).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('manual export (TRIOFSND-320)', () => {
+    function makeFakeDiagnosticsService(overrides) {
+      return Object.assign(
+        {
+          getCounters: jest.fn(() => ({})),
+          getErrors: jest.fn(() => []),
+          resetDiagnostics: jest.fn(),
+          buildExportSummary: jest.fn(() => ({ counters: { selectorOpen: 2 }, errorCounts: {}, totalErrors: 0 })),
+        },
+        overrides
+      );
+    }
+
+    test('never builds or delivers an export without an explicit click', () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      renderWithFixture(container, { diagnosticsService });
+
+      expect(diagnosticsService.buildExportSummary).not.toHaveBeenCalled();
+    });
+
+    test('clicking export builds the summary and copies it to the clipboard when available, with no network call', async () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const copyToClipboard = jest.fn(() => Promise.resolve());
+      const downloadFile = jest.fn();
+
+      const { exportButton, exportStatus } = renderWithFixture(container, {
+        diagnosticsService,
+        copyToClipboard,
+        downloadFile,
+      });
+
+      exportButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(diagnosticsService.buildExportSummary).toHaveBeenCalledTimes(1);
+      expect(copyToClipboard).toHaveBeenCalledWith(JSON.stringify({ counters: { selectorOpen: 2 }, errorCounts: {}, totalErrors: 0 }, null, 2));
+      expect(downloadFile).not.toHaveBeenCalled();
+      expect(exportStatus.textContent).toBe(strings.actions.exportCopiedMessage);
+    });
+
+    test('falls back to a local download when the clipboard is unavailable/fails', async () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const copyToClipboard = jest.fn(() => Promise.reject(new Error('no clipboard')));
+      const downloadFile = jest.fn(() => true);
+
+      const { exportButton, exportStatus } = renderWithFixture(container, {
+        diagnosticsService,
+        copyToClipboard,
+        downloadFile,
+      });
+
+      exportButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(downloadFile).toHaveBeenCalledTimes(1);
+      expect(exportStatus.textContent).toBe(strings.actions.exportDownloadedMessage);
+    });
+
+    test('reports failure when neither clipboard nor download succeed, still without touching the network', async () => {
+      const diagnosticsService = makeFakeDiagnosticsService();
+      const copyToClipboard = jest.fn(() => Promise.reject(new Error('no clipboard')));
+      const downloadFile = jest.fn(() => false);
+
+      const { exportButton, exportStatus } = renderWithFixture(container, {
+        diagnosticsService,
+        copyToClipboard,
+        downloadFile,
+      });
+
+      exportButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(exportStatus.textContent).toBe(strings.actions.exportFailedMessage);
+    });
+
+    test('the exported summary never contains a name or a free-text answer', () => {
+      const diagnosticsService = makeFakeDiagnosticsService({
+        buildExportSummary: jest.fn(() => ({
+          counters: { 'gameStarted:parejas': 3 },
+          errorCounts: { 'parejas:render:BOARD_RENDER_FAILED': 1 },
+          totalErrors: 1,
+          sevenDayRetention: false,
+        })),
+      });
+
+      const { exportButton } = renderWithFixture(container, { diagnosticsService });
+      exportButton.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+      const summary = diagnosticsService.buildExportSummary.mock.results[0].value;
+      expect(JSON.stringify(summary)).not.toMatch(/Rex|Tiranosaurio/);
     });
   });
 });
