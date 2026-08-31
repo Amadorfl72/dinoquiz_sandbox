@@ -249,5 +249,8 @@
     "/i18n/es.json": "317ac329a55d4db5a7a19f00cc5346c4262bfaeaa73a1c3125fa6386e1f7ab6f",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
+    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b",
+    "/scripts/modeBlockedScreen.js": "cc8c22322ed0e754ac45c510449d13897d83a09a44b4f250198adcfb522c6f1a",
+    "/scripts/offlineStatus.js": "02b770723d6acf25815498132757c30350604542726dff19a0d7f982e0ca35b2"
   }
 }
