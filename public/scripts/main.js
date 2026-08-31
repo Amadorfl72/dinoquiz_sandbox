@@ -3016,6 +3016,29 @@
     });
   }
 
+  /**
+   * Fetches the precomputed launch-gate report -- `{ candidateVersion, pass,
+   * gates }` for all ten src/services/launchGate.js gates, written by
+   * scripts/generateLaunchGateReport.js at release time (see that script's
+   * own doc comment for why a no-bundler browser can't evaluate the gates
+   * live). Resolves null on any fetch/parse failure, the same degrade-to-
+   * unknown fallback fetchI18nResource uses, so a missing/corrupted report
+   * never breaks the screen -- it just renders every gate as 'unknown'.
+   */
+  function loadLaunchGateReport(fetchFn, resourcePath) {
+    fetchFn = fetchFn || (typeof fetch === 'function' ? fetch : undefined);
+    resourcePath = resourcePath || '/data/launchGateReport.json';
+
+    if (typeof fetchFn !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    return fetchJson(fetchFn, resourcePath).catch(function (error) {
+      console.error('DinoQuiz: failed to load the launch-gate report', error);
+      return null;
+    });
+  }
+
   function navigateToPrivacyPolicy(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
@@ -3770,9 +3793,12 @@
   /**
    * Renders the launch-gate status screen (TRIOFSND-325) for the hidden
    * `#/gates-lanzamiento` route: resolves the i18n copy the same way
-   * `renderDiagnostics` does, then hands off to launchGateScreen.js, which
-   * reads the live gate/goal/SW_VERSION data itself (see that file's own
-   * resolveX() helpers).
+   * `renderDiagnostics` does, fetches the precomputed gates report (the
+   * real per-release gate/version data -- see loadLaunchGateReport's own
+   * doc comment for why gates can't be evaluated live in this browser),
+   * then hands off to launchGateScreen.js. Product goals and SW_VERSION/
+   * precache status are still resolved by that screen itself, via its real
+   * `window.DinoQuiz.services.productGoals`/`offlineStatus` bridges.
    */
   function renderLaunchGate(doc, renderLaunchGateScreen, fetchFn, onBack) {
     doc = doc || (typeof document !== 'undefined' ? document : undefined);
@@ -3792,8 +3818,16 @@
       return Promise.resolve(null);
     }
 
-    return loadLaunchGateStrings(fetchFn).then(function (strings) {
+    return Promise.all([loadLaunchGateStrings(fetchFn), loadLaunchGateReport(fetchFn)]).then(function (results) {
+      var strings = results[0];
+      var report = results[1];
       var options = strings ? { strings: strings } : {};
+      if (report && typeof report.pass === 'boolean' && report.gates) {
+        options.gatesReport = { pass: report.pass, gates: report.gates };
+      }
+      if (report && typeof report.candidateVersion === 'string') {
+        options.candidateVersion = report.candidateVersion;
+      }
       if (typeof onBack === 'function') {
         options.onBack = onBack;
       }
@@ -3955,6 +3989,7 @@
       navigateToLaunchGate: navigateToLaunchGate,
       isLaunchGateRoute: isLaunchGateRoute,
       loadLaunchGateStrings: loadLaunchGateStrings,
+      loadLaunchGateReport: loadLaunchGateReport,
       renderLaunchGate: renderLaunchGate,
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,

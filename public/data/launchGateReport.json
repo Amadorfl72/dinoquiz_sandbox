@@ -1,0 +1,106 @@
+{
+  "candidateVersion": "0.1.0",
+  "pass": true,
+  "gates": {
+    "fichas": {
+      "pass": true,
+      "failureCount": 0,
+      "failures": []
+    },
+    "generadores": {
+      "pass": true,
+      "generators": {
+        "laberinto": {
+          "pass": true,
+          "details": {
+            "width": 5,
+            "height": 5
+          }
+        },
+        "siluetas": {
+          "pass": true,
+          "details": {
+            "correctId": "iguanodon"
+          }
+        },
+        "tamanos": {
+          "pass": true,
+          "details": {
+            "correctOrder": [
+              "pteranodon",
+              "dilophosaurus",
+              "parasaurolophus",
+              "spinosaurus"
+            ]
+          }
+        },
+        "rejillas": {
+          "pass": true,
+          "details": {
+            "pairCount": 4,
+            "columns": 4
+          }
+        }
+      }
+    },
+    "resolubilidad": {
+      "pass": true,
+      "checks": [
+        {
+          "level": 1,
+          "solvable": true
+        },
+        {
+          "level": 6,
+          "solvable": true
+        },
+        {
+          "level": 10,
+          "solvable": true
+        }
+      ]
+    },
+    "siluetas": {
+      "pass": true,
+      "threshold": 12,
+      "count": 13
+    },
+    "tamanos": {
+      "pass": true,
+      "threshold": 4,
+      "count": 14
+    },
+    "rejillas": {
+      "pass": true,
+      "threshold": 8,
+      "count": 14,
+      "cause": null
+    },
+    "precache": {
+      "pass": true,
+      "swVersion": "v39",
+      "precacheCount": 124
+    },
+    "offline": {
+      "pass": true,
+      "requiredCount": 108,
+      "missing": []
+    },
+    "accesibilidad": {
+      "pass": true,
+      "checkedCount": 17,
+      "failures": []
+    },
+    "regresionQuiz": {
+      "pass": true,
+      "questionCount": 300,
+      "loadError": null,
+      "quizAvailability": {
+        "modeId": "quiz",
+        "available": true,
+        "cause": null,
+        "blockedByIds": []
+      }
+    }
+  }
+}

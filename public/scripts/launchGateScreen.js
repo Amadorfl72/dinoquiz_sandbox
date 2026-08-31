@@ -11,15 +11,30 @@
  * (see public/scripts/main.js), the same pattern as `DIAGNOSTICS_HASH` --
  * there is no visible link to it from Home or the mode selector.
  *
- * `launchGate.js`/`productGoals.js` are plain `src/services/` CommonJS
- * modules with no browser bridge of their own (unlike e.g.
- * public/scripts/offlineStatus.js) -- `evaluateLaunchGates()` alone pulls in
- * ~10 further src/data|game|theme modules that don't have one either. Under
- * Node/Jest (where `require` exists) this screen reads them live; in the
- * real no-bundler browser `require` is undefined, so every gate/goal falls
- * back to its 'unknown'/'pendiente' state and shows a text explanation
- * rather than a crash -- mirroring the same `typeof require === 'function'`
- * guard public/scripts/classifyGame.js already uses for `creatureSheet.js`.
+ * Two different data sources feed this screen, because they have two
+ * different shapes of "liveness":
+ *
+ *  - Gates are a property of the shipped CODE/DATA, identical on every
+ *    device running a given release -- `evaluateLaunchGates()` alone pulls
+ *    in ~15 further `src/data|game|theme` modules that have no browser
+ *    bridge (no bundler, so re-deriving all of that in the browser a second
+ *    time would duplicate -- and risk drifting from -- the one real rule
+ *    each gate already tests). So, like SW_VERSION itself, the gates report
+ *    is precomputed once at release time by
+ *    `scripts/generateLaunchGateReport.js` into
+ *    `public/data/launchGateReport.json`, which `main.js`'s `renderLaunchGate`
+ *    fetches and passes in as `options.gatesReport`/`options.candidateVersion`
+ *    before this screen ever renders. Under Node/Jest, `resolveGatesReport`
+ *    below still falls back to calling `evaluateLaunchGates()` live via
+ *    `require` when no `options.gatesReport` was supplied (e.g. this
+ *    screen's own tests).
+ *  - Product goals are genuine per-device runtime state (approved via
+ *    localStorage), so they ARE read live in the browser, through
+ *    `productGoals.js`'s real dual CommonJS/`window.DinoQuiz.services.
+ *    productGoals` bridge (public/scripts/productGoals.js), the same
+ *    pattern public/scripts/offlineStatus.js already uses for SW_VERSION/
+ *    precache status.
+ *
  * Every data source can also be overridden through `options` so tests
  * exercise the rendering with plain fixtures instead of these services.
  */
@@ -66,7 +81,7 @@
     return null;
   }
 
-  /** The app's own package.json `version` field, treated as "the version currently a launch candidate". Not fetchable from the browser (it isn't served under public/), so this only resolves under Node/Jest -- a real device shows `version.unknownValue` instead. */
+  /** The app's own package.json `version` field, treated as "the version currently a launch candidate". `package.json` itself isn't served under public/, so a real browser only knows this because main.js's renderLaunchGate already read it off the precomputed launch-gate report and passed it in as `options.candidateVersion`; without that (e.g. a failed fetch), this falls back to a direct Node/Jest `require`, or finally `version.unknownValue`. */
   function resolveCandidateVersion(options) {
     if (typeof options.candidateVersion !== 'undefined') {
       return options.candidateVersion;
@@ -101,7 +116,7 @@
     return null;
   }
 
-  /** `{ pass, gates }` from `evaluateLaunchGates()`, or `null` when the service is unavailable or throws -- the screen then renders every gate as 'unknown' instead of crashing. */
+  /** `options.gatesReport` (the browser path: main.js's renderLaunchGate already fetched the precomputed report and passed it in), else `{ pass, gates }` from a live `evaluateLaunchGates()` call (the Node/Jest path, when a `launchGateService` was resolved via `require`), else `null` -- the screen then renders every gate as 'unknown' instead of crashing. */
   function resolveGatesReport(options, launchGateService) {
     if (typeof options.gatesReport !== 'undefined') {
       return options.gatesReport;

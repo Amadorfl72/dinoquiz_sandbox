@@ -19,7 +19,7 @@
  * stay a superset of that manifest (one entry per resource); see that
  * module's test for the completeness check.
  */
-const SW_VERSION = 'v38';
+const SW_VERSION = 'v39';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -81,6 +81,7 @@ const PRECACHE_URLS = [
   '/scripts/offlineStatus.js',
   '/scripts/diagnostics.js',
   '/scripts/diagnosticsScreen.js',
+  '/scripts/productGoals.js',
   '/scripts/launchGateScreen.js',
   '/scripts/main.js',
   '/icons/icon.svg',
@@ -186,6 +187,12 @@ const PRECACHE_URLS = [
   // length, era, habitat, classification, sources) other modes will read
   // instead of each re-deriving/duplicating a fact per creature.
   '/data/creatures.json',
+  // Launch-gate status report (TRIOFSND-325): the ten launchGate.js gate
+  // results, precomputed at release time by
+  // scripts/generateLaunchGateReport.js and fetched by main.js for the
+  // hidden diagnostic screen -- see that script's own doc comment for why
+  // this can't instead be evaluated live in a no-bundler browser.
+  '/data/launchGateReport.json',
   '/offline.html',
 ];
 

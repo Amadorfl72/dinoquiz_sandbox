@@ -1,5 +1,5 @@
 {
-  "swVersion": "v38",
+  "swVersion": "v39",
   "precacheUrls": [
     "/",
     "/assets/images/cards/back.svg",
@@ -69,6 +69,7 @@
     "/assets/sounds/oido-jurasico/triceratops.wav",
     "/assets/sounds/oido-jurasico/velociraptor.wav",
     "/data/creatures.json",
+    "/data/launchGateReport.json",
     "/data/questions.json",
     "/i18n/es.json",
     "/icons/icon.svg",
@@ -109,6 +110,7 @@
     "/scripts/parejasGame.js",
     "/scripts/parejasScreen.js",
     "/scripts/privacyPolicyScreen.js",
+    "/scripts/productGoals.js",
     "/scripts/questionScreen.js",
     "/scripts/resultsScreen.js",
     "/scripts/roundContract.js",
@@ -125,8 +127,8 @@
     "/styles/main.css"
   ],
   "contentHashes": {
-    "/": "fdec7db329a5989ee07961a9290fa52a0d641c51b58c2b0905c5a2f521fc4003",
-    "/index.html": "fdec7db329a5989ee07961a9290fa52a0d641c51b58c2b0905c5a2f521fc4003",
+    "/": "774aa898f2ea35b3adccc3d607838ba4b5fd58d61d7f97260fed68c811a6251d",
+    "/index.html": "774aa898f2ea35b3adccc3d607838ba4b5fd58d61d7f97260fed68c811a6251d",
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
     "/styles/main.css": "a19ec9483eaab5e8fcff1d1b32c1219dc059b229ef4817dd6f971b255b0614c2",
     "/scripts/scoring.js": "e4bf1edd3c843106032ebba0d0eedc80bd608a39152a5b9ac41652131d852e0f",
@@ -174,8 +176,9 @@
     "/scripts/offlineStatus.js": "02b770723d6acf25815498132757c30350604542726dff19a0d7f982e0ca35b2",
     "/scripts/diagnostics.js": "9521e8c980eb71a5761dbacdaa4a63eca69b8dadb6254097f60171e8dd0c6a32",
     "/scripts/diagnosticsScreen.js": "8e5943934b36160c8c8f40261fd66aa9160e2090d1ee7181d8566797fb536434",
-    "/scripts/launchGateScreen.js": "b94ba11804d5fbb53ac02b159351d1efd45fd28b365181840bd3ad7e90e38320",
-    "/scripts/main.js": "a2d6988ff97a7ce938b84c41a2899ab8b25e8a62cdca8c66031d60848e4b22fc",
+    "/scripts/productGoals.js": "e19fcfbfbf35d1693cf1cc191bececb93f208774cc5563a856bd9871126aab89",
+    "/scripts/launchGateScreen.js": "4bf280b92384e5bf4a2aa7170a526509d98f4fbce4ef3915c42fbb986ef79aa9",
+    "/scripts/main.js": "0bcbc4fdc1497ab957723ad465444108acb1466e99a7cc4bd66993809209383f",
     "/icons/icon.svg": "17da64ccfd4edae6de8813fbc4a3126df29a80250e005c34e708487a400a3653",
     "/assets/images/mascot.svg": "6ae1a73c12a193fe74b07d6c51def00cc2d122bf5ee77d4b4a4b4666e6550b94",
     "/assets/images/dinosaurs/trex.svg": "a8130b220650eec59d2d20aaecda55b1897abde244c41603a0f74fb37cc7c560",
@@ -246,6 +249,7 @@
     "/i18n/es.json": "a32d9c5b3676f9032e523290a45aabfbb385b064f177c8acf2fc692557e5922f",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
+    "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",
     "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b"
   }
 }
