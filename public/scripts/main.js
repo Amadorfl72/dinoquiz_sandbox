@@ -240,6 +240,12 @@
   // public/scripts/diagnosticsScreen.js). Never advertised in the UI.
   var DIAGNOSTICS_HASH = '#/diagnostico';
 
+  // Launch-gate status screen route (TRIOFSND-325): mirrors DIAGNOSTICS_HASH
+  // -- another hidden hash route with no visible link from Home or any other
+  // screen, so only an adult or QA who already knows this URL can open it
+  // (see public/scripts/launchGateScreen.js). Never advertised in the UI.
+  var LAUNCH_GATE_HASH = '#/gates-lanzamiento';
+
   // Laberinto route (TRIOFSND-259): mirrors the privacy-policy hash route
   // below (isPrivacyPolicyRoute/navigateToPrivacyPolicy) -- the app shell's
   // own mode-selection mechanism until a future ticket adds the PRD's
@@ -3003,6 +3009,13 @@
     });
   }
 
+  /** Fetches the whole i18n resource once and hands back the `launchGate` screen copy -- everything renderLaunchGate needs. */
+  function loadLaunchGateStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.launchGate;
+    });
+  }
+
   function navigateToPrivacyPolicy(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
@@ -3032,6 +3045,18 @@
   function isDiagnosticsRoute(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     return !!loc && loc.hash === DIAGNOSTICS_HASH;
+  }
+
+  function navigateToLaunchGate(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = LAUNCH_GATE_HASH;
+    }
+  }
+
+  function isLaunchGateRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === LAUNCH_GATE_HASH;
   }
 
   function loadDinoQuizStorage(requireFn) {
@@ -3742,6 +3767,40 @@
     });
   }
 
+  /**
+   * Renders the launch-gate status screen (TRIOFSND-325) for the hidden
+   * `#/gates-lanzamiento` route: resolves the i18n copy the same way
+   * `renderDiagnostics` does, then hands off to launchGateScreen.js, which
+   * reads the live gate/goal/SW_VERSION data itself (see that file's own
+   * resolveX() helpers).
+   */
+  function renderLaunchGate(doc, renderLaunchGateScreen, fetchFn, onBack) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderLaunchGateScreen =
+      renderLaunchGateScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderLaunchGateScreen);
+
+    if (!doc || typeof renderLaunchGateScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return loadLaunchGateStrings(fetchFn).then(function (strings) {
+      var options = strings ? { strings: strings } : {};
+      if (typeof onBack === 'function') {
+        options.onBack = onBack;
+      }
+      return renderLaunchGateScreen(container, options);
+    });
+  }
+
   function renderRoute(doc, fetchFn, loc) {
     // TRIOFSND-259: navigating away from an in-progress Laberinto game
     // (whichever route this render is actually for) means it was left
@@ -3772,6 +3831,12 @@
 
     if (isDiagnosticsRoute(loc)) {
       return renderDiagnostics(doc, undefined, fetchFn, function () {
+        navigateHome(loc);
+      });
+    }
+
+    if (isLaunchGateRoute(loc)) {
+      return renderLaunchGate(doc, undefined, fetchFn, function () {
         navigateHome(loc);
       });
     }
@@ -3886,6 +3951,11 @@
       isDiagnosticsRoute: isDiagnosticsRoute,
       loadDiagnosticsStrings: loadDiagnosticsStrings,
       renderDiagnostics: renderDiagnostics,
+      LAUNCH_GATE_HASH: LAUNCH_GATE_HASH,
+      navigateToLaunchGate: navigateToLaunchGate,
+      isLaunchGateRoute: isLaunchGateRoute,
+      loadLaunchGateStrings: loadLaunchGateStrings,
+      renderLaunchGate: renderLaunchGate,
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
