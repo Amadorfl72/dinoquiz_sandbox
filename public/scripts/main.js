@@ -842,6 +842,14 @@
             if (logger && typeof logger.logGameAbandonedByMode === 'function') {
               logger.logGameAbandonedByMode(currentModeId);
             }
+            // TRIOFSND-318: this discard is the real "abandonar partida"
+            // moment for whichever mode was left mid-round, whatever mode it
+            // was -- one shared counter instead of a per-mode call at each
+            // of the eight modes' own start functions.
+            var diagnostics = resolveDiagnostics();
+            if (diagnostics) {
+              diagnostics.incrementCounter('gameAbandoned:' + currentModeId);
+            }
             renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
           });
         },
@@ -1586,6 +1594,7 @@
     var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
       getQuestionsByLevel: getQuestionsByLevel,
       randomFn: ctx.randomFn,
+      modeId: modeId,
     });
 
     if (levelGame && levelGame.error) {
@@ -1640,6 +1649,9 @@
         if (ctx.logger) {
           ctx.logger.logMazeResolvabilityFailure();
         }
+        if (ctx.diagnostics) {
+          ctx.diagnostics.recordError(MAZE_MODE_ID, 'roundGeneration', result.nextRound.error);
+        }
         exitMazeToHomeSafely(container, renderers, doc, fetchFn, result.nextRound);
         return;
       }
@@ -1648,6 +1660,9 @@
         activeMazeGame = null;
         if (ctx.logger) {
           ctx.logger.logMazeGameCompleted(ctx.level);
+        }
+        if (ctx.diagnostics) {
+          ctx.diagnostics.incrementCounter('gameCompleted:' + MAZE_MODE_ID);
         }
         finishMazeGame(container, renderers, doc, fetchFn, result.state, ctx);
       } else {
@@ -1724,6 +1739,7 @@
       storage: ctx.storage,
       logger: ctx.logger,
       logService: ctx.logger,
+      diagnostics: ctx.diagnostics,
     };
 
     persistLastMode(MAZE_MODE_ID, ctx.storageObj);
@@ -1743,7 +1759,14 @@
       if (ctx.logger) {
         ctx.logger.logMazeResolvabilityFailure();
       }
+      if (ctx.diagnostics) {
+        ctx.diagnostics.recordError(MAZE_MODE_ID, 'roundGeneration', game.round.error);
+      }
       return exitMazeToHomeSafely(container, renderers, doc, fetchFn, game.round);
+    }
+
+    if (ctx.diagnostics) {
+      ctx.diagnostics.incrementCounter('gameStarted:' + MAZE_MODE_ID);
     }
 
     activeMazeGame = { level: level };
@@ -1769,6 +1792,7 @@
       analyticsStorage: homeStorage,
       storage: homeStorage,
       logger: resolveLogger(),
+      diagnostics: resolveDiagnostics(),
     });
   }
 
@@ -2929,6 +2953,22 @@
     return new LogService();
   }
 
+  /**
+   * Resolves src/services/diagnostics.js (TRIOFSND-317's local, aggregated
+   * counters/structured errors), same require-or-`window.DinoQuiz` fallback
+   * shape as `resolveGameSessionStorage` above -- this service has no
+   * browser-global registration yet, so it resolves to null in the real,
+   * unbundled browser and every diagnostics call below simply no-ops there
+   * (see each call site's own null guard), never blocking gameplay.
+   */
+  function resolveDiagnostics(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/diagnostics');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) || null;
+  }
+
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -3694,6 +3734,10 @@
       if (logger) {
         logger.logMazeGameAbandoned(activeMazeGame.level);
       }
+      var diagnosticsOnAbandon = resolveDiagnostics();
+      if (diagnosticsOnAbandon) {
+        diagnosticsOnAbandon.incrementCounter('gameAbandoned:' + MAZE_MODE_ID);
+      }
       activeMazeGame = null;
     }
 
@@ -3806,6 +3850,7 @@
       resolvePlatformSupport: resolvePlatformSupport,
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,
+      resolveDiagnostics: resolveDiagnostics,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,

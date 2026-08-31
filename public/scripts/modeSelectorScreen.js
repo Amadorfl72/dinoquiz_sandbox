@@ -107,6 +107,24 @@
   }
 
   /**
+   * Resolves src/services/diagnostics.js (TRIOFSND-317/318's local,
+   * aggregated counters), same require-or-`window.DinoQuiz` fallback shape
+   * as `resolveLogService` above -- this service has no browser-global
+   * registration yet, so it resolves to null in the real, unbundled browser
+   * and the `selectorOpen` tally below simply no-ops there.
+   */
+  function resolveDiagnostics(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) {
+      return win.DinoQuiz.services.diagnostics;
+    }
+    if (typeof require === 'function') {
+      return require('../../src/services/diagnostics');
+    }
+    return null;
+  }
+
+  /**
    * Resolves the availability verdict for every mode. `options.availability`
    * (a precomputed evaluateModes() result) short-circuits everything else,
    * which is what tests use to exercise available/blocked cards without a
@@ -236,6 +254,7 @@
     var modesCatalog = options.modesCatalog || resolveModesCatalog();
     var lastModeService = options.lastModeService || resolveLastModeService();
     var logService = options.logService || resolveLogService();
+    var diagnostics = options.diagnostics || resolveDiagnostics();
 
     var modes = options.modes || (modesCatalog && modesCatalog.MODES_CATALOG) || [];
     var availability = resolveAvailability(options, modesCatalog);
@@ -344,6 +363,11 @@
 
     if (logService) {
       logService.logSelectorOpen();
+    }
+    // TRIOFSND-318: apertura del selector, tallied once per render call --
+    // exactly once per time the illustrated mode selector is actually shown.
+    if (diagnostics) {
+      diagnostics.incrementCounter('selectorOpen');
     }
 
     if (typeof title.focus === 'function') {

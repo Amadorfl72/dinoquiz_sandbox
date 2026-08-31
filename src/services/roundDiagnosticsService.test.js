@@ -140,4 +140,64 @@ describe('roundDiagnosticsService.attachToSession', () => {
 
     expect(logService.failures).toEqual([]);
   });
+
+  describe('diagnostics.js counters/errors (TRIOFSND-318)', () => {
+    function createFakeDiagnostics() {
+      const counters = [];
+      const errors = [];
+      return {
+        counters,
+        errors,
+        incrementCounter(name) {
+          counters.push(name);
+        },
+        recordError(mode, category, code) {
+          errors.push({ mode, category, code });
+        },
+      };
+    }
+
+    it('tallies gameStarted:<modeId> immediately on attach', () => {
+      const session = startSession();
+      const diagnostics = createFakeDiagnostics();
+
+      attachToSession(session, { modeId: 'parejas', level: 2, logService: createFakeLogService(), roundContract, diagnostics });
+
+      expect(diagnostics.counters).toContain('gameStarted:parejas');
+    });
+
+    it('tallies gameCompleted:<modeId> on game:over, never gameAbandoned', () => {
+      const session = startSession();
+      const diagnostics = createFakeDiagnostics();
+      const attached = attachToSession(session, { modeId: 'parejas', level: 1, logService: createFakeLogService(), roundContract, diagnostics });
+
+      playThroughToGameOver(session);
+      attached.off();
+
+      expect(diagnostics.counters).toContain('gameCompleted:parejas');
+      expect(diagnostics.counters).not.toContain('gameAbandoned:parejas');
+    });
+
+    it('tallies gameAbandoned:<modeId> when off() is called before game:over ever fired', () => {
+      const session = startSession();
+      const diagnostics = createFakeDiagnostics();
+      const attached = attachToSession(session, { modeId: 'parejas', level: 1, logService: createFakeLogService(), roundContract, diagnostics });
+
+      attached.off();
+
+      expect(diagnostics.counters).not.toContain('gameCompleted:parejas');
+      expect(diagnostics.counters).toContain('gameAbandoned:parejas');
+    });
+
+    it('records a structured roundGeneration diagnostics error for a round.error, the same stable code logService received', () => {
+      const session = startSession(0);
+      const diagnostics = createFakeDiagnostics();
+
+      attachToSession(session, { modeId: 'ordenaPorTamano', level: null, logService: createFakeLogService(), roundContract, diagnostics });
+
+      expect(diagnostics.errors).toEqual([
+        { mode: 'ordenaPorTamano', category: 'roundGeneration', code: 'some_round_generation_failed' },
+      ]);
+    });
+  });
 });

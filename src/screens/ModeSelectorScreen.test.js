@@ -245,6 +245,14 @@ describe('ModeSelectorScreen availability wiring', () => {
 
     expect(logService.logSelectorOpen).toHaveBeenCalledTimes(1);
   });
+
+  test('TRIOFSND-318: tallies the selectorOpen diagnostics.js counter once per render', () => {
+    const diagnostics = { incrementCounter: jest.fn() };
+    renderWithFixture(container, { diagnostics });
+
+    expect(diagnostics.incrementCounter).toHaveBeenCalledWith('selectorOpen');
+    expect(diagnostics.incrementCounter).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('ModeSelectorScreen last-used mode marking', () => {

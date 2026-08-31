@@ -227,4 +227,22 @@ describe('TRIOFSND-259: leaving an in-progress Laberinto game logs it as abandon
     renderRoute(document, undefined, { hash: '' });
     expect(resolveLogger().getMazeGamesAbandonedByLevel()).toEqual({ 1: 1 });
   });
+
+  test('TRIOFSND-318: start and mid-game abandon also tally gameStarted/gameAbandoned:laberinto diagnostics counters', () => {
+    const { startMazeGame, resolveScreenRenderers, resolveDiagnostics, renderRoute } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const diagnostics = resolveDiagnostics();
+
+    startMazeGame(container, renderers, document, undefined, {
+      level: 1,
+      seed: 'diagnostics-seed',
+      randomFn: () => 0.5,
+      diagnostics,
+    });
+    expect(diagnostics.getCounters()['gameStarted:laberinto']).toBe(1);
+
+    renderRoute(document, undefined, { hash: '' });
+
+    expect(resolveDiagnostics().getCounters()['gameAbandoned:laberinto']).toBe(1);
+  });
 });

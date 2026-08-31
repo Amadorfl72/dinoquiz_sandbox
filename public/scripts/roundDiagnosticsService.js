@@ -73,10 +73,38 @@
     return new LogServiceCtor();
   }
 
+  var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
+
+  /**
+   * Resolves src/services/diagnostics.js (TRIOFSND-317/318), same
+   * dual-pattern/`options` override shape as `resolveLogService` above,
+   * falling back to a no-op so a caller that never wires it up (or the
+   * real, unbundled browser, which has no `<script>` for this service yet)
+   * never breaks round-contract game flow.
+   */
+  function resolveDiagnostics(options) {
+    options = options || {};
+    if (options.diagnostics) {
+      return options.diagnostics;
+    }
+
+    var win = typeof window !== 'undefined' ? window : undefined;
+    var diagnosticsModule =
+      (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) ||
+      (typeof require === 'function' ? require('../../src/services/diagnostics') : undefined);
+
+    return diagnosticsModule && typeof diagnosticsModule.incrementCounter === 'function' ? diagnosticsModule : noopDiagnostics;
+  }
+
   /** Tallies `round.error` (a mode's own local round-generation failure code), if present -- never touches anything else about `round`. */
-  function reportRoundIfFailed(logService, modeId, round) {
-    if (logService && round && typeof round.error === 'string' && round.error) {
-      logService.logRoundGenerationFailure(modeId, round.error);
+  function reportRoundIfFailed(logService, diagnostics, modeId, round) {
+    if (round && typeof round.error === 'string' && round.error) {
+      if (logService) {
+        logService.logRoundGenerationFailure(modeId, round.error);
+      }
+      // PRD failure point "fallo de generación de ronda" (TRIOFSND-318): the
+      // stable generator code alone, never any other round content.
+      diagnostics.recordError(modeId, 'roundGeneration', round.error);
     }
   }
 
@@ -103,6 +131,7 @@
     }
 
     var logService = resolveLogService(options);
+    var diagnostics = resolveDiagnostics(options);
     var modeId = options.modeId;
     var level = options.level === undefined ? null : options.level;
     var finished = false;
@@ -111,10 +140,15 @@
     if (logService) {
       logService.logRoundGameStarted(modeId, level);
     }
-    reportRoundIfFailed(logService, modeId, session.round);
+    // TRIOFSND-318: "partida iniciada" for every round-contract mode this
+    // service attaches to (Sombra, Parejas, Clasifica, Ordena por tamaño,
+    // Oído Jurásico, Línea del tiempo) -- one shared tally instead of a
+    // separate call at each mode's own start function.
+    diagnostics.incrementCounter('gameStarted:' + modeId);
+    reportRoundIfFailed(logService, diagnostics, modeId, session.round);
 
     var offRoundStarted = session.hooks.on(roundContract.HOOK_EVENTS.ROUND_STARTED, function (payload) {
-      reportRoundIfFailed(logService, modeId, payload && payload.round);
+      reportRoundIfFailed(logService, diagnostics, modeId, payload && payload.round);
     });
 
     var offGameOver = session.hooks.on(roundContract.HOOK_EVENTS.GAME_OVER, function () {
@@ -122,6 +156,7 @@
       if (logService) {
         logService.logRoundGameCompleted(modeId, level);
       }
+      diagnostics.incrementCounter('gameCompleted:' + modeId);
     });
 
     function off() {
@@ -133,6 +168,9 @@
       offGameOver();
       if (!finished && logService) {
         logService.logRoundGameAbandoned(modeId, level);
+      }
+      if (!finished) {
+        diagnostics.incrementCounter('gameAbandoned:' + modeId);
       }
     }
 

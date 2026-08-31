@@ -4,6 +4,7 @@ const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { LogService } = require('../logging');
+const diagnostics = require('../diagnostics');
 const { ROUNDS_PER_GAME } = require('../../game/roundContract');
 const { MODE_STATE_SCHEMA_VERSION } = require('./types');
 
@@ -193,6 +194,7 @@ class GameSessionStorage {
   #activeAdapter = null;
   #initPromise = null;
   #logService;
+  #diagnostics;
 
   // Aggregated, non-PII observability counters only (mirrors StorageClient.js).
   #failureCount = 0;
@@ -200,10 +202,12 @@ class GameSessionStorage {
 
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
-    logService = new LogService()
+    logService = new LogService(),
+    diagnosticsService = diagnostics
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
+    this.#diagnostics = diagnosticsService;
   }
 
   init() {
@@ -354,6 +358,9 @@ class GameSessionStorage {
     if (!isValidEnvelope(envelope) || envelope.modeId !== modeId || !RESUMABLE_STATUSES.includes(envelope.session.status)) {
       await this.#clear(modeId);
       this.#logService.logStateDiscarded(modeId, SESSION_DISCARD_INCOMPATIBLE_CODE);
+      // TRIOFSND-318, PRD failure point "estado de partida descartado": the
+      // stable discard code alone, never the discarded session's own content.
+      this.#diagnostics.recordError(modeId, 'state', SESSION_DISCARD_INCOMPATIBLE_CODE);
       return null;
     }
 
