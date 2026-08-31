@@ -25,13 +25,15 @@
  * `window.DinoQuiz.screens.offlineDiagnosticsPanel`; the canonical
  * `src/screens/OfflineDiagnosticsPanel.js` re-exports it for Node/Jest.
  *
- * `validateModeResources` itself is a plain CommonJS module (it is only
- * ever required from Node/Jest today, see its own doc comment) -- under a
- * real no-bundler browser `require` does not exist, so
+ * `src/services/modeResourceValidation.js` is a plain CommonJS module (only
+ * ever required from Node/Jest, see its own doc comment) -- under a real
+ * no-bundler browser `require` does not exist, so
  * `resolveValidateModeResources` below mirrors logging.js's own
  * `resolveScoring`: try `require` first (Node/Jest), otherwise fall back to
- * `window.DinoQuiz.services.modeResourceValidation` (unset today, since no
- * caller has wired that bridge yet), and degrade every mode's row to
+ * `window.DinoQuiz.services.modeResourceValidation`, registered by
+ * public/scripts/modeResourceValidation.js (TRIOFSND-307) -- the
+ * browser-runnable twin of the Node service, loaded as a `<script>` right
+ * before this file (see public/index.html). Degrades every mode's row to
  * "no se pudo comprobar" rather than throwing when neither is available --
  * this panel must never crash the page it is diagnosing.
  */
