@@ -181,6 +181,49 @@ describe('no hardcoded visible-text literals in public/scripts/*.js', () => {
     return hits;
   }
 
+  // Fixtures proving the detector's behaviour directly, independent of what
+  // the real scripts happen to contain. These lock in the requirement that
+  // visible copy is caught in ALL THREE literal kinds -- single-quoted,
+  // double-quoted and template -- including copy embedded around a `${...}`
+  // interpolation, while purely-interpolated templates and lone technical
+  // tokens stay clean.
+  test('detects a visible phrase inside a single-quoted string', () => {
+    expect(findEmbeddedVisibleLiterals("const x = 'Best score today';"))
+      .toEqual(['Best score today']);
+  });
+
+  test('detects a visible phrase inside a double-quoted string', () => {
+    expect(findEmbeddedVisibleLiterals('const y = "You win the game";'))
+      .toEqual(['You win the game']);
+  });
+
+  test('detects a visible phrase inside a non-interpolated template literal', () => {
+    expect(findEmbeddedVisibleLiterals('const z = `Welcome to DinoQuiz`;'))
+      .toEqual(['Welcome to DinoQuiz']);
+  });
+
+  test('detects the static copy of an interpolated template literal', () => {
+    // The mandatory blocker fixture: the `${score}` interpolation must not
+    // hide the surrounding hardcoded UI copy. The scanner splits the template
+    // into static segments and flags "Best score:" rather than discarding the
+    // whole literal because it contains `$`, `{` and `}`.
+    expect(findEmbeddedVisibleLiterals('button.textContent = `Best score: ${score} points`;'))
+      .toContain('Best score:');
+  });
+
+  test('does not flag a template made only of interpolations', () => {
+    expect(findEmbeddedVisibleLiterals('const t = `${a}${b}`;')).toEqual([]);
+    expect(findEmbeddedVisibleLiterals('const u = `${first} ${second}`;')).toEqual([]);
+  });
+
+  test('does not flag lone technical tokens (keys, selectors, MIME, storage)', () => {
+    expect(findEmbeddedVisibleLiterals("const a = 'results.score.label';")).toEqual([]);
+    expect(findEmbeddedVisibleLiterals("const b = '.mode-card';")).toEqual([]);
+    expect(findEmbeddedVisibleLiterals("const c = 'image/png';")).toEqual([]);
+    expect(findEmbeddedVisibleLiterals("const d = 'dinoquiz:muted';")).toEqual([]);
+    expect(findEmbeddedVisibleLiterals("el.addEventListener('click', handler);")).toEqual([]);
+  });
+
   const scriptFiles = fs.readdirSync(SCRIPTS_DIR).filter((name) => name.endsWith('.js'));
 
   test('public/scripts/ has at least one script to scan', () => {
