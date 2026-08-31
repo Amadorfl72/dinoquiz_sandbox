@@ -3880,3 +3880,80 @@ body {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
+
+.offline-diagnostics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.offline-diagnostics-panel__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.offline-diagnostics-panel__intro {
+  margin: 0;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
+}
+
+.offline-diagnostics-panel__sw-state,
+.offline-diagnostics-panel__mode-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.offline-diagnostics-panel__sw-state h2,
+.offline-diagnostics-panel__mode-matrix h2 {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.offline-diagnostics-panel__sw-state-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin: 0;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
+}
+
+.offline-diagnostics-panel__sw-state-list dt {
+  font-weight: 700;
+}
+
+.offline-diagnostics-panel__sw-state-list dd {
+  margin: 0 0 8px;
+  word-break: break-word;
+}
+
+.offline-diagnostics-panel__mode-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-min);
+  color: var(--color-text);
+}
+
+.offline-diagnostics-panel__mode-table th,
+.offline-diagnostics-panel__mode-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--color-neutral-bg);
+  word-break: break-word;
+}
+
+.offline-diagnostics-panel__missing-list {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  word-break: break-word;
+}
