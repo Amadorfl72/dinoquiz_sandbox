@@ -8,6 +8,7 @@ const {
   recordError,
   getErrors,
   resetDiagnostics,
+  buildExportSummary,
   COUNTERS_KEY,
   ERRORS_KEY,
   RETENTION_KEY,
@@ -223,6 +224,54 @@ describe('diagnostics — local aggregated counters, retention and structured er
         setItem: () => { throw new Error('boom'); },
         removeItem: () => { throw new Error('boom'); },
       })).not.toThrow();
+    });
+  });
+
+  describe('buildExportSummary', () => {
+    it('aggregates counters, a mode:category:code error tally, the total error count and retention -- never the raw dated error list', () => {
+      const storage = makeStorage();
+      incrementCounter('selectorOpen', storage);
+      incrementCounter('gameStarted:parejas', storage);
+      incrementCounter('gameStarted:parejas', storage);
+      recordError('parejas', 'render', 'BOARD_RENDER_FAILED', storage);
+      recordError('parejas', 'render', 'BOARD_RENDER_FAILED', storage);
+      recordError('timeline', 'data', 'MISSING_CREATURE', storage);
+      recordLocalReturn(new Date('2026-08-01T10:00:00'), storage);
+      recordLocalReturn(new Date('2026-08-03T10:00:00'), storage);
+
+      const summary = buildExportSummary(storage);
+
+      expect(summary.counters).toEqual({ selectorOpen: 1, 'gameStarted:parejas': 2 });
+      expect(summary.errorCounts).toEqual({
+        'parejas:render:BOARD_RENDER_FAILED': 2,
+        'timeline:data:MISSING_CREATURE': 1,
+      });
+      expect(summary.totalErrors).toBe(3);
+      expect(summary.sevenDayRetention).toBe(true);
+      expect(typeof summary.generatedAt).toBe('string');
+      expect(Object.keys(summary).sort()).toEqual(
+        ['counters', 'errorCounts', 'generatedAt', 'sevenDayRetention', 'totalErrors'].sort()
+      );
+    });
+
+    it('never includes a name, a per-round answer/selection or free text -- only aggregate counts', () => {
+      const storage = makeStorage();
+      recordError('parejas', 'render', 'BOARD_RENDER_FAILED', storage);
+
+      const summary = buildExportSummary(storage);
+      const serialized = JSON.stringify(summary);
+
+      expect(serialized).not.toContain('2026-08-15');
+      expect(Object.keys(summary.errorCounts)).toEqual(['parejas:render:BOARD_RENDER_FAILED']);
+    });
+
+    it('is all-zero/empty on a device with no recorded diagnostics yet', () => {
+      const storage = makeStorage();
+      const summary = buildExportSummary(storage);
+      expect(summary.counters).toEqual({});
+      expect(summary.errorCounts).toEqual({});
+      expect(summary.totalErrors).toBe(0);
+      expect(summary.sevenDayRetention).toBe(false);
     });
   });
 
