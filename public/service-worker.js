@@ -81,6 +81,8 @@ const PRECACHE_URLS = [
   '/scripts/offlineStatus.js',
   '/scripts/diagnostics.js',
   '/scripts/diagnosticsScreen.js',
+  '/scripts/productGoals.js',
+  '/scripts/launchGateScreen.js',
   '/scripts/modeResourceValidation.js',
   '/scripts/offlineDiagnosticsPanel.js',
   '/scripts/main.js',
@@ -187,6 +189,12 @@ const PRECACHE_URLS = [
   // length, era, habitat, classification, sources) other modes will read
   // instead of each re-deriving/duplicating a fact per creature.
   '/data/creatures.json',
+  // Launch-gate status report (TRIOFSND-325): the ten launchGate.js gate
+  // results, precomputed at release time by
+  // scripts/generateLaunchGateReport.js and fetched by main.js for the
+  // hidden diagnostic screen -- see that script's own doc comment for why
+  // this can't instead be evaluated live in a no-bundler browser.
+  '/data/launchGateReport.json',
   '/offline.html',
 ];
 

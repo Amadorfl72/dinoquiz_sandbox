@@ -278,6 +278,63 @@
       "exportFailedMessage": "No se pudo exportar el resumen técnico en este dispositivo."
     }
   },
+  "launchGate": {
+    "screenTitle": "Estado de los gates de lanzamiento",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "intro": "Esta pantalla es solo para personas adultas o del equipo de QA: muestra si la versión candidata puede lanzarse, según los gates automáticos y las metas de producto revisadas en este dispositivo.",
+    "version": {
+      "heading": "Versión y precarga",
+      "candidateVersionLabel": "Versión candidata",
+      "swVersionLabel": "SW_VERSION",
+      "precacheStatusLabel": "Estado de precarga",
+      "precacheStatus": {
+        "complete": "Completa",
+        "pending": "Pendiente o desconocida"
+      },
+      "lastPreloadLabel": "Última precarga completa",
+      "unknownValue": "Sin datos todavía"
+    },
+    "gates": {
+      "heading": "Estado de los gates",
+      "overall": {
+        "pass": "Todos los gates están aprobados: la versión candidata puede lanzarse.",
+        "fail": "Hay gates bloqueados: la versión candidata todavía no puede lanzarse.",
+        "unknown": "No se pudo evaluar el estado de los gates en este dispositivo."
+      },
+      "statusLabels": {
+        "pass": "Aprobado",
+        "fail": "Bloqueado",
+        "unknown": "Desconocido"
+      },
+      "names": {
+        "fichas": "Fichas de criaturas verificadas",
+        "generadores": "Generadores de rondas por modo",
+        "resolubilidad": "Resolubilidad del laberinto",
+        "siluetas": "Modo Adivina la sombra",
+        "tamanos": "Modo Ordena por tamaño",
+        "rejillas": "Modo Parejas jurásicas",
+        "precache": "Estructura de precarga (SW_VERSION)",
+        "offline": "Disponibilidad completa sin conexión",
+        "accesibilidad": "Contraste WCAG AA",
+        "regresionQuiz": "Regresión del quiz existente"
+      }
+    },
+    "productGoals": {
+      "heading": "Metas de producto",
+      "statusLabels": {
+        "aprobado": "Aprobada",
+        "pendiente": "Pendiente de aprobación"
+      },
+      "names": {
+        "distribucionPorModo": "Distribución de partidas por modo",
+        "finalizacion": "Finalización de partidas",
+        "retencion7dias": "Retención a 7 días"
+      },
+      "targetLabel": "Objetivo revisado",
+      "approvedAtLabel": "Aprobada el",
+      "unknownValue": "Sin datos todavía"
+    }
+  },
   "privacy": {
     "heading": "Política de privacidad",
     "closeButton": "Cerrar",

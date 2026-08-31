@@ -1405,6 +1405,150 @@ body {
 }
 
 /*
+ * Launch-gate status screen (TRIOFSND-325) — reuses diagnostics-screen's
+ * layout tokens (same section/definition-list/back-button treatment) and
+ * its already AA-checked verde/rojo pair (#1b5e20 / #b71c1c). The unknown
+ * ("no se pudo evaluar") state reuses var(--color-stars) (#9c6500), the
+ * amber already picked elsewhere in this file as an accessible, non-alarming
+ * attention color. Every status also renders as text (never color alone).
+ */
+.launch-gate-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 4px 32px;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1b5e20;
+}
+
+.launch-gate-screen__back-button {
+  align-self: flex-start;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #2e7d32;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.launch-gate-screen__back-button:hover {
+  background-color: #388e3c;
+}
+
+.launch-gate-screen__back-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.launch-gate-screen__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  color: #1b5e20;
+}
+
+.launch-gate-screen__title:focus {
+  outline: none;
+}
+
+.launch-gate-screen__section {
+  border-top: 2px solid #2e7d32;
+  padding-top: 16px;
+}
+
+.launch-gate-screen__section h2 {
+  margin-top: 0;
+  color: #1b5e20;
+  font-size: 1.1rem;
+}
+
+.launch-gate-screen__definition-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.launch-gate-screen__definition-list dt {
+  font-weight: 700;
+}
+
+.launch-gate-screen__definition-list dd {
+  margin: 0 0 8px;
+}
+
+.launch-gate-screen__overall {
+  font-weight: 700;
+}
+
+.launch-gate-screen__overall--pass {
+  color: #1b5e20;
+}
+
+.launch-gate-screen__overall--fail {
+  color: #b71c1c;
+}
+
+.launch-gate-screen__overall--unknown {
+  color: var(--color-stars);
+}
+
+.launch-gate-screen__gate-list,
+.launch-gate-screen__goal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.launch-gate-screen__gate-item,
+.launch-gate-screen__goal-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.launch-gate-screen__gate-name,
+.launch-gate-screen__goal-name {
+  font-weight: 700;
+}
+
+.launch-gate-screen__gate-item--pass .launch-gate-screen__gate-status,
+.launch-gate-screen__goal-item--aprobado .launch-gate-screen__goal-status {
+  color: #1b5e20;
+  font-weight: 700;
+}
+
+.launch-gate-screen__gate-item--fail .launch-gate-screen__gate-status {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.launch-gate-screen__gate-item--unknown .launch-gate-screen__gate-status,
+.launch-gate-screen__goal-item--pendiente .launch-gate-screen__goal-status {
+  color: var(--color-stars);
+  font-weight: 700;
+}
+
+.launch-gate-screen__goal-detail {
+  flex-basis: 100%;
+  font-size: 0.9rem;
+}
+
+/*
  * Age gate screen (TRIOFSND-193, exact-age capture TRIOFSND-204) — three big,
  * equally-weighted options so a 6-8 year old can pick their exact age at a
  * glance. All three reuse already AA-checked design tokens (the outline
