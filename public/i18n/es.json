@@ -197,6 +197,53 @@
       }
     ]
   },
+  "diagnostics": {
+    "screenTitle": "Diagnóstico técnico",
+    "backButtonLabel": "Volver a la pantalla de inicio",
+    "intro": "Esta pantalla es solo para personas adultas o del equipo de QA: muestra contadores agregados y el estado técnico del dispositivo. Nunca muestra nombres ni respuestas concretas.",
+    "health": {
+      "heading": "Salud técnica",
+      "serviceWorkerLabel": "Estado del service worker",
+      "serviceWorkerStatus": {
+        "active": "Activo y controlando esta página",
+        "inactive": "Instalado pero sin controlar esta página",
+        "unsupported": "No disponible en este navegador"
+      },
+      "cacheVersionLabel": "Versión de caché",
+      "lastPreloadLabel": "Última precarga completa",
+      "unknownValue": "Sin datos todavía"
+    },
+    "resourceAvailability": {
+      "heading": "Disponibilidad de recursos por modo",
+      "statusAvailable": "Disponible",
+      "statusBlocked": "Bloqueado",
+      "blockedReasons": {
+        "insufficient_questions": "Faltan preguntas verificadas",
+        "insufficient_creatures": "Faltan criaturas verificadas",
+        "insufficient_creature_sounds": "Faltan sonidos imaginados de criaturas",
+        "missing_creature_field": "Faltan datos verificados de las criaturas",
+        "round_generation_failed": "No se pudo preparar una ronda nueva",
+        "state_discarded": "Se reinició la partida por un problema técnico"
+      },
+      "unknownReason": "Motivo no disponible"
+    },
+    "counters": {
+      "heading": "Contadores agregados por modo",
+      "generalHeading": "Contadores generales",
+      "emptyMessage": "Todavía no se ha registrado ningún contador en este dispositivo."
+    },
+    "errors": {
+      "heading": "Códigos de error recientes",
+      "emptyMessage": "No se ha registrado ningún error en este dispositivo.",
+      "columns": {
+        "date": "Fecha",
+        "mode": "Modo",
+        "category": "Categoría",
+        "code": "Código"
+      },
+      "truncatedNote": "Mostrando los {shown} más recientes de {total} registrados."
+    }
+  },
   "privacy": {
     "heading": "Política de privacidad",
     "closeButton": "Cerrar",
