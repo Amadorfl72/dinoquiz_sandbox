@@ -113,11 +113,50 @@
     "sevenOption": "7 years or younger",
     "eightPlusOption": "8 years or older"
   },
+  "nicknameRequest": {
+    "screenTitle": "What should we call you?",
+    "instructions": "Type a nickname to play. It can be whatever you like.",
+    "lastNameWarning": "Don't type your last name, just a nickname or your first name.",
+    "inputLabel": "Your nickname",
+    "continueButtonLabel": "Continue",
+    "guestButtonLabel": "Play as a guest",
+    "errors": {
+      "empty": "Type a nickname before continuing.",
+      "tooLong": "Your nickname is too long. Use 20 letters at most."
+    }
+  },
   "modeChange": {
     "title": "Change game?",
     "message": "You haven't finished this game yet. If you change games now, you'll lose your current progress.",
     "confirmButtonLabel": "Yes, change game",
     "cancelButtonLabel": "No, keep playing"
+  },
+  "modeBlocked": {
+    "screenTitle": "Mode not available",
+    "message": "This mode isn't available right now. Try again later or choose another mode from the selector.",
+    "backButtonLabel": "Back to the game selector"
+  },
+  "offlineDiagnostics": {
+    "screenTitle": "Offline diagnostics",
+    "introText": "This data is calculated and saved only on this device. It's never sent to the internet.",
+    "backButtonLabel": "Back",
+    "swState": {
+      "heading": "Service worker status",
+      "versionLabel": "Installed cache version",
+      "lastPreloadLabel": "Last full preload",
+      "notAvailableText": "There's no saved data on this device yet."
+    },
+    "modeMatrix": {
+      "heading": "Resources by game mode",
+      "modeColumnLabel": "Mode",
+      "statusColumnLabel": "Status",
+      "checkingText": "Checking…",
+      "statusOkText": "All set",
+      "statusMissingFormat": "{count} resources missing",
+      "statusUnavailableText": "Couldn't check on this device",
+      "missingResourcesLabel": "Missing resources:",
+      "summaryFormat": "Check complete: {okCount}/{totalCount} modes ready"
+    }
   },
   "privacyPolicy": {
     "screenTitle": "Privacy Policy",
@@ -179,6 +218,122 @@
         ]
       }
     ]
+  },
+  "diagnostics": {
+    "screenTitle": "Technical diagnostics",
+    "backButtonLabel": "Back to the home screen",
+    "intro": "This screen is only for adults or the QA team: it shows aggregated counters and the device's technical status. It never shows names or specific answers.",
+    "health": {
+      "heading": "Technical health",
+      "serviceWorkerLabel": "Service worker status",
+      "serviceWorkerStatus": {
+        "active": "Active and controlling this page",
+        "inactive": "Installed but not controlling this page",
+        "unsupported": "Not available in this browser"
+      },
+      "cacheVersionLabel": "Cache version",
+      "lastPreloadLabel": "Last full preload",
+      "unknownValue": "No data yet"
+    },
+    "resourceAvailability": {
+      "heading": "Resource availability by mode",
+      "statusAvailable": "Available",
+      "statusBlocked": "Blocked",
+      "blockedReasons": {
+        "insufficient_questions": "Missing verified questions",
+        "insufficient_creatures": "Missing verified creatures",
+        "insufficient_creature_sounds": "Missing imagined creature sounds",
+        "missing_creature_field": "Missing verified creature data",
+        "round_generation_failed": "Couldn't prepare a new round",
+        "state_discarded": "The game was restarted due to a technical issue"
+      },
+      "unknownReason": "Reason not available"
+    },
+    "counters": {
+      "heading": "Aggregated counters by mode",
+      "generalHeading": "General counters",
+      "emptyMessage": "No counter has been recorded on this device yet."
+    },
+    "errors": {
+      "heading": "Recent error codes",
+      "emptyMessage": "No error has been recorded on this device.",
+      "columns": {
+        "date": "Date",
+        "mode": "Mode",
+        "category": "Category",
+        "code": "Code"
+      },
+      "truncatedNote": "Showing the {shown} most recent of {total} recorded."
+    },
+    "actions": {
+      "heading": "Maintenance actions",
+      "resetButtonLabel": "Clear diagnostics data",
+      "resetConfirmMessage": "Are you sure you want to clear the counters and technical errors recorded on this device? This doesn't affect game progress or unlocks.",
+      "resetConfirmButtonLabel": "Clear",
+      "resetCancelButtonLabel": "Cancel",
+      "resetSuccessMessage": "Diagnostics data cleared on this device.",
+      "exportButtonLabel": "Export technical summary",
+      "exportCopiedMessage": "Technical summary copied to clipboard.",
+      "exportDownloadedMessage": "Technical summary downloaded on this device.",
+      "exportFailedMessage": "Couldn't export the technical summary on this device."
+    }
+  },
+  "launchGate": {
+    "screenTitle": "Launch gate status",
+    "backButtonLabel": "Back to the home screen",
+    "intro": "This screen is only for adults or the QA team: it shows whether the candidate version can be launched, based on the automated gates and the product goals reviewed on this device.",
+    "version": {
+      "heading": "Version and preload",
+      "candidateVersionLabel": "Candidate version",
+      "swVersionLabel": "SW_VERSION",
+      "precacheStatusLabel": "Preload status",
+      "precacheStatus": {
+        "complete": "Complete",
+        "pending": "Pending or unknown"
+      },
+      "lastPreloadLabel": "Last full preload",
+      "unknownValue": "No data yet"
+    },
+    "gates": {
+      "heading": "Gate status",
+      "overall": {
+        "pass": "All gates are approved: the candidate version can be launched.",
+        "fail": "There are blocked gates: the candidate version can't be launched yet.",
+        "unknown": "Couldn't evaluate the gate status on this device."
+      },
+      "statusLabels": {
+        "pass": "Approved",
+        "fail": "Blocked",
+        "unknown": "Unknown"
+      },
+      "names": {
+        "fichas": "Verified creature sheets",
+        "generadores": "Round generators by mode",
+        "resolubilidad": "Maze solvability",
+        "siluetas": "Guess the Shadow mode",
+        "tamanos": "Sort by Size mode",
+        "rejillas": "Jurassic Pairs mode",
+        "precache": "Preload structure (SW_VERSION)",
+        "offline": "Full offline availability",
+        "accesibilidad": "WCAG AA contrast",
+        "regresionQuiz": "Existing quiz regression"
+      }
+    },
+    "productGoals": {
+      "heading": "Product goals",
+      "statusLabels": {
+        "aprobado": "Approved",
+        "pendiente": "Pending approval"
+      },
+      "names": {
+        "distribucionPorModo": "Game distribution by mode",
+        "finalizacion": "Game completion",
+        "retencion7dias": "7-day retention"
+      },
+      "targetLabel": "Reviewed target",
+      "approvedAtLabel": "Approved on",
+      "unknownValue": "No data yet"
+    }
   },
   "privacy": {
     "heading": "Privacy Policy",
@@ -274,6 +429,7 @@
     "imageAltFormat": "Illustration of a {dinosaur}",
     "levelFormat": "Level {level}",
     "progressFormat": "{current} of {total}",
+    "roundAnnouncementFormat": "Round {current} of {total}",
     "feedback": {
       "correct": "Great, you got it right!",
       "incorrect": "Good try!"
