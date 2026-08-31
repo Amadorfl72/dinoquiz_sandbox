@@ -1327,6 +1327,83 @@ body {
   margin-top: 8px;
 }
 
+.diagnostics-screen__action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.diagnostics-screen__action-group:last-child {
+  margin-bottom: 0;
+}
+
+.diagnostics-screen__reset-button,
+.diagnostics-screen__export-button,
+.diagnostics-screen__reset-cancel-button,
+.diagnostics-screen__reset-confirm-button {
+  align-self: flex-start;
+  min-height: var(--tap-target-min);
+  min-width: var(--tap-target-min);
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.diagnostics-screen__reset-button,
+.diagnostics-screen__reset-confirm-button {
+  color: #ffffff;
+  background-color: #b71c1c;
+}
+
+.diagnostics-screen__reset-button:focus-visible,
+.diagnostics-screen__reset-confirm-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.diagnostics-screen__export-button,
+.diagnostics-screen__reset-cancel-button {
+  color: #ffffff;
+  background-color: #2e7d32;
+}
+
+.diagnostics-screen__export-button:focus-visible,
+.diagnostics-screen__reset-cancel-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.diagnostics-screen__reset-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 2px solid #b71c1c;
+  border-radius: 12px;
+}
+
+.diagnostics-screen__reset-confirm-message {
+  margin: 0;
+}
+
+.diagnostics-screen__reset-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.diagnostics-screen__action-status {
+  min-height: 1.25em;
+  margin: 0;
+  font-weight: 700;
+}
+
 /*
  * Age gate screen (TRIOFSND-193, exact-age capture TRIOFSND-204) — three big,
  * equally-weighted options so a 6-8 year old can pick their exact age at a

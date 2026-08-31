@@ -242,6 +242,18 @@
         "code": "Código"
       },
       "truncatedNote": "Mostrando los {shown} más recientes de {total} registrados."
+    },
+    "actions": {
+      "heading": "Acciones de mantenimiento",
+      "resetButtonLabel": "Borrar datos de diagnóstico",
+      "resetConfirmMessage": "¿Seguro que quieres borrar los contadores y errores técnicos registrados en este dispositivo? Esto no afecta al progreso ni a los desbloqueos del juego.",
+      "resetConfirmButtonLabel": "Borrar",
+      "resetCancelButtonLabel": "Cancelar",
+      "resetSuccessMessage": "Datos de diagnóstico borrados en este dispositivo.",
+      "exportButtonLabel": "Exportar resumen técnico",
+      "exportCopiedMessage": "Resumen técnico copiado al portapapeles.",
+      "exportDownloadedMessage": "Resumen técnico descargado en este dispositivo.",
+      "exportFailedMessage": "No se pudo exportar el resumen técnico en este dispositivo."
     }
   },
   "privacy": {
