@@ -83,6 +83,8 @@ const PRECACHE_URLS = [
   '/scripts/diagnosticsScreen.js',
   '/scripts/productGoals.js',
   '/scripts/launchGateScreen.js',
+  '/scripts/modeResourceValidation.js',
+  '/scripts/offlineDiagnosticsPanel.js',
   '/scripts/main.js',
   '/icons/icon.svg',
   '/assets/images/mascot.svg',

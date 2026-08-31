@@ -29,9 +29,23 @@
  * Accessibility: the heading receives focus on mount (mirrors
  * privacyPolicyScreen.js) so screen readers announce the new view
  * immediately; every value is a real text node (status words, not color
- * alone), and the only interactive control -- the back button -- is a plain
- * `<button>` with an accessible name, reachable and activatable by keyboard
- * like every other screen in this app.
+ * alone), and every interactive control -- the back button and the two
+ * maintenance actions below -- is a plain `<button>` with an accessible
+ * name, reachable and activatable by keyboard like every other screen in
+ * this app.
+ *
+ * Maintenance actions (TRIOFSND-320):
+ *  - "Borrar datos de diagnóstico" asks for confirmation inline before
+ *    calling `diagnostics.resetDiagnostics()`; it never touches a mode's
+ *    progress/unlock/session keys (see that function's own doc comment),
+ *    only this module's own counters/errors/retention.
+ *  - "Exportar resumen técnico" only ever runs from this explicit adult
+ *    click -- there is no automatic/background export anywhere in this
+ *    file. It asks `diagnostics.buildExportSummary()` for a single
+ *    aggregated, non-identifiable snapshot (counts only, no name, no
+ *    per-round answer, no free text) and hands it to the adult locally --
+ *    clipboard first, falling back to a same-device file download -- with
+ *    no network request of any kind.
  */
 
 (function () {
@@ -399,6 +413,134 @@
     return section;
   }
 
+  /** Default clipboard delivery: `navigator.clipboard.writeText`, rejecting when the API isn't available (older/insecure-context browsers) so the caller falls back to a download. */
+  function defaultCopyToClipboard(text, win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.navigator && win.navigator.clipboard && typeof win.navigator.clipboard.writeText === 'function') {
+      return win.navigator.clipboard.writeText(text);
+    }
+    return Promise.reject(new Error('clipboard unavailable'));
+  }
+
+  /** Default same-device file delivery: a `Blob` + object URL fed to a throwaway, never-appended-visibly `<a download>` -- no network request. Returns whether it could run at all (`Blob`/`URL.createObjectURL` missing counts as failure, not a throw). */
+  function defaultDownloadFile(text, filename, doc) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    if (!doc || typeof Blob === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      return false;
+    }
+    try {
+      var blob = new Blob([text], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var link = doc.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      doc.body.appendChild(link);
+      link.click();
+      doc.body.removeChild(link);
+      if (typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(url);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * The two maintenance actions (TRIOFSND-320): delete-with-confirmation and
+   * manual export. Built once per render and wired up by the caller, which
+   * owns the actual `resetDiagnostics`/`buildExportSummary` calls and the
+   * counters/errors refresh afterwards -- this function only builds the DOM
+   * and exposes the nodes/buttons the caller needs.
+   */
+  function renderActionsSection(doc, strings) {
+    var section = doc.createElement('section');
+    section.className = 'diagnostics-screen__section';
+
+    var heading = doc.createElement('h2');
+    heading.id = 'diagnostics-actions-heading';
+    heading.textContent = strings.actions.heading;
+    section.setAttribute('aria-labelledby', heading.id);
+    section.appendChild(heading);
+
+    // Delete, with an inline confirmation step -- the confirm block starts
+    // hidden and swaps places with the plain reset button, it never deletes
+    // on the first click.
+    var resetGroup = doc.createElement('div');
+    resetGroup.className = 'diagnostics-screen__action-group';
+
+    var resetButton = doc.createElement('button');
+    resetButton.type = 'button';
+    resetButton.className = 'diagnostics-screen__reset-button';
+    resetButton.textContent = strings.actions.resetButtonLabel;
+
+    var resetConfirm = doc.createElement('div');
+    resetConfirm.className = 'diagnostics-screen__reset-confirm';
+    resetConfirm.setAttribute('aria-live', 'polite');
+    resetConfirm.hidden = true;
+
+    var resetConfirmMessage = doc.createElement('p');
+    resetConfirmMessage.className = 'diagnostics-screen__reset-confirm-message';
+    resetConfirmMessage.textContent = strings.actions.resetConfirmMessage;
+
+    var resetConfirmActions = doc.createElement('div');
+    resetConfirmActions.className = 'diagnostics-screen__reset-confirm-actions';
+
+    var resetCancelButton = doc.createElement('button');
+    resetCancelButton.type = 'button';
+    resetCancelButton.className = 'diagnostics-screen__reset-cancel-button';
+    resetCancelButton.textContent = strings.actions.resetCancelButtonLabel;
+
+    var resetConfirmButton = doc.createElement('button');
+    resetConfirmButton.type = 'button';
+    resetConfirmButton.className = 'diagnostics-screen__reset-confirm-button';
+    resetConfirmButton.textContent = strings.actions.resetConfirmButtonLabel;
+
+    resetConfirmActions.appendChild(resetCancelButton);
+    resetConfirmActions.appendChild(resetConfirmButton);
+    resetConfirm.appendChild(resetConfirmMessage);
+    resetConfirm.appendChild(resetConfirmActions);
+
+    var resetStatus = doc.createElement('p');
+    resetStatus.className = 'diagnostics-screen__action-status';
+    resetStatus.setAttribute('aria-live', 'polite');
+
+    resetGroup.appendChild(resetButton);
+    resetGroup.appendChild(resetConfirm);
+    resetGroup.appendChild(resetStatus);
+
+    // Manual export -- only ever runs from this button's own click handler.
+    var exportGroup = doc.createElement('div');
+    exportGroup.className = 'diagnostics-screen__action-group';
+
+    var exportButton = doc.createElement('button');
+    exportButton.type = 'button';
+    exportButton.className = 'diagnostics-screen__export-button';
+    exportButton.textContent = strings.actions.exportButtonLabel;
+
+    var exportStatus = doc.createElement('p');
+    exportStatus.className = 'diagnostics-screen__action-status';
+    exportStatus.setAttribute('aria-live', 'polite');
+
+    exportGroup.appendChild(exportButton);
+    exportGroup.appendChild(exportStatus);
+
+    section.appendChild(resetGroup);
+    section.appendChild(exportGroup);
+
+    return {
+      section: section,
+      resetButton: resetButton,
+      resetConfirm: resetConfirm,
+      resetCancelButton: resetCancelButton,
+      resetConfirmButton: resetConfirmButton,
+      resetStatus: resetStatus,
+      exportButton: exportButton,
+      exportStatus: exportStatus,
+    };
+  }
+
   function renderDiagnosticsScreen(container, options) {
     options = options || {};
     var doc = container.ownerDocument || (typeof document !== 'undefined' ? document : undefined);
@@ -449,13 +591,94 @@
     intro.className = 'diagnostics-screen__intro';
     intro.textContent = strings.intro;
 
+    var countersSection = renderCountersSection(doc, strings, grouped, modeIds, modesNames);
+    var errorsSection = renderErrorsSection(doc, strings, errors);
+    var actions = renderActionsSection(doc, strings);
+
     root.appendChild(backButton);
     root.appendChild(title);
     root.appendChild(intro);
     root.appendChild(renderHealthSection(doc, strings, health));
     root.appendChild(renderResourceAvailabilitySection(doc, strings, availability, modesNames));
-    root.appendChild(renderCountersSection(doc, strings, grouped, modeIds, modesNames));
-    root.appendChild(renderErrorsSection(doc, strings, errors));
+    root.appendChild(countersSection);
+    root.appendChild(errorsSection);
+    root.appendChild(actions.section);
+
+    // Re-reads the live counters/errors (never `options.counters`/
+    // `options.errors`, which are only ever a fixed test fixture) and
+    // replaces the two sections above in place -- used after a confirmed
+    // reset so the screen reflects the data it just cleared.
+    function refreshCountersAndErrors() {
+      var freshCounters =
+        diagnosticsService && typeof diagnosticsService.getCounters === 'function' ? diagnosticsService.getCounters() : {};
+      var freshErrors =
+        diagnosticsService && typeof diagnosticsService.getErrors === 'function' ? diagnosticsService.getErrors() : [];
+      var freshGrouped = groupCountersByMode(freshCounters, modeIds);
+
+      var newCountersSection = renderCountersSection(doc, strings, freshGrouped, modeIds, modesNames);
+      root.replaceChild(newCountersSection, countersSection);
+      countersSection = newCountersSection;
+
+      var newErrorsSection = renderErrorsSection(doc, strings, freshErrors);
+      root.replaceChild(newErrorsSection, errorsSection);
+      errorsSection = newErrorsSection;
+    }
+
+    function showResetButton() {
+      actions.resetConfirm.hidden = true;
+      actions.resetButton.hidden = false;
+      if (typeof actions.resetButton.focus === 'function') {
+        actions.resetButton.focus();
+      }
+    }
+
+    actions.resetButton.addEventListener('click', function () {
+      actions.resetStatus.textContent = '';
+      actions.resetButton.hidden = true;
+      actions.resetConfirm.hidden = false;
+      if (typeof actions.resetCancelButton.focus === 'function') {
+        actions.resetCancelButton.focus();
+      }
+    });
+
+    actions.resetCancelButton.addEventListener('click', function () {
+      showResetButton();
+    });
+
+    actions.resetConfirmButton.addEventListener('click', function () {
+      if (diagnosticsService && typeof diagnosticsService.resetDiagnostics === 'function') {
+        diagnosticsService.resetDiagnostics();
+      }
+      showResetButton();
+      refreshCountersAndErrors();
+      actions.resetStatus.textContent = strings.actions.resetSuccessMessage;
+    });
+
+    actions.exportButton.addEventListener('click', function () {
+      var summary =
+        diagnosticsService && typeof diagnosticsService.buildExportSummary === 'function'
+          ? diagnosticsService.buildExportSummary()
+          : {};
+      var text = JSON.stringify(summary, null, 2);
+      var filename = 'dinoquiz-diagnostico.json';
+      var copyToClipboard = options.copyToClipboard || defaultCopyToClipboard;
+      var downloadFile = options.downloadFile || defaultDownloadFile;
+
+      actions.exportStatus.textContent = '';
+      Promise.resolve()
+        .then(function () {
+          return copyToClipboard(text);
+        })
+        .then(function () {
+          actions.exportStatus.textContent = strings.actions.exportCopiedMessage;
+        })
+        .catch(function () {
+          var downloaded = downloadFile(text, filename, doc);
+          actions.exportStatus.textContent = downloaded
+            ? strings.actions.exportDownloadedMessage
+            : strings.actions.exportFailedMessage;
+        });
+    });
 
     container.appendChild(root);
 
@@ -463,7 +686,18 @@
       title.focus();
     }
 
-    return { root: root, backButton: backButton, title: title };
+    return {
+      root: root,
+      backButton: backButton,
+      title: title,
+      resetButton: actions.resetButton,
+      resetConfirm: actions.resetConfirm,
+      resetCancelButton: actions.resetCancelButton,
+      resetConfirmButton: actions.resetConfirmButton,
+      resetStatus: actions.resetStatus,
+      exportButton: actions.exportButton,
+      exportStatus: actions.exportStatus,
+    };
   }
 
   var api = {
