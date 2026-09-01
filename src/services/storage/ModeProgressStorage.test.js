@@ -210,6 +210,22 @@ describe('ModeProgressStorage', () => {
       ]);
     });
 
+    it('TRIOFSND-318: also records a structured diagnostics.js error for the discard, never the entry\'s content', async () => {
+      const store = new Map();
+      store.set(`${MODE_PROGRESS_KEY_PREFIX}quiz`, '{not-json');
+      const adapter = createFakeAdapter({
+        async getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+      });
+      const diagnosticsService = { recordError: jest.fn() };
+      const storage = new ModeProgressStorage([adapter], createFakeLogService(), diagnosticsService);
+
+      await storage.getProgress('quiz');
+
+      expect(diagnosticsService.recordError).toHaveBeenCalledWith('quiz', 'state', MODE_PROGRESS_DISCARD_INCOMPATIBLE_CODE);
+    });
+
     it('discards an entry saved under a different schema version', async () => {
       const store = new Map();
       store.set(

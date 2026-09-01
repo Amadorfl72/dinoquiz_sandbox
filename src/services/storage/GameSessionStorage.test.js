@@ -366,6 +366,17 @@ describe('GameSessionStorage', () => {
       expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
     });
 
+    it('TRIOFSND-318: also records a structured diagnostics.js error for the discard, never the session content', async () => {
+      const adapter = createFakeAdapter();
+      const diagnosticsService = { recordError: jest.fn() };
+      const storage = new GameSessionStorage([adapter], createFakeLogService(), diagnosticsService);
+      await adapter.setItem(sessionKey('quiz'), '{not-json');
+
+      await storage.restoreSession('quiz');
+
+      expect(diagnosticsService.recordError).toHaveBeenCalledWith('quiz', 'state', SESSION_DISCARD_INCOMPATIBLE_CODE);
+    });
+
     it('logs the unsupported-version discard code for a schema version with no migration path', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();

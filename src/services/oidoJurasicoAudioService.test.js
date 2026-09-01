@@ -1,6 +1,12 @@
 'use strict';
 
-const { STATUS, MUTE_STORAGE_KEY, createOidoJurasicoAudioService } = require('./oidoJurasicoAudioService');
+const {
+  STATUS,
+  MUTE_STORAGE_KEY,
+  AUDIO_UNAVAILABLE_CODE,
+  PLAYBACK_FAILED_CODE,
+  createOidoJurasicoAudioService,
+} = require('./oidoJurasicoAudioService');
 
 const SOUND_SRC = '/assets/sounds/oido-jurasico/trex.wav';
 
@@ -229,6 +235,35 @@ describe('oidoJurasicoAudioService (TRIOFSND-269)', () => {
 
       expect(state.status).toBe(STATUS.ERROR);
       expect(instances).toHaveLength(0);
+    });
+
+    test('TRIOFSND-318: every failure branch also records a structured diagnostics.js error under the oidoJurasico mode', async () => {
+      const storageObj = buildStorage({ [MUTE_STORAGE_KEY]: 'false' });
+
+      const constructorDiagnostics = { recordError: jest.fn() };
+      function ThrowingAudio() {
+        throw new Error('decode error');
+      }
+      createOidoJurasicoAudioService({ AudioCtor: ThrowingAudio, storageObj, diagnostics: constructorDiagnostics, autoListen: false })
+        .play(SOUND_SRC);
+      expect(constructorDiagnostics.recordError).toHaveBeenCalledWith('oidoJurasico', 'audio', PLAYBACK_FAILED_CODE);
+
+      const noSourceDiagnostics = { recordError: jest.fn() };
+      const { FakeAudio } = buildAudioCtor();
+      createOidoJurasicoAudioService({ AudioCtor: FakeAudio, storageObj, diagnostics: noSourceDiagnostics, autoListen: false }).play();
+      expect(noSourceDiagnostics.recordError).toHaveBeenCalledWith('oidoJurasico', 'audio', AUDIO_UNAVAILABLE_CODE);
+
+      const rejectedDiagnostics = { recordError: jest.fn() };
+      const { FakeAudio: RejectingAudio } = buildAudioCtor({
+        play: jest.fn(function play() {
+          this.paused = false;
+          return Promise.reject(new Error('NotAllowedError'));
+        }),
+      });
+      createOidoJurasicoAudioService({ AudioCtor: RejectingAudio, storageObj, diagnostics: rejectedDiagnostics, autoListen: false })
+        .play(SOUND_SRC);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(rejectedDiagnostics.recordError).toHaveBeenCalledWith('oidoJurasico', 'audio', PLAYBACK_FAILED_CODE);
     });
   });
 

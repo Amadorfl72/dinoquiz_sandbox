@@ -35,6 +35,14 @@
 
 const { getModeManifest } = require('../data/modeResourceManifest');
 const { LogService } = require('./logging');
+const diagnostics = require('./diagnostics');
+
+// Stable, structured code for `diagnostics.js#recordError` (TRIOFSND-318,
+// PRD failure point "recurso no cacheado"): a resource URL is a technical
+// asset path, not player content, but recordError's `code` stays this one
+// fixed string regardless -- the per-URL detail already lives in
+// `logModeResourceMissing`'s own aggregated counters below.
+const RESOURCE_NOT_CACHED_CODE = 'RESOURCE_NOT_CACHED';
 
 function flattenManifestUrls(manifest) {
   return [...manifest.scripts, ...manifest.i18n, ...manifest.images, ...manifest.audio, ...manifest.fallback];
@@ -56,6 +64,10 @@ function resolveLogService(injected) {
   } catch (error) {
     return null;
   }
+}
+
+function resolveDiagnostics(injected) {
+  return injected || diagnostics;
 }
 
 /**
@@ -87,6 +99,9 @@ async function validateModeResources(modeId, options = {}) {
     if (logService) {
       missing.forEach((url) => logService.logModeResourceMissing(modeId, url));
     }
+
+    const diagnosticsService = resolveDiagnostics(options.diagnostics);
+    missing.forEach(() => diagnosticsService.recordError(modeId, 'resource', RESOURCE_NOT_CACHED_CODE));
   }
 
   return missing;

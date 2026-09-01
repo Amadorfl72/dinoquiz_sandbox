@@ -39,6 +39,7 @@
 
 (function () {
   var MUTE_STORAGE_KEY = 'dinoquiz:muted';
+  var MODE_ID = 'oidoJurasico';
 
   var STATUS = Object.freeze({
     IDLE: 'idle',
@@ -47,6 +48,26 @@
     MUTED: 'muted',
     ERROR: 'error',
   });
+
+  // Mirrors logging.js's own OIDO_JURASICO_AUDIO_UNAVAILABLE/
+  // OIDO_JURASICO_PLAYBACK_FAILED codes: the only two failure branches
+  // `attempt()` below ever reports -- no audio source/player available at
+  // all, or an available player that failed to start/continue.
+  var AUDIO_UNAVAILABLE_CODE = 'OIDO_JURASICO_AUDIO_UNAVAILABLE';
+  var PLAYBACK_FAILED_CODE = 'OIDO_JURASICO_PLAYBACK_FAILED';
+
+  var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
+
+  /** Resolves src/services/diagnostics.js the same require-or-`window.DinoQuiz` shape as this file's own dual export pattern, falling back to a no-op. */
+  function resolveDiagnostics() {
+    if (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.diagnostics) {
+      return window.DinoQuiz.services.diagnostics;
+    }
+    if (typeof require === 'function') {
+      return require('../../src/services/diagnostics');
+    }
+    return noopDiagnostics;
+  }
 
   function isDocumentHidden(docObj) {
     if (!docObj) {
@@ -90,6 +111,7 @@
     var docObj = options.documentObj || (typeof document !== 'undefined' ? document : null);
     var onMuted = options.onMuted;
     var onError = options.onError;
+    var diagnostics = options.diagnostics || resolveDiagnostics();
 
     var currentAudio = null;
     var state = { status: STATUS.IDLE, error: null };
@@ -110,8 +132,17 @@
       currentAudio = null;
     }
 
-    function fail(error) {
+    /**
+     * `code` is one of the two stable codes above -- `attempt()` below
+     * always passes one explicitly, never derived from `error.message`
+     * (PRD "sin incluir contenido libre ni del jugador"). Recorded via
+     * diagnostics.js#recordError (TRIOFSND-318, PRD failure point "audio no
+     * reproducible") in addition to flipping `getState().status`/invoking
+     * `onError`.
+     */
+    function fail(error, code) {
       setState({ status: STATUS.ERROR, error: error });
+      diagnostics.recordError(MODE_ID, 'audio', code || PLAYBACK_FAILED_CODE);
       if (typeof onError === 'function') {
         onError(error);
       }
@@ -135,7 +166,7 @@
       }
 
       if (typeof src !== 'string' || !src || typeof AudioCtor !== 'function') {
-        fail(new Error('Oído Jurásico: no audio source/player available'));
+        fail(new Error('Oído Jurásico: no audio source/player available'), AUDIO_UNAVAILABLE_CODE);
         return state;
       }
 
@@ -143,7 +174,7 @@
       try {
         audio = new AudioCtor(src);
       } catch (error) {
-        fail(error);
+        fail(error, PLAYBACK_FAILED_CODE);
         return state;
       }
 
@@ -165,12 +196,12 @@
             if (currentAudio === audio) {
               currentAudio = null;
             }
-            fail(error);
+            fail(error, PLAYBACK_FAILED_CODE);
           });
         }
       } catch (error) {
         currentAudio = null;
-        fail(error);
+        fail(error, PLAYBACK_FAILED_CODE);
         return state;
       }
 
@@ -249,6 +280,8 @@
   var api = {
     STATUS: STATUS,
     MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
+    AUDIO_UNAVAILABLE_CODE: AUDIO_UNAVAILABLE_CODE,
+    PLAYBACK_FAILED_CODE: PLAYBACK_FAILED_CODE,
     createOidoJurasicoAudioService: createOidoJurasicoAudioService,
   };
 
