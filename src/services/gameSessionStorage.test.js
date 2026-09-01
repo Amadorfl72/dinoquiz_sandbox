@@ -79,6 +79,76 @@ describe('gameSessionStorage service (TRIOFSND-238)', () => {
     });
   });
 
+  describe('saveSession', () => {
+    it('persists a session under modeId, readable back via the underlying storage', async () => {
+      const { facade, storage } = loadFacadeWithFakeStorage();
+
+      const persisted = await facade.saveSession('oidoJurasico', playingSession({ level: 1 }));
+
+      expect(persisted).toBe(true);
+      expect(await storage.restoreSession('oidoJurasico')).not.toBeNull();
+    });
+  });
+
+  describe('restoreGameState (TRIOFSND-299)', () => {
+    it('returns null when nothing was ever saved', async () => {
+      const { facade } = loadFacadeWithFakeStorage();
+      expect(await facade.restoreGameState('oidoJurasico')).toBeNull();
+    });
+
+    it('restores mode/level/round/score from a valid, schema-compatible saved session', async () => {
+      const { facade, storage } = loadFacadeWithFakeStorage();
+      let session = playingSession({ level: 3 });
+      session = evaluateAnswer(session, { isCorrect: true }).session;
+      session = advanceRound(session).session;
+      await storage.saveSession('oidoJurasico', session);
+
+      const restored = await facade.restoreGameState('oidoJurasico');
+
+      expect(restored).toMatchObject({
+        modeId: 'oidoJurasico',
+        level: 3,
+        currentRound: 1,
+        score: 1,
+        answeredCount: 1,
+      });
+      // The exact restored session -- reusable to resume without duplicating
+      // the round already answered/the score already counted.
+      expect(restored.session.state.answers).toHaveLength(1);
+      expect(restored.session.roundIndex).toBe(1);
+    });
+
+    it('defaults level to 1 for a level-less mode session whose context carries no level', async () => {
+      const { facade, storage } = loadFacadeWithFakeStorage();
+      await storage.saveSession('oidoJurasico', playingSession({}));
+
+      const restored = await facade.restoreGameState('oidoJurasico');
+
+      expect(restored.level).toBe(1);
+    });
+
+    it('discards only the transient session -- never any durable per-mode key -- when the derived state fails stateSchema.js validation', async () => {
+      const { facade, storage, adapter } = loadFacadeWithFakeStorage();
+      // A modeId roundContract.js's own envelope check accepts (non-empty
+      // string) but stateSchema.js's isValidModeState rejects (unknown mode).
+      await storage.saveSession('not-a-real-mode', playingSession());
+      await adapter.setItem('dinoquiz:bestScore', JSON.stringify(10));
+
+      const restored = await facade.restoreGameState('not-a-real-mode');
+
+      expect(restored).toBeNull();
+      expect(await storage.restoreSession('not-a-real-mode')).toBeNull();
+      expect(await adapter.getItem('dinoquiz:bestScore')).toBe('10');
+    });
+
+    it('returns null once the saved round has finished, leaving completed results untouched', async () => {
+      const { facade, storage } = loadFacadeWithFakeStorage();
+      await storage.saveSession('oidoJurasico', finishedSession());
+
+      expect(await facade.restoreGameState('oidoJurasico')).toBeNull();
+    });
+  });
+
   describe('discardTransientState', () => {
     it('clears the in-progress round for that mode', async () => {
       const { facade, storage } = loadFacadeWithFakeStorage();

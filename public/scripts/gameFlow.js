@@ -323,6 +323,34 @@
     return defaultLogService;
   }
 
+  var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
+  var defaultDiagnostics;
+
+  /**
+   * Lazily resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318's
+   * local, aggregated counters/structured errors), the same require-or-
+   * `window.DinoQuiz` shape `resolveDefaultLogService` above uses --
+   * registered on `window.DinoQuiz.services.diagnostics` (see that file), so
+   * this resolves the real service in the unbundled browser too, not just
+   * under Node/Jest. Falls back to a no-op only if that script genuinely
+   * failed to load, so this never blocks gameplay.
+   */
+  function resolveDefaultDiagnostics() {
+    if (defaultDiagnostics) {
+      return defaultDiagnostics;
+    }
+
+    var diagnosticsModule = typeof require === 'function'
+      ? require('../../src/services/diagnostics')
+      : (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.diagnostics);
+
+    defaultDiagnostics = diagnosticsModule && typeof diagnosticsModule.incrementCounter === 'function'
+      ? diagnosticsModule
+      : noopDiagnostics;
+
+    return defaultDiagnostics;
+  }
+
   /** Every valid question for `level` (TRIOFSND-202's own validation/logging applies, not repeated here). */
   function getLevelQuestionPool(level, options) {
     if (typeof options.getQuestionsByLevel === 'function') {
@@ -348,7 +376,15 @@
    * started: a `level_generation_failed` event is logged with the level and
    * the number of valid questions found -- no personal data -- and an error
    * result is returned instead of throwing, so one broken level never
-   * crashes the app shell.
+   * crashes the app shell. The same failure is also recorded via
+   * diagnostics.js's `recordError(modeId, 'roundGeneration',
+   * 'level_generation_failed')` (TRIOFSND-318) -- the stable code alone,
+   * never the level/validQuestionCount already logged above.
+   *
+   * On success, tallies this device's local, non-PII `gameStarted:<modeId>`/
+   * `gamesByModeLevel:<modeId>:<level>` diagnostics counters (TRIOFSND-318,
+   * PRD "shared_game_structure.match: una partida corresponde a un nivel") --
+   * every level a caller starts through this function is one "partida".
    */
   function startLevel(level, options) {
     options = options || {};
@@ -358,13 +394,19 @@
     }
 
     var logService = options.logService || resolveDefaultLogService();
+    var diagnostics = options.diagnostics || resolveDefaultDiagnostics();
+    var modeId = options.modeId || DEFAULT_MODE_ID;
     var pool = getLevelQuestionPool(level, options);
     var validQuestionCount = Array.isArray(pool) ? pool.length : 0;
 
     if (validQuestionCount < QUESTIONS_PER_GAME) {
       logService.logEvent('level_generation_failed', { level: level, validQuestionCount: validQuestionCount });
+      diagnostics.recordError(modeId, 'roundGeneration', 'level_generation_failed');
       return { error: 'level_generation_failed', level: level, validQuestionCount: validQuestionCount };
     }
+
+    diagnostics.incrementCounter('gameStarted:' + modeId);
+    diagnostics.incrementCounter('gamesByModeLevel:' + modeId + ':' + level);
 
     return {
       level: level,
@@ -403,6 +445,16 @@
    * mode once `answers` has at least `modeId`'s unlock threshold for `level`
    * aciertos, otherwise the game ends. This applies uniformly to every mode,
    * including quiz: there is no age-band exception.
+   *
+   * Diagnostics (TRIOFSND-318): every call tallies this level's own
+   * `gameCompleted:<modeId>` (a level's 10 questions are always fully
+   * answered by the time this runs, whatever the outcome), one
+   * `correctAnswers:<modeId>` per correct answer and one
+   * `starsEarned:<modeId>` per star `scoring.js#normalizeOutcome` derives
+   * from `correctCount` -- so both aggregate to a running per-mode total the
+   * same way `incrementCounter` accumulates every other counter, never a
+   * single call carrying an amount. A genuine level-up additionally tallies
+   * `unlocks:<modeId>`.
    */
   function resolveLevelOutcome(params) {
     params = params || {};
@@ -413,13 +465,28 @@
     }
 
     var modeId = params.modeId || DEFAULT_MODE_ID;
+    var diagnostics = params.diagnostics || resolveDefaultDiagnostics();
     var correctCount = countCorrectAnswers(params.answers);
+
+    diagnostics.incrementCounter('gameCompleted:' + modeId);
+    for (var i = 0; i < correctCount; i += 1) {
+      diagnostics.incrementCounter('correctAnswers:' + modeId);
+    }
+
+    var scoring = resolveScoring();
+    if (scoring && typeof scoring.normalizeOutcome === 'function') {
+      var stars = scoring.normalizeOutcome(correctCount, QUESTIONS_PER_GAME).stars;
+      for (var s = 0; s < stars; s += 1) {
+        diagnostics.incrementCounter('starsEarned:' + modeId);
+      }
+    }
 
     if (level >= MAX_LEVEL) {
       return { gameOver: true, nextLevel: null, level: level, correctCount: correctCount, reason: 'completed_all_levels' };
     }
 
     if (correctCount >= getUnlockThreshold(modeId, level)) {
+      diagnostics.incrementCounter('unlocks:' + modeId);
       return { gameOver: false, nextLevel: level + 1, level: level, correctCount: correctCount, reason: 'level_up' };
     }
 

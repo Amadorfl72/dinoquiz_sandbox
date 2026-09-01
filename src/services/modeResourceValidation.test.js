@@ -22,6 +22,10 @@ function createFakeLogService() {
   return { logModeResourceMissing: jest.fn() };
 }
 
+function createFakeDiagnostics() {
+  return { recordError: jest.fn(), incrementCounter: jest.fn() };
+}
+
 describe('validateModeResources', () => {
   test('resolves to an empty list when every declared resource is cached', async () => {
     const caches = createFakeCaches([
@@ -98,5 +102,40 @@ describe('validateModeResources', () => {
     await expect(validateModeResources('not-a-real-mode', { caches: createFakeCaches([]) })).rejects.toThrow(
       /unknown mode id/i,
     );
+  });
+
+  test('TRIOFSND-318: records a structured RESOURCE_NOT_CACHED diagnostics error per missing resource, never the URL', async () => {
+    const caches = createFakeCaches(['/scripts/main.js', '/i18n/es.json', '/assets/sounds/correct.wav']);
+    const diagnosticsService = createFakeDiagnostics();
+
+    await validateModeResources(MODE_IDS.QUIZ, {
+      manifest: FIXTURE_MANIFEST,
+      caches,
+      logService: createFakeLogService(),
+      diagnostics: diagnosticsService,
+    });
+
+    expect(diagnosticsService.recordError).toHaveBeenCalledTimes(2);
+    expect(diagnosticsService.recordError).toHaveBeenCalledWith(MODE_IDS.QUIZ, 'resource', 'RESOURCE_NOT_CACHED');
+  });
+
+  test('TRIOFSND-318: records nothing when every declared resource is cached', async () => {
+    const caches = createFakeCaches([
+      '/scripts/main.js',
+      '/scripts/questionScreen.js',
+      '/i18n/es.json',
+      '/assets/images/mascot.svg',
+      '/assets/sounds/correct.wav',
+    ]);
+    const diagnosticsService = createFakeDiagnostics();
+
+    await validateModeResources(MODE_IDS.QUIZ, {
+      manifest: FIXTURE_MANIFEST,
+      caches,
+      logService: createFakeLogService(),
+      diagnostics: diagnosticsService,
+    });
+
+    expect(diagnosticsService.recordError).not.toHaveBeenCalled();
   });
 });

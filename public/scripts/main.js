@@ -234,6 +234,18 @@
 
   var PRIVACY_POLICY_HASH = '#/privacidad';
 
+  // Diagnostics screen route (TRIOFSND-319): mirrors PRIVACY_POLICY_HASH --
+  // a hidden hash route with no visible link from Home or any other screen,
+  // so only an adult or QA who already knows this URL can open it (see
+  // public/scripts/diagnosticsScreen.js). Never advertised in the UI.
+  var DIAGNOSTICS_HASH = '#/diagnostico';
+
+  // Launch-gate status screen route (TRIOFSND-325): mirrors DIAGNOSTICS_HASH
+  // -- another hidden hash route with no visible link from Home or any other
+  // screen, so only an adult or QA who already knows this URL can open it
+  // (see public/scripts/launchGateScreen.js). Never advertised in the UI.
+  var LAUNCH_GATE_HASH = '#/gates-lanzamiento';
+
   // Laberinto route (TRIOFSND-259): mirrors the privacy-policy hash route
   // below (isPrivacyPolicyRoute/navigateToPrivacyPolicy) -- the app shell's
   // own mode-selection mechanism until a future ticket adds the PRD's
@@ -841,6 +853,14 @@
             var logger = resolveLogger();
             if (logger && typeof logger.logGameAbandonedByMode === 'function') {
               logger.logGameAbandonedByMode(currentModeId);
+            }
+            // TRIOFSND-318: this discard is the real "abandonar partida"
+            // moment for whichever mode was left mid-round, whatever mode it
+            // was -- one shared counter instead of a per-mode call at each
+            // of the eight modes' own start functions.
+            var diagnostics = resolveDiagnostics();
+            if (diagnostics) {
+              diagnostics.incrementCounter('gameAbandoned:' + currentModeId);
             }
             renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
           });
@@ -1586,6 +1606,7 @@
     var levelGame = gameFlow.startLevel(ctx.level || gameFlow.MIN_LEVEL, {
       getQuestionsByLevel: getQuestionsByLevel,
       randomFn: ctx.randomFn,
+      modeId: modeId,
     });
 
     if (levelGame && levelGame.error) {
@@ -1640,6 +1661,9 @@
         if (ctx.logger) {
           ctx.logger.logMazeResolvabilityFailure();
         }
+        if (ctx.diagnostics) {
+          ctx.diagnostics.recordError(MAZE_MODE_ID, 'roundGeneration', result.nextRound.error);
+        }
         exitMazeToHomeSafely(container, renderers, doc, fetchFn, result.nextRound);
         return;
       }
@@ -1648,6 +1672,9 @@
         activeMazeGame = null;
         if (ctx.logger) {
           ctx.logger.logMazeGameCompleted(ctx.level);
+        }
+        if (ctx.diagnostics) {
+          ctx.diagnostics.incrementCounter('gameCompleted:' + MAZE_MODE_ID);
         }
         finishMazeGame(container, renderers, doc, fetchFn, result.state, ctx);
       } else {
@@ -1724,6 +1751,7 @@
       storage: ctx.storage,
       logger: ctx.logger,
       logService: ctx.logger,
+      diagnostics: ctx.diagnostics,
     };
 
     persistLastMode(MAZE_MODE_ID, ctx.storageObj);
@@ -1743,7 +1771,14 @@
       if (ctx.logger) {
         ctx.logger.logMazeResolvabilityFailure();
       }
+      if (ctx.diagnostics) {
+        ctx.diagnostics.recordError(MAZE_MODE_ID, 'roundGeneration', game.round.error);
+      }
       return exitMazeToHomeSafely(container, renderers, doc, fetchFn, game.round);
+    }
+
+    if (ctx.diagnostics) {
+      ctx.diagnostics.incrementCounter('gameStarted:' + MAZE_MODE_ID);
     }
 
     activeMazeGame = { level: level };
@@ -1769,6 +1804,7 @@
       analyticsStorage: homeStorage,
       storage: homeStorage,
       logger: resolveLogger(),
+      diagnostics: resolveDiagnostics(),
     });
   }
 
@@ -2338,6 +2374,58 @@
    */
 
   /**
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): fire-and-forget
+   * persistence of a live roundContract.js session under `modeId`, via
+   * `gameSessionStorage.saveSession` -- called only from the top of
+   * `playOidoJurasicoRound`/`playSizeOrderRound`, i.e. only at a round's
+   * *start* (`session.round.answered` is always false there, whether that
+   * round came from `startGame` or `advanceRound`), never mid-round right
+   * after `evaluateAnswer`. This is deliberate: it guarantees a restored
+   * session's current round is always unanswered, so resuming never hands
+   * the player a round whose "already counted" answer buttons would then
+   * silently reject a second tap. A missing/unavailable service (see
+   * `resolveGameSessionStorage`) is a no-op; a failed write is swallowed --
+   * the game itself never needs to know or wait for its own save.
+   */
+  function persistRoundContractSession(gameSessionStorage, modeId, session) {
+    if (!gameSessionStorage || typeof gameSessionStorage.saveSession !== 'function') {
+      return;
+    }
+    Promise.resolve(gameSessionStorage.saveSession(modeId, session)).catch(function () {});
+  }
+
+  /** Fire-and-forget discard of `modeId`'s transient session once its game has ended (TRIOFSND-299) -- never the durable per-mode result/progress `finishOidoJurasicoGame`/`finishSizeOrderGame` just recorded. */
+  function discardRoundContractSession(gameSessionStorage, modeId) {
+    if (!gameSessionStorage || typeof gameSessionStorage.discardTransientState !== 'function') {
+      return;
+    }
+    Promise.resolve(gameSessionStorage.discardTransientState(modeId)).catch(function () {});
+  }
+
+  /**
+   * Consumes (reads, then clears) the session restored for `modeId` at
+   * startup (TRIOFSND-299, see `restoreLastGameSession`), so a later replay
+   * ("Volver a jugar") or a second call never resumes the same stale round
+   * twice. `ctx.restoredSession`, when explicitly set (including `null`),
+   * always wins over `win.DinoQuiz.restoredGameState` -- the injectable
+   * override every test in this file uses instead of reaching into
+   * `window.DinoQuiz` directly.
+   */
+  function consumeRestoredSession(win, ctx, modeId) {
+    if (ctx && ctx.restoredSession !== undefined) {
+      return ctx.restoredSession;
+    }
+
+    var restoredGameState = win && win.DinoQuiz && win.DinoQuiz.restoredGameState;
+    if (!restoredGameState || restoredGameState.modeId !== modeId) {
+      return null;
+    }
+
+    win.DinoQuiz.restoredGameState = null;
+    return restoredGameState;
+  }
+
+  /**
    * Renders `session.round` and drives it to completion (answer -> feedback
    * -> "Siguiente"), then either the next round or Resultados, exactly
    * mirroring `playMazeRound`'s shape. `roundContractApi.evaluateAnswer`
@@ -2348,6 +2436,8 @@
    * rondas") -- this function never counts rounds itself.
    */
   function playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    persistRoundContractSession(ctx.gameSessionStorage, OIDO_JURASICO_MODE_ID, session);
+
     return renderers.renderOidoJurasicoScreen(container, session.round, {
       score: session.state.score,
       roundNumber: session.roundIndex + 1,
@@ -2397,6 +2487,11 @@
     finalState.bestScore = bestScoreAndStreak.bestScore;
     finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+    // TRIOFSND-299: the game is over -- its result is now durable via
+    // modeProgressStorage.recordResult below, so the transient round-by-round
+    // session that led here has nothing left to resume.
+    discardRoundContractSession(ctx.gameSessionStorage, OIDO_JURASICO_MODE_ID);
+
     if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
       ctx.analyticsStorage.recordGameCompleted(finalState.score);
     }
@@ -2427,7 +2522,24 @@
     });
   }
 
-  /** Starts a fresh Oído Jurásico game: builds the round context/session via roundContract.js and renders its first round. Persists the last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`. */
+  /**
+   * Starts Oído Jurásico: builds the round context/session via
+   * roundContract.js and renders its first round. Persists the
+   * last-selected mode (TRIOFSND-230/270), mirrors `startMazeGame`.
+   *
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): before starting a
+   * brand-new game, `consumeRestoredSession` checks for a schema-validated,
+   * still-resumable Oído Jurásico session restored at startup
+   * (`restoreLastGameSession`). When there is one, its plain-data session
+   * (score, answers and the round it was on -- see
+   * `gameSessionStorage.restoreGameState`'s own doc comment) is reused
+   * as-is, re-attaching only the fields that can't survive persistence --
+   * `generateRound`, a fresh `hooks`, and `context.randomFn` (a function,
+   * same as the other two, dropped by `saveSession`'s `JSON.stringify`,
+   * re-defaulted to `Math.random` exactly like
+   * `buildOidoJurasicoRoundContext` itself does) -- never re-scored or
+   * re-generated, so nothing already contabilized is duplicated.
+   */
   function startOidoJurasicoGame(container, renderers, doc, fetchFn, ctx) {
     ctx = ctx || {};
     var roundContractApi = resolveRoundContract();
@@ -2438,13 +2550,22 @@
 
     persistLastMode(OIDO_JURASICO_MODE_ID, ctx.storageObj);
 
-    var context = oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn });
-    var session = roundContractApi.startGame({
-      generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
-      context: context,
-    });
+    var win = typeof window !== 'undefined' ? window : undefined;
+    var resolvedCtx = Object.assign({}, ctx, { gameSessionStorage: resolveGameSessionStorage(win) });
+    var restored = consumeRestoredSession(win, ctx, OIDO_JURASICO_MODE_ID);
 
-    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx);
+    var session = restored
+      ? Object.assign({}, restored.session, {
+          generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+          hooks: roundContractApi.createHooks(),
+          context: Object.assign({}, restored.session.context, { randomFn: ctx.randomFn || Math.random }),
+        })
+      : roundContractApi.startGame({
+          generateRound: oidoJurasicoGame.generateOidoJurasicoRound,
+          context: oidoJurasicoGame.buildOidoJurasicoRoundContext({ randomFn: ctx.randomFn }),
+        });
+
+    return playOidoJurasicoRound(container, renderers, doc, fetchFn, roundContractApi, session, resolvedCtx);
   }
 
   /**
@@ -2480,6 +2601,8 @@
    * this function never counts rounds itself.
    */
   function playSizeOrderRound(container, renderers, doc, fetchFn, roundContractApi, session, ctx) {
+    persistRoundContractSession(ctx.gameSessionStorage, SIZE_ORDER_MODE_ID, session);
+
     return renderers.renderSizeOrderScreen(container, session.round, {
       roundNumber: session.roundIndex + 1,
       totalRounds: session.roundCount,
@@ -2517,6 +2640,11 @@
     finalState.bestScore = bestScoreAndStreak.bestScore;
     finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+    // TRIOFSND-299: the game is over -- its result is now durable via
+    // modeProgressStorage.recordResult below, so the transient round-by-round
+    // session that led here has nothing left to resume.
+    discardRoundContractSession(ctx.gameSessionStorage, SIZE_ORDER_MODE_ID);
+
     if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
       ctx.analyticsStorage.recordGameCompleted(finalState.score);
     }
@@ -2552,10 +2680,15 @@
   }
 
   /**
-   * Starts a fresh Ordena por tamaño game: builds the round context/session
-   * via roundContract.js, attaches roundDiagnosticsService.js to it and
-   * renders its first round. Persists the last-selected mode
-   * (`dinoquiz:lastMode`, TRIOFSND-230/288), mirrors `startOidoJurasicoGame`.
+   * Starts Ordena por tamaño: builds the round context/session via
+   * roundContract.js, attaches roundDiagnosticsService.js to it and renders
+   * its first round. Persists the last-selected mode (`dinoquiz:lastMode`,
+   * TRIOFSND-230/288), mirrors `startOidoJurasicoGame`.
+   *
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): resumes a
+   * schema-validated, still-resumable Ordena por tamaño session restored at
+   * startup instead of starting fresh, exactly like `startOidoJurasicoGame`
+   * -- see that function's own doc comment.
    */
   function startSizeOrderGame(container, renderers, doc, fetchFn, ctx) {
     ctx = ctx || {};
@@ -2567,16 +2700,28 @@
 
     persistLastMode(SIZE_ORDER_MODE_ID, ctx.storageObj);
 
-    var context = sizeOrderGame.buildSizeOrderRoundContext({
-      randomFn: ctx.randomFn,
-      creatures: ctx.creatures,
-      creatureCount: ctx.creatureCount,
-      minRelativeDifference: ctx.minRelativeDifference,
-    });
-    var session = roundContractApi.startGame({
-      generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
-      context: context,
-    });
+    var win = typeof window !== 'undefined' ? window : undefined;
+    var resolvedCtx = Object.assign({}, ctx, { gameSessionStorage: resolveGameSessionStorage(win) });
+    var restored = consumeRestoredSession(win, ctx, SIZE_ORDER_MODE_ID);
+
+    var session = restored
+      ? Object.assign({}, restored.session, {
+          generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
+          hooks: roundContractApi.createHooks(),
+          // context.randomFn doesn't survive saveSession's JSON.stringify --
+          // re-attached exactly like startOidoJurasicoGame does (see its own
+          // doc comment).
+          context: Object.assign({}, restored.session.context, { randomFn: ctx.randomFn || Math.random }),
+        })
+      : roundContractApi.startGame({
+          generateRound: sizeOrderGame.generateSizeOrderRoundForContract,
+          context: sizeOrderGame.buildSizeOrderRoundContext({
+            randomFn: ctx.randomFn,
+            creatures: ctx.creatures,
+            creatureCount: ctx.creatureCount,
+            minRelativeDifference: ctx.minRelativeDifference,
+          }),
+        });
 
     var diagnosticsService = resolveRoundDiagnosticsService();
     var sizeOrderDiagnostics =
@@ -2591,7 +2736,7 @@
       fetchFn,
       roundContractApi,
       session,
-      Object.assign({}, ctx, { sizeOrderDiagnostics: sizeOrderDiagnostics })
+      Object.assign({}, resolvedCtx, { sizeOrderDiagnostics: sizeOrderDiagnostics })
     );
   }
 
@@ -2929,6 +3074,24 @@
     return new LogService();
   }
 
+  /**
+   * Resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318's local,
+   * aggregated counters/structured errors), same require-or-`window.DinoQuiz`
+   * fallback shape as `resolveGameSessionStorage` above -- registered on
+   * `window.DinoQuiz.services.diagnostics` (see that file), so every
+   * diagnostics call below persists in the real, unbundled browser too, not
+   * just under Node/Jest. A missing service (e.g. that script failed to
+   * load) still falls back to null, and every call site's own null guard
+   * keeps that from ever blocking gameplay.
+   */
+  function resolveDiagnostics(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/diagnostics');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) || null;
+  }
+
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -2990,6 +3153,43 @@
     });
   }
 
+  /** Fetches the whole i18n resource once and hands back both `diagnostics` (screen copy) and `modes` (per-mode display names, keyed the same way the mode selector already reads them) -- everything renderDiagnostics needs in a single fetch. */
+  function loadDiagnosticsStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data ? { diagnostics: data.diagnostics, modes: data.modes } : null;
+    });
+  }
+
+  /** Fetches the whole i18n resource once and hands back the `launchGate` screen copy -- everything renderLaunchGate needs. */
+  function loadLaunchGateStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.launchGate;
+    });
+  }
+
+  /**
+   * Fetches the precomputed launch-gate report -- `{ candidateVersion, pass,
+   * gates }` for all ten src/services/launchGate.js gates, written by
+   * scripts/generateLaunchGateReport.js at release time (see that script's
+   * own doc comment for why a no-bundler browser can't evaluate the gates
+   * live). Resolves null on any fetch/parse failure, the same degrade-to-
+   * unknown fallback fetchI18nResource uses, so a missing/corrupted report
+   * never breaks the screen -- it just renders every gate as 'unknown'.
+   */
+  function loadLaunchGateReport(fetchFn, resourcePath) {
+    fetchFn = fetchFn || (typeof fetch === 'function' ? fetch : undefined);
+    resourcePath = resourcePath || '/data/launchGateReport.json';
+
+    if (typeof fetchFn !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    return fetchJson(fetchFn, resourcePath).catch(function (error) {
+      console.error('DinoQuiz: failed to load the launch-gate report', error);
+      return null;
+    });
+  }
+
   function navigateToPrivacyPolicy(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     if (loc) {
@@ -3007,6 +3207,30 @@
   function isPrivacyPolicyRoute(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     return !!loc && loc.hash === PRIVACY_POLICY_HASH;
+  }
+
+  function navigateToDiagnostics(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = DIAGNOSTICS_HASH;
+    }
+  }
+
+  function isDiagnosticsRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === DIAGNOSTICS_HASH;
+  }
+
+  function navigateToLaunchGate(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    if (loc) {
+      loc.hash = LAUNCH_GATE_HASH;
+    }
+  }
+
+  function isLaunchGateRoute(loc) {
+    loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
+    return !!loc && loc.hash === LAUNCH_GATE_HASH;
   }
 
   function loadDinoQuizStorage(requireFn) {
@@ -3683,6 +3907,85 @@
     });
   }
 
+  /**
+   * Renders the diagnostics screen (TRIOFSND-319) for the hidden
+   * `#/diagnostico` route: resolves the i18n copy the same way
+   * `renderPrivacyPolicy` does, then hands off to
+   * diagnosticsScreen.js, which reads the live counters/errors/SW status
+   * itself (see that file's own resolveX() helpers).
+   */
+  function renderDiagnostics(doc, renderDiagnosticsScreen, fetchFn, onBack) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderDiagnosticsScreen =
+      renderDiagnosticsScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderDiagnosticsScreen);
+
+    if (!doc || typeof renderDiagnosticsScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return loadDiagnosticsStrings(fetchFn).then(function (strings) {
+      var options = strings ? { strings: strings.diagnostics, modesStrings: strings.modes } : {};
+      if (typeof onBack === 'function') {
+        options.onBack = onBack;
+      }
+      return renderDiagnosticsScreen(container, options);
+    });
+  }
+
+  /**
+   * Renders the launch-gate status screen (TRIOFSND-325) for the hidden
+   * `#/gates-lanzamiento` route: resolves the i18n copy the same way
+   * `renderDiagnostics` does, fetches the precomputed gates report (the
+   * real per-release gate/version data -- see loadLaunchGateReport's own
+   * doc comment for why gates can't be evaluated live in this browser),
+   * then hands off to launchGateScreen.js. Product goals and SW_VERSION/
+   * precache status are still resolved by that screen itself, via its real
+   * `window.DinoQuiz.services.productGoals`/`offlineStatus` bridges.
+   */
+  function renderLaunchGate(doc, renderLaunchGateScreen, fetchFn, onBack) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderLaunchGateScreen =
+      renderLaunchGateScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderLaunchGateScreen);
+
+    if (!doc || typeof renderLaunchGateScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    return Promise.all([loadLaunchGateStrings(fetchFn), loadLaunchGateReport(fetchFn)]).then(function (results) {
+      var strings = results[0];
+      var report = results[1];
+      var options = strings ? { strings: strings } : {};
+      if (report && typeof report.pass === 'boolean' && report.gates) {
+        options.gatesReport = { pass: report.pass, gates: report.gates };
+      }
+      if (report && typeof report.candidateVersion === 'string') {
+        options.candidateVersion = report.candidateVersion;
+      }
+      if (typeof onBack === 'function') {
+        options.onBack = onBack;
+      }
+      return renderLaunchGateScreen(container, options);
+    });
+  }
+
   function renderRoute(doc, fetchFn, loc) {
     // TRIOFSND-259: navigating away from an in-progress Laberinto game
     // (whichever route this render is actually for) means it was left
@@ -3693,6 +3996,10 @@
       var logger = resolveLogger();
       if (logger) {
         logger.logMazeGameAbandoned(activeMazeGame.level);
+      }
+      var diagnosticsOnAbandon = resolveDiagnostics();
+      if (diagnosticsOnAbandon) {
+        diagnosticsOnAbandon.incrementCounter('gameAbandoned:' + MAZE_MODE_ID);
       }
       activeMazeGame = null;
     }
@@ -3711,6 +4018,18 @@
       });
     }
 
+    if (isDiagnosticsRoute(loc)) {
+      return renderDiagnostics(doc, undefined, fetchFn, function () {
+        navigateHome(loc);
+      });
+    }
+
+    if (isLaunchGateRoute(loc)) {
+      return renderLaunchGate(doc, undefined, fetchFn, function () {
+        navigateHome(loc);
+      });
+    }
+
     var homeStorage = resolveHomeStorage();
     return renderHome(
       doc,
@@ -3722,6 +4041,50 @@
       },
       homeStorage
     );
+  }
+
+  /**
+   * Restaurar ronda en curso al recargar (TRIOFSND-299): resolves the last
+   * mode the player picked (`dinoquiz:lastMode`, via modeStorage.js) and asks
+   * `gameSessionStorage.restoreGameState` (src/services/gameSessionStorage.js)
+   * for its in-progress round -- schema-validated (stateSchema.js) and
+   * integrity-checked (GameSessionStorage.js) there, never re-derived here.
+   * The result (or null, when there is nothing resumable) is stashed on
+   * `win.DinoQuiz.restoredGameState` for `startOidoJurasicoGame`/
+   * `startSizeOrderGame` to consume synchronously once this promise settles
+   * -- those two are the only modes currently driven by roundContract.js,
+   * the shape GameSessionStorage.js's envelope is built around (see that
+   * file's own doc comment); every other mode keeps starting fresh exactly
+   * as before this feature existed. Never throws: a missing service, a
+   * missing/unavailable last mode, or a failed lookup all resolve to null,
+   * so a broken restore can never block the app from starting.
+   */
+  function restoreLastGameSession(win) {
+    if (win) {
+      win.DinoQuiz = win.DinoQuiz || {};
+      win.DinoQuiz.restoredGameState = null;
+    }
+
+    var gameSessionStorage = resolveGameSessionStorage(win);
+    var modeStorage = resolveModeStorage(win);
+    if (!gameSessionStorage || typeof gameSessionStorage.restoreGameState !== 'function' || !modeStorage) {
+      return Promise.resolve(null);
+    }
+
+    var lastMode = typeof modeStorage.getLastMode === 'function' ? modeStorage.getLastMode() : null;
+    if (!lastMode) {
+      return Promise.resolve(null);
+    }
+
+    return Promise.resolve(gameSessionStorage.restoreGameState(lastMode))
+      .then(function (restored) {
+        win.DinoQuiz.restoredGameState = restored || null;
+        return restored;
+      })
+      .catch(function () {
+        win.DinoQuiz.restoredGameState = null;
+        return null;
+      });
   }
 
   /**
@@ -3752,6 +4115,9 @@
       })
       .then(function (rawQuestions) {
         window.DinoQuiz.questions = prepareBrowserQuestions(rawQuestions, window.DinoQuiz.strings);
+      })
+      .then(function () {
+        return restoreLastGameSession(window);
       })
       .catch(function (error) {
         console.error('DinoQuiz: failed to prepare the game data', error);
@@ -3806,6 +4172,7 @@
       resolvePlatformSupport: resolvePlatformSupport,
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,
+      resolveDiagnostics: resolveDiagnostics,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
@@ -3816,6 +4183,17 @@
       navigateToPrivacyPolicy: navigateToPrivacyPolicy,
       navigateHome: navigateHome,
       isPrivacyPolicyRoute: isPrivacyPolicyRoute,
+      DIAGNOSTICS_HASH: DIAGNOSTICS_HASH,
+      navigateToDiagnostics: navigateToDiagnostics,
+      isDiagnosticsRoute: isDiagnosticsRoute,
+      loadDiagnosticsStrings: loadDiagnosticsStrings,
+      renderDiagnostics: renderDiagnostics,
+      LAUNCH_GATE_HASH: LAUNCH_GATE_HASH,
+      navigateToLaunchGate: navigateToLaunchGate,
+      isLaunchGateRoute: isLaunchGateRoute,
+      loadLaunchGateStrings: loadLaunchGateStrings,
+      loadLaunchGateReport: loadLaunchGateReport,
+      renderLaunchGate: renderLaunchGate,
       renderHome: renderHome,
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
@@ -3862,6 +4240,8 @@
       SOMBRA_MODE_ID: SOMBRA_MODE_ID,
       CLASIFICA_MODE_ID: CLASIFICA_MODE_ID,
       resolveGameSessionStorage: resolveGameSessionStorage,
+      restoreLastGameSession: restoreLastGameSession,
+      consumeRestoredSession: consumeRestoredSession,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
       resolveShadowGuessGame: resolveShadowGuessGame,

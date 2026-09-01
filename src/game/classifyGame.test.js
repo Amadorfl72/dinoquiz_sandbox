@@ -192,6 +192,16 @@ describe('evaluateRound', () => {
     });
   });
 
+  test('TRIOFSND-318: a missing ficha also records a structured diagnostics.js error, never the player\'s guess', () => {
+    const round = buildRound({ dinosaur: 'unknown-creature' });
+    const gameState = { score: 0, questionIndex: 0, answers: [] };
+    const diagnosticsService = { recordError: jest.fn() };
+
+    evaluateRound(round, gameState, DIETS.OMNIVORO, { diagnostics: diagnosticsService });
+
+    expect(diagnosticsService.recordError).toHaveBeenCalledWith(MODE_ID, 'data', DIAGNOSTIC_CODES.MISSING_CREATURE_SHEET);
+  });
+
   test('a blocked round guards a second evaluation the same way completed rounds do', () => {
     const round = buildRound({ dinosaur: 'unknown-creature' });
     const gameState = { score: 0, questionIndex: 0, answers: [] };
