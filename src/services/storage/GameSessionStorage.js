@@ -215,16 +215,32 @@ class GameSessionStorage {
   #failureCount = 0;
   #lastErrorAt = null;
 
+  // The 3rd positional constructor argument accepts either a diagnosticsService
+  // (an object exposing `recordError`, TRIOFSND-246/318) or a migrations
+  // registry (a plain map of schemaVersion -> transform, TRIOFSND-300) --
+  // callers only ever need to override one of the two at a time, and which
+  // one is told apart by duck-typing for `recordError` rather than by a
+  // second positional slot, so `new GameSessionStorage(adapters, logService,
+  // migrations)` and `new GameSessionStorage(adapters, logService,
+  // diagnosticsService)` both resolve unambiguously. `migrationsArg` is
+  // still available as a 4th positional argument for callers that need to
+  // override both at once.
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
     logService = new LogService(),
-    diagnosticsService = diagnostics,
-    migrations = DEFAULT_MIGRATIONS
+    diagnosticsServiceOrMigrations = diagnostics,
+    migrationsArg = DEFAULT_MIGRATIONS
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
-    this.#diagnostics = diagnosticsService;
-    this.#migrations = migrations;
+
+    if (diagnosticsServiceOrMigrations && typeof diagnosticsServiceOrMigrations.recordError === 'function') {
+      this.#diagnostics = diagnosticsServiceOrMigrations;
+      this.#migrations = migrationsArg;
+    } else {
+      this.#diagnostics = diagnostics;
+      this.#migrations = diagnosticsServiceOrMigrations || migrationsArg;
+    }
   }
 
   init() {
