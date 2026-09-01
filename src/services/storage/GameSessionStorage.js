@@ -214,13 +214,13 @@ class GameSessionStorage {
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
     logService = new LogService(),
-    diagnosticsService = diagnostics,
-    migrations = DEFAULT_MIGRATIONS
+    migrations = DEFAULT_MIGRATIONS,
+    diagnosticsService = diagnostics
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
-    this.#diagnostics = diagnosticsService;
     this.#migrations = migrations;
+    this.#diagnostics = diagnosticsService;
   }
 
   init() {

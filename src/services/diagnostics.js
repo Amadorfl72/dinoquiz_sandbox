@@ -42,6 +42,3 @@
  */
 
 module.exports = require('../../public/scripts/diagnostics');
- */
-
-module.exports = require('../../public/scripts/diagnostics');

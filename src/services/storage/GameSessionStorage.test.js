@@ -369,7 +369,7 @@ describe('GameSessionStorage', () => {
     it('TRIOFSND-318: also records a structured diagnostics.js error for the discard, never the session content', async () => {
       const adapter = createFakeAdapter();
       const diagnosticsService = { recordError: jest.fn() };
-      const storage = new GameSessionStorage([adapter], createFakeLogService(), diagnosticsService);
+      const storage = new GameSessionStorage([adapter], createFakeLogService(), undefined, diagnosticsService);
       await adapter.setItem(sessionKey('quiz'), '{not-json');
 
       await storage.restoreSession('quiz');
