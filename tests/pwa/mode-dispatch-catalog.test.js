@@ -26,24 +26,52 @@ const { getByRole } = require('@testing-library/dom');
  * the plain, ungated ids: quiz, laberinto, oidoJurasico, parejas,
  * lineaDelTiempo.
  *
- * The id "started" is observed directly at its source of truth: each mode's
- * own screen module (`src/screens/*Screen.js`'s exported `render*Screen`),
- * the function every `start*Game` dispatch branch in main.js's
- * `handleModeSelected` calls to paint that mode's first screen -- whether
- * reached directly (Sombra/Parejas/Clasifica/Ordena por tamaño/Línea del
- * tiempo/Quiz) or via a hash route re-resolved through `renderRoute`
- * (Laberinto/Oído Jurásico, whose `renderMazeRoute`/`renderOidoJurasicoRoute`
- * call `resolveScreenRenderers()` again instead of reusing the selector's
- * own renderers object -- spying on the shared module export, not on one
- * particular `renderers` object instance, survives that re-resolution).
- * Spying on those renderer functions -- not reading a DOM class after the
- * fact, and not reading back `dinoquiz:lastMode` (written by the selector's
- * own click handler the instant a card is tapped, before dispatch decides
- * which engine to start, so it reflects the tap, not the start) -- proves
- * which engine main.js actually invoked for a given tap. `OWN_SCREEN_SELECTORS`
- * is kept as a second, independent, user-facing signal: the tapped mode's
- * dedicated screen must be the one visible on screen, and no other mode's
- * screen (`.question-screen` included) may be present.
+ * The id "started" is asserted from two independent signals, neither of
+ * which is a DOM class or `dinoquiz:lastMode` storage read:
+ *
+ *   1. `dinoquiz:match_started` -- a DOM `CustomEvent` main.js's
+ *      `handleModeSelected`/`startMode()` dispatches on `document`, once per
+ *      dispatch, carrying the *true* identity of the engine that is
+ *      actually about to start -- not simply an echo of the id tapped.
+ *      Every `start*Game` branch reports its own literal mode id, and the
+ *      shared question-bank fallback (used by Quiz, and by any mode that
+ *      isn't wired to its own engine yet) always reports the literal
+ *      `QUIZ_MODE_ID`, regardless of which `modeId` reached it -- see
+ *      `emitMatchStarted`'s own doc comment in main.js. That's what makes
+ *      this a meaningful "id iniciado" check rather than a tautology: a
+ *      mode that silently falls through to Quiz's engine reports having
+ *      started `'quiz'`, so `expect(matchStarted.ids).toEqual([mode.id])`
+ *      fails for it. This is the primary "id iniciado" assertion below.
+ *   2. Each mode's own screen module (`src/screens/*Screen.js`'s exported
+ *      `render*Screen`), the function every `start*Game` dispatch branch in
+ *      main.js's `handleModeSelected` calls to paint that mode's first
+ *      screen -- whether reached directly (Sombra/Parejas/Clasifica/Ordena
+ *      por tamaño/Línea del tiempo/Quiz) or via a hash route re-resolved
+ *      through `renderRoute` (Laberinto/Oído Jurásico, whose
+ *      `renderMazeRoute`/`renderOidoJurasicoRoute` call
+ *      `resolveScreenRenderers()` again instead of reusing the selector's
+ *      own renderers object -- spying on the shared module export, not on
+ *      one particular `renderers` object instance, survives that
+ *      re-resolution). This corroborates (1) with an independent code path.
+ *
+ * `OWN_SCREEN_SELECTORS` is kept as a third, user-facing signal: the tapped
+ * mode's dedicated screen must be the one visible on screen, and no other
+ * mode's screen (`.question-screen` included) may be present.
+ *
+ * Bite, verified: with `lineaDelTiempo`'s dispatch branch in main.js's
+ * `startMode()` temporarily removed, this suite's `tapping "lineaDelTiempo"
+ * ...` test fails red on both signals -- `matchStarted.ids` comes back
+ * `['quiz']` instead of `['lineaDelTiempo']`, and
+ * `engineRendererSpies.lineaDelTiempo` is never called -- because dispatch
+ * silently fell through to the shared quiz orchestrator instead; every
+ * other mode still passes. Restoring the branch turns it green again. That
+ * fall-through is the exact regression TRIOFSND commits
+ * cece844/2d4016d document (red, then the fix) earlier in this branch's own
+ * history. `parejas` was already wired by the separately merged Parejas
+ * jurásicas integration (PR #326, predates this branch) and has never
+ * regressed here, so no red run exists for it on this branch -- the suite
+ * still covers it on equal footing with every other catalog id, so any
+ * future regression fails the same way lineaDelTiempo's did.
  */
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
@@ -106,6 +134,24 @@ function clickModeCard(container, modeId) {
 /** Flushes the real (non-fake) timer/microtask queue so any async post-tap check settles before assertions run. */
 function flush() {
   return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
+ * Listens for `dinoquiz:match_started` on `document` and records every
+ * `detail.modeId` it carries -- the "id iniciado" signal itself (see the
+ * suite doc comment), captured at its source instead of inferred from a
+ * screen render. Call `stop()` once assertions are done to detach.
+ */
+function captureMatchStartedIds(doc) {
+  const ids = [];
+  function onMatchStarted(event) {
+    ids.push(event && event.detail && event.detail.modeId);
+  }
+  doc.addEventListener('dinoquiz:match_started', onMatchStarted);
+  return {
+    ids,
+    stop: () => doc.removeEventListener('dinoquiz:match_started', onMatchStarted),
+  };
 }
 
 /** Forces every catalog mode "available" -- see the suite doc comment for why. */
@@ -217,6 +263,8 @@ describe('mode dispatch derived from modesCatalog.js: tapping every offered mode
         getByRole(container, 'button', { name: modeSelectorStrings.modes[mode.id].accessibleLabel })
       ).not.toHaveAttribute('aria-disabled');
 
+      const matchStarted = captureMatchStartedIds(document);
+
       clickModeCard(container, mode.id);
       await flush();
 
@@ -230,9 +278,15 @@ describe('mode dispatch derived from modesCatalog.js: tapping every offered mode
         await flush();
       }
 
-      // The id iniciado -- observed as which mode's own screen renderer
-      // main.js actually invoked, the direct analogue of a `match_started`
-      // event's id -- must equal the id tapped, for every catalog mode.
+      matchStarted.stop();
+
+      // The id iniciado in `dinoquiz:match_started` -- main.js's own
+      // dispatch-decision signal -- must equal the id tapped, exactly once,
+      // for every catalog mode.
+      expect(matchStarted.ids).toEqual([mode.id]);
+
+      // Corroborating signal: which mode's own screen renderer main.js
+      // actually invoked must agree with (1) above.
       expect(engineRendererSpies[mode.id]).toHaveBeenCalled();
       Object.keys(engineRendererSpies)
         .filter((otherModeId) => otherModeId !== mode.id)
@@ -280,6 +334,8 @@ describe('mode dispatch derived from modesCatalog.js: tapping every offered mode
         return;
       }
 
+      const matchStarted = captureMatchStartedIds(document);
+
       clickModeCard(container, mode.id);
       await flush();
 
@@ -290,9 +346,13 @@ describe('mode dispatch derived from modesCatalog.js: tapping every offered mode
         await flush();
       }
 
-      // Offered and tapped: it must never silently fall through to the
-      // shared quiz orchestrator's screen -- "cae en un aviso visible en
-      // vez del quiz silencioso" -- it must land on its own screen.
+      matchStarted.stop();
+
+      // Offered and tapped: the id iniciado must be the id tapped, and
+      // dispatch must never silently fall through to the shared quiz
+      // orchestrator's screen -- "cae en un aviso visible en vez del quiz
+      // silencioso" -- it must land on its own screen.
+      expect(matchStarted.ids).toEqual([mode.id]);
       expect(container.querySelector(SILENT_QUIZ_SELECTOR)).toBeNull();
       expect(container.querySelector(OWN_SCREEN_SELECTORS[mode.id])).not.toBeNull();
     });

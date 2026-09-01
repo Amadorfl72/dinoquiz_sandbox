@@ -759,6 +759,25 @@
   }
 
   /**
+   * Dispatches `dinoquiz:match_started` on `doc`, a DOM `CustomEvent` whose
+   * `detail.modeId` is the true identity of the engine that is actually
+   * about to start a match (PRD shared_game_structure: "Una partida
+   * corresponde a un nivel") -- not necessarily the id the player tapped.
+   * Every call site in `handleModeSelected`'s `startMode()` passes its own
+   * branch's literal mode id, including the shared question-bank fallback
+   * (which always reports `QUIZ_MODE_ID`, since that's the engine it
+   * actually starts, whichever `modeId` reached it) -- so a mode that
+   * silently falls through to that fallback instead of its own dedicated
+   * engine reports having started Quiz, not itself, the same regression
+   * tests/pwa/mode-dispatch-catalog.test.js asserts against.
+   */
+  function emitMatchStarted(doc, startedModeId) {
+    if (doc && typeof doc.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      doc.dispatchEvent(new CustomEvent('dinoquiz:match_started', { detail: { modeId: startedModeId } }));
+    }
+  }
+
+  /**
    * Cambiar de modo fuera de una ronda (TRIOFSND-239, PRD "Contrato técnico
    * ... común para los modos"): the handler behind every mode card tap on
    * the illustrated selector (`renderModeSelector`'s `onSelectMode` below).
@@ -800,10 +819,12 @@
   function handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId) {
     function startMode() {
       if (modeId === MAZE_MODE_ID) {
+        emitMatchStarted(doc, MAZE_MODE_ID);
         navigateToMaze();
         return;
       }
       if (modeId === OIDO_JURASICO_MODE_ID) {
+        emitMatchStarted(doc, OIDO_JURASICO_MODE_ID);
         navigateToOidoJurasico();
         return;
       }
@@ -812,6 +833,7 @@
         // procedural round generator (shadowGuessGame.js) instead of the
         // question-bank-driven orchestrator below -- see
         // startShadowGuessLevelGame's own doc comment.
+        emitMatchStarted(doc, SOMBRA_MODE_ID);
         startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
@@ -819,6 +841,7 @@
         // TRIOFSND-282: Clasifica has its own fixed-level round generator
         // (classifyGame.js) instead of the question-bank-driven orchestrator
         // below -- see startClassifyGame's own doc comment.
+        emitMatchStarted(doc, CLASIFICA_MODE_ID);
         startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
@@ -826,6 +849,7 @@
         // TRIOFSND-288: Ordena por tamaño is a fixed, level-less
         // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape
         // as Oído Jurásico -- see startSizeOrderGame's own doc comment.
+        emitMatchStarted(doc, SIZE_ORDER_MODE_ID);
         startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
@@ -834,6 +858,7 @@
         // chain and procedural board generator (parejasGame.js) instead of
         // the question-bank-driven orchestrator below -- see
         // startParejasLevelGame's own doc comment.
+        emitMatchStarted(doc, PAREJAS_MODE_ID);
         startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
@@ -842,6 +867,7 @@
         // eligible-creature round generator (timelineRound.js) instead of
         // the question-bank-driven orchestrator below -- see
         // startTimelineLevelGame's own doc comment.
+        emitMatchStarted(doc, LINEA_DEL_TIEMPO_MODE_ID);
         startTimelineLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
@@ -849,6 +875,14 @@
       // multi-level orchestrator until its own game engine ships -- `modeId`
       // (TRIOFSND-253) is what keeps each mode's level-unlock progression and
       // finished-game result independent (see startLevelGame/finishLevel).
+      // The engine that actually starts here is always Quiz's own
+      // question-bank orchestrator, regardless of which `modeId` reached
+      // it -- so the "id iniciado" it reports is the literal QUIZ_MODE_ID,
+      // never the requested `modeId`: a mode that falls through to this
+      // branch instead of its own dedicated one (the exact "silent quiz"
+      // regression tests/pwa/mode-dispatch-catalog.test.js guards against)
+      // must report having started Quiz, not itself.
+      emitMatchStarted(doc, QUIZ_MODE_ID);
       startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
     }
 
