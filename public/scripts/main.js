@@ -765,11 +765,13 @@
    * recorder for the generic mode dispatcher's four events (`mode_selected`,
    * `match_started`, `mode_blocked`, `mode_dispatch_mismatch` -- see that
    * file's own doc comment). Same require-or-`window.DinoQuiz` fallback shape
-   * as `resolveGameSessionStorage` above -- this service has no
-   * `public/scripts/` browser port yet either, so it resolves to null in the
-   * real, bundler-less browser and every call site below simply records
-   * nothing there for now, the same fail-open shape `resolveGameSessionStorage`
-   * already documents.
+   * as `resolveGameSessionStorage` above: under Node/Jest it resolves via
+   * `require`, and in the real, bundler-less browser it resolves the
+   * `public/scripts/analytics.js` port loaded as a `<script>` (see
+   * public/index.html) off `window.DinoQuiz.services.analytics`, so the four
+   * dispatcher events are recorded on-device there too. Still fail-open: if
+   * the service can't be resolved at all, every call site below simply
+   * records nothing rather than throwing or blocking dispatch.
    */
   function resolveAnalytics(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
