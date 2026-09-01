@@ -6,6 +6,7 @@ const { createMemoryAdapter } = require('./adapters/memoryAdapter');
 const { LogService } = require('../logging');
 const { ROUNDS_PER_GAME } = require('../../game/roundContract');
 const { MODE_STATE_SCHEMA_VERSION } = require('./types');
+const { DEFAULT_MIGRATIONS, applyMigrations } = require('./stateMigration');
 
 const NAMESPACE = 'dinoquiz:';
 // Mirrors ModeProgressStorage.js's MODE_PROGRESS_KEY_PREFIX: each mode's
@@ -41,12 +42,21 @@ const RESUMABLE_STATUSES = ['playing', 'paused'];
 const SESSION_PERSIST_ERROR_CODE = 'storage_session_persist_error';
 
 // Stable technical code for restoreSession() discarding a persisted session as
-// incompatible (corrupted JSON, mismatched schema version, wrong mode, invalid
-// shape, or already-finished status -- see restoreSession's own doc comment for
-// the full list) -- carries no round content, only that the affected mode's
-// transient state had to be discarded (TRIOFSND-246, PRD "Diagnóstico ...
-// almacenados únicamente en el dispositivo").
+// incompatible (corrupted JSON, wrong mode, invalid shape -- including a
+// migrated-but-still-invalid one --, or already-finished status -- see
+// restoreSession's own doc comment for the full list) -- carries no round
+// content, only that the affected mode's transient state had to be discarded
+// (TRIOFSND-246, PRD "Diagnóstico ... almacenados únicamente en el dispositivo").
 const SESSION_DISCARD_INCOMPATIBLE_CODE = 'storage_session_discard_incompatible';
+
+// Stable technical code for restoreSession() discarding a persisted session
+// whose schemaVersion has no migration path to SESSION_SCHEMA_VERSION (an
+// unknown old version, a version newer than this build's, or a break in the
+// stateMigration.js chain) -- distinct from SESSION_DISCARD_INCOMPATIBLE_CODE
+// so a non-migratable version is identifiable separately from a structurally
+// invalid one (TRIOFSND-300, PRD "Versiones no migrables se descartan de
+// forma controlada con un código de incompatibilidad identificable").
+const SESSION_DISCARD_UNSUPPORTED_VERSION_CODE = 'storage_session_discard_unsupported_version';
 
 /**
  * Strips a live roundContract.js session down to its serializable fields
@@ -193,6 +203,7 @@ class GameSessionStorage {
   #activeAdapter = null;
   #initPromise = null;
   #logService;
+  #migrations;
 
   // Aggregated, non-PII observability counters only (mirrors StorageClient.js).
   #failureCount = 0;
@@ -200,10 +211,12 @@ class GameSessionStorage {
 
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
-    logService = new LogService()
+    logService = new LogService(),
+    migrations = DEFAULT_MIGRATIONS
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
+    this.#migrations = migrations;
   }
 
   init() {
@@ -323,20 +336,32 @@ class GameSessionStorage {
    * the meantime can never have overwritten this one (TRIOFSND-298). Returns
    * the plain-data session fields (see class doc comment for how to
    * re-attach `hooks`/`generateRound`), or null when there is nothing to
-   * restore: no session was ever saved for `modeId`, its JSON is corrupted,
-   * its schema version doesn't match this build's, its shape fails
-   * validation, or it already finished.
+   * restore.
    *
-   * Any of those "incompatible" cases also discards the stored entry (AC:
-   * "si no lo es descarta únicamente el estado transitorio conservando
-   * progreso y resultados completados") -- this only ever removes `modeId`'s
-   * own `dinoquiz:session:<modeId>` key, never another mode's session key
-   * nor bestScore/maxStreak/scoreMetrics/maxUnlockedLevel/etc., which live
-   * under their own keys in StorageClient.js and are untouched here. Every
-   * such discard also tallies `modeId`'s aggregated, local-only
-   * `SESSION_DISCARD_INCOMPATIBLE_CODE` counter (LogService#logStateDiscarded,
-   * TRIOFSND-246) -- the stable code alone, never the discarded session's
-   * own content.
+   * A stored envelope whose `schemaVersion` doesn't match
+   * `SESSION_SCHEMA_VERSION` is first run through stateMigration.js's
+   * `applyMigrations` (TRIOFSND-300, PRD "Migración segura de estado ante
+   * cambios de versión incompatibles") instead of being discarded outright.
+   * Only a *migrated* envelope that then also passes the same integrity
+   * check every other envelope does (`isValidEnvelope`, correct `modeId`,
+   * resumable `status`) is restored -- a version with no registered
+   * migration path is discarded immediately, tagged with the distinct
+   * `SESSION_DISCARD_UNSUPPORTED_VERSION_CODE` so it's identifiable apart
+   * from a structurally invalid one.
+   *
+   * Null is also returned -- and the stored entry discarded -- whenever: no
+   * session was ever saved for `modeId`, its JSON is corrupted, its shape
+   * fails validation (before or after migration), or it already finished.
+   *
+   * Any of those "incompatible" cases (AC: "si no lo es descarta únicamente
+   * el estado transitorio conservando progreso y resultados completados")
+   * only ever removes `modeId`'s own `dinoquiz:session:<modeId>` key, never
+   * another mode's session key nor bestScore/maxStreak/scoreMetrics/
+   * maxUnlockedLevel/etc., which live under their own keys in
+   * StorageClient.js/ModeProgressStorage.js and are untouched here. Every
+   * such discard also tallies `modeId`'s aggregated, local-only discard-code
+   * counter (LogService#logStateDiscarded, TRIOFSND-246) -- the stable code
+   * alone, never the discarded session's own content.
    */
   async restoreSession(modeId) {
     const raw = await this.#readRaw(modeId);
@@ -349,6 +374,16 @@ class GameSessionStorage {
       envelope = JSON.parse(raw);
     } catch {
       // Corrupted JSON: fall through to the discard-and-return-null path below.
+    }
+
+    if (envelope && typeof envelope === 'object' && envelope.schemaVersion !== SESSION_SCHEMA_VERSION) {
+      const migrated = applyMigrations(envelope, SESSION_SCHEMA_VERSION, this.#migrations);
+      if (migrated === null) {
+        await this.#clear(modeId);
+        this.#logService.logStateDiscarded(modeId, SESSION_DISCARD_UNSUPPORTED_VERSION_CODE);
+        return null;
+      }
+      envelope = migrated;
     }
 
     if (!isValidEnvelope(envelope) || envelope.modeId !== modeId || !RESUMABLE_STATUSES.includes(envelope.session.status)) {
@@ -410,4 +445,5 @@ module.exports = {
   SESSION_KEY_PREFIX,
   sessionKey,
   SESSION_DISCARD_INCOMPATIBLE_CODE,
+  SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
 };
