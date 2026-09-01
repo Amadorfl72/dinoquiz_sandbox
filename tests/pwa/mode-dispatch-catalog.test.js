@@ -29,23 +29,20 @@ const { getByRole } = require('@testing-library/dom');
  * For every mode except Quiz itself, tapping its (now-offered) card must
  * land on that mode's OWN dedicated screen -- never on `.question-screen`,
  * the shared quiz orchestrator's screen. That single assertion is what
- * "muerde": today it fails for `lineaDelTiempo`. `public/scripts/
- * timelineScreen.js` (`.timeline-screen`) already exists as a fully-built
- * screen and `src/game/timelineRound.js` already exists as its round
- * generator, but `handleModeSelected` in main.js has no dispatch case for
- * `lineaDelTiempo` (unlike every other non-Quiz mode) and
- * `resolveScreenRenderers` never wires up a `renderTimelineScreen` --  so a
- * tapped Línea del tiempo card silently falls through to
- * `startLevelGame`/`.question-screen`, the exact "quiz silencioso" the PRD
- * flags this suite as guarding against. A follow-up task adds the
- * `lineaDelTiempo` dispatch case and renderer wiring to turn this green.
+ * "muerde": it used to fail for `lineaDelTiempo`, whose dispatch case
+ * (`startTimelineLevelGame` -> `.timeline-screen`, driving
+ * `src/game/timelineRound.js`'s eligible-creature rounds) and
+ * `renderTimelineScreen` renderer wiring have since been added to
+ * `handleModeSelected`/`resolveScreenRenderers` in main.js, so a tapped
+ * Línea del tiempo card no longer falls through to
+ * `startLevelGame`/`.question-screen`, the "quiz silencioso" the PRD flags
+ * this suite as guarding against.
  *
- * `parejas` is NOT currently red: its own dispatch case
- * (`startParejasLevelGame` -> `.parejas-screen`) already shipped in an
- * earlier task (see tests/pwa/offline-parejas-game.test.js's own end-to-end
- * coverage) and is exercised here too so a future regression on it -- or on
- * any other catalog id -- gets caught by the same generic, catalog-driven
- * loop instead of a mode-specific test.
+ * `parejas` is exercised here too, alongside every other catalog id, so a
+ * future regression on any of them -- not just `lineaDelTiempo` -- gets
+ * caught by this same generic, catalog-driven loop instead of a
+ * mode-specific test (see tests/pwa/offline-parejas-game.test.js for its own
+ * end-to-end coverage).
  */
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
@@ -64,8 +61,6 @@ const OWN_SCREEN_SELECTORS = {
   parejas: '.parejas-screen',
   clasifica: '.classify-screen',
   ordenaPorTamano: '.size-order-screen',
-  // No dispatch case exists for this id yet (see the suite doc comment
-  // above) -- this is the mode the loop below expects to currently fail.
   lineaDelTiempo: '.timeline-screen',
 };
 
@@ -190,7 +185,7 @@ describe('mode dispatch derived from modesCatalog.js: tapping every offered mode
     });
   });
 
-  test('lineaDelTiempo, with no dispatch case wired yet, is either withheld from the selector or never silently starts the quiz', async () => {
+  test('lineaDelTiempo, under the real (unmocked) catalog gate, is either withheld from the selector or never silently starts the quiz', async () => {
     global.fetch = rejectingFetch();
     // Real, unmocked catalog gate here -- exercises the shipped, current
     // behaviour a player actually sees today, not the forced-available

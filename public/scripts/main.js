@@ -248,6 +248,7 @@
   var CLASIFICA_MODE_ID = 'clasifica'; // mirrors src/game/modesCatalog.js MODE_IDS.CLASIFICA
   var SIZE_ORDER_MODE_ID = 'ordenaPorTamano'; // mirrors src/game/modesCatalog.js MODE_IDS.ORDENA_POR_TAMANO
   var PAREJAS_MODE_ID = 'parejas'; // mirrors src/game/modesCatalog.js MODE_IDS.PAREJAS
+  var LINEA_DEL_TIEMPO_MODE_ID = 'lineaDelTiempo'; // mirrors src/game/modesCatalog.js MODE_IDS.LINEA_DEL_TIEMPO
   var MAZE_MIN_LEVEL = 1;
 
   function isMazeRoute(loc) {
@@ -308,6 +309,8 @@
           fromWindow.renderSizeOrderScreen || require('../../src/screens/SizeOrderScreen').renderSizeOrderScreen,
         renderParejasScreen:
           fromWindow.renderParejasScreen || require('../../src/screens/ParejasScreen').renderParejasScreen,
+        renderTimelineScreen:
+          fromWindow.renderTimelineScreen || require('../../src/screens/TimelineScreen').renderTimelineScreen,
         renderModeSelectorScreen:
           fromWindow.renderModeSelectorScreen || require('./modeSelectorScreen').renderModeSelectorScreen,
         renderModeChangeConfirmScreen:
@@ -474,6 +477,25 @@
     }
 
     return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.parejas) || null;
+  }
+
+  /**
+   * Resolves src/game/timelineRound.js (TRIOFSND-291/294), the Línea del
+   * tiempo round/level generator -- same require-or-`window.DinoQuiz`
+   * pattern as `resolveClassifyGame`/`resolveParejasGame` above. Unlike
+   * those, this module has no `public/scripts/` browser port yet (see
+   * timelineScreen.js's own doc comment), so the `window.DinoQuiz.game.
+   * timelineRound` branch is ready for whenever that port lands but
+   * currently only ever resolves under Node/Jest.
+   */
+  function resolveTimelineRound(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+
+    if (typeof require === 'function') {
+      return require('../../src/game/timelineRound');
+    }
+
+    return (win && win.DinoQuiz && win.DinoQuiz.game && win.DinoQuiz.game.timelineRound) || null;
   }
 
   /**
@@ -813,6 +835,14 @@
         // the question-bank-driven orchestrator below -- see
         // startParejasLevelGame's own doc comment.
         startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+        return;
+      }
+      if (modeId === LINEA_DEL_TIEMPO_MODE_ID) {
+        // TRIOFSND-294: Línea del tiempo has its own level-unlock chain and
+        // eligible-creature round generator (timelineRound.js) instead of
+        // the question-bank-driven orchestrator below -- see
+        // startTimelineLevelGame's own doc comment.
+        startTimelineLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
         return;
       }
       // Every other mode (Quiz included) still routes through the existing
@@ -2188,6 +2218,223 @@
     }
 
     return playParejasRound(container, renderers, doc, fetchFn, parejasGameApi, game.round, game.state, resolvedCtx);
+  }
+
+  /**
+   * Línea del tiempo mode integration (TRIOFSND-294): like Parejas, this
+   * mode plays through its own multi-level unlock chain (timelineRound.js's
+   * own `completeLevel`, scoped to this mode's own unlockThresholds.js
+   * entry) by generating one eligible-creature round at a time
+   * (`startGame`/`completeRound`) instead of Sombra's whole-level-upfront
+   * `rounds` array -- `playTimelineRound`/`finishTimelineLevel`/
+   * `startTimelineLevelGame` mirror `playParejasRound`/`finishParejasLevel`/
+   * `startParejasLevelGame` exactly, but drive timelineRound.js's
+   * period-guess rounds and timelineScreen.js's board instead of
+   * parejasGame.js's memory boards, and score plainly off `gameState.score`
+   * (no soft-limit tally to reconcile, unlike Parejas).
+   *
+   * `order` -- the level's whole shuffled eligible-creature sequence,
+   * `startGame`'s own return value -- must be threaded through every
+   * recursive call: unlike Sombra's `rounds` array, timelineRound.js only
+   * ever hands back the CURRENT round, and `completeRound` needs `order` to
+   * resolve which creature the next round asks about.
+   */
+
+  /** Renders `round` and drives it to completion (or the next round, or Resultados once the level is over) -- mirrors `playParejasRound`'s own `advance()` loop. */
+  function playTimelineRound(container, renderers, doc, fetchFn, timelineRoundApi, round, gameState, order, ctx) {
+    var totalRounds = timelineRoundApi.ROUNDS_PER_GAME;
+    var level = round.level;
+    var evaluatedRound = round;
+    var latestGameState = gameState;
+
+    function advance() {
+      var result = timelineRoundApi.completeRound({
+        round: evaluatedRound,
+        gameState: latestGameState,
+        level: level,
+        order: order,
+        periodGuess: evaluatedRound.periodGuess,
+        dinosaurPool: ctx.dinosaurPool,
+        getCreatureSheet: ctx.getCreatureSheet,
+        logService: ctx.logService,
+      });
+
+      if (result.gameOver) {
+        finishTimelineLevel(container, renderers, doc, fetchFn, level, result.state, ctx);
+      } else {
+        playTimelineRound(container, renderers, doc, fetchFn, timelineRoundApi, result.nextRound, result.state, order, ctx);
+      }
+    }
+
+    return renderers.renderTimelineScreen(container, round, {
+      score: gameState.score,
+      roundNumber: round.roundIndex + 1,
+      totalRounds: totalRounds,
+      gameState: gameState,
+      getCreatureSheet: ctx.getCreatureSheet,
+      logService: ctx.logService,
+      onAnswer: function (result) {
+        evaluatedRound = result.round;
+        latestGameState = result.gameState;
+      },
+      onNext: function () {
+        advance();
+      },
+      onGameOver: function () {
+        advance();
+      },
+    });
+  }
+
+  /** Renders Resultados for the Línea del tiempo level just finished, persisting/reading progress through the same per-mode modeProgressStorage.js instance every mode uses -- mirrors `finishParejasLevel` exactly, but resolves the level-unlock outcome via timelineRound.js's own `completeLevel` and scores plainly off `finalState.score` (no soft-limit tally to reconcile). */
+  function finishTimelineLevel(container, renderers, doc, fetchFn, level, finalState, ctx) {
+    var gameFlow = resolveGameFlow();
+    var timelineRoundApi = resolveTimelineRound();
+    var modeProgressStorage = ctx.modeProgressStorage;
+    var modeId = ctx.modeId || LINEA_DEL_TIEMPO_MODE_ID;
+
+    var outcome = timelineRoundApi.completeLevel({
+      level: level,
+      answers: finalState.answers,
+      dinosaurPool: ctx.dinosaurPool,
+      getCreatureSheet: ctx.getCreatureSheet,
+      randomFn: ctx.randomFn,
+      logService: ctx.logService,
+    });
+
+    if (outcome.nextLevelGame && outcome.nextLevelGame.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, outcome.nextLevelGame);
+    }
+
+    finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+    var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
+    finalState.bestScore = bestScoreAndStreak.bestScore;
+    finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
+    var writesSettled = Promise.resolve();
+    if (!outcome.gameOver && modeProgressStorage && typeof modeProgressStorage.recordLevelUnlocked === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordLevelUnlocked(modeId, outcome.nextLevel);
+      });
+    }
+    if (modeProgressStorage && typeof modeProgressStorage.recordResult === 'function') {
+      writesSettled = writesSettled.then(function () {
+        return modeProgressStorage.recordResult(modeId, {
+          score: finalState.score,
+          maxScore: timelineRoundApi.ROUNDS_PER_GAME,
+          level: level,
+        });
+      });
+    }
+
+    if (ctx.maxUnlockedLevelPromise) {
+      ctx.maxUnlockedLevelPromise = ctx.maxUnlockedLevelPromise.then(function (previousMax) {
+        if (outcome.gameOver) {
+          return previousMax;
+        }
+        return typeof previousMax === 'number' ? Math.max(previousMax, outcome.nextLevel) : outcome.nextLevel;
+      });
+    }
+
+    if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordGameCompleted === 'function') {
+      ctx.analyticsStorage.recordGameCompleted(finalState.score);
+    }
+
+    return Promise.resolve(writesSettled)
+      .then(function () {
+        return ctx.maxUnlockedLevelPromise;
+      })
+      .then(function (maxLevelUnlocked) {
+        return renderers.renderResultsScreen(container, {
+          score: finalState.score,
+          maxScore: timelineRoundApi.ROUNDS_PER_GAME,
+          maxStreak: finalState.maxStreak,
+          bestScore: finalState.bestScore,
+          bestStreak: finalState.bestStreak,
+          level: level,
+          levelOutcome: outcome,
+          maxLevelUnlocked: typeof maxLevelUnlocked === 'number' ? maxLevelUnlocked : undefined,
+          adsRemoved: loadAdsRemovedState(ctx.storageObj),
+          onPlayAgain: function () {
+            if (ctx.analyticsStorage && typeof ctx.analyticsStorage.recordEvent === 'function') {
+              ctx.analyticsStorage.recordEvent('replay_pulsado');
+            }
+            if (!outcome.gameOver && outcome.nextLevelGame) {
+              playTimelineRound(
+                container,
+                renderers,
+                doc,
+                fetchFn,
+                timelineRoundApi,
+                outcome.nextLevelGame.round,
+                outcome.nextLevelGame.state,
+                outcome.nextLevelGame.order,
+                ctx
+              );
+            } else {
+              startTimelineLevelGame(container, renderers, doc, fetchFn, ctx);
+            }
+          },
+          onExit: function () {
+            var homeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderers.renderHomeScreen,
+              fetchFn,
+              homeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              homeStorage
+            );
+          },
+        });
+      });
+  }
+
+  /** Starts (or restarts) the Línea del tiempo multi-level game at `ctx.level` (level 1 by default) -- mirrors `startParejasLevelGame` exactly, using timelineRound.js's own eligible-creature rounds instead of parejasGame.js's memory boards. */
+  function startTimelineLevelGame(container, renderers, doc, fetchFn, ctx) {
+    ctx = ctx || {};
+    var timelineRoundApi = resolveTimelineRound();
+    var gameFlow = resolveGameFlow();
+    if (!timelineRoundApi || !gameFlow || !renderers || typeof renderers.renderTimelineScreen !== 'function') {
+      return null;
+    }
+
+    var level = ctx.level || gameFlow.MIN_LEVEL;
+    var modeId = LINEA_DEL_TIEMPO_MODE_ID;
+    var resolvedCtx = {
+      level: level,
+      randomFn: ctx.randomFn,
+      dinosaurPool: ctx.dinosaurPool,
+      getCreatureSheet: ctx.getCreatureSheet,
+      storageObj: ctx.storageObj,
+      analyticsStorage: ctx.analyticsStorage,
+      storage: ctx.storage,
+      modeProgressStorage: ctx.modeProgressStorage,
+      logService: ctx.logService,
+      modeId: modeId,
+      maxUnlockedLevelPromise:
+        ctx.modeProgressStorage && typeof ctx.modeProgressStorage.getMaxUnlockedLevel === 'function'
+          ? Promise.resolve(ctx.modeProgressStorage.getMaxUnlockedLevel(modeId))
+          : undefined,
+    };
+
+    persistLastMode(modeId, ctx.storageObj);
+
+    var game = timelineRoundApi.startGame({
+      level: level,
+      dinosaurPool: ctx.dinosaurPool,
+      getCreatureSheet: ctx.getCreatureSheet,
+      randomFn: ctx.randomFn,
+      logService: ctx.logService,
+    });
+
+    if (game && game.error) {
+      return exitToHomeSafely(container, renderers, doc, fetchFn, game);
+    }
+
+    return playTimelineRound(container, renderers, doc, fetchFn, timelineRoundApi, game.round, game.state, game.order, resolvedCtx);
   }
 
   /**
@@ -3842,6 +4089,11 @@
       playParejasRound: playParejasRound,
       finishParejasLevel: finishParejasLevel,
       startParejasLevelGame: startParejasLevelGame,
+      LINEA_DEL_TIEMPO_MODE_ID: LINEA_DEL_TIEMPO_MODE_ID,
+      resolveTimelineRound: resolveTimelineRound,
+      playTimelineRound: playTimelineRound,
+      finishTimelineLevel: finishTimelineLevel,
+      startTimelineLevelGame: startTimelineLevelGame,
     };
   }
 })();
