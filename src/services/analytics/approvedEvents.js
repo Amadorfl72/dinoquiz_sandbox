@@ -21,7 +21,14 @@
 // recordEvent/recordEventOnce/recordGameCompleted/recordQuestionAnswered
 // (src/services/storage/StorageClient.js) or its browser-inline duplicate
 // (public/scripts/main.js) -- aggregated, non-PII counters only, never sent
-// off-device (no backend exists to send them to).
+// off-device (no backend exists to send them to). Also covers the generic
+// mode dispatcher's own four events, recorded by src/services/analytics.js
+// (TRIOFSND-322): `mode_selected` (a mode card tap reached the dispatcher),
+// `match_started` (a mode's own engine actually began a match),
+// `mode_blocked` (a blocked card was tapped anyway) and
+// `mode_dispatch_mismatch` (the mode->renderer registry had no entry for
+// the selected id, so the accessible fallback warning screen showed
+// instead of silently starting Quiz).
 const APPROVED_ANALYTICS_EVENTS = [
   'partida_iniciada',
   'first_tap_jugar',
@@ -30,6 +37,10 @@ const APPROVED_ANALYTICS_EVENTS = [
   'partida_completada',
   'replay_pulsado',
   'mute_toggled',
+  'mode_selected',
+  'match_started',
+  'mode_blocked',
+  'mode_dispatch_mismatch',
 ];
 
 // Fields allowed on the per-question analytics event (TRIOFSND-80,

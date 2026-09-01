@@ -142,6 +142,11 @@
     "message": "This mode isn't available right now. Try again later or choose another mode from the selector.",
     "backButtonLabel": "Back to the game selector"
   },
+  "modeFallbackWarning": {
+    "screenTitle": "We couldn't open this game",
+    "message": "This mode isn't ready on your device yet. Go back to the selector and choose another game.",
+    "backButtonLabel": "Back to the game selector"
+  },
   "offlineDiagnostics": {
     "screenTitle": "Offline diagnostics",
     "introText": "This data is calculated and saved only on this device. It's never sent to the internet.",

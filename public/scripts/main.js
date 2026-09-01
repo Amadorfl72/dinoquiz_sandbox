@@ -328,6 +328,9 @@
         renderModeChangeConfirmScreen:
           fromWindow.renderModeChangeConfirmScreen ||
           require('./modeChangeConfirmScreen').renderModeChangeConfirmScreen,
+        renderModeFallbackWarningScreen:
+          fromWindow.renderModeFallbackWarningScreen ||
+          require('../../src/screens/ModeFallbackWarningScreen').renderModeFallbackWarningScreen,
       };
     }
 
@@ -750,6 +753,25 @@
   }
 
   /**
+   * Resolves src/services/analytics.js (TRIOFSND-322), the local, aggregated
+   * recorder for the generic mode dispatcher's four events (`mode_selected`,
+   * `match_started`, `mode_blocked`, `mode_dispatch_mismatch` -- see that
+   * file's own doc comment). Same require-or-`window.DinoQuiz` fallback shape
+   * as `resolveGameSessionStorage` above -- this service has no
+   * `public/scripts/` browser port yet either, so it resolves to null in the
+   * real, bundler-less browser and every call site below simply records
+   * nothing there for now, the same fail-open shape `resolveGameSessionStorage`
+   * already documents.
+   */
+  function resolveAnalytics(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/analytics');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.analytics) || null;
+  }
+
+  /**
    * Renders modeChangeConfirmScreen.js (TRIOFSND-237) with the `modeChange`
    * i18n strings already resolved into `resources` (see `loadHomeResources`).
    * Returns null (renders nothing) when the renderer failed to load, mirroring
@@ -771,6 +793,26 @@
   }
 
   /**
+   * Renders modeFallbackWarningScreen.js (TRIOFSND-322) with the
+   * `modeFallbackWarning` i18n strings already resolved into `resources`.
+   * Reached only from `handleModeSelected`'s `startMode()` once the
+   * mode->renderer registry has no dispatch entry for the selected id --
+   * see that function's own doc comment. Returns null (renders nothing) when
+   * the renderer itself failed to load, the same degrade-gracefully shape
+   * `renderAgeGate`/`renderModeChangeConfirm` already follow.
+   */
+  function renderModeFallbackWarning(container, renderers, resources, options) {
+    if (!renderers || typeof renderers.renderModeFallbackWarningScreen !== 'function') {
+      return null;
+    }
+
+    return renderers.renderModeFallbackWarningScreen(container, {
+      strings: resources && resources.modeFallbackWarning,
+      onBack: options.onBack,
+    });
+  }
+
+  /**
    * Dispatches `dinoquiz:match_started` on `doc`, a DOM `CustomEvent` whose
    * `detail.modeId` is the true identity of the engine that is actually
    * about to start a match (PRD shared_game_structure: "Una partida
@@ -782,10 +824,19 @@
    * silently falls through to that fallback instead of its own dedicated
    * engine reports having started Quiz, not itself, the same regression
    * tests/pwa/mode-dispatch-catalog.test.js asserts against.
+   *
+   * Also records the local, aggregated `match_started` event via
+   * src/services/analytics.js (TRIOFSND-322) -- the same "true id that
+   * actually started" signal, just persisted as a count instead of a
+   * one-shot DOM event.
    */
   function emitMatchStarted(doc, startedModeId) {
     if (doc && typeof doc.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
       doc.dispatchEvent(new CustomEvent('dinoquiz:match_started', { detail: { modeId: startedModeId } }));
+    }
+    var analytics = resolveAnalytics();
+    if (analytics && typeof analytics.recordEvent === 'function') {
+      analytics.recordEvent('match_started');
     }
   }
 
@@ -828,74 +879,126 @@
    * `renderModeSelector` below resolves it once, right before rendering the
    * selector, exactly for this reason.
    */
+
+  /**
+   * Builds the explicit mode->renderer dispatch registry `startMode()` below
+   * looks `modeId` up in (TRIOFSND-322), constructed from `renderers` (the
+   * object `resolveScreenRenderers()` returns) plus the other per-call
+   * context each mode's own start function needs. One entry per catalog mode
+   * id, each a zero-arg function that reports its own literal mode id via
+   * `emitMatchStarted` (never `modeId`, so a mismatch between the two is
+   * detectable) and then starts that mode's own engine -- Maze/Oído
+   * Jurásico by navigating to their own hash route, Sombra/Clasifica/Ordena
+   * por tamaño/Parejas/Línea del tiempo via their own dedicated
+   * start*Game function, and Quiz via the shared question-bank orchestrator.
+   *
+   * A `modeId` with no entry here (a future catalog id not yet wired, or any
+   * other unexpected value) is `startMode()`'s cue to show the accessible
+   * fallback warning screen instead of ever falling through to a different
+   * mode's engine -- see `renderModeFallbackWarning` and this file's own
+   * `mode-dispatch-catalog.test.js`-guarded history of that exact "silent
+   * quiz" regression.
+   */
+  function buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx) {
+    var registry = {};
+
+    registry[MAZE_MODE_ID] = function () {
+      emitMatchStarted(doc, MAZE_MODE_ID);
+      navigateToMaze();
+    };
+
+    registry[OIDO_JURASICO_MODE_ID] = function () {
+      emitMatchStarted(doc, OIDO_JURASICO_MODE_ID);
+      navigateToOidoJurasico();
+    };
+
+    // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
+    // procedural round generator (shadowGuessGame.js) instead of the
+    // question-bank-driven orchestrator below -- see
+    // startShadowGuessLevelGame's own doc comment.
+    registry[SOMBRA_MODE_ID] = function () {
+      emitMatchStarted(doc, SOMBRA_MODE_ID);
+      startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: SOMBRA_MODE_ID }));
+    };
+
+    // TRIOFSND-282: Clasifica has its own fixed-level round generator
+    // (classifyGame.js) instead of the question-bank-driven orchestrator
+    // below -- see startClassifyGame's own doc comment.
+    registry[CLASIFICA_MODE_ID] = function () {
+      emitMatchStarted(doc, CLASIFICA_MODE_ID);
+      startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: CLASIFICA_MODE_ID }));
+    };
+
+    // TRIOFSND-288: Ordena por tamaño is a fixed, level-less
+    // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape as
+    // Oído Jurásico -- see startSizeOrderGame's own doc comment.
+    registry[SIZE_ORDER_MODE_ID] = function () {
+      emitMatchStarted(doc, SIZE_ORDER_MODE_ID);
+      startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: SIZE_ORDER_MODE_ID }));
+    };
+
+    // TRIOFSND-276: Parejas jurásicas has its own multi-level unlock chain
+    // and procedural board generator (parejasGame.js) instead of the
+    // question-bank-driven orchestrator below -- see
+    // startParejasLevelGame's own doc comment.
+    registry[PAREJAS_MODE_ID] = function () {
+      emitMatchStarted(doc, PAREJAS_MODE_ID);
+      startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: PAREJAS_MODE_ID }));
+    };
+
+    // TRIOFSND-294: Línea del tiempo has its own level-unlock chain and
+    // eligible-creature round generator (timelineRound.js) instead of the
+    // question-bank-driven orchestrator below -- see
+    // startTimelineLevelGame's own doc comment.
+    registry[LINEA_DEL_TIEMPO_MODE_ID] = function () {
+      emitMatchStarted(doc, LINEA_DEL_TIEMPO_MODE_ID);
+      startTimelineLevelGame(
+        container,
+        renderers,
+        doc,
+        fetchFn,
+        Object.assign({}, ctx, { modeId: LINEA_DEL_TIEMPO_MODE_ID })
+      );
+    };
+
+    // Quiz (TRIOFSND-253): the original mode, still the shared question-bank
+    // orchestrator every mode used to fall through to silently before this
+    // registry existed. It is now just one more explicit entry, reached only
+    // when `modeId` really is `QUIZ_MODE_ID`.
+    registry[QUIZ_MODE_ID] = function () {
+      emitMatchStarted(doc, QUIZ_MODE_ID);
+      startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: QUIZ_MODE_ID }));
+    };
+
+    return registry;
+  }
+
   function handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId) {
     function startMode() {
-      if (modeId === MAZE_MODE_ID) {
-        emitMatchStarted(doc, MAZE_MODE_ID);
-        navigateToMaze();
+      var analytics = resolveAnalytics();
+      if (analytics && typeof analytics.recordEvent === 'function') {
+        analytics.recordEvent('mode_selected');
+      }
+
+      var registry = buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx);
+      var dispatch = registry[modeId];
+
+      if (typeof dispatch === 'function') {
+        dispatch();
         return;
       }
-      if (modeId === OIDO_JURASICO_MODE_ID) {
-        emitMatchStarted(doc, OIDO_JURASICO_MODE_ID);
-        navigateToOidoJurasico();
-        return;
+
+      // No registered renderer for this id (TRIOFSND-322): show the
+      // accessible fallback warning screen with a way back to the selector,
+      // instead of ever silently starting Quiz for a mode nobody chose.
+      if (analytics && typeof analytics.recordEvent === 'function') {
+        analytics.recordEvent('mode_dispatch_mismatch');
       }
-      if (modeId === SOMBRA_MODE_ID) {
-        // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
-        // procedural round generator (shadowGuessGame.js) instead of the
-        // question-bank-driven orchestrator below -- see
-        // startShadowGuessLevelGame's own doc comment.
-        emitMatchStarted(doc, SOMBRA_MODE_ID);
-        startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
-        return;
-      }
-      if (modeId === CLASIFICA_MODE_ID) {
-        // TRIOFSND-282: Clasifica has its own fixed-level round generator
-        // (classifyGame.js) instead of the question-bank-driven orchestrator
-        // below -- see startClassifyGame's own doc comment.
-        emitMatchStarted(doc, CLASIFICA_MODE_ID);
-        startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
-        return;
-      }
-      if (modeId === SIZE_ORDER_MODE_ID) {
-        // TRIOFSND-288: Ordena por tamaño is a fixed, level-less
-        // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape
-        // as Oído Jurásico -- see startSizeOrderGame's own doc comment.
-        emitMatchStarted(doc, SIZE_ORDER_MODE_ID);
-        startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
-        return;
-      }
-      if (modeId === PAREJAS_MODE_ID) {
-        // TRIOFSND-276: Parejas jurásicas has its own multi-level unlock
-        // chain and procedural board generator (parejasGame.js) instead of
-        // the question-bank-driven orchestrator below -- see
-        // startParejasLevelGame's own doc comment.
-        emitMatchStarted(doc, PAREJAS_MODE_ID);
-        startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
-        return;
-      }
-      if (modeId === LINEA_DEL_TIEMPO_MODE_ID) {
-        // TRIOFSND-294: Línea del tiempo has its own level-unlock chain and
-        // eligible-creature round generator (timelineRound.js) instead of
-        // the question-bank-driven orchestrator below -- see
-        // startTimelineLevelGame's own doc comment.
-        emitMatchStarted(doc, LINEA_DEL_TIEMPO_MODE_ID);
-        startTimelineLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
-        return;
-      }
-      // Every other mode (Quiz included) still routes through the existing
-      // multi-level orchestrator until its own game engine ships -- `modeId`
-      // (TRIOFSND-253) is what keeps each mode's level-unlock progression and
-      // finished-game result independent (see startLevelGame/finishLevel).
-      // The engine that actually starts here is always Quiz's own
-      // question-bank orchestrator, regardless of which `modeId` reached
-      // it -- so the "id iniciado" it reports is the literal QUIZ_MODE_ID,
-      // never the requested `modeId`: a mode that falls through to this
-      // branch instead of its own dedicated one (the exact "silent quiz"
-      // regression tests/pwa/mode-dispatch-catalog.test.js guards against)
-      // must report having started Quiz, not itself.
-      emitMatchStarted(doc, QUIZ_MODE_ID);
-      startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: modeId }));
+      renderModeFallbackWarning(container, renderers, resources, {
+        onBack: function () {
+          renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
+        },
+      });
     }
 
     var gameSessionStorage = resolveGameSessionStorage();
@@ -3158,6 +3261,18 @@
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
+      // TRIOFSND-322: modeSelectorScreen.js already logs a local diagnostic
+      // via LogService#logModeBlocked whenever a blocked card is tapped
+      // anyway (see that file's own doc comment) -- this also tallies the
+      // aggregated, local-only `mode_blocked` analytics count via
+      // src/services/analytics.js, alongside `mode_selected`/`match_started`/
+      // `mode_dispatch_mismatch` (see `handleModeSelected`'s registry).
+      onBlockedModeAttempt: function () {
+        var analytics = resolveAnalytics();
+        if (analytics && typeof analytics.recordEvent === 'function') {
+          analytics.recordEvent('mode_blocked');
+        }
+      },
       onBack: function () {
         var homeStorage = resolveHomeStorage();
         renderHome(
@@ -3423,6 +3538,7 @@
             modeSelector: data.modeSelector,
             modes: data.modes,
             modeChange: data.modeChange,
+            modeFallbackWarning: data.modeFallbackWarning,
           }
         : null;
     });
@@ -4525,6 +4641,9 @@
       consumeRestoredSession: consumeRestoredSession,
       renderModeChangeConfirm: renderModeChangeConfirm,
       handleModeSelected: handleModeSelected,
+      buildModeDispatchRegistry: buildModeDispatchRegistry,
+      renderModeFallbackWarning: renderModeFallbackWarning,
+      resolveAnalytics: resolveAnalytics,
       resolveShadowGuessGame: resolveShadowGuessGame,
       resolveClassifyGame: resolveClassifyGame,
       resolveModesCatalog: resolveModesCatalog,

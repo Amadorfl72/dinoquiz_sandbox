@@ -131,7 +131,8 @@
     "/data/questions.json",
     "/data/creatures.json",
     "/data/launchGateReport.json",
-    "/offline.html"
+    "/offline.html",
+    "/scripts/modeFallbackWarningScreen.js"
   ],
   "contentHashes": {
     "/": "9e22dc8c3d5fa73aa26c60d44622a621190ca69fb1b1e27e5bdcfc028f1a59b1",
@@ -260,6 +261,7 @@
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",
-    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b"
+    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b",
+    "/scripts/modeFallbackWarningScreen.js": "5b802e610896c58b73526015f9f07f1c352294224b71e388681dcdb76796c05d"
   }
 }
