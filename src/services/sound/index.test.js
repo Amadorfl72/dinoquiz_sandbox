@@ -1,6 +1,6 @@
 'use strict';
 
-const { createSoundService, SOUND_SRC, MUTE_STORAGE_KEY } = require('./index');
+const { createSoundService, SOUND_SRC, MUTE_STORAGE_KEY, checkMutedBeforeAudioMode } = require('./index');
 
 function createFakeStorage(initial = {}) {
   const store = new Map(Object.entries(initial));
@@ -142,6 +142,47 @@ describe('SoundService (TRIOFSND-78)', () => {
       storageObj.setItem(MUTE_STORAGE_KEY, 'false');
       expect(soundService.playCorrect()).toBe(true);
       expect(audioFactory.created[SOUND_SRC.correct].played).toBe(1);
+    });
+  });
+
+  describe('checkMutedBeforeAudioMode (TRIOFSND-314: reusable accessible muted notice)', () => {
+    const strings = {
+      heading: 'El sonido está silenciado',
+      message: 'Este modo necesita el sonido activado para poder jugar.',
+      unmuteButton: 'Activar sonido',
+      backButton: 'Volver al selector de juegos',
+    };
+
+    it('returns muted: false when dinoquiz:muted is not active', () => {
+      const storageObj = createFakeStorage();
+
+      expect(checkMutedBeforeAudioMode(strings, { storageObj })).toEqual({ muted: false });
+    });
+
+    it('returns the notice heading/message/two actions when dinoquiz:muted is active', () => {
+      const storageObj = createFakeStorage({ [MUTE_STORAGE_KEY]: 'true' });
+
+      expect(checkMutedBeforeAudioMode(strings, { storageObj })).toEqual({
+        muted: true,
+        heading: strings.heading,
+        message: strings.message,
+        unmuteButton: strings.unmuteButton,
+        backButton: strings.backButton,
+      });
+    });
+
+    it('re-reads the flag fresh on every call, no caching across calls', () => {
+      const storageObj = createFakeStorage({ [MUTE_STORAGE_KEY]: 'true' });
+
+      expect(checkMutedBeforeAudioMode(strings, { storageObj }).muted).toBe(true);
+
+      storageObj.setItem(MUTE_STORAGE_KEY, 'false');
+      expect(checkMutedBeforeAudioMode(strings, { storageObj }).muted).toBe(false);
+    });
+
+    it('never throws when no storage backend is available (defaults to unmuted)', () => {
+      expect(() => checkMutedBeforeAudioMode(strings, { storageObj: undefined })).not.toThrow();
+      expect(checkMutedBeforeAudioMode(strings, { storageObj: undefined })).toEqual({ muted: false });
     });
   });
 

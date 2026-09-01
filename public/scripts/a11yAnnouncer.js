@@ -70,7 +70,7 @@
         return null;
       }
       var el = docObj.createElement('p');
-      el.className = 'a11y-announcer sr-only';
+      el.classList.add('a11y-announcer__region', 'sr-only');
       el.setAttribute('role', 'status');
       el.setAttribute('aria-live', 'polite');
       return el;

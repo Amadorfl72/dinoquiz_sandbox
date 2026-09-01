@@ -3,6 +3,7 @@ const {
   SESSION_SCHEMA_VERSION,
   sessionKey,
   SESSION_DISCARD_INCOMPATIBLE_CODE,
+  SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
 } = require('./GameSessionStorage');
 const { startGame, evaluateAnswer, advanceRound, ROUNDS_PER_GAME } = require('../../game/roundContract');
 
@@ -109,7 +110,7 @@ describe('GameSessionStorage', () => {
   });
 
   describe('version and integrity validation', () => {
-    it('discards and returns null for a stored envelope with a mismatched schema version', async () => {
+    it('discards and returns null for a stored envelope with a schema version that has no migration path', async () => {
       const adapter = createFakeAdapter();
       const storage = new GameSessionStorage([adapter]);
       await storage.saveSession('quiz', playingSession());
@@ -168,6 +169,103 @@ describe('GameSessionStorage', () => {
       expect(await storage.restoreSession('quiz')).toBeNull();
       expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
       expect(await adapter.getItem('dinoquiz:bestScore')).toBe('10');
+    });
+  });
+
+  describe('schema-version migration (TRIOFSND-300)', () => {
+    it('restores a session migrated from an older schema version once it passes integrity validation', async () => {
+      const adapter = createFakeAdapter();
+      const oldVersion = SESSION_SCHEMA_VERSION - 1;
+      const migrations = {
+        [oldVersion]: (envelope) => Object.assign({}, envelope, { schemaVersion: SESSION_SCHEMA_VERSION }),
+      };
+      const storage = new GameSessionStorage([adapter], undefined, migrations);
+      await storage.saveSession('quiz', playingSession({ level: 2 }));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.schemaVersion = oldVersion;
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      const restored = await storage.restoreSession('quiz');
+
+      expect(restored).not.toBeNull();
+      expect(restored.context).toEqual({ level: 2 });
+    });
+
+    it('chains multiple registered migrations to reach the current schema version', async () => {
+      const adapter = createFakeAdapter();
+      const veryOldVersion = SESSION_SCHEMA_VERSION - 2;
+      const oldVersion = SESSION_SCHEMA_VERSION - 1;
+      const migrations = {
+        [veryOldVersion]: (envelope) => Object.assign({}, envelope, { schemaVersion: oldVersion }),
+        [oldVersion]: (envelope) => Object.assign({}, envelope, { schemaVersion: SESSION_SCHEMA_VERSION }),
+      };
+      const storage = new GameSessionStorage([adapter], undefined, migrations);
+      await storage.saveSession('quiz', playingSession());
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.schemaVersion = veryOldVersion;
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).not.toBeNull();
+    });
+
+    it('discards a migrated envelope that still fails integrity validation, with the generic incompatible code, leaving completed results untouched', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const oldVersion = SESSION_SCHEMA_VERSION - 1;
+      const migrations = {
+        [oldVersion]: (envelope) =>
+          Object.assign({}, envelope, {
+            schemaVersion: SESSION_SCHEMA_VERSION,
+            session: Object.assign({}, envelope.session, { roundIndex: 999 }),
+          }),
+      };
+      const storage = new GameSessionStorage([adapter], logService, migrations);
+      await storage.saveSession('quiz', playingSession());
+      await adapter.setItem('dinoquiz:bestScore', JSON.stringify(42));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.schemaVersion = oldVersion;
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+
+      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
+      expect(await adapter.getItem('dinoquiz:bestScore')).toBe('42');
+    });
+
+    it('discards a schema version with no registered migration path, with the unsupported-version code, leaving completed results untouched', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService, {});
+      await storage.saveSession('quiz', playingSession());
+      await adapter.setItem('dinoquiz:bestScore', JSON.stringify(7));
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.schemaVersion = SESSION_SCHEMA_VERSION - 1;
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+
+      expect(logService.stateDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      ]);
+      expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
+      expect(await adapter.getItem('dinoquiz:bestScore')).toBe('7');
+    });
+
+    it('discards, with the unsupported-version code, a version newer than this build understands (downgrade scenario)', async () => {
+      const adapter = createFakeAdapter();
+      const logService = createFakeLogService();
+      const storage = new GameSessionStorage([adapter], logService, {});
+      await storage.saveSession('quiz', playingSession());
+      const envelope = JSON.parse(await adapter.getItem(sessionKey('quiz')));
+      envelope.schemaVersion = SESSION_SCHEMA_VERSION + 1;
+      await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
+
+      expect(await storage.restoreSession('quiz')).toBeNull();
+
+      expect(logService.stateDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      ]);
     });
   });
 
@@ -279,7 +377,7 @@ describe('GameSessionStorage', () => {
       expect(diagnosticsService.recordError).toHaveBeenCalledWith('quiz', 'state', SESSION_DISCARD_INCOMPATIBLE_CODE);
     });
 
-    it('logs the discard code for a schema-version mismatch', async () => {
+    it('logs the unsupported-version discard code for a schema version with no migration path', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
@@ -290,7 +388,9 @@ describe('GameSessionStorage', () => {
 
       await storage.restoreSession('quiz');
 
-      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+      expect(logService.stateDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      ]);
     });
 
     it('does not restore or log anything when a different mode\'s key was never written (per-mode keys, TRIOFSND-298)', async () => {
