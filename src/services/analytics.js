@@ -15,13 +15,23 @@
  * Four event names are recorded here (privacy-audited, non-PII, see
  * src/services/analytics/approvedEvents.js's APPROVED_ANALYTICS_EVENTS):
  * `mode_selected` (a mode card tap reaches the dispatcher), `match_started`
- * (a mode's own engine actually begins a match), `mode_blocked` (a blocked
- * card was tapped anyway) and `mode_dispatch_mismatch` (the dispatcher's
- * mode->renderer registry has no entry for the selected id, so the
- * accessible fallback warning screen shows instead of silently starting
- * Quiz). No round content, score, answer or player identifier is ever
- * recorded -- only that one of these four things happened, and how many
- * times.
+ * (a mode's own engine actually begins a match), `mode_blocked` (a known mode
+ * with no valid destination -- missing renderer/dependencies, or a blocked
+ * selector card tapped anyway) and `mode_dispatch_mismatch` (the registry
+ * resolved a destination whose own mode id disagrees with the one selected).
+ * No round content, score, answer or player identifier is ever recorded --
+ * only that one of these four things happened, how many times, and (via
+ * `recordEventDetail`) the non-PII `mode_id`/`cause`/`resolved_mode_id` of
+ * the most recent occurrence.
+ *
+ * `recordEventDetail` is deliberately a second call, never folded into
+ * `recordEvent` itself: `recordEvent(eventName)` keeps its single-argument
+ * shape because `tests/privacy-audit/analytics-events.test.js` statically
+ * greps for exactly that shape to confirm every approved event is actually
+ * emitted somewhere in the codebase. `recordEventDetail` only ever stores
+ * the latest payload per event name (not a growing history) under its own
+ * `dinoquiz:`-namespaced key, so a burst of taps never grows storage
+ * unbounded.
  *
  * Same require-or-`window.DinoQuiz` resolution shape as every other
  * optional service main.js resolves (e.g. resolveGameSessionStorage's own
@@ -32,8 +42,10 @@
  */
 
 const STORAGE_KEY = 'dinoquiz:modeAnalyticsEventCounts';
+const DETAILS_STORAGE_KEY = 'dinoquiz:modeAnalyticsEventDetails';
 
 let memoryCounts = {};
+let memoryDetails = {};
 
 function resolveStorage(storageAdapter) {
   if (storageAdapter) {
@@ -103,9 +115,62 @@ function getEventCounts(storageAdapter) {
   return readCounts(storage);
 }
 
+function readDetails(storage) {
+  if (!storage) {
+    return { ...memoryDetails };
+  }
+  try {
+    const raw = storage.getItem(DETAILS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    return { ...memoryDetails };
+  }
+}
+
+function writeDetails(storage, details) {
+  memoryDetails = details;
+  if (!storage) {
+    return;
+  }
+  try {
+    storage.setItem(DETAILS_STORAGE_KEY, JSON.stringify(details));
+  } catch (error) {
+    // Quota exceeded or unavailable: `memoryDetails` above already keeps the
+    // latest detail correct for the rest of this session, it just won't
+    // persist -- mirrors `writeCounts`'s own degrade-to-memory shape.
+  }
+}
+
+/**
+ * Stores `detail` (a plain, non-PII object -- e.g. `{ mode_id, cause }` or
+ * `{ mode_id, resolved_mode_id }`) as the most recent payload recorded for
+ * `eventName`, alongside (never instead of) the aggregated count
+ * `recordEvent` already tracks. A falsy/non-object `detail` is a no-op.
+ * Never throws.
+ */
+function recordEventDetail(eventName, detail, storageAdapter) {
+  if (!detail || typeof detail !== 'object') {
+    return;
+  }
+  const storage = resolveStorage(storageAdapter);
+  const details = readDetails(storage);
+  details[eventName] = detail;
+  writeDetails(storage, details);
+}
+
+/** The most recent detail object recorded for `eventName`, or null if none was ever recorded. */
+function getEventDetail(eventName, storageAdapter) {
+  const storage = resolveStorage(storageAdapter);
+  const details = readDetails(storage);
+  return Object.prototype.hasOwnProperty.call(details, eventName) ? details[eventName] : null;
+}
+
 module.exports = {
   STORAGE_KEY,
+  DETAILS_STORAGE_KEY,
   recordEvent,
   getEventCount,
   getEventCounts,
+  recordEventDetail,
+  getEventDetail,
 };

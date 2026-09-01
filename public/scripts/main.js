@@ -263,6 +263,14 @@
   var LINEA_DEL_TIEMPO_MODE_ID = 'lineaDelTiempo'; // mirrors src/game/modesCatalog.js MODE_IDS.LINEA_DEL_TIEMPO
   var MAZE_MIN_LEVEL = 1;
 
+  // Structured `mode_blocked` cause codes for `handleModeSelected`'s own
+  // dispatch registry (TRIOFSND-322) -- distinct from
+  // modesCatalog.js's AVAILABILITY_CAUSES (which cover the selector's data-
+  // readiness gate, e.g. "insufficient_creatures"): these two cover the
+  // dispatcher's own "no destination resolved" verdict, whatever the reason.
+  var DISPATCH_BLOCKED_CAUSE_UNKNOWN_MODE = 'unknown_mode'; // modeId isn't declared in modesCatalog.js at all
+  var DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING = 'renderer_missing'; // known catalog id, but its own renderer/dependency failed to load
+
   function isMazeRoute(loc) {
     loc = loc || (typeof window !== 'undefined' ? window.location : undefined);
     return !!loc && loc.hash === MAZE_HASH;
@@ -828,7 +836,7 @@
    * Also records the local, aggregated `match_started` event via
    * src/services/analytics.js (TRIOFSND-322) -- the same "true id that
    * actually started" signal, just persisted as a count instead of a
-   * one-shot DOM event.
+   * one-shot DOM event -- plus its `{ mode_id }` detail payload.
    */
   function emitMatchStarted(doc, startedModeId) {
     if (doc && typeof doc.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
@@ -837,6 +845,29 @@
     var analytics = resolveAnalytics();
     if (analytics && typeof analytics.recordEvent === 'function') {
       analytics.recordEvent('match_started');
+    }
+    recordDispatchAnalyticsDetail(analytics, 'match_started', { mode_id: startedModeId });
+  }
+
+  /**
+   * Records `detail` (a non-PII payload -- `{ mode_id }`, `{ mode_id, cause }`
+   * or `{ mode_id, resolved_mode_id }`) for `eventName` via
+   * src/services/analytics.js's `recordEventDetail`, when the service
+   * supports it. Deliberately separate from the aggregated `recordEvent(...)`
+   * count itself: every call site below keeps its own literal
+   * `analytics.recordEvent('mode_selected'|'match_started'|'mode_blocked'|
+   * 'mode_dispatch_mismatch')` call so
+   * tests/privacy-audit/analytics-events.test.js's static scan (which only
+   * recognizes a literal string or ALL_CAPS constant passed directly to
+   * `.recordEvent(`, not a variable) keeps detecting every one of the four
+   * events as actually emitted. Fails open exactly like every other
+   * optional-service call site in this file (e.g. `resolveGameSessionStorage`'s
+   * own doc comment) -- a missing/older analytics module simply means the
+   * detail is not recorded, it never blocks dispatch.
+   */
+  function recordDispatchAnalyticsDetail(analytics, eventName, detail) {
+    if (analytics && typeof analytics.recordEventDetail === 'function') {
+      analytics.recordEventDetail(eventName, detail);
     }
   }
 
@@ -884,73 +915,103 @@
    * Builds the explicit mode->renderer dispatch registry `startMode()` below
    * looks `modeId` up in (TRIOFSND-322), constructed from `renderers` (the
    * object `resolveScreenRenderers()` returns) plus the other per-call
-   * context each mode's own start function needs. One entry per catalog mode
-   * id, each a zero-arg function that reports its own literal mode id via
-   * `emitMatchStarted` (never `modeId`, so a mismatch between the two is
-   * detectable) and then starts that mode's own engine -- Maze/Oído
+   * context each mode's own start function needs. Every entry is gated on
+   * `renderers` actually exposing that mode's own screen-render function --
+   * a mode's entry is only ever added when its destination is genuinely
+   * resolvable, never unconditionally for every catalog id -- so a script
+   * that failed to load (e.g. parejasScreen.js missing from `renderers`)
+   * removes only that mode's own entry instead of leaving a dispatch
+   * function that would silently no-op (each `start*Game` below already
+   * degrades to `return null` when its own renderer is missing, which used
+   * to mean nothing rendered and nothing was recorded -- see
+   * tests/pwa/mode-dispatch-fallback.test.js's "renderer ausente" cases).
+   *
+   * Each entry is `{ modeId, dispatch }`, never a bare function: `modeId` is
+   * the literal id this entry actually starts, so `startMode()` below can
+   * assert `entry.modeId === modeId` before ever invoking `dispatch` --
+   * the explicit "el destino resuelto coincide con el id seleccionado"
+   * check, not just an implicit assumption from the object key. `dispatch`
+   * reports that same literal id via `emitMatchStarted` (never the outer
+   * `modeId` parameter) and then starts that mode's own engine -- Maze/Oído
    * Jurásico by navigating to their own hash route, Sombra/Clasifica/Ordena
    * por tamaño/Parejas/Línea del tiempo via their own dedicated
    * start*Game function, and Quiz via the shared question-bank orchestrator.
    *
-   * A `modeId` with no entry here (a future catalog id not yet wired, or any
-   * other unexpected value) is `startMode()`'s cue to show the accessible
-   * fallback warning screen instead of ever falling through to a different
-   * mode's engine -- see `renderModeFallbackWarning` and this file's own
-   * `mode-dispatch-catalog.test.js`-guarded history of that exact "silent
-   * quiz" regression.
+   * A `modeId` with no entry here (a future catalog id not yet wired, an id
+   * modesCatalog.js doesn't declare at all, or a known id whose renderer
+   * failed to load) is `startMode()`'s cue to record `mode_blocked` and show
+   * the accessible fallback warning screen instead of ever falling through
+   * to a different mode's engine -- see `renderModeFallbackWarning` and this
+   * file's own `mode-dispatch-catalog.test.js`-guarded history of that exact
+   * "silent quiz" regression.
    */
   function buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx) {
     var registry = {};
 
-    registry[MAZE_MODE_ID] = function () {
-      emitMatchStarted(doc, MAZE_MODE_ID);
-      navigateToMaze();
+    function addEntry(modeId, hasDestination, dispatch) {
+      if (!hasDestination) {
+        return;
+      }
+      registry[modeId] = { modeId: modeId, dispatch: dispatch };
+    }
+
+    var hasRenderer = function (exportName) {
+      return !!(renderers && typeof renderers[exportName] === 'function');
     };
 
-    registry[OIDO_JURASICO_MODE_ID] = function () {
-      emitMatchStarted(doc, OIDO_JURASICO_MODE_ID);
-      navigateToOidoJurasico();
-    };
+    addEntry(MAZE_MODE_ID, hasRenderer('renderMazeScreen'), function () {
+      emitMatchStarted(doc, MAZE_MODE_ID);
+      navigateToMaze();
+    });
+
+    addEntry(
+      OIDO_JURASICO_MODE_ID,
+      hasRenderer('renderOidoJurasicoIntro') && hasRenderer('renderOidoJurasicoScreen'),
+      function () {
+        emitMatchStarted(doc, OIDO_JURASICO_MODE_ID);
+        navigateToOidoJurasico();
+      }
+    );
 
     // TRIOFSND-265: Adivina la sombra has its own level-unlock chain and
     // procedural round generator (shadowGuessGame.js) instead of the
     // question-bank-driven orchestrator below -- see
     // startShadowGuessLevelGame's own doc comment.
-    registry[SOMBRA_MODE_ID] = function () {
+    addEntry(SOMBRA_MODE_ID, hasRenderer('renderShadowGuessScreen'), function () {
       emitMatchStarted(doc, SOMBRA_MODE_ID);
       startShadowGuessLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: SOMBRA_MODE_ID }));
-    };
+    });
 
     // TRIOFSND-282: Clasifica has its own fixed-level round generator
     // (classifyGame.js) instead of the question-bank-driven orchestrator
     // below -- see startClassifyGame's own doc comment.
-    registry[CLASIFICA_MODE_ID] = function () {
+    addEntry(CLASIFICA_MODE_ID, hasRenderer('renderClassifyScreen'), function () {
       emitMatchStarted(doc, CLASIFICA_MODE_ID);
       startClassifyGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: CLASIFICA_MODE_ID }));
-    };
+    });
 
     // TRIOFSND-288: Ordena por tamaño is a fixed, level-less
     // ROUNDS_PER_GAME-round game driven by roundContract.js, same shape as
     // Oído Jurásico -- see startSizeOrderGame's own doc comment.
-    registry[SIZE_ORDER_MODE_ID] = function () {
+    addEntry(SIZE_ORDER_MODE_ID, hasRenderer('renderSizeOrderScreen'), function () {
       emitMatchStarted(doc, SIZE_ORDER_MODE_ID);
       startSizeOrderGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: SIZE_ORDER_MODE_ID }));
-    };
+    });
 
     // TRIOFSND-276: Parejas jurásicas has its own multi-level unlock chain
     // and procedural board generator (parejasGame.js) instead of the
     // question-bank-driven orchestrator below -- see
     // startParejasLevelGame's own doc comment.
-    registry[PAREJAS_MODE_ID] = function () {
+    addEntry(PAREJAS_MODE_ID, hasRenderer('renderParejasScreen'), function () {
       emitMatchStarted(doc, PAREJAS_MODE_ID);
       startParejasLevelGame(container, renderers, doc, fetchFn, Object.assign({}, ctx, { modeId: PAREJAS_MODE_ID }));
-    };
+    });
 
     // TRIOFSND-294: Línea del tiempo has its own level-unlock chain and
     // eligible-creature round generator (timelineRound.js) instead of the
     // question-bank-driven orchestrator below -- see
     // startTimelineLevelGame's own doc comment.
-    registry[LINEA_DEL_TIEMPO_MODE_ID] = function () {
+    addEntry(LINEA_DEL_TIEMPO_MODE_ID, hasRenderer('renderTimelineScreen'), function () {
       emitMatchStarted(doc, LINEA_DEL_TIEMPO_MODE_ID);
       startTimelineLevelGame(
         container,
@@ -959,46 +1020,85 @@
         fetchFn,
         Object.assign({}, ctx, { modeId: LINEA_DEL_TIEMPO_MODE_ID })
       );
-    };
+    });
 
     // Quiz (TRIOFSND-253): the original mode, still the shared question-bank
     // orchestrator every mode used to fall through to silently before this
     // registry existed. It is now just one more explicit entry, reached only
     // when `modeId` really is `QUIZ_MODE_ID`.
-    registry[QUIZ_MODE_ID] = function () {
+    addEntry(QUIZ_MODE_ID, hasRenderer('renderQuestionScreen'), function () {
       emitMatchStarted(doc, QUIZ_MODE_ID);
       startLevelGame(container, renderers, questions, doc, fetchFn, Object.assign({}, ctx, { modeId: QUIZ_MODE_ID }));
-    };
+    });
 
     return registry;
   }
 
-  function handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId) {
-    function startMode() {
-      var analytics = resolveAnalytics();
-      if (analytics && typeof analytics.recordEvent === 'function') {
-        analytics.recordEvent('mode_selected');
-      }
-
-      var registry = buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx);
-      var dispatch = registry[modeId];
-
-      if (typeof dispatch === 'function') {
-        dispatch();
-        return;
-      }
-
-      // No registered renderer for this id (TRIOFSND-322): show the
-      // accessible fallback warning screen with a way back to the selector,
-      // instead of ever silently starting Quiz for a mode nobody chose.
-      if (analytics && typeof analytics.recordEvent === 'function') {
-        analytics.recordEvent('mode_dispatch_mismatch');
-      }
+  /**
+   * `handleModeSelected(..., modeId, currentModeId, registryOverride)`:
+   * `registryOverride`, when passed, is used verbatim instead of a freshly
+   * built `buildModeDispatchRegistry(...)` -- production code (the sole real
+   * call site, `renderModeSelector`'s `onSelectMode` below) never passes it,
+   * so behaviour there is unchanged. It exists purely as a test seam
+   * (tests/pwa/mode-dispatch-fallback.test.js) for deliberately exercising
+   * the "el destino resuelto no corresponde al id seleccionado" branch below
+   * through this same real function, without needing to corrupt
+   * `resolveScreenRenderers()` itself.
+   */
+  function handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId, registryOverride) {
+    function showFallback() {
       renderModeFallbackWarning(container, renderers, resources, {
         onBack: function () {
           renderModeSelector(container, renderers, questions, doc, fetchFn, resources, ctx);
         },
       });
+    }
+
+    function startMode() {
+      var analytics = resolveAnalytics();
+      if (analytics && typeof analytics.recordEvent === 'function') {
+        analytics.recordEvent('mode_selected');
+      }
+      recordDispatchAnalyticsDetail(analytics, 'mode_selected', { mode_id: modeId });
+
+      var registry = registryOverride || buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx);
+      var entry = registry[modeId];
+
+      if (!entry) {
+        // No destination resolved for this id at all (TRIOFSND-322): either
+        // modesCatalog.js doesn't declare it, or it does but the entry was
+        // withheld because its own renderer/dependency wasn't available (see
+        // `buildModeDispatchRegistry`'s own doc comment). Either way this
+        // mode alone becomes unavailable -- record the structured cause and
+        // show the accessible fallback warning screen with a way back to the
+        // selector, instead of ever silently starting Quiz for a mode nobody
+        // chose.
+        var modesCatalog = resolveModesCatalog();
+        var isKnownCatalogMode =
+          !!modesCatalog && typeof modesCatalog.getModeById === 'function' && !!modesCatalog.getModeById(modeId);
+        var cause = isKnownCatalogMode ? DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING : DISPATCH_BLOCKED_CAUSE_UNKNOWN_MODE;
+        if (analytics && typeof analytics.recordEvent === 'function') {
+          analytics.recordEvent('mode_blocked');
+        }
+        recordDispatchAnalyticsDetail(analytics, 'mode_blocked', { mode_id: modeId, cause: cause });
+        showFallback();
+        return;
+      }
+
+      if (entry.modeId !== modeId) {
+        // The registry resolved a real destination, but that destination's
+        // own id disagrees with the one selected -- always blocks the start
+        // and shows the fallback, never just a warning on top of a game that
+        // already began.
+        if (analytics && typeof analytics.recordEvent === 'function') {
+          analytics.recordEvent('mode_dispatch_mismatch');
+        }
+        recordDispatchAnalyticsDetail(analytics, 'mode_dispatch_mismatch', { mode_id: modeId, resolved_mode_id: entry.modeId });
+        showFallback();
+        return;
+      }
+
+      entry.dispatch();
     }
 
     var gameSessionStorage = resolveGameSessionStorage();
@@ -3264,14 +3364,18 @@
       // TRIOFSND-322: modeSelectorScreen.js already logs a local diagnostic
       // via LogService#logModeBlocked whenever a blocked card is tapped
       // anyway (see that file's own doc comment) -- this also tallies the
-      // aggregated, local-only `mode_blocked` analytics count via
-      // src/services/analytics.js, alongside `mode_selected`/`match_started`/
-      // `mode_dispatch_mismatch` (see `handleModeSelected`'s registry).
-      onBlockedModeAttempt: function () {
+      // aggregated, local-only `mode_blocked` analytics count (plus its
+      // `{ mode_id, cause }` detail) via src/services/analytics.js, alongside
+      // `mode_selected`/`match_started`/`mode_dispatch_mismatch` (see
+      // `handleModeSelected`'s registry). `modeId`/`cause` are the same two
+      // arguments modeSelectorScreen.js already passes to its own
+      // `logService.logModeBlocked(modeId, cause)` call right above this one.
+      onBlockedModeAttempt: function (blockedModeId, cause) {
         var analytics = resolveAnalytics();
         if (analytics && typeof analytics.recordEvent === 'function') {
           analytics.recordEvent('mode_blocked');
         }
+        recordDispatchAnalyticsDetail(analytics, 'mode_blocked', { mode_id: blockedModeId, cause: cause || null });
       },
       onBack: function () {
         var homeStorage = resolveHomeStorage();
@@ -4644,6 +4748,8 @@
       buildModeDispatchRegistry: buildModeDispatchRegistry,
       renderModeFallbackWarning: renderModeFallbackWarning,
       resolveAnalytics: resolveAnalytics,
+      DISPATCH_BLOCKED_CAUSE_UNKNOWN_MODE: DISPATCH_BLOCKED_CAUSE_UNKNOWN_MODE,
+      DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING: DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING,
       resolveShadowGuessGame: resolveShadowGuessGame,
       resolveClassifyGame: resolveClassifyGame,
       resolveModesCatalog: resolveModesCatalog,

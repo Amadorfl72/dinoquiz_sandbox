@@ -65,4 +65,45 @@ describe('src/services/analytics.js', () => {
     analytics.recordEvent('mode_selected');
     expect(JSON.parse(window.localStorage.getItem(analytics.STORAGE_KEY))).toEqual({ mode_selected: 1 });
   });
+
+  test('recordEventDetail stores the mode_id/cause payload for an event, retrievable via getEventDetail', () => {
+    const storage = createMemoryStorage();
+    analytics.recordEventDetail('mode_selected', { mode_id: 'quiz' }, storage);
+    analytics.recordEventDetail('mode_blocked', { mode_id: 'parejas', cause: 'renderer_missing' }, storage);
+
+    expect(analytics.getEventDetail('mode_selected', storage)).toEqual({ mode_id: 'quiz' });
+    expect(analytics.getEventDetail('mode_blocked', storage)).toEqual({ mode_id: 'parejas', cause: 'renderer_missing' });
+  });
+
+  test('recordEventDetail keeps only the most recent payload per event name', () => {
+    const storage = createMemoryStorage();
+    analytics.recordEventDetail('mode_selected', { mode_id: 'quiz' }, storage);
+    analytics.recordEventDetail('mode_selected', { mode_id: 'laberinto' }, storage);
+
+    expect(analytics.getEventDetail('mode_selected', storage)).toEqual({ mode_id: 'laberinto' });
+  });
+
+  test('getEventDetail returns null for an event whose detail was never recorded', () => {
+    const storage = createMemoryStorage();
+    expect(analytics.getEventDetail('mode_dispatch_mismatch', storage)).toBeNull();
+  });
+
+  test('recordEventDetail is a no-op for a falsy or non-object detail, and never throws', () => {
+    const storage = createMemoryStorage();
+    expect(() => analytics.recordEventDetail('mode_selected', null, storage)).not.toThrow();
+    expect(() => analytics.recordEventDetail('mode_selected', 'quiz', storage)).not.toThrow();
+    expect(analytics.getEventDetail('mode_selected', storage)).toBeNull();
+  });
+
+  test('recordEventDetail persists under its own dinoquiz:-namespaced key, degrading to memory when storage.setItem throws', () => {
+    expect(analytics.DETAILS_STORAGE_KEY.startsWith('dinoquiz:')).toBe(true);
+
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota exceeded');
+      },
+    };
+    expect(() => analytics.recordEventDetail('mode_blocked', { mode_id: 'x' }, storage)).not.toThrow();
+  });
 });
