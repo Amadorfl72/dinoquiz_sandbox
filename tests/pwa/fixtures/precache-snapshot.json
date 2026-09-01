@@ -188,7 +188,7 @@
     "/scripts/launchGateScreen.js": "4bf280b92384e5bf4a2aa7170a526509d98f4fbce4ef3915c42fbb986ef79aa9",
     "/scripts/modeResourceValidation.js": "c11d2cb97e28080d6c4183a34399979b4ef93c2c55bfec65d2df4e82df7ab074",
     "/scripts/offlineDiagnosticsPanel.js": "65808e262bfe9cd70687bf116dda42703e45fee1c3c139127678470873208b9e",
-    "/scripts/main.js": "4fb80aa7c9aa049a1d0aec91ddd0ceb495e6165fbec41bd9aa1d6e5e19eb3f0a",
+    "/scripts/main.js": "507d87a9e11cdc2925d3e0150b05461758aefe9f9e374c48652f8113a97614a9",
     "/icons/icon.svg": "17da64ccfd4edae6de8813fbc4a3126df29a80250e005c34e708487a400a3653",
     "/assets/images/mascot.svg": "6ae1a73c12a193fe74b07d6c51def00cc2d122bf5ee77d4b4a4b4666e6550b94",
     "/assets/images/dinosaurs/trex.svg": "a8130b220650eec59d2d20aaecda55b1897abde244c41603a0f74fb37cc7c560",
@@ -256,10 +256,10 @@
     "/assets/sounds/oido-jurasico/trex.wav": "347562503fb9d6ac332e56c0ace758fb8792911680c63b8fb27a618b05ec8027",
     "/assets/sounds/oido-jurasico/triceratops.wav": "ec3c9ee92a003b0d82a950cc91e65788f5c8f8b54c2b0370f9ae02d7e3ef8642",
     "/assets/sounds/oido-jurasico/velociraptor.wav": "9a3ed07be6986ae7f945ce53862e04f68970bee5ffcfe2ee526a9c2b85f53699",
+    "/i18n/es.json": "3253f92c30db202939d0232bd92bcd624ea3b3d833296fcb9e7a1106be58b3ed",
+    "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",
-    "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
-    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b",
-    "/i18n/es.json": "5c35b7c2b7e3571c460aed2fbf0c0ca1d061b6fbea9f2e08b5a5f5e013e9e53c"
+    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b"
   }
 }
