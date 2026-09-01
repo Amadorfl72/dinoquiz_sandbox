@@ -9,6 +9,7 @@
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:e2e": "playwright test",
     "test:a11y": "jest tests/e2e/accessibility.test.js",
+    "generate:launch-gate-report": "node scripts/generateLaunchGateReport.js",
     "postinstall": "npm run test:e2e:install"
   },
   "devDependencies": {
