@@ -46,6 +46,19 @@
  *    per-round answer, no free text) and hands it to the adult locally --
  *    clipboard first, falling back to a same-device file download -- with
  *    no network request of any kind.
+ *
+ * Restauraciones fallidas (TRIOFSND-301, PRD "Diagnóstico y métricas
+ * agregadas almacenadas únicamente en el dispositivo"): a dedicated section
+ * sourced from `LogService#getRestoreDiscardCount`/`getRestoreDiscardDiagnostics`
+ * (public/scripts/logging.js, resolved live the same dual CommonJS/
+ * `window.DinoQuiz` way as every other data source above) shows the
+ * aggregated number of in-progress rounds GameSessionStorage.js's
+ * `restoreSession` had to discard on reload, the same recent-codes table
+ * shape as the generic errors section (date/mode/category/code, most recent
+ * first), and the schema version this build currently expects
+ * (src/services/storage/types.js's `MODE_STATE_SCHEMA_VERSION`) so a
+ * mismatch against a shown discard's own `schemaVersion` is visible at a
+ * glance -- never the discarded round's own content.
  */
 
 (function () {
@@ -127,6 +140,55 @@
       return diagnosticsService.getErrors();
     }
     return [];
+  }
+
+  /**
+   * Resolves a ready-to-read LogService instance, following the same dual
+   * CommonJS/global pattern as main.js's own `resolveLogger`: the browser
+   * loads logging.js as a plain `<script>` and exposes it on
+   * `window.DinoQuiz.services.logging`; Node/Jest requires it directly. A
+   * fresh instance always reflects this device's current localStorage state.
+   */
+  function resolveLogService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    var LogServiceCtor =
+      (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.logging && win.DinoQuiz.services.logging.LogService) ||
+      (typeof require === 'function' ? require('./logging').LogService : undefined);
+    if (typeof LogServiceCtor !== 'function') {
+      return null;
+    }
+    return new LogServiceCtor();
+  }
+
+  /** `options.restoreDiscardCount` short-circuits (what tests use); otherwise reads LogService's own aggregated count live. */
+  function resolveRestoreDiscardCount(options, logService) {
+    if (typeof options.restoreDiscardCount !== 'undefined') {
+      return options.restoreDiscardCount;
+    }
+    return logService && typeof logService.getRestoreDiscardCount === 'function' ? logService.getRestoreDiscardCount() : 0;
+  }
+
+  /** `options.restoreDiscardEntries` short-circuits (what tests use); otherwise reads LogService's own structured log live. */
+  function resolveRestoreDiscardEntries(options, logService) {
+    if (Array.isArray(options.restoreDiscardEntries)) {
+      return options.restoreDiscardEntries;
+    }
+    return logService && typeof logService.getRestoreDiscardDiagnostics === 'function' ? logService.getRestoreDiscardDiagnostics() : [];
+  }
+
+  /** The schema version this build currently expects (src/services/storage/types.js's MODE_STATE_SCHEMA_VERSION), never a locally re-derived value. `options.schemaVersion` short-circuits for tests. */
+  function resolveSchemaVersion(options) {
+    if (typeof options.schemaVersion !== 'undefined') {
+      return options.schemaVersion;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/storage/types').MODE_STATE_SCHEMA_VERSION;
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 
   function resolveSwVersion(options, offlineStatusService) {
@@ -413,6 +475,96 @@
     return section;
   }
 
+  /**
+   * "Restauraciones fallidas" (TRIOFSND-301): the aggregated discard count
+   * and the schema version this build expects (a definition list, same
+   * shape as the health section above), then the same recent-codes table
+   * shape as `renderErrorsSection` (date/mode/category/code, most recent
+   * first) fed from LogService's own restore-discard log instead of
+   * diagnostics.js's generic errors -- never the discarded round's content.
+   */
+  function renderRestoreDiagnosticsSection(doc, strings, restoreDiagnostics) {
+    var section = doc.createElement('section');
+    section.className = 'diagnostics-screen__section';
+
+    var heading = doc.createElement('h2');
+    heading.id = 'diagnostics-restore-diagnostics-heading';
+    heading.textContent = strings.restoreDiagnostics.heading;
+    section.setAttribute('aria-labelledby', heading.id);
+    section.appendChild(heading);
+
+    var dl = doc.createElement('dl');
+    dl.className = 'diagnostics-screen__definition-list';
+    renderDefinitionRow(doc, dl, strings.restoreDiagnostics.countLabel, String(restoreDiagnostics.count));
+    renderDefinitionRow(
+      doc,
+      dl,
+      strings.restoreDiagnostics.schemaVersionLabel,
+      restoreDiagnostics.schemaVersion !== null && restoreDiagnostics.schemaVersion !== undefined
+        ? String(restoreDiagnostics.schemaVersion)
+        : strings.restoreDiagnostics.unknownValue
+    );
+    section.appendChild(dl);
+
+    var entries = restoreDiagnostics.entries;
+    if (entries.length === 0) {
+      var empty = doc.createElement('p');
+      empty.textContent = strings.restoreDiagnostics.emptyMessage;
+      section.appendChild(empty);
+      return section;
+    }
+
+    // Most recent first: logging.js appends in chronological order, and
+    // "recientes" (recent) reads top-to-bottom as newest-to-oldest.
+    var mostRecentFirst = entries.slice().reverse();
+    var shown = mostRecentFirst.slice(0, MAX_DISPLAYED_ERRORS);
+
+    var table = doc.createElement('table');
+    table.className = 'diagnostics-screen__restore-diagnostics-table';
+    table.setAttribute('aria-labelledby', heading.id);
+
+    var thead = doc.createElement('thead');
+    var headRow = doc.createElement('tr');
+    [
+      strings.restoreDiagnostics.columns.date,
+      strings.restoreDiagnostics.columns.mode,
+      strings.restoreDiagnostics.columns.category,
+      strings.restoreDiagnostics.columns.code,
+    ].forEach(function (columnLabel) {
+      var th = doc.createElement('th');
+      th.scope = 'col';
+      th.textContent = columnLabel;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = doc.createElement('tbody');
+    shown.forEach(function (entry) {
+      var row = doc.createElement('tr');
+      var categoryLabel = (strings.restoreDiagnostics.categories && strings.restoreDiagnostics.categories[entry.category]) || entry.category;
+      [entry.date, entry.mode, categoryLabel, entry.code].forEach(function (cellValue) {
+        var td = doc.createElement('td');
+        td.textContent = cellValue;
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    section.appendChild(table);
+
+    if (mostRecentFirst.length > shown.length) {
+      var note = doc.createElement('p');
+      note.className = 'diagnostics-screen__restore-diagnostics-truncated-note';
+      note.textContent = strings.restoreDiagnostics.truncatedNote
+        .replace('{shown}', String(shown.length))
+        .replace('{total}', String(mostRecentFirst.length));
+      section.appendChild(note);
+    }
+
+    return section;
+  }
+
   /** Default clipboard delivery: `navigator.clipboard.writeText`, rejecting when the API isn't available (older/insecure-context browsers) so the caller falls back to a download. */
   function defaultCopyToClipboard(text, win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
@@ -554,9 +706,15 @@
     var diagnosticsService = options.diagnosticsService || resolveDiagnosticsService();
     var offlineStatusService = options.offlineStatusService || resolveOfflineStatusService();
     var modesCatalog = options.modesCatalog || resolveModesCatalog();
+    var logService = options.logService || resolveLogService();
 
     var counters = resolveCounters(options, diagnosticsService);
     var errors = resolveErrors(options, diagnosticsService);
+    var restoreDiagnostics = {
+      count: resolveRestoreDiscardCount(options, logService),
+      entries: resolveRestoreDiscardEntries(options, logService),
+      schemaVersion: resolveSchemaVersion(options),
+    };
     var health = {
       serviceWorkerStatus: options.serviceWorkerStatus || resolveServiceWorkerStatus(options.navigator),
       swVersion: resolveSwVersion(options, offlineStatusService),
@@ -593,6 +751,7 @@
 
     var countersSection = renderCountersSection(doc, strings, grouped, modeIds, modesNames);
     var errorsSection = renderErrorsSection(doc, strings, errors);
+    var restoreDiagnosticsSection = renderRestoreDiagnosticsSection(doc, strings, restoreDiagnostics);
     var actions = renderActionsSection(doc, strings);
 
     root.appendChild(backButton);
@@ -602,6 +761,7 @@
     root.appendChild(renderResourceAvailabilitySection(doc, strings, availability, modesNames));
     root.appendChild(countersSection);
     root.appendChild(errorsSection);
+    root.appendChild(restoreDiagnosticsSection);
     root.appendChild(actions.section);
 
     // Re-reads the live counters/errors (never `options.counters`/

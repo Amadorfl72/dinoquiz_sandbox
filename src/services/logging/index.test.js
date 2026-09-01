@@ -3,6 +3,7 @@
 const logging = require('./index');
 const LogService = logging.LogService || logging;
 const scoring = require('../../../public/scripts/scoring');
+const { RESTORE_DISCARD_CATEGORY_INVALID, RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION } = logging;
 
 function makeStorage() {
   const store = {};
@@ -411,6 +412,100 @@ describe('LogService — structured access & PWA install logging', () => {
       } finally {
         global.fetch = originalFetch;
       }
+    });
+  });
+
+  describe('restore-discard diagnostics (TRIOFSND-301)', () => {
+    it('records mode, code, category, schemaVersion and today\'s local date, and aggregates the total count', () => {
+      expect(
+        service.logRestoreDiscarded({
+          modeId: 'quiz',
+          code: 'storage_session_discard_incompatible',
+          category: RESTORE_DISCARD_CATEGORY_INVALID,
+          schemaVersion: 1,
+        })
+      ).toBe(true);
+
+      expect(service.getRestoreDiscardCount()).toBe(1);
+      expect(service.getRestoreDiscardDiagnostics()).toEqual([
+        {
+          mode: 'quiz',
+          code: 'storage_session_discard_incompatible',
+          category: RESTORE_DISCARD_CATEGORY_INVALID,
+          schemaVersion: 1,
+          date: expect.any(String),
+        },
+      ]);
+    });
+
+    it('accepts the unsupported-version category and defaults schemaVersion to null when omitted', () => {
+      service.logRestoreDiscarded({
+        modeId: 'laberinto',
+        code: 'storage_session_discard_unsupported_version',
+        category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+      });
+
+      expect(service.getRestoreDiscardDiagnostics()).toEqual([
+        {
+          mode: 'laberinto',
+          code: 'storage_session_discard_unsupported_version',
+          category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+          schemaVersion: null,
+          date: expect.any(String),
+        },
+      ]);
+    });
+
+    it('accumulates the count across every mode, most-recent-last', () => {
+      service.logRestoreDiscarded({ modeId: 'quiz', code: 'a', category: RESTORE_DISCARD_CATEGORY_INVALID });
+      service.logRestoreDiscarded({ modeId: 'parejas', code: 'b', category: RESTORE_DISCARD_CATEGORY_INVALID });
+      service.logRestoreDiscarded({
+        modeId: 'laberinto',
+        code: 'c',
+        category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+      });
+
+      expect(service.getRestoreDiscardCount()).toBe(3);
+      expect(service.getRestoreDiscardDiagnostics().map((entry) => entry.mode)).toEqual(['quiz', 'parejas', 'laberinto']);
+    });
+
+    it('rejects a missing/empty modeId, code or an unsupported category, mutating nothing', () => {
+      expect(service.logRestoreDiscarded({ code: 'x', category: RESTORE_DISCARD_CATEGORY_INVALID })).toBe(false);
+      expect(service.logRestoreDiscarded({ modeId: '', code: 'x', category: RESTORE_DISCARD_CATEGORY_INVALID })).toBe(false);
+      expect(service.logRestoreDiscarded({ modeId: 'quiz', category: RESTORE_DISCARD_CATEGORY_INVALID })).toBe(false);
+      expect(service.logRestoreDiscarded({ modeId: 'quiz', code: '' })).toBe(false);
+      expect(service.logRestoreDiscarded({ modeId: 'quiz', code: 'x', category: 'not_a_real_category' })).toBe(false);
+
+      expect(service.getRestoreDiscardCount()).toBe(0);
+      expect(service.getRestoreDiscardDiagnostics()).toEqual([]);
+    });
+
+    it('never touches the generic stateDiscardCounts aggregate', () => {
+      service.logRestoreDiscarded({ modeId: 'quiz', code: 'a', category: RESTORE_DISCARD_CATEGORY_INVALID });
+      expect(service.getStateDiscardCounts()).toEqual({});
+    });
+
+    it('is unaffected by clearLogs and is never included in getLogsPayload/sendLogs (local-only, privacy)', async () => {
+      service.logRestoreDiscarded({ modeId: 'quiz', code: 'a', category: RESTORE_DISCARD_CATEGORY_INVALID });
+      service.clearLogs();
+
+      expect(service.getRestoreDiscardCount()).toBe(1);
+
+      const payload = service.getLogsPayload();
+      expect(payload.logs).toHaveLength(0);
+    });
+
+    it('persists across reload', () => {
+      service.logRestoreDiscarded({
+        modeId: 'quiz',
+        code: 'storage_session_discard_incompatible',
+        category: RESTORE_DISCARD_CATEGORY_INVALID,
+        schemaVersion: 2,
+      });
+
+      const reloaded = new LogService(storage);
+      expect(reloaded.getRestoreDiscardCount()).toBe(1);
+      expect(reloaded.getRestoreDiscardDiagnostics()[0]).toMatchObject({ mode: 'quiz', schemaVersion: 2 });
     });
   });
 

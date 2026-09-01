@@ -271,6 +271,24 @@
       },
       "truncatedNote": "Showing the {shown} most recent of {total} recorded."
     },
+    "restoreDiagnostics": {
+      "heading": "Failed restorations",
+      "countLabel": "Failed restorations recorded",
+      "schemaVersionLabel": "Schema version",
+      "unknownValue": "No data yet",
+      "emptyMessage": "No failed restoration has been recorded on this device.",
+      "columns": {
+        "date": "Date",
+        "mode": "Mode",
+        "category": "Category",
+        "code": "Code"
+      },
+      "categories": {
+        "invalid": "Invalid state",
+        "unsupported_version": "Unsupported version"
+      },
+      "truncatedNote": "Showing the {shown} most recent of {total} recorded."
+    },
     "actions": {
       "heading": "Maintenance actions",
       "resetButtonLabel": "Clear diagnostics data",
