@@ -215,31 +215,44 @@ class GameSessionStorage {
   #failureCount = 0;
   #lastErrorAt = null;
 
-  // The 3rd positional constructor argument accepts either a diagnosticsService
-  // (an object exposing `recordError`, TRIOFSND-246/318) or a migrations
-  // registry (a plain map of schemaVersion -> transform, TRIOFSND-300) --
-  // callers only ever need to override one of the two at a time, and which
-  // one is told apart by duck-typing for `recordError` rather than by a
-  // second positional slot, so `new GameSessionStorage(adapters, logService,
-  // migrations)` and `new GameSessionStorage(adapters, logService,
-  // diagnosticsService)` both resolve unambiguously. `migrationsArg` is
-  // still available as a 4th positional argument for callers that need to
-  // override both at once.
+  // The 3rd and 4th positional constructor arguments each accept either a
+  // diagnosticsService (an object exposing `recordError`, TRIOFSND-246/318)
+  // or a migrations registry (a plain map of schemaVersion -> transform,
+  // TRIOFSND-300) -- callers only ever need to override one of the two at a
+  // time, and each slot is told apart by duck-typing for `recordError`
+  // rather than by its position, so `new GameSessionStorage(adapters,
+  // logService, migrations)`, `new GameSessionStorage(adapters, logService,
+  // diagnosticsService)` and `new GameSessionStorage(adapters, logService,
+  // undefined, diagnosticsService)` (overriding only the 4th slot, leaving
+  // migrations at their default) all resolve unambiguously.
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
     logService = new LogService(),
-    diagnosticsServiceOrMigrations = diagnostics,
-    migrationsArg = DEFAULT_MIGRATIONS
+    diagnosticsServiceOrMigrations,
+    migrationsArg
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
 
-    if (diagnosticsServiceOrMigrations && typeof diagnosticsServiceOrMigrations.recordError === 'function') {
+    // No default values on the 3rd/4th params themselves (unlike the params
+    // above): a default of `diagnostics` on the 3rd slot would kick in even
+    // when a caller passes it explicit `undefined` to skip straight to
+    // overriding the 4th slot (`new GameSessionStorage(adapters, logService,
+    // undefined, diagnosticsService)`), shadowing that 4th-slot
+    // diagnosticsService with the real module. Resolving both slots by
+    // duck-typing here, with an explicit fallback to `diagnostics`/
+    // `DEFAULT_MIGRATIONS` below, avoids that.
+    const isDiagnosticsService = (value) => value != null && typeof value.recordError === 'function';
+
+    if (isDiagnosticsService(diagnosticsServiceOrMigrations)) {
       this.#diagnostics = diagnosticsServiceOrMigrations;
-      this.#migrations = migrationsArg;
+      this.#migrations = migrationsArg || DEFAULT_MIGRATIONS;
+    } else if (isDiagnosticsService(migrationsArg)) {
+      this.#diagnostics = migrationsArg;
+      this.#migrations = diagnosticsServiceOrMigrations || DEFAULT_MIGRATIONS;
     } else {
       this.#diagnostics = diagnostics;
-      this.#migrations = diagnosticsServiceOrMigrations || migrationsArg;
+      this.#migrations = diagnosticsServiceOrMigrations || migrationsArg || DEFAULT_MIGRATIONS;
     }
   }
 
