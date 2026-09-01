@@ -4,6 +4,12 @@
     "muteLabel": "Silenciar sonido",
     "unmuteLabel": "Activar sonido"
   },
+  "audioAccessNotice": {
+    "heading": "El sonido está silenciado",
+    "message": "Este modo necesita el sonido activado para poder jugar. Actívalo para continuar.",
+    "unmuteButton": "Activar sonido",
+    "backButton": "Volver al selector de juegos"
+  },
   "home": {
     "title": "DinoQuiz",
     "mascotAlt": "Dino, la mascota de DinoQuiz: un simpático dinosaurio verde saludando con la pata",
