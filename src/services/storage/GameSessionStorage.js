@@ -3,7 +3,11 @@
 const { createIndexedDbAdapter } = require('./adapters/indexedDbAdapter');
 const { createLocalStorageAdapter } = require('./adapters/localStorageAdapter');
 const { createMemoryAdapter } = require('./adapters/memoryAdapter');
-const { LogService } = require('../logging');
+const {
+  LogService,
+  RESTORE_DISCARD_CATEGORY_INVALID,
+  RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+} = require('../logging');
 const { ROUNDS_PER_GAME } = require('../../game/roundContract');
 const { MODE_STATE_SCHEMA_VERSION } = require('./types');
 const { DEFAULT_MIGRATIONS, applyMigrations } = require('./stateMigration');
@@ -359,9 +363,13 @@ class GameSessionStorage {
    * another mode's session key nor bestScore/maxStreak/scoreMetrics/
    * maxUnlockedLevel/etc., which live under their own keys in
    * StorageClient.js/ModeProgressStorage.js and are untouched here. Every
-   * such discard also tallies `modeId`'s aggregated, local-only discard-code
-   * counter (LogService#logStateDiscarded, TRIOFSND-246) -- the stable code
-   * alone, never the discarded session's own content.
+   * such discard also records a structured, local-only restore diagnostic
+   * (LogService#logRestoreDiscarded, TRIOFSND-301) with `modeId`, the stable
+   * discard `code`, a `category` (`RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION`
+   * for a non-migratable version, `RESTORE_DISCARD_CATEGORY_INVALID` for
+   * every other case above), the discarded envelope's own `schemaVersion`
+   * when known, and today's local date -- never the discarded session's own
+   * content (no prompt, answer or context).
    */
   async restoreSession(modeId) {
     const raw = await this.#readRaw(modeId);
@@ -376,11 +384,19 @@ class GameSessionStorage {
       // Corrupted JSON: fall through to the discard-and-return-null path below.
     }
 
+    const attemptedSchemaVersion =
+      envelope && typeof envelope === 'object' && envelope.schemaVersion !== undefined ? envelope.schemaVersion : null;
+
     if (envelope && typeof envelope === 'object' && envelope.schemaVersion !== SESSION_SCHEMA_VERSION) {
       const migrated = applyMigrations(envelope, SESSION_SCHEMA_VERSION, this.#migrations);
       if (migrated === null) {
         await this.#clear(modeId);
-        this.#logService.logStateDiscarded(modeId, SESSION_DISCARD_UNSUPPORTED_VERSION_CODE);
+        this.#logService.logRestoreDiscarded({
+          modeId,
+          code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
+          category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+          schemaVersion: attemptedSchemaVersion,
+        });
         return null;
       }
       envelope = migrated;
@@ -388,7 +404,12 @@ class GameSessionStorage {
 
     if (!isValidEnvelope(envelope) || envelope.modeId !== modeId || !RESUMABLE_STATUSES.includes(envelope.session.status)) {
       await this.#clear(modeId);
-      this.#logService.logStateDiscarded(modeId, SESSION_DISCARD_INCOMPATIBLE_CODE);
+      this.#logService.logRestoreDiscarded({
+        modeId,
+        code: SESSION_DISCARD_INCOMPATIBLE_CODE,
+        category: RESTORE_DISCARD_CATEGORY_INVALID,
+        schemaVersion: attemptedSchemaVersion,
+      });
       return null;
     }
 

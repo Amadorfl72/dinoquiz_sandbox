@@ -265,6 +265,24 @@
       },
       "truncatedNote": "Mostrando los {shown} más recientes de {total} registrados."
     },
+    "restoreDiagnostics": {
+      "heading": "Restauraciones fallidas",
+      "countLabel": "Restauraciones fallidas registradas",
+      "schemaVersionLabel": "Versión de esquema",
+      "unknownValue": "Sin datos todavía",
+      "emptyMessage": "No se ha registrado ninguna restauración fallida en este dispositivo.",
+      "columns": {
+        "date": "Fecha",
+        "mode": "Modo",
+        "category": "Categoría",
+        "code": "Código"
+      },
+      "categories": {
+        "invalid": "Estado inválido",
+        "unsupported_version": "Versión no compatible"
+      },
+      "truncatedNote": "Mostrando los {shown} más recientes de {total} registradas."
+    },
     "actions": {
       "heading": "Acciones de mantenimiento",
       "resetButtonLabel": "Borrar datos de diagnóstico",
