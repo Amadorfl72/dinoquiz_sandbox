@@ -171,6 +171,32 @@
  * never-transmitted-by-sendLogs shape, and likewise not reset by
  * `clearLogs()`.
  *
+ * Restore-discard diagnostics (TRIOFSND-301, PRD "Diagnóstico y métricas
+ * agregadas almacenadas únicamente en el dispositivo"): generalizes
+ * `logStateDiscarded`'s bare per-"modeId:code" tally above into a small
+ * structured, local-only log specifically for a persisted in-progress round
+ * (src/services/storage/GameSessionStorage.js's `restoreSession`) that had
+ * to be discarded on restore, either because it was structurally invalid
+ * (`RESTORE_DISCARD_CATEGORY_INVALID`) or because its `schemaVersion` had no
+ * migration path forward (`RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION`).
+ * `logRestoreDiscarded({ modeId, code, category, schemaVersion })` validates
+ * `modeId`/`code` (non-empty strings) and `category` (one of the two
+ * constants above -- no other category exists), then appends
+ * `{ mode, code, category, schemaVersion (or null), date }` -- `date` is
+ * today's local calendar date (`localDateString`, never a full timestamp),
+ * `schemaVersion` the discarded envelope's own version when known, and
+ * never the round's own content (no prompts, answers or context) -- to its
+ * own `dinoquiz:restoreDiscardDiagnostics` key, same array-with-MAX_LOGS-
+ * rotation shape as `clasificaDiagnostics`/`oidoJurasicoPlaybackErrors`
+ * above, never pushed into the transmittable `logs` array, so never
+ * reachable via `getLogsPayload()`/`sendLogs()`. `getRestoreDiscardCount()`
+ * derives the aggregated "número de restauraciones fallidas" the local
+ * diagnostics screen shows directly from this array's length -- never a
+ * separately persisted counter that could drift out of sync with it.
+ * `getRestoreDiscardDiagnostics()` returns the log itself (most useful for
+ * the screen's "códigos recientes" list). Like `roundGenerationFailureCounts`/
+ * `stateDiscardCounts` above, not reset by `clearLogs()`.
+ *
  * Browser bridge: Without a bundler, this follows the dual CommonJS/global
  * pattern as public/scripts/audio.js — registers on window.DinoQuiz for
  * the browser and module.exports for Node/Jest. The canonical
@@ -206,6 +232,7 @@
   var ROUND_GAMES_ABANDONED_KEY = 'dinoquiz:roundGamesAbandonedByModeLevel';
   var ROUND_GENERATION_FAILURE_CODES_KEY = 'dinoquiz:roundGenerationFailureCodes';
   var STATE_DISCARD_CODES_KEY = 'dinoquiz:stateDiscardCodes';
+  var RESTORE_DISCARD_DIAGNOSTICS_KEY = 'dinoquiz:restoreDiscardDiagnostics';
   var ROUND_CORRECT_ANSWERS_KEY = 'dinoquiz:roundCorrectAnswersByModeLevel';
   var ROUND_STARS_EARNED_KEY = 'dinoquiz:roundStarsEarnedByModeLevel';
   var ROUND_GRID_LIMIT_VIOLATION_CODES_KEY = 'dinoquiz:roundGridLimitViolationCodes';
@@ -238,6 +265,15 @@
   var OIDO_JURASICO_AUDIO_UNAVAILABLE = 'OIDO_JURASICO_AUDIO_UNAVAILABLE';
   var OIDO_JURASICO_PLAYBACK_FAILED = 'OIDO_JURASICO_PLAYBACK_FAILED';
   var OIDO_JURASICO_PLAYBACK_ERROR_CODES = Object.freeze([OIDO_JURASICO_AUDIO_UNAVAILABLE, OIDO_JURASICO_PLAYBACK_FAILED]);
+
+  // The only two categories a restore-time discard can fall under
+  // (TRIOFSND-301, GameSessionStorage.js#restoreSession's own doc comment):
+  // structurally invalid (corrupted JSON, wrong mode, invalid shape, already
+  // finished) or a schemaVersion with no migration path forward. No other
+  // category exists, none should be invented here.
+  var RESTORE_DISCARD_CATEGORY_INVALID = 'invalid';
+  var RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION = 'unsupported_version';
+  var RESTORE_DISCARD_CATEGORIES = Object.freeze([RESTORE_DISCARD_CATEGORY_INVALID, RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION]);
 
   function generateRequestId() {
     return 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -372,6 +408,7 @@
     this.roundGamesAbandonedByModeLevel = this._loadLevelCounts(ROUND_GAMES_ABANDONED_KEY);
     this.roundGenerationFailureCounts = this._loadLevelCounts(ROUND_GENERATION_FAILURE_CODES_KEY);
     this.stateDiscardCounts = this._loadLevelCounts(STATE_DISCARD_CODES_KEY);
+    this.restoreDiscardDiagnostics = this._loadRestoreDiscardDiagnostics();
     this.roundCorrectAnswersByModeLevel = this._loadLevelCounts(ROUND_CORRECT_ANSWERS_KEY);
     this.roundStarsEarnedByModeLevel = this._loadLevelCounts(ROUND_STARS_EARNED_KEY);
     this.roundGridLimitViolationCounts = this._loadLevelCounts(ROUND_GRID_LIMIT_VIOLATION_CODES_KEY);
@@ -634,6 +671,78 @@
 
   LogService.prototype.getStateDiscardCounts = function () {
     return Object.assign({}, this.stateDiscardCounts);
+  };
+
+  LogService.prototype._loadRestoreDiscardDiagnostics = function () {
+    try {
+      var stored = this.storageAdapter.getItem(RESTORE_DISCARD_DIAGNOSTICS_KEY);
+      var parsed = stored ? JSON.parse(stored) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn('DinoQuiz: failed to load restore discard diagnostics from storage', error);
+      return [];
+    }
+  };
+
+  LogService.prototype._saveRestoreDiscardDiagnostics = function () {
+    try {
+      if (this.restoreDiscardDiagnostics.length > MAX_LOGS) {
+        this.restoreDiscardDiagnostics = this.restoreDiscardDiagnostics.slice(-MAX_LOGS);
+      }
+      this.storageAdapter.setItem(RESTORE_DISCARD_DIAGNOSTICS_KEY, JSON.stringify(this.restoreDiscardDiagnostics));
+    } catch (error) {
+      console.error('DinoQuiz: failed to save restore discard diagnostics to storage', error);
+    }
+  };
+
+  /**
+   * Records one restore-time discard (TRIOFSND-301): `modeId`/`code` must be
+   * non-empty strings, `category` one of `RESTORE_DISCARD_CATEGORY_INVALID`/
+   * `RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION`. `schemaVersion` is
+   * optional (the discarded envelope's own version, when known) and stored
+   * as `null` otherwise. An invalid call mutates nothing and returns false.
+   * Never stores the discarded round's own content -- only these five
+   * technical fields plus today's local date.
+   */
+  LogService.prototype.logRestoreDiscarded = function (params) {
+    params = params || {};
+    var modeId = params.modeId;
+    var code = params.code;
+    var category = params.category;
+    var schemaVersion = params.schemaVersion;
+
+    if (typeof modeId !== 'string' || modeId.length === 0) {
+      console.warn('DinoQuiz: logRestoreDiscarded requires a valid modeId');
+      return false;
+    }
+    if (typeof code !== 'string' || code.length === 0) {
+      console.warn('DinoQuiz: logRestoreDiscarded requires a valid code');
+      return false;
+    }
+    if (RESTORE_DISCARD_CATEGORIES.indexOf(category) === -1) {
+      console.warn('DinoQuiz: logRestoreDiscarded requires a valid category');
+      return false;
+    }
+
+    var entry = {
+      mode: modeId,
+      code: code,
+      category: category,
+      schemaVersion: schemaVersion !== undefined ? schemaVersion : null,
+      date: localDateString(),
+    };
+    this.restoreDiscardDiagnostics.push(entry);
+    this._saveRestoreDiscardDiagnostics();
+    return true;
+  };
+
+  LogService.prototype.getRestoreDiscardDiagnostics = function () {
+    return this.restoreDiscardDiagnostics.slice();
+  };
+
+  /** Total aggregated failed-restoration count for the local diagnostics screen -- derived from this log's own length, never a separately persisted counter that could drift out of sync with it. */
+  LogService.prototype.getRestoreDiscardCount = function () {
+    return this.restoreDiscardDiagnostics.length;
   };
 
   /** Tallies one more "acierto" (a correct match/answer within a round -- for Parejas, one more matched pair) for `modeId` at `level` (TRIOFSND-277). */
@@ -1117,6 +1226,9 @@
       ROUND_GAMES_ABANDONED_KEY: ROUND_GAMES_ABANDONED_KEY,
       ROUND_GENERATION_FAILURE_CODES_KEY: ROUND_GENERATION_FAILURE_CODES_KEY,
       STATE_DISCARD_CODES_KEY: STATE_DISCARD_CODES_KEY,
+      RESTORE_DISCARD_DIAGNOSTICS_KEY: RESTORE_DISCARD_DIAGNOSTICS_KEY,
+      RESTORE_DISCARD_CATEGORY_INVALID: RESTORE_DISCARD_CATEGORY_INVALID,
+      RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
       ROUND_CORRECT_ANSWERS_KEY: ROUND_CORRECT_ANSWERS_KEY,
       ROUND_STARS_EARNED_KEY: ROUND_STARS_EARNED_KEY,
       ROUND_GRID_LIMIT_VIOLATION_CODES_KEY: ROUND_GRID_LIMIT_VIOLATION_CODES_KEY,
@@ -1152,6 +1264,8 @@
       OIDO_JURASICO_MODE_ID: OIDO_JURASICO_MODE_ID,
       OIDO_JURASICO_AUDIO_UNAVAILABLE: OIDO_JURASICO_AUDIO_UNAVAILABLE,
       OIDO_JURASICO_PLAYBACK_FAILED: OIDO_JURASICO_PLAYBACK_FAILED,
+      RESTORE_DISCARD_CATEGORY_INVALID: RESTORE_DISCARD_CATEGORY_INVALID,
+      RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
       createLocalStorageAdapter: createLocalStorageAdapter,
       createMemoryAdapter: createMemoryAdapter,
     };

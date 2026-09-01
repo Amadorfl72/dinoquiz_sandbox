@@ -24,6 +24,9 @@ function renderWithFixture(container, overrides) {
         modes: MODES_CATALOG,
         counters: {},
         errors: [],
+        restoreDiscardCount: 0,
+        restoreDiscardEntries: [],
+        schemaVersion: 1,
         serviceWorkerStatus: 'active',
         swVersion: 'v35',
         lastPreloadAt: '2026-08-20T10:00:00.000Z',
@@ -229,6 +232,69 @@ describe('DiagnosticsScreen rendering', () => {
           expect(getByRole(container, 'columnheader', { name: columnLabel })).toBeInTheDocument();
         }
       );
+    });
+  });
+
+  describe('restore diagnostics section (TRIOFSND-301)', () => {
+    test('shows the aggregated failed-restoration count and the schema version', () => {
+      renderWithFixture(container, { restoreDiscardCount: 3, restoreDiscardEntries: [], schemaVersion: 2 });
+
+      expect(getByRole(container, 'heading', { name: strings.restoreDiagnostics.heading })).toBeInTheDocument();
+      expect(container.textContent).toContain(strings.restoreDiagnostics.countLabel);
+      expect(container.textContent).toContain('3');
+      expect(container.textContent).toContain(strings.restoreDiagnostics.schemaVersionLabel);
+      expect(container.textContent).toContain('2');
+    });
+
+    test('falls back to the unknown-value copy when the schema version could not be resolved', () => {
+      renderWithFixture(container, { restoreDiscardCount: 0, restoreDiscardEntries: [], schemaVersion: null });
+      expect(container.textContent).toContain(strings.restoreDiagnostics.unknownValue);
+    });
+
+    test('shows the empty message when no restore discard was recorded', () => {
+      renderWithFixture(container, { restoreDiscardCount: 0, restoreDiscardEntries: [] });
+      expect(container.textContent).toContain(strings.restoreDiagnostics.emptyMessage);
+    });
+
+    test('lists local date, mode, translated category and code for every recorded discard, most recent first, never the round content', () => {
+      renderWithFixture(container, {
+        restoreDiscardCount: 2,
+        restoreDiscardEntries: [
+          { date: '2026-08-18', mode: 'quiz', category: 'invalid', code: 'storage_session_discard_incompatible', schemaVersion: 1 },
+          {
+            date: '2026-08-20',
+            mode: 'laberinto',
+            category: 'unsupported_version',
+            code: 'storage_session_discard_unsupported_version',
+            schemaVersion: 0,
+          },
+        ],
+      });
+
+      const table = container.querySelector('.diagnostics-screen__restore-diagnostics-table');
+      const rows = getAllByRole(table, 'row');
+      // rows[0] is the header row; rows[1] must be the most recent discard.
+      expect(rows[1].textContent).toContain('2026-08-20');
+      expect(rows[1].textContent).toContain('laberinto');
+      expect(rows[1].textContent).toContain(strings.restoreDiagnostics.categories.unsupported_version);
+      expect(rows[1].textContent).toContain('storage_session_discard_unsupported_version');
+      expect(rows[2].textContent).toContain('2026-08-18');
+      expect(rows[2].textContent).toContain(strings.restoreDiagnostics.categories.invalid);
+    });
+
+    test('column headers come from i18n, not hardcoded strings', () => {
+      renderWithFixture(container, {
+        restoreDiscardEntries: [{ date: '2026-08-20', mode: 'quiz', category: 'invalid', code: 'X', schemaVersion: 1 }],
+      });
+
+      [
+        strings.restoreDiagnostics.columns.date,
+        strings.restoreDiagnostics.columns.mode,
+        strings.restoreDiagnostics.columns.category,
+        strings.restoreDiagnostics.columns.code,
+      ].forEach((columnLabel) => {
+        expect(getByRole(container, 'columnheader', { name: columnLabel })).toBeInTheDocument();
+      });
     });
   });
 

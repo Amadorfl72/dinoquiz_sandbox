@@ -5,13 +5,14 @@ const {
   SESSION_DISCARD_INCOMPATIBLE_CODE,
   SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
 } = require('./GameSessionStorage');
+const { RESTORE_DISCARD_CATEGORY_INVALID, RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION } = require('../logging');
 const { startGame, evaluateAnswer, advanceRound, ROUNDS_PER_GAME } = require('../../game/roundContract');
 
 function createFakeLogService() {
   return {
-    stateDiscardedCalls: [],
-    logStateDiscarded(modeId, code) {
-      this.stateDiscardedCalls.push({ modeId, code });
+    restoreDiscardedCalls: [],
+    logRestoreDiscarded({ modeId, code, category, schemaVersion }) {
+      this.restoreDiscardedCalls.push({ modeId, code, category, schemaVersion });
     },
     logEvent() {},
   };
@@ -228,7 +229,9 @@ describe('GameSessionStorage', () => {
 
       expect(await storage.restoreSession('quiz')).toBeNull();
 
-      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+      expect(logService.restoreDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE, category: RESTORE_DISCARD_CATEGORY_INVALID, schemaVersion: oldVersion },
+      ]);
       expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
       expect(await adapter.getItem('dinoquiz:bestScore')).toBe('42');
     });
@@ -245,8 +248,13 @@ describe('GameSessionStorage', () => {
 
       expect(await storage.restoreSession('quiz')).toBeNull();
 
-      expect(logService.stateDiscardedCalls).toEqual([
-        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      expect(logService.restoreDiscardedCalls).toEqual([
+        {
+          modeId: 'quiz',
+          code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
+          category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+          schemaVersion: SESSION_SCHEMA_VERSION - 1,
+        },
       ]);
       expect(await adapter.getItem(sessionKey('quiz'))).toBeNull();
       expect(await adapter.getItem('dinoquiz:bestScore')).toBe('7');
@@ -263,8 +271,13 @@ describe('GameSessionStorage', () => {
 
       expect(await storage.restoreSession('quiz')).toBeNull();
 
-      expect(logService.stateDiscardedCalls).toEqual([
-        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      expect(logService.restoreDiscardedCalls).toEqual([
+        {
+          modeId: 'quiz',
+          code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
+          category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+          schemaVersion: SESSION_SCHEMA_VERSION + 1,
+        },
       ]);
     });
   });
@@ -354,8 +367,8 @@ describe('GameSessionStorage', () => {
     });
   });
 
-  describe('state-discard diagnostics (TRIOFSND-246)', () => {
-    it('logs the stable discard code for the requested modeId when corrupted JSON is discarded', async () => {
+  describe('restore-discard diagnostics (TRIOFSND-246, TRIOFSND-301)', () => {
+    it('logs the stable discard code, invalid category and a null schemaVersion for the requested modeId when corrupted JSON is discarded', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
@@ -363,7 +376,9 @@ describe('GameSessionStorage', () => {
 
       await storage.restoreSession('quiz');
 
-      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+      expect(logService.restoreDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE, category: RESTORE_DISCARD_CATEGORY_INVALID, schemaVersion: null },
+      ]);
     });
 
     it('TRIOFSND-318: also records a structured diagnostics.js error for the discard, never the session content', async () => {
@@ -377,7 +392,7 @@ describe('GameSessionStorage', () => {
       expect(diagnosticsService.recordError).toHaveBeenCalledWith('quiz', 'state', SESSION_DISCARD_INCOMPATIBLE_CODE);
     });
 
-    it('logs the unsupported-version discard code for a schema version with no migration path', async () => {
+    it('logs the unsupported-version discard code, category and the discarded envelope\'s own schemaVersion for a version with no migration path', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
@@ -388,8 +403,13 @@ describe('GameSessionStorage', () => {
 
       await storage.restoreSession('quiz');
 
-      expect(logService.stateDiscardedCalls).toEqual([
-        { modeId: 'quiz', code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE },
+      expect(logService.restoreDiscardedCalls).toEqual([
+        {
+          modeId: 'quiz',
+          code: SESSION_DISCARD_UNSUPPORTED_VERSION_CODE,
+          category: RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
+          schemaVersion: SESSION_SCHEMA_VERSION + 1,
+        },
       ]);
     });
 
@@ -400,10 +420,10 @@ describe('GameSessionStorage', () => {
       await storage.saveSession('quiz', playingSession());
 
       expect(await storage.restoreSession('laberinto')).toBeNull();
-      expect(logService.stateDiscardedCalls).toEqual([]);
+      expect(logService.restoreDiscardedCalls).toEqual([]);
     });
 
-    it('logs the discard code, tagged with the requested modeId, when an envelope\'s internal modeId disagrees with its own storage key', async () => {
+    it('logs the discard code, category and current schemaVersion, tagged with the requested modeId, when an envelope\'s internal modeId disagrees with its own storage key', async () => {
       const adapter = createFakeAdapter();
       const logService = createFakeLogService();
       const storage = new GameSessionStorage([adapter], logService);
@@ -414,7 +434,9 @@ describe('GameSessionStorage', () => {
       await adapter.setItem(sessionKey('quiz'), JSON.stringify(envelope));
 
       expect(await storage.restoreSession('quiz')).toBeNull();
-      expect(logService.stateDiscardedCalls).toEqual([{ modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE }]);
+      expect(logService.restoreDiscardedCalls).toEqual([
+        { modeId: 'quiz', code: SESSION_DISCARD_INCOMPATIBLE_CODE, category: RESTORE_DISCARD_CATEGORY_INVALID, schemaVersion: SESSION_SCHEMA_VERSION },
+      ]);
     });
 
     it('never logs when nothing was ever saved', async () => {
@@ -423,7 +445,7 @@ describe('GameSessionStorage', () => {
 
       await storage.restoreSession('quiz');
 
-      expect(logService.stateDiscardedCalls).toEqual([]);
+      expect(logService.restoreDiscardedCalls).toEqual([]);
     });
 
     it('never logs a successful restore', async () => {
@@ -433,7 +455,7 @@ describe('GameSessionStorage', () => {
 
       await storage.restoreSession('quiz');
 
-      expect(logService.stateDiscardedCalls).toEqual([]);
+      expect(logService.restoreDiscardedCalls).toEqual([]);
     });
 
     it('never logs the deliberate discardModeSession flow (already tracked by logGameAbandonedByMode)', async () => {
@@ -445,7 +467,7 @@ describe('GameSessionStorage', () => {
       await storage.saveSession('laberinto', playingSession());
       await storage.discardModeSession('laberinto');
 
-      expect(logService.stateDiscardedCalls).toEqual([]);
+      expect(logService.restoreDiscardedCalls).toEqual([]);
     });
   });
 
