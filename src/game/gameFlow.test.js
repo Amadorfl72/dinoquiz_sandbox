@@ -59,6 +59,21 @@ function buildMemoryLogService() {
   };
 }
 
+function buildMemoryDiagnostics() {
+  const counters = [];
+  const errors = [];
+  return {
+    counters,
+    errors,
+    incrementCounter(name) {
+      counters.push(name);
+    },
+    recordError(mode, category, code) {
+      errors.push({ mode, category, code });
+    },
+  };
+}
+
 describe('createInitialGameState', () => {
   test('resets score, question index and answers to their initial values', () => {
     expect(createInitialGameState()).toEqual({ score: 0, questionIndex: 0, answers: [] });
@@ -337,6 +352,26 @@ describe('startLevel (TRIOFSND-203)', () => {
     ]);
   });
 
+  test('TRIOFSND-318: tallies gameStarted/gamesByModeLevel diagnostics counters for the default (quiz) mode on success', () => {
+    const questions = buildLevelQuestions(2, 30);
+    const diagnostics = buildMemoryDiagnostics();
+
+    startLevel(2, { questions, logService: buildMemoryLogService(), diagnostics });
+
+    expect(diagnostics.counters).toEqual(['gameStarted:quiz', 'gamesByModeLevel:quiz:2']);
+    expect(diagnostics.errors).toEqual([]);
+  });
+
+  test('TRIOFSND-318: scopes the diagnostics counters to options.modeId when given, never tallying anything on failure', () => {
+    const questions = buildLevelQuestions(1, 4);
+    const diagnostics = buildMemoryDiagnostics();
+
+    startLevel(1, { questions, logService: buildMemoryLogService(), diagnostics, modeId: 'clasifica' });
+
+    expect(diagnostics.counters).toEqual([]);
+    expect(diagnostics.errors).toEqual([{ mode: 'clasifica', category: 'roundGeneration', code: 'level_generation_failed' }]);
+  });
+
   test('excludes individually invalid questions before counting/selecting (delegates to getQuestionsByLevel/TRIOFSND-202)', () => {
     const valid = buildLevelQuestions(1, 9);
     const invalid = buildValidLevelQuestion({ id: 'broken', level: 1, dato_curioso: '' });
@@ -553,6 +588,33 @@ describe('resolveLevelOutcome (TRIOFSND-203)', () => {
 
   test('throws for a level outside MIN_LEVEL-MAX_LEVEL', () => {
     expect(() => resolveLevelOutcome({ level: 0, answers: [], ageBand: AGE_BAND_EIGHT_PLUS })).toThrow();
+  });
+
+  test('TRIOFSND-318: tallies one correctAnswers/starsEarned diagnostics counter per aciertos/star, plus gameCompleted and unlocks on a level-up', () => {
+    const diagnostics = buildMemoryDiagnostics();
+
+    const outcome = resolveLevelOutcome({
+      level: 2,
+      answers: buildAnswers('CCCCCCCCCF'), // 9 correct -> 90% -> 3 stars
+      modeId: 'clasifica',
+      diagnostics,
+    });
+
+    expect(outcome.reason).toBe('level_up');
+    expect(diagnostics.counters.filter((name) => name === 'correctAnswers:clasifica')).toHaveLength(9);
+    expect(diagnostics.counters.filter((name) => name === 'starsEarned:clasifica')).toHaveLength(3);
+    expect(diagnostics.counters).toEqual(
+      expect.arrayContaining(['gameCompleted:clasifica', 'unlocks:clasifica'])
+    );
+  });
+
+  test('TRIOFSND-318: an insufficient score tallies no unlocks counter', () => {
+    const diagnostics = buildMemoryDiagnostics();
+
+    resolveLevelOutcome({ level: 2, answers: buildAnswers('CCCCCFFFFF'), diagnostics }); // 5 correct
+
+    expect(diagnostics.counters).not.toContain('unlocks:quiz');
+    expect(diagnostics.counters).toContain('gameCompleted:quiz');
   });
 });
 

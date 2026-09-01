@@ -336,6 +336,18 @@
     return typeof LogServiceCtor === 'function' ? new LogServiceCtor() : noopLogService;
   }
 
+  var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
+
+  /** Resolves src/services/diagnostics.js the same require-or-`window.DinoQuiz` shape as resolveLogServiceCtor above, falling back to a no-op. */
+  function createDefaultDiagnostics() {
+    if (typeof require === 'function') {
+      return require('../../src/services/diagnostics');
+    }
+    var diagnosticsModule =
+      typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.diagnostics;
+    return diagnosticsModule && typeof diagnosticsModule.incrementCounter === 'function' ? diagnosticsModule : noopDiagnostics;
+  }
+
   /** Resolves scoring.js's `normalizeOutcome`, same dual pattern as resultsScreen.js/mazeGame.js's own resolveScoring. */
   function resolveScoring() {
     if (typeof require === 'function') {
@@ -350,9 +362,10 @@
    * StorageClient.js's constructor) so tests can inject fakes instead of
    * depending on the real backends/logger.
    */
-  function ModeProgressStorage(adapters, logService) {
+  function ModeProgressStorage(adapters, logService, diagnosticsService) {
     this._adapters = adapters || defaultAdapters();
     this._logService = logService || createDefaultLogService();
+    this._diagnostics = diagnosticsService || createDefaultDiagnostics();
     this._activeAdapter = null;
     this._initPromise = null;
 
@@ -450,6 +463,9 @@
 
     if (!isValidProgress(parsed)) {
       this._logService.logStateDiscarded(modeId, MODE_PROGRESS_DISCARD_INCOMPATIBLE_CODE);
+      // TRIOFSND-318, PRD failure point "estado de partida descartado": the
+      // stable discard code alone, never the discarded entry's own content.
+      this._diagnostics.recordError(modeId, 'state', MODE_PROGRESS_DISCARD_INCOMPATIBLE_CODE);
       return defaultProgress();
     }
 

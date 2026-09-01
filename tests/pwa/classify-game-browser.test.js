@@ -122,6 +122,16 @@ describe('startRound / evaluateRound', () => {
     expect(result.gameState).toBe(gameState);
   });
 
+  test('TRIOFSND-318: a missing ficha also records a structured diagnostics.js error', () => {
+    const round = startRound({ roundIndex: 0, level: 1, dinosaurPool: ['unknown-creature'], randomFn: () => 0 });
+    const gameState = { score: 0, questionIndex: 0, answers: [] };
+    const diagnosticsService = { recordError: jest.fn() };
+
+    evaluateRound(round, gameState, 'carnivoro', { diagnostics: diagnosticsService });
+
+    expect(diagnosticsService.recordError).toHaveBeenCalledWith('clasifica', 'data', DIAGNOSTIC_CODES.MISSING_CREATURE_SHEET);
+  });
+
   test('a second evaluation of the same round never double-counts', () => {
     const round = startRound({ roundIndex: 0, level: 1, dinosaurPool: ['trex'], randomFn: () => 0 });
     const gameState = { score: 0, questionIndex: 0, answers: [] };

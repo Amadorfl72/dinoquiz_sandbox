@@ -19,6 +19,21 @@
  * audio is skipped entirely (no `Audio.play()` call) while the visual
  * feedback in questionScreen.js still runs unchanged.
  *
+ * Accessible muted notice (TRIOFSND-314): `checkMutedBeforeAudioMode(strings)`
+ * is the reusable "should I show a muted notice instead of playing?" check
+ * for any AUDIO-CENTRIC mode (one where the audio itself is the content the
+ * player must hear, not a sfx layered on top of a visual/text task) —
+ * Oído Jurásico ships the first one and any future audio mode reuses this
+ * instead of re-implementing the same `dinoquiz:muted` read. Call it BEFORE
+ * attempting any playback; when it returns `{ muted: true, ... }`, render
+ * that notice's heading/message/two actions (activar sonido / volver al
+ * selector, see `src/services/audioAccessNotice.js` for the documented
+ * contract) instead of the playable board — never call `Audio.play()` while
+ * muted. `strings` is the caller's own localized notice copy (same shape
+ * `oidoJurasico.mutedNotice` already ships in `public/i18n/*.json`: `heading`,
+ * `message`, `unmuteButton`, `backButton`); this function only decides
+ * WHETHER to show the notice, never WHAT it says.
+ *
  * Browser bridge: DinoQuiz has no bundler, so this file follows the same
  * dual CommonJS/global pattern as scoring.js/homeScreen.js — it registers on
  * `window.DinoQuiz.services.soundService` for the `<script>`-loaded PWA and
@@ -49,6 +64,32 @@
     } catch (error) {
       return false;
     }
+  }
+
+  /**
+   * Reusable "muted before playback" check (TRIOFSND-314). Returns
+   * `{ muted: false }` when `dinoquiz:muted` isn't active (nothing to show,
+   * caller proceeds as normal); returns `{ muted: true, heading, message,
+   * unmuteButton, backButton }` — copied straight from `strings` — when it
+   * is, so the caller can render the accessible notice instead of the
+   * playable board. `options.storageObj` overrides the mute flag's storage
+   * (defaults to `localStorage`, same as the rest of this file).
+   */
+  function checkMutedBeforeAudioMode(strings, options) {
+    options = options || {};
+    strings = strings || {};
+
+    if (!isMuted(options.storageObj)) {
+      return { muted: false };
+    }
+
+    return {
+      muted: true,
+      heading: strings.heading,
+      message: strings.message,
+      unmuteButton: strings.unmuteButton,
+      backButton: strings.backButton,
+    };
   }
 
   function defaultAudioFactory(src) {
@@ -143,6 +184,7 @@
     MUTE_STORAGE_KEY: MUTE_STORAGE_KEY,
     createSoundService: createSoundService,
     soundService: soundService,
+    checkMutedBeforeAudioMode: checkMutedBeforeAudioMode,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -154,5 +196,6 @@
     window.DinoQuiz.services = window.DinoQuiz.services || {};
     window.DinoQuiz.services.soundService = soundService;
     window.DinoQuiz.services.createSoundService = createSoundService;
+    window.DinoQuiz.services.checkMutedBeforeAudioMode = checkMutedBeforeAudioMode;
   }
 })();

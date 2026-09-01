@@ -8,6 +8,7 @@ const {
   RESTORE_DISCARD_CATEGORY_INVALID,
   RESTORE_DISCARD_CATEGORY_UNSUPPORTED_VERSION,
 } = require('../logging');
+const diagnostics = require('../diagnostics');
 const { ROUNDS_PER_GAME } = require('../../game/roundContract');
 const { MODE_STATE_SCHEMA_VERSION } = require('./types');
 const { DEFAULT_MIGRATIONS, applyMigrations } = require('./stateMigration');
@@ -207,6 +208,7 @@ class GameSessionStorage {
   #activeAdapter = null;
   #initPromise = null;
   #logService;
+  #diagnostics;
   #migrations;
 
   // Aggregated, non-PII observability counters only (mirrors StorageClient.js).
@@ -216,10 +218,12 @@ class GameSessionStorage {
   constructor(
     adapters = [createIndexedDbAdapter(), createLocalStorageAdapter(), createMemoryAdapter()],
     logService = new LogService(),
+    diagnosticsService = diagnostics,
     migrations = DEFAULT_MIGRATIONS
   ) {
     this.#adapters = adapters;
     this.#logService = logService;
+    this.#diagnostics = diagnosticsService;
     this.#migrations = migrations;
   }
 
@@ -410,6 +414,9 @@ class GameSessionStorage {
         category: RESTORE_DISCARD_CATEGORY_INVALID,
         schemaVersion: attemptedSchemaVersion,
       });
+      // TRIOFSND-318, PRD failure point "estado de partida descartado": the
+      // stable discard code alone, never the discarded session's own content.
+      this.#diagnostics.recordError(modeId, 'state', SESSION_DISCARD_INCOMPATIBLE_CODE);
       return null;
     }
 

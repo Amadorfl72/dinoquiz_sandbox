@@ -86,6 +86,7 @@
     "/scripts/classifyTimer.js",
     "/scripts/diagnostics.js",
     "/scripts/diagnosticsScreen.js",
+    "/scripts/diagnosticsService.js",
     "/scripts/feedbackComponent.js",
     "/scripts/gameFlow.js",
     "/scripts/homeScreen.js",
@@ -134,7 +135,7 @@
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
     "/styles/main.css": "c48b67075eea4e440621877ecc6fbfdc18ce3fa0477f6d55e1e206e772d28fc1",
     "/scripts/scoring.js": "e4bf1edd3c843106032ebba0d0eedc80bd608a39152a5b9ac41652131d852e0f",
-    "/scripts/soundService.js": "f8795492b374ea80f0d8618c631708ea615b35c93928b94951bb439f62f19e12",
+    "/scripts/soundService.js": "e55ea588dcdfb2c19e68bf7465e5001c8fd9cb4410ebf75794202c6dc87fe2a5",
     "/scripts/adsService.js": "b57d05e1ce844690d3b6b7ddea0bca32b8ea9f077321def35e1e8653d2331528",
     "/scripts/gameFlow.js": "58a5d94c4ce75a88a9f39bbf5c201e538546adfe2e5c51289b1792b5e8201683",
     "/scripts/roundContract.js": "cf4afb8f6244448de3b080054fdb7f817c811f812adc4872f0fe1de48cdbcc3b",
@@ -250,10 +251,10 @@
     "/assets/sounds/oido-jurasico/trex.wav": "347562503fb9d6ac332e56c0ace758fb8792911680c63b8fb27a618b05ec8027",
     "/assets/sounds/oido-jurasico/triceratops.wav": "ec3c9ee92a003b0d82a950cc91e65788f5c8f8b54c2b0370f9ae02d7e3ef8642",
     "/assets/sounds/oido-jurasico/velociraptor.wav": "9a3ed07be6986ae7f945ce53862e04f68970bee5ffcfe2ee526a9c2b85f53699",
-    "/i18n/es.json": "5c35b7c2b7e3571c460aed2fbf0c0ca1d061b6fbea9f2e08b5a5f5e013e9e53c",
-    "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",
-    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b"
+    "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
+    "/offline.html": "d45d92028f7f1d956b563d4aadb634c00315c53c2495719bcb11640804d8b53b",
+    "/i18n/es.json": "5c35b7c2b7e3571c460aed2fbf0c0ca1d061b6fbea9f2e08b5a5f5e013e9e53c",
   }
 }

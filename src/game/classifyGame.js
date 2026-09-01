@@ -36,6 +36,7 @@ const gameFlow = require('./gameFlow');
 const { DIETS, getCreatureSheet } = require('../data/creatureSheet');
 const { VALID_DINOSAURS } = require('../data/questionBank');
 const { LogService } = require('../services/logging');
+const diagnostics = require('../services/diagnostics');
 
 const ROUNDS_PER_GAME = 10;
 const MODE_ID = 'clasifica';
@@ -175,6 +176,10 @@ function evaluateRound(round, gameState, category, options) {
       level: round.level,
       roundIndex: round.roundIndex,
     });
+    // PRD failure point "ficha ausente" (TRIOFSND-318): the stable
+    // diagnostic code alone, never round.dinosaur/category.
+    const diagnosticsService = options.diagnostics || diagnostics;
+    diagnosticsService.recordError(MODE_ID, 'data', verified.error);
 
     return {
       round: Object.assign({}, round, { status: 'blocked', evaluated: true, diagnosticCode: verified.error }),

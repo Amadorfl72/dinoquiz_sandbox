@@ -119,6 +119,9 @@ describe('TRIOFSND-239: cambiar de modo fuera de una ronda (red desactivada)', (
     const { resolveLogger } = require(MAIN_JS_PATH);
     expect(resolveLogger().getGamesAbandonedByMode()).toEqual({ laberinto: 1 });
 
+    const diagnostics = require('../../src/services/diagnostics');
+    expect(diagnostics.getCounters()['gameAbandoned:laberinto']).toBe(1);
+
     expect(window.navigator.onLine).toBe(false);
     expect(global.fetch).not.toHaveBeenCalled();
   });

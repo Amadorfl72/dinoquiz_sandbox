@@ -151,6 +151,25 @@
     return defaultLogService;
   }
 
+  var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
+  var defaultDiagnostics;
+
+  /** Lazily resolves src/services/diagnostics.js, same dual pattern as resolveDefaultLogService above. */
+  function resolveDefaultDiagnostics() {
+    if (defaultDiagnostics) {
+      return defaultDiagnostics;
+    }
+
+    var diagnosticsModule =
+      typeof require === 'function'
+        ? require('../../src/services/diagnostics')
+        : (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.services && window.DinoQuiz.services.diagnostics);
+
+    defaultDiagnostics = diagnosticsModule && typeof diagnosticsModule.incrementCounter === 'function' ? diagnosticsModule : noopDiagnostics;
+
+    return defaultDiagnostics;
+  }
+
   /**
    * Picks a creature for a round: uniformly at random from `pool`, excluding
    * `previousDinosaurId` when the pool has another option -- so the 10
@@ -257,6 +276,10 @@
         level: round.level,
         roundIndex: round.roundIndex,
       });
+      // PRD failure point "ficha ausente" (TRIOFSND-318): the stable
+      // diagnostic code alone, never round.dinosaur/category.
+      var diagnostics = options.diagnostics || resolveDefaultDiagnostics();
+      diagnostics.recordError(MODE_ID, 'data', verified.error);
 
       return {
         round: Object.assign({}, round, { status: 'blocked', evaluated: true, diagnosticCode: verified.error }),
