@@ -121,14 +121,14 @@
   },
   "nicknameRequest": {
     "screenTitle": "What should we call you?",
-    "instructions": "Write a nickname to play. It can be whatever you like.",
-    "lastNameWarning": "Don't write your last name, just a nickname or your first name.",
+    "instructions": "Type a nickname to play. It can be whatever you like.",
+    "lastNameWarning": "Don't type your last name, just a nickname or your first name.",
     "inputLabel": "Your nickname",
     "continueButtonLabel": "Continue",
-    "guestButtonLabel": "Play as guest",
+    "guestButtonLabel": "Play as a guest",
     "errors": {
-      "empty": "Write a nickname before continuing.",
-      "tooLong": "Your nickname is too long. Use 20 letters or fewer."
+      "empty": "Type a nickname before continuing.",
+      "tooLong": "Your nickname is too long. Use 20 letters at most."
     }
   },
   "modeChange": {
@@ -140,7 +140,7 @@
   "modeBlocked": {
     "screenTitle": "Mode not available",
     "message": "This mode isn't available right now. Try again later or choose another mode from the selector.",
-    "backButtonLabel": "Back to the mode selector"
+    "backButtonLabel": "Back to the game selector"
   },
   "offlineDiagnostics": {
     "screenTitle": "Offline diagnostics",
@@ -157,11 +157,11 @@
       "modeColumnLabel": "Mode",
       "statusColumnLabel": "Status",
       "checkingText": "Checking…",
-      "statusOkText": "All ready",
+      "statusOkText": "All set",
       "statusMissingFormat": "{count} resources missing",
-      "statusUnavailableText": "Couldn't be checked on this device",
+      "statusUnavailableText": "Couldn't check on this device",
       "missingResourcesLabel": "Missing resources:",
-      "summaryFormat": "Full check: {okCount}/{totalCount} modes ready"
+      "summaryFormat": "Check complete: {okCount}/{totalCount} modes ready"
     }
   },
   "privacyPolicy": {
@@ -246,23 +246,23 @@
       "statusAvailable": "Available",
       "statusBlocked": "Blocked",
       "blockedReasons": {
-        "insufficient_questions": "Not enough verified questions",
-        "insufficient_creatures": "Not enough verified creatures",
-        "insufficient_creature_sounds": "Not enough imagined creature sounds",
+        "insufficient_questions": "Missing verified questions",
+        "insufficient_creatures": "Missing verified creatures",
+        "insufficient_creature_sounds": "Missing imagined creature sounds",
         "missing_creature_field": "Missing verified creature data",
         "round_generation_failed": "Couldn't prepare a new round",
-        "state_discarded": "The game was reset due to a technical problem"
+        "state_discarded": "The game was restarted due to a technical issue"
       },
       "unknownReason": "Reason not available"
     },
     "counters": {
       "heading": "Aggregated counters by mode",
       "generalHeading": "General counters",
-      "emptyMessage": "No counters have been recorded on this device yet."
+      "emptyMessage": "No counter has been recorded on this device yet."
     },
     "errors": {
       "heading": "Recent error codes",
-      "emptyMessage": "No errors have been recorded on this device.",
+      "emptyMessage": "No error has been recorded on this device.",
       "columns": {
         "date": "Date",
         "mode": "Mode",
@@ -274,7 +274,7 @@
     "actions": {
       "heading": "Maintenance actions",
       "resetButtonLabel": "Clear diagnostics data",
-      "resetConfirmMessage": "Are you sure you want to clear the technical counters and errors recorded on this device? This doesn't affect game progress or unlocks.",
+      "resetConfirmMessage": "Are you sure you want to clear the counters and technical errors recorded on this device? This doesn't affect game progress or unlocks.",
       "resetConfirmButtonLabel": "Clear",
       "resetCancelButtonLabel": "Cancel",
       "resetSuccessMessage": "Diagnostics data cleared on this device.",
@@ -285,14 +285,14 @@
     }
   },
   "launchGate": {
-    "screenTitle": "Launch gates status",
+    "screenTitle": "Launch gate status",
     "backButtonLabel": "Back to the home screen",
-    "intro": "This screen is only for adults or the QA team: it shows whether the candidate version can launch, based on the automated gates and the product goals reviewed on this device.",
+    "intro": "This screen is only for adults or the QA team: it shows whether the candidate version can be launched, based on the automated gates and the product goals reviewed on this device.",
     "version": {
       "heading": "Version and preload",
       "candidateVersionLabel": "Candidate version",
       "swVersionLabel": "SW_VERSION",
-      "precacheStatusLabel": "Precache status",
+      "precacheStatusLabel": "Preload status",
       "precacheStatus": {
         "complete": "Complete",
         "pending": "Pending or unknown"
@@ -301,11 +301,11 @@
       "unknownValue": "No data yet"
     },
     "gates": {
-      "heading": "Gates status",
+      "heading": "Gate status",
       "overall": {
-        "pass": "All gates are approved: the candidate version can launch.",
-        "fail": "Some gates are blocked: the candidate version can't launch yet.",
-        "unknown": "The gates status couldn't be evaluated on this device."
+        "pass": "All gates are approved: the candidate version can be launched.",
+        "fail": "There are blocked gates: the candidate version can't be launched yet.",
+        "unknown": "Couldn't evaluate the gate status on this device."
       },
       "statusLabels": {
         "pass": "Approved",
@@ -313,13 +313,13 @@
         "unknown": "Unknown"
       },
       "names": {
-        "fichas": "Verified creature profiles",
+        "fichas": "Verified creature sheets",
         "generadores": "Round generators by mode",
         "resolubilidad": "Maze solvability",
         "siluetas": "Guess the Shadow mode",
         "tamanos": "Sort by Size mode",
         "rejillas": "Jurassic Pairs mode",
-        "precache": "Precache structure (SW_VERSION)",
+        "precache": "Preload structure (SW_VERSION)",
         "offline": "Full offline availability",
         "accesibilidad": "WCAG AA contrast",
         "regresionQuiz": "Existing quiz regression"
@@ -332,7 +332,7 @@
         "pendiente": "Pending approval"
       },
       "names": {
-        "distribucionPorModo": "Games distribution by mode",
+        "distribucionPorModo": "Game distribution by mode",
         "finalizacion": "Game completion",
         "retencion7dias": "7-day retention"
       },
