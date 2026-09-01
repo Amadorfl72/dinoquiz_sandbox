@@ -2954,12 +2954,14 @@
   }
 
   /**
-   * Resolves src/services/diagnostics.js (TRIOFSND-317's local, aggregated
-   * counters/structured errors), same require-or-`window.DinoQuiz` fallback
-   * shape as `resolveGameSessionStorage` above -- this service has no
-   * browser-global registration yet, so it resolves to null in the real,
-   * unbundled browser and every diagnostics call below simply no-ops there
-   * (see each call site's own null guard), never blocking gameplay.
+   * Resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318's local,
+   * aggregated counters/structured errors), same require-or-`window.DinoQuiz`
+   * fallback shape as `resolveGameSessionStorage` above -- registered on
+   * `window.DinoQuiz.services.diagnostics` (see that file), so every
+   * diagnostics call below persists in the real, unbundled browser too, not
+   * just under Node/Jest. A missing service (e.g. that script failed to
+   * load) still falls back to null, and every call site's own null guard
+   * keeps that from ever blocking gameplay.
    */
   function resolveDiagnostics(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);

@@ -76,11 +76,13 @@
   var noopDiagnostics = { incrementCounter: function () {}, recordError: function () {} };
 
   /**
-   * Resolves src/services/diagnostics.js (TRIOFSND-317/318), same
-   * dual-pattern/`options` override shape as `resolveLogService` above,
-   * falling back to a no-op so a caller that never wires it up (or the
-   * real, unbundled browser, which has no `<script>` for this service yet)
-   * never breaks round-contract game flow.
+   * Resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318), same
+   * dual-pattern/`options` override shape as `resolveLogService` above --
+   * registered on `window.DinoQuiz.services.diagnostics` (see that file),
+   * so this resolves the real service in the unbundled browser too, not
+   * just under Node/Jest. Falls back to a no-op so a caller that never
+   * wires it up (or a script that genuinely failed to load) never breaks
+   * round-contract game flow.
    */
   function resolveDiagnostics(options) {
     options = options || {};

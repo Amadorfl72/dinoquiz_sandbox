@@ -107,11 +107,12 @@
   }
 
   /**
-   * Resolves src/services/diagnostics.js (TRIOFSND-317/318's local,
+   * Resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318's local,
    * aggregated counters), same require-or-`window.DinoQuiz` fallback shape
-   * as `resolveLogService` above -- this service has no browser-global
-   * registration yet, so it resolves to null in the real, unbundled browser
-   * and the `selectorOpen` tally below simply no-ops there.
+   * as `resolveLogService` above -- registered on
+   * `window.DinoQuiz.services.diagnostics` (see that file), so the
+   * `selectorOpen` tally below actually persists in the real, unbundled
+   * browser too, not just under Node/Jest.
    */
   function resolveDiagnostics(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);

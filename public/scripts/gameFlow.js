@@ -327,11 +327,13 @@
   var defaultDiagnostics;
 
   /**
-   * Lazily resolves src/services/diagnostics.js (TRIOFSND-317's local,
-   * aggregated counters/structured errors), the same require-or-`window.
-   * DinoQuiz` shape `resolveDefaultLogService` above uses, falling back to a
-   * no-op when it isn't available (e.g. the real, unbundled browser, which
-   * has no `<script>` for this service yet) so this never blocks gameplay.
+   * Lazily resolves public/scripts/diagnosticsService.js (TRIOFSND-317/318's
+   * local, aggregated counters/structured errors), the same require-or-
+   * `window.DinoQuiz` shape `resolveDefaultLogService` above uses --
+   * registered on `window.DinoQuiz.services.diagnostics` (see that file), so
+   * this resolves the real service in the unbundled browser too, not just
+   * under Node/Jest. Falls back to a no-op only if that script genuinely
+   * failed to load, so this never blocks gameplay.
    */
   function resolveDefaultDiagnostics() {
     if (defaultDiagnostics) {
