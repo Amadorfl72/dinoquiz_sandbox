@@ -4240,6 +4240,73 @@ body {
   outline-offset: 3px;
 }
 
+/*
+ * Mode-dispatch fallback warning screen (TRIOFSND-322): same icon+title+
+ * message+back-button shape as .mode-blocked-screen above, reused verbatim
+ * for the dispatcher's own "no renderer registered for this mode" case.
+ */
+.mode-fallback-warning-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.mode-fallback-warning-screen__icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.mode-fallback-warning-screen__title {
+  margin: 0;
+  font-size: var(--font-size-heading-sm);
+  color: var(--color-text);
+}
+
+.mode-fallback-warning-screen__message {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mode-fallback-warning-screen__back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-target-min);
+  min-height: var(--tap-target-min);
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: var(--font-size-button);
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-option-bg);
+  border: 3px solid var(--color-text);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.mode-fallback-warning-screen__back-button:hover {
+  background-color: var(--color-option-bg-hover);
+}
+
+.mode-fallback-warning-screen__back-button:active {
+  background-color: var(--color-option-bg-pressed);
+}
+
+.mode-fallback-warning-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
+}
+
 .offline-diagnostics-panel {
   display: flex;
   flex-direction: column;
