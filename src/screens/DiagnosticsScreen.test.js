@@ -36,6 +36,7 @@ function renderWithFixture(container, overrides) {
           cause: null,
           details: null,
         })),
+        dispatchEventCounts: {},
       },
       overrides
     )
@@ -171,6 +172,54 @@ describe('DiagnosticsScreen rendering', () => {
       expect(container.textContent).toContain(modesStrings.sombra.name);
       expect(container.textContent).toContain(strings.resourceAvailability.statusBlocked);
       expect(container.textContent).toContain(strings.resourceAvailability.blockedReasons.insufficient_creatures);
+    });
+  });
+
+  describe('dispatch integrity section', () => {
+    test('shows the declared mode count from the catalog when no dispatch event was ever recorded', () => {
+      renderWithFixture(container, { dispatchEventCounts: {} });
+
+      expect(getByRole(container, 'heading', { name: strings.dispatchIntegrity.heading })).toBeInTheDocument();
+      expect(container.textContent).toContain(strings.dispatchIntegrity.declaredLabel);
+      expect(container.textContent).toContain(String(MODES_CATALOG.length));
+      expect(container.textContent).toContain(strings.dispatchIntegrity.offeredLabel);
+      expect(container.textContent).toContain(strings.dispatchIntegrity.connectedLabel);
+      expect(container.textContent).toContain(strings.dispatchIntegrity.blockedLabel);
+    });
+
+    test('reads the offered/connected/blocked counts from analytics.js\'s own mode_selected/match_started/mode_blocked aggregates', () => {
+      renderWithFixture(container, {
+        dispatchEventCounts: { mode_selected: 12, match_started: 9, mode_blocked: 2, mode_dispatch_mismatch: 1 },
+      });
+
+      const definitions = getAllByRole(container, 'definition');
+      const values = definitions.map((dd) => dd.textContent);
+
+      expect(values).toContain('12');
+      expect(values).toContain('9');
+      expect(values).toContain('2');
+    });
+
+    test('combines mode_blocked and mode_dispatch_mismatch into the fallback-usage count', () => {
+      renderWithFixture(container, {
+        dispatchEventCounts: { mode_selected: 5, match_started: 3, mode_blocked: 2, mode_dispatch_mismatch: 1 },
+      });
+
+      const definitions = getAllByRole(container, 'definition');
+      const values = definitions.map((dd) => dd.textContent);
+
+      expect(values).toContain('3'); // 2 mode_blocked + 1 mode_dispatch_mismatch
+    });
+
+    test('shows the mode_selected vs match_started discrepancy', () => {
+      renderWithFixture(container, {
+        dispatchEventCounts: { mode_selected: 7, match_started: 4 },
+      });
+
+      const definitions = getAllByRole(container, 'definition');
+      const values = definitions.map((dd) => dd.textContent);
+
+      expect(values).toContain('3'); // 7 - 4
     });
   });
 
