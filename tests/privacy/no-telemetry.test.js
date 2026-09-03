@@ -33,7 +33,6 @@ const { getByRole } = require('@testing-library/dom');
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const i18n = require('../../public/i18n/es.json');
 const { results: resultsStrings, question: questionStrings, dinosaurNames } = i18n;
-const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 const { loadQuestionBank } = require('../../src/data/questionBank');
 const gameFlow = require('../../src/game/gameFlow');
 const { MODE_IDS, MODES_CATALOG } = require('../../src/game/modesCatalog');
@@ -87,7 +86,6 @@ function answerCurrentQuestionCorrectly(container, session) {
   const question = session.questions[session.state.questionIndex];
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   buttons[question.correctAnswerIndex].click();
-  jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 

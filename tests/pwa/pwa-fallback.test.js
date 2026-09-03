@@ -121,7 +121,6 @@ describe('TRIOFSND-113: the game stays fully playable without service worker sup
     try {
       const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
       const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
-      const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(10);
 
@@ -130,7 +129,6 @@ describe('TRIOFSND-113: the game stays fully playable without service worker sup
       for (let i = 0; i < 10; i += 1) {
         const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
         buttons[0].click();
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
         getByRole(container, 'button', { name: questionStrings.nextButton }).click();
       }
 
@@ -268,7 +266,6 @@ describe('TRIOFSND-113: full fallback flow — Inicio -> 10 preguntas -> Resulta
   });
 
   function playGame(renderers, questions, correctCount) {
-    const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
     const { question: questionStrings } = require('../../public/i18n/es.json');
     const { startNewGame } = require(MAIN_JS_PATH);
 
@@ -278,7 +275,6 @@ describe('TRIOFSND-113: full fallback flow — Inicio -> 10 preguntas -> Resulta
       const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
       const optionIndex = i < correctCount ? 0 : 1;
       buttons[optionIndex].click();
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
       getByRole(container, 'button', { name: questionStrings.nextButton }).click();
     }
   }
@@ -314,7 +310,6 @@ describe('TRIOFSND-113: full fallback flow — Inicio -> 10 preguntas -> Resulta
     try {
       const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
       const { results: strings, question: questionStrings } = require('../../public/i18n/es.json');
-      const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
       const renderers = resolveScreenRenderers();
       const questions = buildQuestionBank(20);
 
@@ -328,7 +323,6 @@ describe('TRIOFSND-113: full fallback flow — Inicio -> 10 preguntas -> Resulta
       for (let i = 0; i < 10; i += 1) {
         const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
         buttons[0].click();
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
         getByRole(container, 'button', { name: questionStrings.nextButton }).click();
       }
 
