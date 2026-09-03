@@ -85,6 +85,16 @@ function selectQuizMode(container) {
   container.querySelector('[data-mode-id="quiz"]').click();
 }
 
+// A saved nickname (nicknameService.js's `dinoquiz:nickname`) makes the
+// nickname step -- now shown right after '¡Jugar!', before the age gate --
+// skip itself silently, so every scenario below (none of which cares about
+// the nickname flow itself) reaches the age gate straight away, exactly as
+// before that step existed. See tests/pwa/nickname-flow.test.js for the
+// nickname step's own coverage.
+beforeEach(() => {
+  window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('Rex'));
+});
+
 describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image style + session persistence)', () => {
   let container;
   let addEventListenerSpy;

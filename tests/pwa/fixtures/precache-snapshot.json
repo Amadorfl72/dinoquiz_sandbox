@@ -1,5 +1,5 @@
 {
-  "swVersion": "v52",
+  "swVersion": "v53",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -23,6 +23,8 @@
     "/scripts/privacyPolicyScreen.js",
     "/scripts/ageGateScreen.js",
     "/scripts/nicknameScreen.js",
+    "/scripts/nicknameService.js",
+    "/scripts/hallOfFameService.js",
     "/scripts/imageStyleService.js",
     "/scripts/questionScreen.js",
     "/scripts/mazeGenerator.js",
@@ -156,6 +158,8 @@
     "/scripts/privacyPolicyScreen.js": "576ef72170e77077bf2a429a4b9cfcf5f1531734b6ff7b4c5c26afe8918dc6f5",
     "/scripts/ageGateScreen.js": "4e581209cf3cb21ab3bdd892c74d5ae79a443d245872d60bea7e2936c408166e",
     "/scripts/nicknameScreen.js": "3953e4ce1e5b7cfbeeac16a6200153c9fe839dc36404d5778d0729fe2ca80314",
+    "/scripts/nicknameService.js": "67545c6359b34eb28bdbce3b465df0a9fecbcc9ebd2fba3d3fb3d9189bb3b2b4",
+    "/scripts/hallOfFameService.js": "73a2e6cf0444a2e8065e187552a8fbd2b3b4dd3c5735dc72055b94cbe525edf2",
     "/scripts/imageStyleService.js": "772847ad1c6c2bfc03e988f23707bfd80044931fadcbc71f08d6087a23519003",
     "/scripts/questionScreen.js": "01a8672b3314ea7239acfac1521c8777a21a889466f3cb59fcfc44164b8af209",
     "/scripts/mazeGenerator.js": "2d28efeaa7189e377c73a80421545215c735c3dfb7397194a20a1276f1087e9a",
@@ -192,7 +196,7 @@
     "/scripts/launchGateScreen.js": "4bf280b92384e5bf4a2aa7170a526509d98f4fbce4ef3915c42fbb986ef79aa9",
     "/scripts/modeResourceValidation.js": "c11d2cb97e28080d6c4183a34399979b4ef93c2c55bfec65d2df4e82df7ab074",
     "/scripts/offlineDiagnosticsPanel.js": "65808e262bfe9cd70687bf116dda42703e45fee1c3c139127678470873208b9e",
-    "/scripts/main.js": "58f5a6a96c7ef47c36ca45c0b7b069c202435bf9f973c8549f8de924f70780d6",
+    "/scripts/main.js": "881fca55e7e4d374d8bfb1d75781826378201fdb87e8845a2c90f3d845470e30",
     "/icons/icon.svg": "17da64ccfd4edae6de8813fbc4a3126df29a80250e005c34e708487a400a3653",
     "/assets/images/mascot.svg": "6ae1a73c12a193fe74b07d6c51def00cc2d122bf5ee77d4b4a4b4666e6550b94",
     "/assets/images/dinosaurs/trex.svg": "a8130b220650eec59d2d20aaecda55b1897abde244c41603a0f74fb37cc7c560",

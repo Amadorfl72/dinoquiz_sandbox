@@ -20,6 +20,15 @@ function selectAgeGateOption(container) {
   container.querySelector('[data-mode-id="quiz"]').click();
 }
 
+// A saved nickname (nicknameService.js's `dinoquiz:nickname`) makes the
+// nickname step skip itself silently, so every existing scenario below --
+// none of which cares about the nickname flow itself -- reaches the age
+// gate straight after '¡Jugar!', exactly as before that step existed. See
+// tests/pwa/nickname-flow.test.js for the nickname step's own coverage.
+beforeEach(() => {
+  window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('Rex'));
+});
+
 // `level` defaults to 1 so every existing caller that doesn't care about
 // multi-level orchestration (TRIOFSND-207) still gets a single, always-valid
 // level-1 pool -- exactly like before that feature existed.
