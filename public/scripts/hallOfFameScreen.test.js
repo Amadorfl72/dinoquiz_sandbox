@@ -129,4 +129,33 @@ describe('hallOfFameScreen', () => {
     expect(rowTexts(container)).toHaveLength(1);
     expect(container.querySelector('.hall-of-fame-screen__delete-button')).toBeVisible();
   });
+
+  describe('back navigation (options.onBack)', () => {
+    it('renders a back button labelled from strings.backButtonLabel that calls onBack when clicked', () => {
+      const onBack = jest.fn();
+      const { backButton } = renderHallOfFameScreen(container, { strings, entries: [], onBack });
+
+      expect(backButton).not.toBeNull();
+      expect(backButton).toHaveTextContent(strings.backButtonLabel);
+      expect(backButton).toHaveAccessibleName(strings.backButtonLabel);
+
+      click(backButton);
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders the back button even without onBack, but it does nothing when clicked', () => {
+      const { backButton } = renderHallOfFameScreen(container, { strings, entries: [] });
+
+      expect(backButton).not.toBeNull();
+      expect(() => click(backButton)).not.toThrow();
+    });
+
+    it('the back button is a real, keyboard- and touch-operable <button>', () => {
+      const { backButton } = renderHallOfFameScreen(container, { strings, entries: [], onBack: jest.fn() });
+
+      expect(backButton.tagName).toBe('BUTTON');
+      expect(backButton).toHaveAttribute('type', 'button');
+    });
+  });
 });

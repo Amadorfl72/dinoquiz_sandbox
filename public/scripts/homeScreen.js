@@ -57,6 +57,16 @@
  * plain button with a descriptive `aria-label`/`title` from the i18n
  * resource (no icon-only, unlabeled control), reachable from Home in <2 taps.
  *
+ * The Hall of Fame entry point mirrors that same privacy-policy-icon-button
+ * shape and sits right next to it: a plain, labelled button that navigates
+ * away to public/scripts/hallOfFameScreen.js on a tap (`options.onOpenHallOfFame`,
+ * wired by the caller, same as `onOpenPrivacyPolicy`). Its visible text and
+ * `aria-label` both reuse `options.hallOfFameStrings.title` -- the exact
+ * string the Hall of Fame screen already uses as its own heading -- instead
+ * of declaring a second, separate "open Hall of Fame" string, the same way
+ * `privacyStrings`/`purchaseStrings` are resolved alongside `strings` below.
+ *
+
  * Offline purchase guard (TRIOFSND-112): the in-app purchase is the one
  * resource in DinoQuiz that actually needs a network connection (everything
  * else ships precached, see public/service-worker.js). Confirming the
@@ -92,6 +102,7 @@
   var UNMUTE_ICON = '🔇';
   var PRIVACY_ICON = '🔒';
   var PURCHASE_ICON = '🛍️';
+  var HALL_OF_FAME_ICON = '🏆';
 
   /**
    * Binds a control to fire `handler` on click AND on an Enter/Espacio
@@ -283,6 +294,7 @@
     var strings = options.strings || resolveDefaultStrings(options.locale);
     var privacyStrings = options.privacyStrings || resolveDefaultLocaleStrings(options.locale, 'privacy');
     var purchaseStrings = options.purchaseStrings || resolveDefaultLocaleStrings(options.locale, 'purchase');
+    var hallOfFameStrings = options.hallOfFameStrings || resolveDefaultLocaleStrings(options.locale, 'hallOfFame');
     var controlsStrings = strings.globalControls;
 
     container.innerHTML = '';
@@ -323,6 +335,28 @@
     privacyPolicyButton.appendChild(privacyPolicyLabel);
     if (typeof options.onOpenPrivacyPolicy === 'function') {
       bindActivation(privacyPolicyButton, options.onOpenPrivacyPolicy);
+    }
+
+    // Hall of Fame entry point: same shape as privacyPolicyButton above,
+    // navigating away to hallOfFameScreen.js on a tap. Its label/aria-label
+    // reuse hallOfFameStrings.title rather than declaring a second string.
+    var hallOfFameButton = document.createElement('button');
+    hallOfFameButton.type = 'button';
+    hallOfFameButton.className = 'home-screen__hall-of-fame-button';
+    if (hallOfFameStrings) {
+      hallOfFameButton.setAttribute('aria-label', hallOfFameStrings.title);
+      hallOfFameButton.title = hallOfFameStrings.title;
+    }
+    var hallOfFameIcon = document.createElement('span');
+    hallOfFameIcon.setAttribute('aria-hidden', 'true');
+    hallOfFameIcon.textContent = HALL_OF_FAME_ICON;
+    var hallOfFameLabel = document.createElement('span');
+    hallOfFameLabel.className = 'home-screen__hall-of-fame-button-label';
+    hallOfFameLabel.textContent = hallOfFameStrings ? hallOfFameStrings.title : '';
+    hallOfFameButton.appendChild(hallOfFameIcon);
+    hallOfFameButton.appendChild(hallOfFameLabel);
+    if (typeof options.onOpenHallOfFame === 'function') {
+      bindActivation(hallOfFameButton, options.onOpenHallOfFame);
     }
 
     var parentalNotice = document.createElement('p');
@@ -456,6 +490,7 @@
       root.appendChild(tooltip);
     }
     root.appendChild(privacyPolicyButton);
+    root.appendChild(hallOfFameButton);
     root.appendChild(globalControls);
     root.appendChild(parentalNotice);
     if (funFactsProgress) {
@@ -477,6 +512,7 @@
       mascot: mascot,
       playButton: playButton,
       privacyPolicyButton: privacyPolicyButton,
+      hallOfFameButton: hallOfFameButton,
       parentalNotice: parentalNotice,
       funFactsProgress: funFactsProgress,
       bestScoreProgress: bestScoreProgress,

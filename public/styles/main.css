@@ -234,6 +234,34 @@ body {
   outline-offset: 3px;
 }
 
+.home-screen__hall-of-fame-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__hall-of-fame-button:hover {
+  background-color: #f1f8e9;
+}
+
+.home-screen__hall-of-fame-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
 .home-screen__parental-notice {
   max-width: 60ch;
   font-size: var(--font-size-min);
@@ -1003,7 +1031,8 @@ body {
  */
 .results-screen__repeat-level-button,
 .results-screen__go-to-next-level-button,
-.results-screen__back-to-selector-button {
+.results-screen__back-to-selector-button,
+.results-screen__hall-of-fame-button {
   min-width: var(--tap-target-min);
   min-height: var(--tap-target-min);
   font-size: var(--font-size-button);
@@ -1020,19 +1049,22 @@ body {
 
 .results-screen__repeat-level-button:hover,
 .results-screen__go-to-next-level-button:hover,
-.results-screen__back-to-selector-button:hover {
+.results-screen__back-to-selector-button:hover,
+.results-screen__hall-of-fame-button:hover {
   background-color: var(--color-option-bg-hover);
 }
 
 .results-screen__repeat-level-button:active,
 .results-screen__go-to-next-level-button:active,
-.results-screen__back-to-selector-button:active {
+.results-screen__back-to-selector-button:active,
+.results-screen__hall-of-fame-button:active {
   background-color: var(--color-option-bg-pressed);
 }
 
 .results-screen__repeat-level-button:focus-visible,
 .results-screen__go-to-next-level-button:focus-visible,
-.results-screen__back-to-selector-button:focus-visible {
+.results-screen__back-to-selector-button:focus-visible,
+.results-screen__hall-of-fame-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
@@ -4395,6 +4427,33 @@ body {
   padding: 16px;
   color: var(--color-text);
   background-color: var(--color-bg);
+}
+
+.hall-of-fame-screen__back-button {
+  display: block;
+  align-self: flex-start;
+  min-height: var(--tap-target-min);
+  min-width: var(--tap-target-min);
+  margin-bottom: 12px;
+  padding: 10px 20px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hall-of-fame-screen__back-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.hall-of-fame-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }
 
 .hall-of-fame-screen__heading {

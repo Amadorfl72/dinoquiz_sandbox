@@ -1723,6 +1723,20 @@
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+        // Hall of Fame entry (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): recorded here,
+        // once per finished level, so `finishLevel` below always has an
+        // identifier ready to hand to hallOfFameScreen.js for highlighting.
+        // `timestamp` doubles as the entry's identifier (see
+        // hallOfFameService.js's own doc comment: entries have no separate
+        // `id` field) -- stashed on `finalState` for `finishLevel` to read.
+        var hallOfFameService = resolveHallOfFameService();
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID && hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
+          var hallOfFameTimestamp = Date.now();
+          hallOfFameService.addEntry({ name: null, score: finalState.score, timestamp: hallOfFameTimestamp }, ctx.storageObj);
+          finalState.hallOfFameEntryId = hallOfFameTimestamp;
+        }
+
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
           answers: finalState.answers,
@@ -1824,7 +1838,12 @@
 
     return Promise.resolve(ctx.maxUnlockedLevelPromise)
       .then(function (maxLevelUnlocked) {
-        return renderers.renderResultsScreen(container, {
+        // Captured in a local variable (rather than passed inline) so
+        // `onViewHallOfFame` below can re-render this exact Resultados
+        // screen when the player comes back from the Hall of Fame, without
+        // re-running the level-unlock/result storage writes above a second
+        // time (calling `finishLevel` itself again would).
+        var resultsOptions = {
           score: finalState.score,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
@@ -1870,7 +1889,23 @@
               homeStorage
             );
           },
-        });
+        };
+
+        // Hall of Fame entry point (Resultados): hands off the just-finished
+        // level's own entry identifier (see playLevel above) so
+        // hallOfFameScreen.js can highlight that row, and its 'back' path
+        // returns to this very same Resultados screen (re-rendering from
+        // `resultsOptions`, not by re-running `finishLevel`).
+        resultsOptions.onViewHallOfFame = function () {
+          renderHallOfFame(doc, undefined, fetchFn, {
+            highlightEntryId: finalState.hallOfFameEntryId,
+            onBack: function () {
+              renderers.renderResultsScreen(container, resultsOptions);
+            },
+          });
+        };
+
+        return renderers.renderResultsScreen(container, resultsOptions);
       });
   }
 
@@ -3659,6 +3694,29 @@
     return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) || null;
   }
 
+  /**
+   * Resolves public/scripts/hallOfFameService.js, same require-or-`window.DinoQuiz`
+   * fallback shape as `resolveDiagnostics` above -- registered on
+   * `window.DinoQuiz.services.hallOfFameService` (see that file), so
+   * `playLevel`'s entry recording below and hallOfFameScreen.js itself read
+   * and write the same on-device top-10 list in the real, unbundled browser
+   * too, not just under Node/Jest.
+   */
+  function resolveHallOfFameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.hallOfFameService) {
+      return win.DinoQuiz.services.hallOfFameService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/hallOfFameService');
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -3705,6 +3763,7 @@
             home: data.home,
             privacy: data.privacy,
             purchase: data.purchase,
+            hallOfFame: data.hallOfFame,
             ageGate: data.ageGate,
             modeSelector: data.modeSelector,
             modes: data.modes,
@@ -3718,6 +3777,13 @@
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
+    });
+  }
+
+  /** Fetches the whole i18n resource once and hands back the `hallOfFame` screen copy -- everything renderHallOfFame needs. */
+  function loadHallOfFameStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.hallOfFame;
     });
   }
 
@@ -4270,12 +4336,39 @@
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
-        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        ? {
+            strings: resources.home,
+            privacyStrings: resources.privacy,
+            purchaseStrings: resources.purchase,
+            hallOfFameStrings: resources.hallOfFame,
+          }
         : {};
 
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
+
+      // Hall of Fame entry point (Inicio): opens the Hall of Fame screen and
+      // wires its 'back' path straight back to a freshly-rendered Inicio --
+      // the same fresh renderHome(...) shape every other "return to Inicio"
+      // call site in this file uses (see finishLevel's onExit below).
+      renderOptions.onOpenHallOfFame = function () {
+        renderHallOfFame(doc, undefined, fetchFn, {
+          onBack: function () {
+            var backHomeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderHomeScreen,
+              fetchFn,
+              backHomeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              backHomeStorage
+            );
+          },
+        });
+      };
 
       if (resolvedMuteStorage) {
         renderOptions.muted = loadMutedState(resolvedMuteStorage);
@@ -4506,6 +4599,49 @@
         options.onBack = onBack;
       }
       return renderDiagnosticsScreen(container, options);
+    });
+  }
+
+  /**
+   * Renders the Hall of Fame screen into #app, the same fetch-then-render
+   * shape as `renderPrivacyPolicy`/`renderDiagnostics` above. Two things a
+   * caller may pass through `options`: `highlightEntryId` (the just-finished
+   * game's own entry identifier, forwarded straight to hallOfFameScreen.js's
+   * `highlightEntryId` so it can highlight that row) and `onBack`, which --
+   * unlike the always-Inicio `onBack` those two screens wire -- is supplied
+   * fresh by each caller below (`renderHome`'s entry point re-renders Inicio;
+   * `finishLevel`'s re-renders the very same Resultados), so this screen
+   * itself stays agnostic about where "back" leads.
+   */
+  function renderHallOfFame(doc, renderHallOfFameScreen, fetchFn, options) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderHallOfFameScreen =
+      renderHallOfFameScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderHallOfFameScreen);
+
+    if (!doc || typeof renderHallOfFameScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    options = options || {};
+
+    return loadHallOfFameStrings(fetchFn).then(function (strings) {
+      var renderOptions = strings ? { strings: strings } : {};
+      if (options.highlightEntryId !== undefined) {
+        renderOptions.highlightEntryId = options.highlightEntryId;
+      }
+      if (typeof options.onBack === 'function') {
+        renderOptions.onBack = options.onBack;
+      }
+      return renderHallOfFameScreen(container, renderOptions);
     });
   }
 
@@ -4741,6 +4877,9 @@
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,
       resolveDiagnostics: resolveDiagnostics,
+      resolveHallOfFameService: resolveHallOfFameService,
+      loadHallOfFameStrings: loadHallOfFameStrings,
+      renderHallOfFame: renderHallOfFame,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
