@@ -209,7 +209,7 @@
         "heading": "Tus derechos (y los de tu hija o hijo)",
         "paragraphs": [
           "Como no recogemos datos personales, no existe un perfil que consultar, corregir o eliminar en nuestros sistemas.",
-          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador.",
+          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento pulsando \"Borrar mis datos\" en esta misma pantalla, desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador. Ese borrado incluye tu mejor puntuación, tu racha, los datos curiosos descubiertos y el Salón de la Fama con las mejores puntuaciones guardadas en este dispositivo.",
           "Si tienes cualquier duda sobre privacidad, o crees que en algún momento se ha recogido un dato que no debería, puedes ejercer tus derechos de acceso, rectificación, supresión, oposición y portabilidad escribiéndonos a la dirección de contacto indicada más abajo."
         ]
       },
@@ -228,7 +228,15 @@
           "Si esta política cambia, lo indicaremos actualizando la fecha de esta página. Te recomendamos consultarla de vez en cuando junto a tu hija o hijo."
         ]
       }
-    ]
+    ],
+    "dataDeletion": {
+      "heading": "Borra tus datos ahora",
+      "buttonLabel": "Borrar mis datos",
+      "confirmMessage": "¿Seguro que quieres borrar tu mejor puntuación, tu racha, los datos curiosos descubiertos y el Salón de la Fama guardados en este dispositivo? Esto no se puede deshacer.",
+      "cancelButtonLabel": "Cancelar",
+      "confirmButtonLabel": "Borrar",
+      "successMessage": "Listo: hemos borrado tu mejor puntuación, tu racha, los datos curiosos descubiertos y el Salón de la Fama guardados en este dispositivo."
+    }
   },
   "diagnostics": {
     "screenTitle": "Diagnóstico técnico",

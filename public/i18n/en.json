@@ -209,7 +209,7 @@
         "heading": "Your rights (and your child's)",
         "paragraphs": [
           "Since we don't collect personal data, there's no profile to look up, correct, or delete in our systems.",
-          "All saved information lives only on the device: you can delete it at any time by uninstalling the app or clearing its data from the device or browser settings.",
+          "All saved information lives only on the device: you can delete it at any time by tapping \"Delete my data\" on this same screen, by uninstalling the app, or by clearing its data from the device or browser settings. That deletion includes your best score, your streak, the fun facts you've discovered, and the Hall of Fame top scores saved on this device.",
           "If you have any questions about privacy, or believe some data was collected that shouldn't have been, you can exercise your rights of access, rectification, erasure, objection, and portability by writing to the contact address below."
         ]
       },
@@ -228,7 +228,15 @@
           "If this policy changes, we'll indicate it by updating the date on this page. We recommend checking it from time to time together with your child."
         ]
       }
-    ]
+    ],
+    "dataDeletion": {
+      "heading": "Delete your data now",
+      "buttonLabel": "Delete my data",
+      "confirmMessage": "Are you sure you want to delete your best score, your streak, the fun facts you've discovered, and the Hall of Fame saved on this device? This can't be undone.",
+      "cancelButtonLabel": "Cancel",
+      "confirmButtonLabel": "Delete",
+      "successMessage": "Done: we've deleted your best score, your streak, the fun facts you've discovered, and the Hall of Fame saved on this device."
+    }
   },
   "diagnostics": {
     "screenTitle": "Technical diagnostics",
