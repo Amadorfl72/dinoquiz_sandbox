@@ -1,5 +1,5 @@
 {
-  "swVersion": "v51",
+  "swVersion": "v53",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -42,6 +42,8 @@
     "/scripts/timelineScreen.js",
     "/scripts/oidoJurasicoScreen.js",
     "/scripts/resultsScreen.js",
+    "/scripts/hallOfFameService.js",
+    "/scripts/hallOfFameScreen.js",
     "/scripts/modesCatalog.js",
     "/scripts/unlockThresholds.js",
     "/scripts/modeStorage.js",
@@ -134,10 +136,10 @@
     "/offline.html"
   ],
   "contentHashes": {
-    "/": "918e50e71ca52ce9d4742c7fc82d090fe02ed3849cabd07358587a670dbb1579",
-    "/index.html": "918e50e71ca52ce9d4742c7fc82d090fe02ed3849cabd07358587a670dbb1579",
+    "/": "5ac21e5d178933e49ef69f77fa2ae4c79987c2fec62cd406bee438c9d372f831",
+    "/index.html": "5ac21e5d178933e49ef69f77fa2ae4c79987c2fec62cd406bee438c9d372f831",
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
-    "/styles/main.css": "cb1b96a7b247d7247b3fafa676ff9c7d6a92f4874b64389069b6a6e59951d64b",
+    "/styles/main.css": "109a9b5cefd14db5da990bd511b1d065ee3f18adb7fab0606f0552f79ee7880f",
     "/scripts/scoring.js": "e4bf1edd3c843106032ebba0d0eedc80bd608a39152a5b9ac41652131d852e0f",
     "/scripts/soundService.js": "e55ea588dcdfb2c19e68bf7465e5001c8fd9cb4410ebf75794202c6dc87fe2a5",
     "/scripts/adsService.js": "b57d05e1ce844690d3b6b7ddea0bca32b8ea9f077321def35e1e8653d2331528",
@@ -175,6 +177,8 @@
     "/scripts/timelineScreen.js": "55def84cb5b93f3914812181e324db960d7bb2440371f5e8f5fd394467ef9bf4",
     "/scripts/oidoJurasicoScreen.js": "058bf6e2729179d989830046105c9d35dec707bbf4fecb468a5352a7d8f5b1c1",
     "/scripts/resultsScreen.js": "6045f39fd021e4263f817e231d12bc536a993327331fcd478eb16bae53e51458",
+    "/scripts/hallOfFameService.js": "d01c09c1b85001936f3d7c4c769b34a6bb69c5f070c7ec131664b5e8d0c86bf2",
+    "/scripts/hallOfFameScreen.js": "bf34d9ab1a5954817028cfd42300cbdfcf58298a248805e2ff0e4ccc0b47c60f",
     "/scripts/modesCatalog.js": "e12a700ca4258abffbf73f60002929092c47039ae412da157292fecd2543b386",
     "/scripts/unlockThresholds.js": "024dda9670eae02e8c3f25cd1a794b16c376466e4db218642efe22a7a5fbf951",
     "/scripts/modeStorage.js": "673bd2f5292f32b66768809f023e3b97e000747130d36c9ec30c7af95a54738e",
@@ -260,7 +264,7 @@
     "/assets/sounds/oido-jurasico/trex.wav": "347562503fb9d6ac332e56c0ace758fb8792911680c63b8fb27a618b05ec8027",
     "/assets/sounds/oido-jurasico/triceratops.wav": "ec3c9ee92a003b0d82a950cc91e65788f5c8f8b54c2b0370f9ae02d7e3ef8642",
     "/assets/sounds/oido-jurasico/velociraptor.wav": "9a3ed07be6986ae7f945ce53862e04f68970bee5ffcfe2ee526a9c2b85f53699",
-    "/i18n/es.json": "e3a1a94517fef8380c30ad1fc3e0e1edd8d0c448a77459570738cf38f242edc1",
+    "/i18n/es.json": "dd607122e9e5cc86b36013b6add2cadd07c35a8ac82ee020e0d3d6386b25f02f",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",

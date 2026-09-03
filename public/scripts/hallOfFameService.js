@@ -3,17 +3,6 @@
 /**
  * Hall of Fame local persistence (TRIOFSND, "Salón de la Fama").
  *
- * The implementation lives here in public/scripts/ (not only in
- * src/services/) because public/scripts/main.js's game-finish flow has to
- * read/write it live in the real, bundler-less browser -- it is loaded there
- * as a `<script>` (see public/index.html), registering itself on
- * `window.DinoQuiz.services.hallOfFameService`, the same require-or-
- * `window.DinoQuiz` bridge every other browser-facing service uses
- * (modeStorage.js, analytics.js, nicknameService.js). The canonical
- * `src/services/hallOfFameService.js` module re-exports this file so
- * Node/Jest keep a single source of truth, mirroring how
- * src/services/modeStorage.js re-exports public/scripts/modeStorage.js.
- *
  * Stores the on-device top-10 scores under a single `dinoquiz:hallOfFame`
  * localStorage key. Deliberately plain localStorage rather than
  * src/services/storage's IndexedDB-with-fallback client: a short, replaceable
@@ -48,6 +37,18 @@
  * still returns the computed top-10 list for the caller to render even if
  * persisting it failed, `getEntries` degrades to `[]`, and `clearAll`
  * degrades to `false`.
+ *
+ * Browser bridge: both public/scripts/main.js's game-finish flow (which
+ * resolves a name via nameEntryScreen/nameService -- reusing a saved name
+ * or prompting for one -- before writing a new entry) and the Hall of Fame
+ * screen (public/scripts/hallOfFameScreen.js, reading and rendering the
+ * list) have to use this live in the real, bundler-less browser, so --
+ * following the same dual CommonJS/`window.DinoQuiz` pattern as
+ * public/scripts/modeStorage.js -- this implementation lives here and is
+ * loaded as a plain `<script>` (see public/index.html), registering itself
+ * on `window.DinoQuiz.services.hallOfFameService`. The canonical
+ * `src/services/hallOfFameService.js` re-exports this file so Node/Jest keep
+ * a single source of truth.
  */
 
 (function () {
@@ -162,10 +163,7 @@
       timestamp: entry.timestamp,
     };
 
-    var merged = current
-      .concat([normalized])
-      .sort(compareEntries)
-      .slice(0, MAX_ENTRIES);
+    var merged = current.concat([normalized]).sort(compareEntries).slice(0, MAX_ENTRIES);
 
     var storage = resolveStorage(storageAdapter);
     if (storage) {
