@@ -1092,24 +1092,22 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
 
     // storage.markFunFactDiscovered is fire-and-forget (see main.js's
     // onAnswer) and only settles a few microtask turns later (StorageClient's
-    // set()/init() chain several awaits) -- unrelated to "Siguiente" itself,
-    // which is visible/enabled synchronously the instant the option is
-    // selected, asserted below with no wait. The flush is required before
-    // clicking "Siguiente" only because the 10th click renders Resultados
-    // synchronously, and that render reads discoveredFunFactsCount -- this
-    // test's own assertion below -- so the pending write must have settled
-    // by then; "Siguiente" itself is already visible/enabled before the
-    // flush runs, so this never gates its own availability.
+    // get()/set() chain several awaits). Left unflushed, two consecutive
+    // answers' writes race and the second can read a stale array, losing the
+    // first's append -- unrelated to "Siguiente" itself, which is already
+    // visible/enabled synchronously the instant the option is selected.
+    // The flush runs right after the click that fired the write and before
+    // "Siguiente" is even looked up, so the assertion below and the click
+    // that follows it have no timer manipulation between them.
     async function answerAndFlushFunFactWrite(container, { correct }) {
       const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
       const index = correct ? 0 : 1;
       buttons[index].click();
+      await jest.advanceTimersByTimeAsync(0);
 
       const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
       expect(nextButton.hidden).toBe(false);
       expect(nextButton.disabled).toBe(false);
-
-      await jest.advanceTimersByTimeAsync(0);
       nextButton.click();
     }
 
