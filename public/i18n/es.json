@@ -260,6 +260,15 @@
       },
       "unknownReason": "Motivo no disponible"
     },
+    "dispatchIntegrity": {
+      "heading": "Integridad de despacho de modos",
+      "declaredLabel": "Modos declarados",
+      "offeredLabel": "Modos ofrecidos (mode_selected)",
+      "connectedLabel": "Modos conectados (match_started)",
+      "blockedLabel": "Modos bloqueados (mode_blocked)",
+      "fallbackUsageLabel": "Veces que se mostró el aviso de repliegue",
+      "discrepancyLabel": "Diferencia entre modo elegido y partida iniciada"
+    },
     "counters": {
       "heading": "Contadores agregados por modo",
       "generalHeading": "Contadores generales",

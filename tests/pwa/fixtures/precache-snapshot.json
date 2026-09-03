@@ -1,5 +1,5 @@
 {
-  "swVersion": "v49",
+  "swVersion": "v50",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -183,7 +183,7 @@
     "/scripts/oidoJurasicoAudioService.js": "2c576c6532d97b6ed08418cff439c9851fc05bf4c239847c94a9a5936a46f44e",
     "/scripts/offlineStatus.js": "02b770723d6acf25815498132757c30350604542726dff19a0d7f982e0ca35b2",
     "/scripts/diagnostics.js": "446ef8524d20c86b828724d8bd8b8312d0ea0fbc27accf7fcbef15caa2e14f66",
-    "/scripts/diagnosticsScreen.js": "62ba0c3cdb984d7baf8634b3e03133b6789978cec4f98c603fa03a8cd78a5506",
+    "/scripts/diagnosticsScreen.js": "30920e287bda12a5d158309c2d70e3c7929a53c461d2a9018a63e7e7c1dc943c",
     "/scripts/productGoals.js": "e19fcfbfbf35d1693cf1cc191bececb93f208774cc5563a856bd9871126aab89",
     "/scripts/launchGateScreen.js": "4bf280b92384e5bf4a2aa7170a526509d98f4fbce4ef3915c42fbb986ef79aa9",
     "/scripts/modeResourceValidation.js": "c11d2cb97e28080d6c4183a34399979b4ef93c2c55bfec65d2df4e82df7ab074",
@@ -256,7 +256,7 @@
     "/assets/sounds/oido-jurasico/trex.wav": "347562503fb9d6ac332e56c0ace758fb8792911680c63b8fb27a618b05ec8027",
     "/assets/sounds/oido-jurasico/triceratops.wav": "ec3c9ee92a003b0d82a950cc91e65788f5c8f8b54c2b0370f9ae02d7e3ef8642",
     "/assets/sounds/oido-jurasico/velociraptor.wav": "9a3ed07be6986ae7f945ce53862e04f68970bee5ffcfe2ee526a9c2b85f53699",
-    "/i18n/es.json": "00ce4814315e62b7e82ea6b4c06e925897682b050e1a9ec5d4cad93cebce5d16",
+    "/i18n/es.json": "e3a1a94517fef8380c30ad1fc3e0e1edd8d0c448a77459570738cf38f242edc1",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",

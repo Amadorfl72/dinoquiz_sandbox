@@ -59,6 +59,29 @@
  * (src/services/storage/types.js's `MODE_STATE_SCHEMA_VERSION`) so a
  * mismatch against a shown discard's own `schemaVersion` is visible at a
  * glance -- never the discarded round's own content.
+ *
+ * Integridad de despacho (dispatch integrity): a dedicated section sourced
+ * from `src/services/analytics.js#getEventCounts()` (the generic mode
+ * dispatcher's own local, aggregated event counts -- resolved live the same
+ * dual CommonJS/`window.DinoQuiz` way as every other data source above).
+ * `modesCatalog.js`'s own `MODE_IDS` (already resolved above for the
+ * per-mode counters section, see `modeIds`) supplies the one static number
+ * of this group -- "modos declarados" -- while `mode_selected`,
+ * `match_started` and `mode_blocked`'s own aggregated counts stand in for
+ * "modos ofrecidos/conectados/bloqueados" respectively: every dispatcher tap
+ * records exactly one of these, so their totals are this device's own
+ * running tally of how many times a mode was offered to the dispatcher, how
+ * many of those actually connected to a working game engine, and how many
+ * were blocked (see public/scripts/analytics.js's own doc comment for what
+ * each of the four event names means). Alongside them, "uso del aviso de
+ * repliegue" combines `mode_blocked` and `mode_dispatch_mismatch` -- the two
+ * events that make `handleModeSelected` show the accessible fallback warning
+ * screen (main.js's own `showFallback()`) -- and the "discrepancia" row is
+ * the raw `mode_selected - match_started` gap, a quick single number for how
+ * many selector taps did not cleanly end in a match starting. Never a
+ * per-round or per-mode breakdown -- `analytics.js` only ever stores these
+ * four flat, opaque totals, exactly the aggregated shape the PRD's local-only
+ * diagnostics requires.
  */
 
 (function () {
@@ -111,6 +134,26 @@
       return require('./modesCatalog');
     }
     return null;
+  }
+
+  /** Same require-or-`window.DinoQuiz` fallback shape as every other resolver above, reaching the generic mode-dispatcher analytics recorder (public/scripts/analytics.js). */
+  function resolveAnalyticsService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.analytics) {
+      return win.DinoQuiz.services.analytics;
+    }
+    if (typeof require === 'function') {
+      return require('./analytics');
+    }
+    return null;
+  }
+
+  /** `options.dispatchEventCounts` short-circuits (what tests use); otherwise reads analytics.js's own aggregated `{eventName: count}` snapshot live. */
+  function resolveDispatchEventCounts(options, analyticsService) {
+    if (options.dispatchEventCounts) {
+      return options.dispatchEventCounts;
+    }
+    return analyticsService && typeof analyticsService.getEventCounts === 'function' ? analyticsService.getEventCounts() : {};
   }
 
   /** 'active' (a service worker currently controls this page), 'inactive' (registered but not controlling) or 'unsupported' (no Service Worker API at all). */
@@ -351,6 +394,44 @@
     });
 
     section.appendChild(list);
+    return section;
+  }
+
+  /**
+   * "Integridad de despacho" -- see this file's own doc comment for what
+   * each row means. `modeIds` supplies "modos declarados"; every other row
+   * reads straight off `eventCounts` (analytics.js's own aggregated
+   * `{eventName: count}` snapshot), defaulting a never-recorded event to 0
+   * exactly like `analytics.js#getEventCount` does.
+   */
+  function renderDispatchIntegritySection(doc, strings, modeIds, eventCounts) {
+    var section = doc.createElement('section');
+    section.className = 'diagnostics-screen__section';
+
+    var heading = doc.createElement('h2');
+    heading.id = 'diagnostics-dispatch-integrity-heading';
+    heading.textContent = strings.dispatchIntegrity.heading;
+    section.setAttribute('aria-labelledby', heading.id);
+    section.appendChild(heading);
+
+    var offered = eventCounts.mode_selected || 0;
+    var connected = eventCounts.match_started || 0;
+    var blocked = eventCounts.mode_blocked || 0;
+    var mismatch = eventCounts.mode_dispatch_mismatch || 0;
+    var fallbackUsage = blocked + mismatch;
+    var discrepancy = offered - connected;
+
+    var dl = doc.createElement('dl');
+    dl.className = 'diagnostics-screen__definition-list';
+
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.declaredLabel, String(modeIds.length));
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.offeredLabel, String(offered));
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.connectedLabel, String(connected));
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.blockedLabel, String(blocked));
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.fallbackUsageLabel, String(fallbackUsage));
+    renderDefinitionRow(doc, dl, strings.dispatchIntegrity.discrepancyLabel, String(discrepancy));
+
+    section.appendChild(dl);
     return section;
   }
 
@@ -707,6 +788,7 @@
     var offlineStatusService = options.offlineStatusService || resolveOfflineStatusService();
     var modesCatalog = options.modesCatalog || resolveModesCatalog();
     var logService = options.logService || resolveLogService();
+    var analyticsService = options.analyticsService || resolveAnalyticsService();
 
     var counters = resolveCounters(options, diagnosticsService);
     var errors = resolveErrors(options, diagnosticsService);
@@ -725,6 +807,7 @@
       return modesCatalog.MODE_IDS[key];
     })) || [];
     var grouped = groupCountersByMode(counters, modeIds);
+    var dispatchEventCounts = resolveDispatchEventCounts(options, analyticsService);
 
     container.innerHTML = '';
 
@@ -759,6 +842,7 @@
     root.appendChild(intro);
     root.appendChild(renderHealthSection(doc, strings, health));
     root.appendChild(renderResourceAvailabilitySection(doc, strings, availability, modesNames));
+    root.appendChild(renderDispatchIntegritySection(doc, strings, modeIds, dispatchEventCounts));
     root.appendChild(countersSection);
     root.appendChild(errorsSection);
     root.appendChild(restoreDiagnosticsSection);

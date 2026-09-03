@@ -260,6 +260,15 @@
       },
       "unknownReason": "Reason not available"
     },
+    "dispatchIntegrity": {
+      "heading": "Mode dispatch integrity",
+      "declaredLabel": "Declared modes",
+      "offeredLabel": "Offered modes (mode_selected)",
+      "connectedLabel": "Connected modes (match_started)",
+      "blockedLabel": "Blocked modes (mode_blocked)",
+      "fallbackUsageLabel": "Times the fallback warning was shown",
+      "discrepancyLabel": "Gap between mode chosen and match started"
+    },
     "counters": {
       "heading": "Aggregated counters by mode",
       "generalHeading": "General counters",
