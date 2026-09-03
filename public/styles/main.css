@@ -820,8 +820,11 @@ body {
 
 /*
  * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
- * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
- * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ * style minimums). It renders visible and enabled as soon as the answer is
+ * revealed (AC-6, see QuestionScreen.js's handleSelect) and, in the markup
+ * below, precedes `.question-screen__fun-fact-box` -- the column flex
+ * layout on `.question-screen` follows DOM order with no `order` overrides,
+ * so that source order is also the visual/focus order at every breakpoint.
  * The hover/focus-visible/active states (TRIOFSND-90) give sighted and
  * keyboard users the same clear affordance screen-reader users get from
  * the aria-live feedback announcement.

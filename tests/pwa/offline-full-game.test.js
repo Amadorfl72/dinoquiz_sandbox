@@ -16,7 +16,6 @@ const { getByRole } = require('@testing-library/dom');
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
 const i18n = require('../../public/i18n/es.json');
 const { results: resultsStrings, question: questionStrings } = i18n;
-const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 const { EXPECTED_QUESTION_COUNT } = require('../../src/data/questionBank');
 const { QUESTIONS_PER_GAME } = require('../../src/game/gameFlow');
 
@@ -38,9 +37,6 @@ function answerCurrentQuestionCorrectly(container, session) {
   const question = session.questions[session.state.questionIndex];
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   buttons[question.correctAnswerIndex].click();
-  // "Siguiente" stays disabled for MIN_ADVANCE_DELAY_MS (AC-6) so the dato
-  // curioso is readable — fast-forward past it for the test.
-  jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 

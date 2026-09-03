@@ -49,7 +49,6 @@ const {
   timeline: timelineStrings,
   modeBlocked: modeBlockedStrings,
 } = i18n;
-const { MIN_ADVANCE_DELAY_MS } = require('../../src/screens/QuestionScreen');
 const { QUESTIONS_PER_GAME } = require('../../src/game/gameFlow');
 
 const ROUNDS_PER_GAME = 10;
@@ -323,7 +322,6 @@ describe('TRIOFSND-308: offline regression suite across every shipped DinoQuiz m
           const question = session.questions[session.state.questionIndex];
           const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
           buttons[question.correctAnswerIndex].click();
-          jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
           getByRole(container, 'button', { name: questionStrings.nextButton }).click();
         }
       } finally {
@@ -448,7 +446,6 @@ describe('TRIOFSND-308: offline regression suite across every shipped DinoQuiz m
           const question = session.questions[session.state.questionIndex];
           const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
           buttons[question.correctAnswerIndex].click();
-          jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
           getByRole(container, 'button', { name: questionStrings.nextButton }).click();
         }
       } finally {
@@ -537,7 +534,6 @@ describe('TRIOFSND-308: offline regression suite across every shipped DinoQuiz m
           const question = session.questions[session.state.questionIndex];
           const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
           buttons[question.correctAnswerIndex].click();
-          jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
           getByRole(container, 'button', { name: questionStrings.nextButton }).click();
         }
       } finally {

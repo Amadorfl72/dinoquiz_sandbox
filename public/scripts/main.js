@@ -1255,27 +1255,26 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
-  // Extra wall-clock time (TRIOFSND-84) the flow controller waits, on top of
-  // the question screen's own MIN_ADVANCE_DELAY_MS gate on "Siguiente"
-  // (public/scripts/questionScreen.js, AC-6), before auto-advancing a child
-  // who never taps the button themselves. Giving that grace period after the
-  // button becomes clickable means the automatic advance never races the
-  // moment the button first becomes tappable.
+  // Wall-clock time (TRIOFSND-84) the flow controller waits, after
+  // "Siguiente" is shown and enabled (public/scripts/questionScreen.js,
+  // AC-6, synchronous — no gate of its own), before auto-advancing a child
+  // who never taps the button themselves. This keeps the dato curioso on
+  // screen long enough to read even when nobody taps "Siguiente".
   var AUTO_ADVANCE_GRACE_MS = 4000;
 
   /**
    * Renders the question at `session.state.questionIndex`, then advances to
    * the next one (or completes the game) either when the child taps
-   * "Siguiente" or, if they don't, automatically once
-   * `MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS` has elapsed since the
-   * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
-   * avance automático) lleva a la siguiente pregunta"). Both paths funnel
-   * through the same `advance()` so a game is only ever walked forward once
-   * per question, whichever trigger fires first. `analyticsStorage` records
-   * the aggregated `pregunta_respondida`/`pregunta_respondida_fallo` event
-   * counters (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client
-   * whose `recordQuestionAnswered` call updates that question's historic
-   * accuracy aggregate.
+   * "Siguiente" or, if they don't, automatically once `AUTO_ADVANCE_GRACE_MS`
+   * has elapsed since the answer was revealed (PRD main_workflow step 5:
+   * "botón 'Siguiente' (o avance automático) lleva a la siguiente
+   * pregunta"). Both paths funnel through the same `advance()` so a game is
+   * only ever walked forward once per question, whichever trigger fires
+   * first. `analyticsStorage` records the aggregated
+   * `pregunta_respondida`/`pregunta_respondida_fallo` event counters
+   * (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client whose
+   * `recordQuestionAnswered` call updates that question's historic accuracy
+   * aggregate.
    */
   function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext) {
     var question = session.questions[session.state.questionIndex];
@@ -1299,11 +1298,6 @@
         renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext);
       }
     }
-
-    var minAdvanceDelayMs =
-      (typeof renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS === 'number' &&
-        renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
-      0;
 
     var questionOptions = {
       score: session.state.score,
@@ -1354,7 +1348,7 @@
           storage.markFunFactDiscovered(question.id);
         }
 
-        autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
+        autoAdvanceTimer = setTimeout(advance, AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
         if (session.state.questionIndex + 1 >= session.questions.length) {
