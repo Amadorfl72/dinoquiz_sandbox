@@ -58,13 +58,14 @@ function buildLeveledQuestionBank(levels) {
 
 // Answers the currently visible question and advances manually via
 // "Siguiente" (TRIOFSND-84): the button is shown and enabled synchronously
-// in the same update as the feedback (AC-6), so it's located and asserted
-// on right away — no timer advance is needed to reveal, enable or click it.
-// The 0ms fake-timer advance right before the click below only flushes the
-// microtask queue for the already-fired, fire-and-forget `onAnswer` storage
-// writes (e.g. TRIOFSND-129's discovered-fun-facts tally), so they've
-// settled before the next question/Resultados renders — it adds no real
-// wall-clock wait and is unrelated to "Siguiente" itself.
+// in the same update as the feedback (AC-6), so it's located, asserted on
+// and clicked right away — no timer advance or wait of any kind is needed
+// to reveal, enable or click it. `onAnswer`'s storage writes (e.g.
+// TRIOFSND-129's discovered-fun-facts tally) are fired synchronously but
+// settle asynchronously; that's a storage-persistence concern, not a
+// "Siguiente" one, so a test that reads their result back (like the
+// TRIOFSND-129 describe block below) flushes for it locally instead of
+// this shared helper doing it for every caller.
 async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
@@ -79,7 +80,6 @@ async function answerCurrentQuestion(container, { correct }) {
   // a screen reader's virtual cursor reaches it before the fun-fact text.
   expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-  await jest.advanceTimersByTimeAsync(0);
   nextButton.click();
 }
 
@@ -1090,11 +1090,32 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
       return renderResultsScreen(resultsContainer, options);
     };
 
+    // storage.markFunFactDiscovered is fire-and-forget (see main.js's
+    // onAnswer) and only settles a few microtask turns later (StorageClient's
+    // set()/init() chain several awaits) -- unrelated to "Siguiente" itself,
+    // which is visible/enabled synchronously the instant the option is
+    // selected, asserted below with no wait. The flush after selecting the
+    // option exists purely so the discoveredFunFactsCount this test asserts
+    // on -- read synchronously by the 10th click's Resultados render --
+    // reflects every fun fact discovered in the game.
+    async function answerAndFlushFunFactWrite(container, { correct }) {
+      const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+      const index = correct ? 0 : 1;
+      buttons[index].click();
+
+      const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+      expect(nextButton.hidden).toBe(false);
+      expect(nextButton.disabled).toBe(false);
+
+      await jest.advanceTimersByTimeAsync(0);
+      nextButton.click();
+    }
+
     jest.useFakeTimers();
     try {
       startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
       for (let i = 0; i < 10; i += 1) {
-        await answerCurrentQuestion(container, { correct: true });
+        await answerAndFlushFunFactWrite(container, { correct: true });
       }
     } finally {
       jest.useRealTimers();
@@ -1566,7 +1587,8 @@ describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () 
     const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
     const index = correct ? question.correctAnswerIndex : (question.correctAnswerIndex + 1) % buttons.length;
     buttons[index].click();
-    await jest.advanceTimersByTimeAsync(0);
+    // "Siguiente" is shown and enabled synchronously in the same update as
+    // the feedback (AC-6), so it's clicked right away — no timer advance.
     getByRole(container, 'button', { name: questionStrings.nextButton }).click();
   }
 
