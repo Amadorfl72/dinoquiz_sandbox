@@ -475,6 +475,7 @@
   },
   "hallOfFame": {
     "title": "Hall of Fame",
+    "backButtonLabel": "Back",
     "columns": {
       "rank": "Rank",
       "player": "Player",

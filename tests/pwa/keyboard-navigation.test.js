@@ -110,15 +110,18 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         strings: strings.home,
         privacyStrings: strings.privacy,
         purchaseStrings: strings.purchase,
+        hallOfFameStrings: strings.hallOfFame,
         nicknameStrings: strings.nicknameSettings,
       });
 
       const homeTabOrder = getTabOrder(container);
       // Reading order: play button, then the privacy-policy icon, then the
-      // global controls row (mute / privacy / purchase / nickname) below it.
+      // Hall of Fame icon, then the global controls row (mute / privacy /
+      // purchase / nickname) below it.
       expect(homeTabOrder).toEqual([
         homeApi.playButton,
         homeApi.privacyPolicyButton,
+        homeApi.hallOfFameButton,
         homeApi.muteButton,
         homeApi.privacyButton,
         homeApi.purchaseButton,
