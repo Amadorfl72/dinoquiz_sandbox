@@ -116,7 +116,7 @@
   },
   "ageGate": {
     "screenTitle": "How old are you?",
-    "instructions": "Choose your age to start playing. It's only used for this game: we don't save or share it.",
+    "instructions": "Choose your age to start playing. It's only used while you play this game: it isn't saved or shared. That's different from your nickname: if you saved one, it stays saved on this device until you delete it.",
     "sevenOption": "7 years or younger",
     "eightPlusOption": "8 years or older"
   },
@@ -183,9 +183,10 @@
         "id": "que-datos",
         "heading": "What information do we use?",
         "paragraphs": [
-          "DinoQuiz doesn't ask for or store personal data from children: there's no registration, no name, no photo, no location, and no contacts.",
+          "DinoQuiz doesn't ask for data that truly identifies children: there's no registration, no real name is requested, no photo, no location, and no contacts.",
+          "Before each game, we ask for an age to adapt the game. That age is only used while the game lasts and isn't saved anywhere, not on the device and not on any server.",
           "Everything the app needs to play (questions, images, sounds) is already included and works without an internet connection.",
-          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, whether sound is muted, and, if voluntarily saved, a nickname (never the real name or last name). This information never leaves the device.",
+          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, whether sound is muted, and, if voluntarily saved, a nickname (never the real name or last name). That nickname can be edited or deleted at any time from Home, and deleting it also removes it from this device. This information never leaves the device.",
           "We may receive anonymous, aggregated technical information such as the device model, system version, language, or screen size, and usage statistics (for example, whether a game was completed). This data cannot identify any individual person."
         ]
       },
@@ -381,7 +382,7 @@
     "sections": [
       {
         "heading": "What data do we collect?",
-        "body": "None that's personal. DinoQuiz doesn't ask for name, age, photo, email, or any other data that identifies the player. There are no accounts or logins."
+        "body": "None that truly identifies the player. Before the game we ask for an age to adapt the game, but it isn't saved or shared: it's only used while that game lasts. We don't ask for a real name, photo, email, or location, and there are no accounts or logins."
       },
       {
         "heading": "Where is progress saved?",

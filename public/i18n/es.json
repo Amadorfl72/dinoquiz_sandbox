@@ -116,7 +116,7 @@
   },
   "ageGate": {
     "screenTitle": "¿Cuántos años tienes?",
-    "instructions": "Elige tu edad para empezar a jugar. Solo se usa en esta partida: no la guardamos ni la compartimos.",
+    "instructions": "Elige tu edad para empezar a jugar. Se usa solo mientras juegas esta partida: no se guarda ni se comparte. Esto es distinto de tu apodo: si guardaste uno, ese sí se queda guardado en este dispositivo hasta que tú lo borres.",
     "sevenOption": "7 años o menos",
     "eightPlusOption": "8 años o más"
   },
@@ -183,9 +183,10 @@
         "id": "que-datos",
         "heading": "¿Qué información usamos?",
         "paragraphs": [
-          "DinoQuiz no pide ni guarda datos personales de niñas y niños: no hay registro, no hay nombre, no hay foto, no hay ubicación ni contactos.",
+          "DinoQuiz no pide datos que identifiquen realmente a niñas y niños: no hay registro, no se pide el nombre real, no hay foto, no hay ubicación ni contactos.",
+          "Antes de cada partida se pregunta la edad para adaptar el juego. Esa edad se usa solo mientras dura la partida y no se guarda en ningún sitio, ni en el dispositivo ni en ningún servidor.",
           "Todo lo que necesita la app para jugar (preguntas, imágenes, sonidos) viene ya incluido y funciona sin conexión a internet.",
-          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos, si el sonido está silenciado y, si se ha guardado voluntariamente, un apodo (nunca el nombre real ni el apellido). Esta información nunca sale del dispositivo.",
+          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos, si el sonido está silenciado y, si se ha guardado voluntariamente, un apodo (nunca el nombre real ni el apellido). Ese apodo se puede editar o borrar en cualquier momento desde Inicio, y borrarlo lo elimina también de este dispositivo. Esta información nunca sale del dispositivo.",
           "De forma anónima y agregada podemos recibir información técnica como el modelo del dispositivo, la versión del sistema, el idioma o el tamaño de pantalla, y estadísticas de uso (por ejemplo, si una partida se completó). Estos datos no permiten identificar a ninguna persona."
         ]
       },
@@ -381,7 +382,7 @@
     "sections": [
       {
         "heading": "¿Qué datos recogemos?",
-        "body": "Ninguno personal. DinoQuiz no pide nombre, edad, foto, email ni ningún otro dato que identifique a quien juega. No hay cuentas ni inicio de sesión."
+        "body": "Ninguno que identifique realmente a quien juega. Antes de la partida se pregunta la edad para adaptar el juego, pero no se guarda ni se comparte: solo se usa mientras dura esa partida. No se pide nombre real, foto, email ni ubicación, y no hay cuentas ni inicio de sesión."
       },
       {
         "heading": "¿Dónde se guarda el progreso?",
