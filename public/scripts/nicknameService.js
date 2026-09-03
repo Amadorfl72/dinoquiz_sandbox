@@ -3,17 +3,16 @@
 /**
  * Local nickname ("apodo") persistence.
  *
- * The implementation lives here (public/scripts/) rather than only under
- * src/services/ because, without a bundler, the browser can only run code it
- * loads as a plain `<script>` (see public/index.html) -- the same rationale
- * documented for public/scripts/homeScreen.js/network.js. This registers on
- * `window.DinoQuiz.services.nicknameService` (same dual CommonJS/browser-
- * global pattern as public/scripts/modeStorage.js) so the Home screen's
- * nickname edit/delete action (public/scripts/main.js) actually persists in
- * the real, unbundled PWA -- before this file existed, only Node/Jest could
- * ever reach this module. The canonical `src/services/nicknameService.js`
- * re-exports this file for Node/Jest and other `src/` modules (mirrors
- * src/services/network.js re-exporting public/scripts/network.js).
+ * The implementation lives here in public/scripts/ (not only in
+ * src/services/) because, without a bundler, the browser can only run code
+ * it loads as a plain `<script>` (see public/index.html) -- public/scripts/main.js's
+ * game-start flow reads it live, and the Home screen's nickname edit/delete
+ * action does too. It registers itself on `window.DinoQuiz.services.nicknameService`,
+ * the same require-or-`window.DinoQuiz` bridge every other browser-facing
+ * service uses (modeStorage.js, analytics.js). The canonical
+ * `src/services/nicknameService.js` module re-exports this file so Node/Jest
+ * keep a single source of truth, mirroring how src/services/modeStorage.js
+ * re-exports public/scripts/modeStorage.js.
  *
  * Client-only, namespaced under `dinoquiz:` per the PRD's local-state
  * constraint (no accounts/auth/cloud sync, PRD out_of_scope) -- deliberately

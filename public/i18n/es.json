@@ -473,6 +473,22 @@
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
     }
   },
+  "hallOfFame": {
+    "title": "Salón de la Fama",
+    "columns": {
+      "rank": "Puesto",
+      "player": "Jugador o jugadora",
+      "score": "Puntos"
+    },
+    "guestLabel": "Jugador invitado",
+    "emptyMessage": "Todavía no hay partidas guardadas. ¡Juega una partida para aparecer aquí!",
+    "highlightBadge": "Tu partida",
+    "deleteButtonLabel": "Borrar Hall of Fame",
+    "deleteConfirmMessage": "¿Seguro que quieres borrar todo el Hall of Fame? Esta acción no se puede deshacer.",
+    "deleteConfirmButtonLabel": "Sí, borrar",
+    "deleteCancelButtonLabel": "Cancelar",
+    "deleteSuccessMessage": "Hall of Fame borrado en este dispositivo."
+  },
   "feedback": {
     "correct": {
       "message": "¡Genial, acertaste!"

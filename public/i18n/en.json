@@ -473,6 +473,22 @@
       "rewardedButton": "Watch an ad to discover an extra clue"
     }
   },
+  "hallOfFame": {
+    "title": "Hall of Fame",
+    "columns": {
+      "rank": "Rank",
+      "player": "Player",
+      "score": "Score"
+    },
+    "guestLabel": "Guest player",
+    "emptyMessage": "There are no saved games yet. Play a game to show up here!",
+    "highlightBadge": "Your game",
+    "deleteButtonLabel": "Clear Hall of Fame",
+    "deleteConfirmMessage": "Are you sure you want to clear the whole Hall of Fame? This cannot be undone.",
+    "deleteConfirmButtonLabel": "Yes, clear it",
+    "deleteCancelButtonLabel": "Cancel",
+    "deleteSuccessMessage": "Hall of Fame cleared on this device."
+  },
   "feedback": {
     "correct": {
       "message": "Great, you got it right!"

@@ -19,7 +19,7 @@
  * stay a superset of that manifest (one entry per resource); see that
  * module's test for the completeness check.
  */
-const SW_VERSION = 'v51';
+const SW_VERSION = 'v54';
 const PRECACHE_NAME = `dinoquiz-precache-${SW_VERSION}`;
 const RUNTIME_CACHE_NAME = `dinoquiz-runtime-${SW_VERSION}`;
 
@@ -55,6 +55,8 @@ const PRECACHE_URLS = [
   '/scripts/ageGateScreen.js',
   '/scripts/nicknameService.js',
   '/scripts/nicknameScreen.js',
+  '/scripts/nicknameService.js',
+  '/scripts/hallOfFameService.js',
   '/scripts/imageStyleService.js',
   '/scripts/questionScreen.js',
   '/scripts/mazeGenerator.js',
@@ -72,6 +74,8 @@ const PRECACHE_URLS = [
   '/scripts/timelineScreen.js',
   '/scripts/oidoJurasicoScreen.js',
   '/scripts/resultsScreen.js',
+  '/scripts/hallOfFameService.js',
+  '/scripts/hallOfFameScreen.js',
   '/scripts/modesCatalog.js',
   '/scripts/unlockThresholds.js',
   '/scripts/modeStorage.js',

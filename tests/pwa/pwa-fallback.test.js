@@ -205,6 +205,11 @@ describe('TRIOFSND-113: install capability (beforeinstallprompt) is fully option
     container.id = 'app';
     document.body.appendChild(container);
     jest.resetModules();
+    // A saved nickname (nicknameService.js's `dinoquiz:nickname`) makes the
+    // nickname step -- shown right after '¡Jugar!', before the age gate --
+    // skip itself silently, so this scenario (which doesn't care about the
+    // nickname flow itself) reaches the age gate straight away.
+    window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('Rex'));
   });
 
   afterEach(() => {
