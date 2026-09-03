@@ -450,6 +450,120 @@ body {
   outline: 4px solid #fbc02d;
   outline-offset: 3px;
 }
+
+.home-screen__nickname-current {
+  font-weight: 700;
+}
+
+.home-screen__nickname-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.home-screen__nickname-label {
+  font-weight: 700;
+  text-align: left;
+}
+
+.home-screen__nickname-input {
+  min-height: 48px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 3px solid #1b5e20;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.home-screen__nickname-input:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.home-screen__nickname-input[aria-invalid='true'] {
+  border-color: #b71c1c;
+}
+
+.home-screen__nickname-error {
+  margin: 0;
+  font-weight: 700;
+  color: #b71c1c;
+  text-align: left;
+}
+
+.home-screen__nickname-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-screen__nickname-save-button,
+.home-screen__nickname-delete-button,
+.home-screen__nickname-delete-cancel-button,
+.home-screen__nickname-delete-confirm-button {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__nickname-save-button,
+.home-screen__nickname-delete-cancel-button {
+  color: #ffffff;
+  background-color: #2e7d32;
+}
+
+.home-screen__nickname-delete-button,
+.home-screen__nickname-delete-confirm-button {
+  color: #ffffff;
+  background-color: #b71c1c;
+}
+
+.home-screen__nickname-save-button:focus-visible,
+.home-screen__nickname-delete-button:focus-visible,
+.home-screen__nickname-delete-cancel-button:focus-visible,
+.home-screen__nickname-delete-confirm-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
+.home-screen__nickname-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 2px solid #b71c1c;
+  border-radius: 12px;
+}
+
+.home-screen__nickname-delete-confirm-message {
+  margin: 0;
+}
+
+.home-screen__nickname-delete-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-screen__nickname-status {
+  min-height: 1.25em;
+  margin: 12px 0 0;
+  font-weight: 700;
+}
+
 /* Tablet landscape: the primary target — give the mascot and title more room. */
 @media (min-width: 900px) and (orientation: landscape) {
   .home-screen {
@@ -848,8 +962,11 @@ body {
 
 /*
  * "Siguiente" button: minimum 48x48dp tap area and >=20sp text (AC-2/AC-4
- * style minimums). It renders disabled for MIN_ADVANCE_DELAY_MS (see
- * QuestionScreen.js) so the dato curioso stays readable before advancing.
+ * style minimums). It renders visible and enabled as soon as the answer is
+ * revealed (AC-6, see QuestionScreen.js's handleSelect) and, in the markup
+ * below, precedes `.question-screen__fun-fact-box` -- the column flex
+ * layout on `.question-screen` follows DOM order with no `order` overrides,
+ * so that source order is also the visual/focus order at every breakpoint.
  * The hover/focus-visible/active states (TRIOFSND-90) give sighted and
  * keyboard users the same clear affordance screen-reader users get from
  * the aria-live feedback announcement.

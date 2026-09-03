@@ -26,7 +26,7 @@ require('@testing-library/jest-dom');
  */
 
 const { renderHomeScreen } = require('../../public/scripts/homeScreen');
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
+const { renderQuestionScreen } = require('../../public/scripts/questionScreen');
 const { renderResultsScreen } = require('../../public/scripts/resultsScreen');
 const i18n = require('../../src/i18n');
 
@@ -111,12 +111,13 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         privacyStrings: strings.privacy,
         purchaseStrings: strings.purchase,
         hallOfFameStrings: strings.hallOfFame,
+        nicknameStrings: strings.nicknameSettings,
       });
 
       const homeTabOrder = getTabOrder(container);
       // Reading order: play button, then the privacy-policy icon, then the
       // Hall of Fame icon, then the global controls row (mute / privacy /
-      // purchase) below it.
+      // purchase / nickname) below it.
       expect(homeTabOrder).toEqual([
         homeApi.playButton,
         homeApi.privacyPolicyButton,
@@ -124,6 +125,7 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         homeApi.muteButton,
         homeApi.privacyButton,
         homeApi.purchaseButton,
+        homeApi.nicknameButton,
       ]);
       // The disclosure panels are closed on mount, so their controls (close
       // buttons, purchase confirm) aren't in the tab order yet.
@@ -160,9 +162,6 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         score += 1;
 
         expect(questionApi.scoreEl.textContent).toContain(String(score));
-
-        // "Siguiente" stays disabled for MIN_ADVANCE_DELAY_MS (AC-6).
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
 
         const tabOrderAfterAnswer = getTabOrder(container);
         // Every option is now disabled (excluded from the tab order);

@@ -38,11 +38,15 @@
  * persisting it failed, `getEntries` degrades to `[]`, and `clearAll`
  * degrades to `false`.
  *
- * Browser bridge: the Hall of Fame screen (public/scripts/hallOfFameScreen.js)
- * has to read/write this live in the real, bundler-less browser, so --
+ * Browser bridge: both public/scripts/main.js's game-finish flow (which
+ * resolves a name via nameEntryScreen/nameService -- reusing a saved name
+ * or prompting for one -- before writing a new entry) and the Hall of Fame
+ * screen (public/scripts/hallOfFameScreen.js, reading and rendering the
+ * list) have to use this live in the real, bundler-less browser, so --
  * following the same dual CommonJS/`window.DinoQuiz` pattern as
  * public/scripts/modeStorage.js -- this implementation lives here and is
- * loaded as a plain `<script>` (see public/index.html). The canonical
+ * loaded as a plain `<script>` (see public/index.html), registering itself
+ * on `window.DinoQuiz.services.hallOfFameService`. The canonical
  * `src/services/hallOfFameService.js` re-exports this file so Node/Jest keep
  * a single source of truth.
  */
