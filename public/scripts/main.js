@@ -669,6 +669,57 @@
   }
 
   /**
+   * Further narrows `evaluateModesWithShadowOverride`'s verdicts so a mode is
+   * only ever offered as a playable ("jugable") card when it also has a real
+   * entry in `registry` (a `buildModeDispatchRegistry(...)` result) --
+   * mirroring that function's own Sombra/Clasifica/Ordena por tamaño pattern
+   * of replacing a verdict instead of trusting the generic catalog check
+   * alone, just gated on real dispatch wiring rather than a per-mode
+   * isXModeUnlocked() check. A mode the catalog reports "available" but that
+   * has no registry entry (its own renderer/dependency never loaded, or
+   * modesCatalog.js declares an id `buildModeDispatchRegistry` doesn't wire
+   * yet) is forced blocked with `DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING` --
+   * the same cause `handleModeSelected` already records when a tap resolves
+   * no destination -- so the card is withheld up front instead of ever
+   * reaching that fallback. A mode already blocked for another reason (e.g.
+   * insufficient creatures) is left untouched: this only ever tightens an
+   * "available" verdict, never loosens a blocked one.
+   *
+   * `parejas` is deliberately NOT special-cased blocked here. The original
+   * filtering requirement assumed TRIOFSND-276 (Parejas jurásicas) was still
+   * pending, so gating on `registry` would exclude it automatically. That
+   * ticket has since shipped (PR #326, predates this change) with its own
+   * renderer, dispatch entry and end-to-end offline coverage
+   * (tests/pwa/offline-parejas-game.test.js, tests/pwa/parejas-game-browser.test.js,
+   * tests/pwa/mode-dispatch-fallback.test.js, tests/pwa/mode-dispatch-catalog.test.js
+   * all exercise it as playable via this exact selector), so `registry`
+   * genuinely has a real `parejas` entry today and this gate correctly
+   * offers it -- hard-coding it blocked would regress a finished mode and
+   * break that existing coverage for no product reason (see G7, "sin
+   * regresiones funcionales", in the PRD this mode shipped under).
+   */
+  function evaluateModesWithDispatchGate(catalog, modes, registry) {
+    var results = evaluateModesWithShadowOverride(catalog, modes);
+    var safeRegistry = registry || {};
+
+    return results.map(function (verdict) {
+      if (!verdict.available) {
+        return verdict;
+      }
+      var entry = safeRegistry[verdict.modeId];
+      if (entry && entry.modeId === verdict.modeId) {
+        return verdict;
+      }
+      return {
+        modeId: verdict.modeId,
+        available: false,
+        cause: DISPATCH_BLOCKED_CAUSE_RENDERER_MISSING,
+        details: null,
+      };
+    });
+  }
+
+  /**
    * Resolves public/scripts/modeStorage.js (TRIOFSND-230/234), the
    * last-selected-mode persistence service -- same require-or-`window.DinoQuiz`
    * pattern as `resolveGameFlow`/`resolveMazeGame` above. `startLevelGame`
@@ -3350,6 +3401,13 @@
         ? modeStorage.getLastMode(ctx && ctx.storageObj)
         : null;
 
+    // The very same registry `handleModeSelected`'s `startMode()` consults
+    // when a card is actually tapped (see that function's own doc comment),
+    // built here up front purely to read which mode ids it has an entry for
+    // -- `evaluateModesWithDispatchGate` never calls any of its `dispatch()`
+    // closures, only checks presence.
+    var dispatchRegistry = buildModeDispatchRegistry(container, renderers, questions, doc, fetchFn, ctx);
+
     return renderers.renderModeSelectorScreen(container, {
       strings: resources && resources.modeSelector,
       modesStrings: resources && resources.modes,
@@ -3358,8 +3416,15 @@
       // isClassifyModeUnlocked checks -- see evaluateModesWithShadowOverride's
       // own doc comment. A missing modesCatalog.js (e.g. failed to load)
       // falls back to modeSelectorScreen.js's own default resolution
-      // untouched.
-      evaluateModes: resolveModesCatalog() ? evaluateModesWithShadowOverride : undefined,
+      // untouched. Also gates every verdict on `dispatchRegistry` (see
+      // `evaluateModesWithDispatchGate`'s own doc comment) so a card is only
+      // ever offered as playable when it also has a real dispatch entry --
+      // never based on the catalog's resource counts alone.
+      evaluateModes: resolveModesCatalog()
+        ? function (catalog, modes) {
+            return evaluateModesWithDispatchGate(catalog, modes, dispatchRegistry);
+          }
+        : undefined,
       onSelectMode: function (modeId) {
         handleModeSelected(container, renderers, questions, doc, fetchFn, resources, ctx, modeId, currentModeId);
       },
@@ -4758,6 +4823,7 @@
       resolveIsShadowModeUnlocked: resolveIsShadowModeUnlocked,
       resolveIsClassifyModeUnlocked: resolveIsClassifyModeUnlocked,
       evaluateModesWithShadowOverride: evaluateModesWithShadowOverride,
+      evaluateModesWithDispatchGate: evaluateModesWithDispatchGate,
       renderShadowRoundAt: renderShadowRoundAt,
       playShadowGuessLevel: playShadowGuessLevel,
       finishShadowGuessLevel: finishShadowGuessLevel,
