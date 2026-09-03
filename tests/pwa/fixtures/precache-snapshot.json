@@ -1,5 +1,5 @@
 {
-  "swVersion": "v48",
+  "swVersion": "v49",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -188,7 +188,7 @@
     "/scripts/launchGateScreen.js": "4bf280b92384e5bf4a2aa7170a526509d98f4fbce4ef3915c42fbb986ef79aa9",
     "/scripts/modeResourceValidation.js": "c11d2cb97e28080d6c4183a34399979b4ef93c2c55bfec65d2df4e82df7ab074",
     "/scripts/offlineDiagnosticsPanel.js": "65808e262bfe9cd70687bf116dda42703e45fee1c3c139127678470873208b9e",
-    "/scripts/main.js": "c981098fdad0f2a06c03b2e1aafab2bd7665ab8d18b21d21f40adb24e06ac786",
+    "/scripts/main.js": "58f5a6a96c7ef47c36ca45c0b7b069c202435bf9f973c8549f8de924f70780d6",
     "/icons/icon.svg": "17da64ccfd4edae6de8813fbc4a3126df29a80250e005c34e708487a400a3653",
     "/assets/images/mascot.svg": "6ae1a73c12a193fe74b07d6c51def00cc2d122bf5ee77d4b4a4b4666e6550b94",
     "/assets/images/dinosaurs/trex.svg": "a8130b220650eec59d2d20aaecda55b1897abde244c41603a0f74fb37cc7c560",

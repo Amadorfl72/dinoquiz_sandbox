@@ -684,6 +684,19 @@
    * reaching that fallback. A mode already blocked for another reason (e.g.
    * insufficient creatures) is left untouched: this only ever tightens an
    * "available" verdict, never loosens a blocked one.
+   *
+   * `parejas` is deliberately NOT special-cased blocked here. The original
+   * filtering requirement assumed TRIOFSND-276 (Parejas jurásicas) was still
+   * pending, so gating on `registry` would exclude it automatically. That
+   * ticket has since shipped (PR #326, predates this change) with its own
+   * renderer, dispatch entry and end-to-end offline coverage
+   * (tests/pwa/offline-parejas-game.test.js, tests/pwa/parejas-game-browser.test.js,
+   * tests/pwa/mode-dispatch-fallback.test.js, tests/pwa/mode-dispatch-catalog.test.js
+   * all exercise it as playable via this exact selector), so `registry`
+   * genuinely has a real `parejas` entry today and this gate correctly
+   * offers it -- hard-coding it blocked would regress a finished mode and
+   * break that existing coverage for no product reason (see G7, "sin
+   * regresiones funcionales", in the PRD this mode shipped under).
    */
   function evaluateModesWithDispatchGate(catalog, modes, registry) {
     var results = evaluateModesWithShadowOverride(catalog, modes);
