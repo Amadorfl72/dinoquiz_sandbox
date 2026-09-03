@@ -1,5 +1,5 @@
 {
-  "swVersion": "v56",
+  "swVersion": "v57",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -195,8 +195,8 @@
     "/styles/main.css"
   ],
   "contentHashes": {
-    "/": "be88665e74de9b4e5cfac71bc3c76bf76818f6dc304af8bf857f08f6123d03f1",
-    "/index.html": "be88665e74de9b4e5cfac71bc3c76bf76818f6dc304af8bf857f08f6123d03f1",
+    "/": "ac600e0877ccede4a99f8278a2237fa71e46f195f9aa2fda60b002e6b2851df3",
+    "/index.html": "ac600e0877ccede4a99f8278a2237fa71e46f195f9aa2fda60b002e6b2851df3",
     "/manifest.json": "dc7b6df9a964521162c120b9a9fc786b03f1b892666b5db13e170a95407f94e5",
     "/styles/main.css": "b25cdab2a15138dd95172e4b2b82270583bb8bf86886e4d5d74f2a5b6f8dd27d",
     "/scripts/scoring.js": "e4bf1edd3c843106032ebba0d0eedc80bd608a39152a5b9ac41652131d852e0f",
