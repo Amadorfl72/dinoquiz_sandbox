@@ -1094,10 +1094,12 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
     // onAnswer) and only settles a few microtask turns later (StorageClient's
     // set()/init() chain several awaits) -- unrelated to "Siguiente" itself,
     // which is visible/enabled synchronously the instant the option is
-    // selected, asserted below with no wait. The flush after selecting the
-    // option exists purely so the discoveredFunFactsCount this test asserts
-    // on -- read synchronously by the 10th click's Resultados render --
-    // reflects every fun fact discovered in the game.
+    // selected, asserted below with no wait. The flush is required before
+    // clicking "Siguiente" only because the 10th click renders Resultados
+    // synchronously, and that render reads discoveredFunFactsCount -- this
+    // test's own assertion below -- so the pending write must have settled
+    // by then; "Siguiente" itself is already visible/enabled before the
+    // flush runs, so this never gates its own availability.
     async function answerAndFlushFunFactWrite(container, { correct }) {
       const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
       const index = correct ? 0 : 1;
