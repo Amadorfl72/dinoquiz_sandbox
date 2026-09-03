@@ -110,17 +110,19 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         strings: strings.home,
         privacyStrings: strings.privacy,
         purchaseStrings: strings.purchase,
+        nicknameStrings: strings.nicknameSettings,
       });
 
       const homeTabOrder = getTabOrder(container);
       // Reading order: play button, then the privacy-policy icon, then the
-      // global controls row (mute / privacy / purchase) below it.
+      // global controls row (mute / privacy / purchase / nickname) below it.
       expect(homeTabOrder).toEqual([
         homeApi.playButton,
         homeApi.privacyPolicyButton,
         homeApi.muteButton,
         homeApi.privacyButton,
         homeApi.purchaseButton,
+        homeApi.nicknameButton,
       ]);
       // The disclosure panels are closed on mount, so their controls (close
       // buttons, purchase confirm) aren't in the tab order yet.

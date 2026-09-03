@@ -1,5 +1,5 @@
 {
-  "swVersion": "v53",
+  "swVersion": "v54",
   "precacheUrls": [
     "/",
     "/index.html",
@@ -22,6 +22,7 @@
     "/scripts/homeScreen.js",
     "/scripts/privacyPolicyScreen.js",
     "/scripts/ageGateScreen.js",
+    "/scripts/nicknameService.js",
     "/scripts/nicknameScreen.js",
     "/scripts/nicknameService.js",
     "/scripts/hallOfFameService.js",
@@ -154,9 +155,10 @@
     "/scripts/roundDiagnosticsService.js": "1f7b470ce6b3faf84a00a6319492b1f4c4f27513ee854631fc0e572383b2fe87",
     "/scripts/a11yAnnouncer.js": "42092c8a2dddde7118340bfdc685a86e215ea2cdd8f5da650953b75aa161ef6e",
     "/scripts/appShell.js": "f3a35c90cc8dd6700694d5cbe385b60592a6e7ae018bee94b8a97babee0f7527",
-    "/scripts/homeScreen.js": "9fe21b377c8000aa9ce6ae3fc582445b1046502094c267e67cabe9499d77375e",
+    "/scripts/homeScreen.js": "20bc659c4cadc4a79ff503a43d7dbad5e803f1cece26455cb06497fa21f49980",
     "/scripts/privacyPolicyScreen.js": "576ef72170e77077bf2a429a4b9cfcf5f1531734b6ff7b4c5c26afe8918dc6f5",
     "/scripts/ageGateScreen.js": "4e581209cf3cb21ab3bdd892c74d5ae79a443d245872d60bea7e2936c408166e",
+    "/scripts/nicknameService.js": "183a768cf3457c4f953a63611c9c0ba2f30feb124db3c98a8ca4a57239b2991a",
     "/scripts/nicknameScreen.js": "3953e4ce1e5b7cfbeeac16a6200153c9fe839dc36404d5778d0729fe2ca80314",
     "/scripts/nicknameService.js": "67545c6359b34eb28bdbce3b465df0a9fecbcc9ebd2fba3d3fb3d9189bb3b2b4",
     "/scripts/hallOfFameService.js": "73a2e6cf0444a2e8065e187552a8fbd2b3b4dd3c5735dc72055b94cbe525edf2",

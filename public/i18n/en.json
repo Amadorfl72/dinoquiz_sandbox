@@ -28,7 +28,8 @@
         "unmuteLabel": "Unmute sound"
       },
       "privacyButton": "Privacy summary",
-      "purchaseButton": "Remove ads"
+      "purchaseButton": "Remove ads",
+      "nicknameButton": "Edit or delete your nickname"
     },
     "tooltip": {
       "message": "Tap here to play!"
@@ -175,7 +176,7 @@
     "updatedAt": "Last updated: July 2026",
     "kidsCallout": {
       "heading": "For you, little one 🦖",
-      "body": "DinoQuiz doesn't ask for your name, your photo, or where you live. We only save your best score and the fun facts you've already discovered on this device, so you can see them next time you play."
+      "body": "DinoQuiz doesn't ask for your real name, your photo, or where you live. We only save your best score, the fun facts you've already discovered and, if you want, a nickname to greet you -- and you can change or delete it whenever you want."
     },
     "sections": [
       {
@@ -184,7 +185,7 @@
         "paragraphs": [
           "DinoQuiz doesn't ask for or store personal data from children: there's no registration, no name, no photo, no location, and no contacts.",
           "Everything the app needs to play (questions, images, sounds) is already included and works without an internet connection.",
-          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, and whether sound is muted. This information never leaves the device.",
+          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, whether sound is muted, and, if voluntarily saved, a nickname (never the real name or last name). This information never leaves the device.",
           "We may receive anonymous, aggregated technical information such as the device model, system version, language, or screen size, and usage statistics (for example, whether a game was completed). This data cannot identify any individual person."
         ]
       },
@@ -209,7 +210,7 @@
         "heading": "Your rights (and your child's)",
         "paragraphs": [
           "Since we don't collect personal data, there's no profile to look up, correct, or delete in our systems.",
-          "All saved information lives only on the device: you can delete it at any time by uninstalling the app or clearing its data from the device or browser settings.",
+          "All saved information lives only on the device: you can delete it at any time by uninstalling the app or clearing its data from the device or browser settings. The saved nickname, specifically, can also be edited or deleted at any time from the 'Edit or delete your nickname' control on the Home screen, with no need to touch any device setting.",
           "If you have any questions about privacy, or believe some data was collected that shouldn't have been, you can exercise your rights of access, rectification, erasure, objection, and portability by writing to the contact address below."
         ]
       },
@@ -384,7 +385,7 @@
       },
       {
         "heading": "Where is progress saved?",
-        "body": "The score, the streak of correct answers, and the discovered fun facts are saved only on this device (localStorage/IndexedDB). They're never sent to any server."
+        "body": "The score, the streak of correct answers, the discovered fun facts and, if voluntarily saved, a nickname, are saved only on this device (localStorage/IndexedDB). They're never sent to any server."
       },
       {
         "heading": "What anonymous data is used?",
@@ -396,7 +397,7 @@
       },
       {
         "heading": "What are your rights?",
-        "body": "Since we don't store personal data, there's nothing to delete, correct, or export at an individual level. If you have any questions, you can write to us."
+        "body": "Since we don't store personal data, there's nothing to delete, correct, or export at an individual level. The saved nickname is the one exception: you can edit or delete it whenever you want from 'Edit or delete your nickname' on Home, and clearing all device data (uninstalling the app or clearing data from settings) removes it too. If you have any questions, you can write to us."
       },
       {
         "heading": "Contact",
@@ -411,6 +412,25 @@
     "priceLabel": "One-time payment of €3.99",
     "purchaseButton": "Buy now",
     "offlineNotice": "There's no internet connection right now. Connect to wifi or mobile data and try again to complete the purchase."
+  },
+  "nicknameSettings": {
+    "heading": "Your nickname",
+    "closeButton": "Close",
+    "description": "This nickname is saved only on this device to personalize the game. You can change it or delete it whenever you want.",
+    "currentNicknameFormat": "Saved nickname: {nickname}",
+    "noNicknameSaved": "You haven't saved a nickname yet.",
+    "inputLabel": "New nickname",
+    "saveButton": "Save",
+    "deleteButton": "Delete nickname",
+    "deleteConfirmMessage": "Are you sure you want to delete your nickname saved on this device? Next time you play you'll be asked whether to save one again.",
+    "deleteConfirmButton": "Delete",
+    "deleteCancelButton": "Cancel",
+    "saveSuccessMessage": "Nickname saved on this device.",
+    "deleteSuccessMessage": "Nickname deleted from this device.",
+    "errors": {
+      "empty": "Type a nickname before saving.",
+      "tooLong": "Your nickname is too long. Use 20 letters at most."
+    }
   },
   "results": {
     "heading": "Results!",

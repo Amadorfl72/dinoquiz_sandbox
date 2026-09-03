@@ -82,6 +82,21 @@
  * progress line above, so reopening the app shows what was achieved on this
  * device so far -- same read-only, storage-agnostic rationale, and each is
  * independently optional (omitting one still renders the other).
+ *
+ * Nickname edit/delete (PRD "Añadir opción visible para cambiar/borrar el
+ * nombre"): a fourth global-controls disclosure, same pattern as
+ * privacy/purchase above. `options.nickname` is the currently saved apodo
+ * (or null/undefined), read by the caller via nicknameService before this
+ * renders -- this screen never touches storage itself. Saving calls
+ * `options.onSaveNickname(value)` with the trimmed, validated value (it
+ * replaces any previously saved apodo); deleting requires a second tap on
+ * an inline confirm/cancel step (mirrors public/scripts/diagnosticsScreen.js's
+ * reset-confirm pattern, so an accidental tap can't wipe it) before calling
+ * `options.onDeleteNickname()`. Validation reuses
+ * public/scripts/nicknameScreen.js's `validateNickname`/`NICKNAME_MAX_LENGTH`
+ * (resolved the same require-or-`window.DinoQuiz` way as `resolveIsOnline`
+ * above) so the same-app rule ("apodo, no apellido", 20 characters) is never
+ * re-derived here.
  */
 
 (function () {
@@ -92,6 +107,7 @@
   var UNMUTE_ICON = '🔇';
   var PRIVACY_ICON = '🔒';
   var PURCHASE_ICON = '🛍️';
+  var NICKNAME_ICON = '✏️';
 
   /**
    * Binds a control to fire `handler` on click AND on an Enter/Espacio
@@ -142,6 +158,18 @@
     return function () {
       return true;
     };
+  }
+
+  /** Resolves public/scripts/nicknameScreen.js's exported validation helpers -- same require-or-`window.DinoQuiz` fallback shape as `resolveIsOnline` above. */
+  function resolveNicknameValidation(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.screens && win.DinoQuiz.screens.nickname) {
+      return win.DinoQuiz.screens.nickname;
+    }
+    if (typeof require === 'function') {
+      return require('./nicknameScreen');
+    }
+    return null;
   }
 
   function buildDisclosurePanel(id, headingText, closeButtonLabel) {
@@ -278,11 +306,193 @@
     return built;
   }
 
+  /**
+   * Builds the "Editar o borrar tu apodo" disclosure panel: shows the
+   * currently saved nickname (or a "none saved" message), an input to save
+   * a new/replacement one, and a two-step (button -> confirm/cancel) delete
+   * action so a stray tap can't wipe it. `currentNickname` is the value
+   * read by the caller at render time; `onSave`/`onDelete` are the actual
+   * persistence callbacks (this screen never touches storage itself, same
+   * contract as `onToggleMute`/`onPurchase`).
+   */
+  function buildNicknamePanel(strings, currentNickname, onSave, onDelete, win) {
+    var built = buildDisclosurePanel('home-screen-nickname-panel', strings.heading, strings.closeButton);
+    var nicknameApi = resolveNicknameValidation(win);
+
+    appendParagraphs(built.body, [strings.description]);
+
+    var currentEl = document.createElement('p');
+    currentEl.className = 'home-screen__nickname-current';
+    currentEl.textContent =
+      typeof currentNickname === 'string' && currentNickname.length > 0
+        ? strings.currentNicknameFormat.replace('{nickname}', currentNickname)
+        : strings.noNicknameSaved;
+    built.body.appendChild(currentEl);
+
+    var field = document.createElement('div');
+    field.className = 'home-screen__nickname-field';
+
+    var label = document.createElement('label');
+    label.className = 'home-screen__nickname-label';
+    label.setAttribute('for', 'home-screen-nickname-input');
+    label.textContent = strings.inputLabel;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'home-screen-nickname-input';
+    input.className = 'home-screen__nickname-input';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    if (typeof currentNickname === 'string') {
+      input.value = currentNickname;
+    }
+
+    var error = document.createElement('p');
+    error.id = 'home-screen-nickname-error';
+    error.className = 'home-screen__nickname-error';
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+
+    field.appendChild(label);
+    field.appendChild(input);
+    field.appendChild(error);
+    built.body.appendChild(field);
+
+    function clearError() {
+      if (error.hidden) return;
+      error.hidden = true;
+      error.textContent = '';
+      input.removeAttribute('aria-invalid');
+    }
+
+    function showError(errorCode) {
+      var message = errorCode === 'too_long' ? strings.errors.tooLong : strings.errors.empty;
+      error.textContent = message;
+      error.hidden = false;
+      input.setAttribute('aria-invalid', 'true');
+    }
+
+    var status = document.createElement('p');
+    status.className = 'home-screen__nickname-status';
+    status.setAttribute('aria-live', 'polite');
+
+    var actions = document.createElement('div');
+    actions.className = 'home-screen__nickname-actions';
+
+    var saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'home-screen__nickname-save-button';
+    saveButton.textContent = strings.saveButton;
+
+    var deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'home-screen__nickname-delete-button';
+    deleteButton.textContent = strings.deleteButton;
+
+    var deleteConfirm = document.createElement('div');
+    deleteConfirm.className = 'home-screen__nickname-delete-confirm';
+    deleteConfirm.setAttribute('aria-live', 'polite');
+    deleteConfirm.hidden = true;
+
+    var deleteConfirmMessage = document.createElement('p');
+    deleteConfirmMessage.className = 'home-screen__nickname-delete-confirm-message';
+    deleteConfirmMessage.textContent = strings.deleteConfirmMessage;
+
+    var deleteConfirmActions = document.createElement('div');
+    deleteConfirmActions.className = 'home-screen__nickname-delete-confirm-actions';
+
+    var deleteCancelButton = document.createElement('button');
+    deleteCancelButton.type = 'button';
+    deleteCancelButton.className = 'home-screen__nickname-delete-cancel-button';
+    deleteCancelButton.textContent = strings.deleteCancelButton;
+
+    var deleteConfirmButton = document.createElement('button');
+    deleteConfirmButton.type = 'button';
+    deleteConfirmButton.className = 'home-screen__nickname-delete-confirm-button';
+    deleteConfirmButton.textContent = strings.deleteConfirmButton;
+
+    deleteConfirmActions.appendChild(deleteCancelButton);
+    deleteConfirmActions.appendChild(deleteConfirmButton);
+    deleteConfirm.appendChild(deleteConfirmMessage);
+    deleteConfirm.appendChild(deleteConfirmActions);
+
+    bindActivation(saveButton, function () {
+      status.textContent = '';
+      var validation =
+        nicknameApi && typeof nicknameApi.validateNickname === 'function'
+          ? nicknameApi.validateNickname(input.value)
+          : null;
+      if (!validation || !validation.valid) {
+        showError(validation ? validation.errorCode : 'empty');
+        input.focus();
+        return;
+      }
+
+      clearError();
+      input.value = validation.value;
+      if (typeof onSave === 'function') {
+        onSave(validation.value);
+      }
+      currentEl.textContent = strings.currentNicknameFormat.replace('{nickname}', validation.value);
+      status.textContent = strings.saveSuccessMessage;
+    });
+
+    function showDeleteButton() {
+      deleteConfirm.hidden = true;
+      deleteButton.hidden = false;
+      if (typeof deleteButton.focus === 'function') {
+        deleteButton.focus();
+      }
+    }
+
+    bindActivation(deleteButton, function () {
+      status.textContent = '';
+      deleteButton.hidden = true;
+      deleteConfirm.hidden = false;
+      if (typeof deleteCancelButton.focus === 'function') {
+        deleteCancelButton.focus();
+      }
+    });
+
+    bindActivation(deleteCancelButton, function () {
+      showDeleteButton();
+    });
+
+    bindActivation(deleteConfirmButton, function () {
+      if (typeof onDelete === 'function') {
+        onDelete();
+      }
+      input.value = '';
+      clearError();
+      showDeleteButton();
+      currentEl.textContent = strings.noNicknameSaved;
+      status.textContent = strings.deleteSuccessMessage;
+    });
+
+    actions.appendChild(saveButton);
+    actions.appendChild(deleteButton);
+    built.body.appendChild(actions);
+    built.body.appendChild(deleteConfirm);
+    built.body.appendChild(status);
+
+    built.currentEl = currentEl;
+    built.input = input;
+    built.error = error;
+    built.saveButton = saveButton;
+    built.deleteButton = deleteButton;
+    built.deleteConfirm = deleteConfirm;
+    built.deleteCancelButton = deleteCancelButton;
+    built.deleteConfirmButton = deleteConfirmButton;
+    built.status = status;
+    return built;
+  }
+
   function renderHomeScreen(container, options) {
     options = options || {};
     var strings = options.strings || resolveDefaultStrings(options.locale);
     var privacyStrings = options.privacyStrings || resolveDefaultLocaleStrings(options.locale, 'privacy');
     var purchaseStrings = options.purchaseStrings || resolveDefaultLocaleStrings(options.locale, 'purchase');
+    var nicknameStrings = options.nicknameStrings || resolveDefaultLocaleStrings(options.locale, 'nicknameSettings');
     var controlsStrings = strings.globalControls;
 
     container.innerHTML = '';
@@ -446,9 +656,20 @@
     var purchasePanelBuilt = buildPurchasePanel(purchaseStrings, options.onPurchase, isOnline);
     wireDisclosure(purchaseButton, purchasePanelBuilt.panel, purchasePanelBuilt.closeButton);
 
+    var nicknameBuilt = buildIconButton('home-screen__nickname-button', NICKNAME_ICON, controlsStrings.nicknameButton);
+    var nicknameButton = nicknameBuilt.button;
+    var nicknamePanelBuilt = buildNicknamePanel(
+      nicknameStrings,
+      options.nickname,
+      options.onSaveNickname,
+      options.onDeleteNickname
+    );
+    wireDisclosure(nicknameButton, nicknamePanelBuilt.panel, nicknamePanelBuilt.closeButton);
+
     globalControls.appendChild(muteButton);
     globalControls.appendChild(privacyButton);
     globalControls.appendChild(purchaseButton);
+    globalControls.appendChild(nicknameButton);
     root.appendChild(title);
     root.appendChild(mascot);
     root.appendChild(playButton);
@@ -469,6 +690,7 @@
     }
     root.appendChild(privacyPanelBuilt.panel);
     root.appendChild(purchasePanelBuilt.panel);
+    root.appendChild(nicknamePanelBuilt.panel);
     container.appendChild(root);
 
     return {
@@ -490,6 +712,17 @@
       purchasePanel: purchasePanelBuilt.panel,
       purchaseConfirmButton: purchasePanelBuilt.purchaseButton,
       purchaseOfflineNotice: purchasePanelBuilt.offlineNotice,
+      nicknameButton: nicknameButton,
+      nicknamePanel: nicknamePanelBuilt.panel,
+      nicknameCurrentEl: nicknamePanelBuilt.currentEl,
+      nicknameInput: nicknamePanelBuilt.input,
+      nicknameError: nicknamePanelBuilt.error,
+      nicknameSaveButton: nicknamePanelBuilt.saveButton,
+      nicknameDeleteButton: nicknamePanelBuilt.deleteButton,
+      nicknameDeleteConfirm: nicknamePanelBuilt.deleteConfirm,
+      nicknameDeleteCancelButton: nicknamePanelBuilt.deleteCancelButton,
+      nicknameDeleteConfirmButton: nicknamePanelBuilt.deleteConfirmButton,
+      nicknameStatus: nicknamePanelBuilt.status,
       isMuted: function () {
         return muted;
       },

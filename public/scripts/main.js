@@ -3755,6 +3755,24 @@
     return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) || null;
   }
 
+  /**
+   * Resolves public/scripts/nicknameService.js (local nickname/"apodo"
+   * persistence), same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveDiagnostics` above -- registered on
+   * `window.DinoQuiz.services.nicknameService` (see that file), so Home's
+   * edit/delete apodo control (`renderHome` below) actually persists in the
+   * real, unbundled browser too, not just under Node/Jest. A missing
+   * service still falls back to null, and every call site's own null guard
+   * keeps that from ever blocking gameplay.
+   */
+  function resolveNicknameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/nicknameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.nicknameService) || null;
+  }
+
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -3801,6 +3819,7 @@
             home: data.home,
             privacy: data.privacy,
             purchase: data.purchase,
+            nicknameSettings: data.nicknameSettings,
             ageGate: data.ageGate,
             nicknameRequest: data.nicknameRequest,
             modeSelector: data.modeSelector,
@@ -4367,7 +4386,12 @@
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
-        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        ? {
+            strings: resources.home,
+            privacyStrings: resources.privacy,
+            purchaseStrings: resources.purchase,
+            nicknameStrings: resources.nicknameSettings,
+          }
         : {};
 
       if (onOpenPrivacyPolicy) {
@@ -4399,6 +4423,24 @@
         // mode this flag cannot afford.
         persistAdsRemovedState(true, adsStorage);
       };
+
+      // The Home "Editar o borrar tu apodo" control reads and writes through
+      // nicknameService (public/scripts/nicknameService.js) directly -- it
+      // is a single small localStorage value namespaced under
+      // `dinoquiz:`, same rationale as the mute preference above, not part of
+      // `storage`'s IndexedDB-with-fallback backend. Saving always replaces
+      // the previous value; deleting removes the key entirely so the next
+      // game offers the optional nickname capture again.
+      var nicknameService = resolveNicknameService();
+      if (nicknameService) {
+        renderOptions.nickname = nicknameService.getNickname();
+        renderOptions.onSaveNickname = function (value) {
+          nicknameService.saveNickname(value);
+        };
+        renderOptions.onDeleteNickname = function () {
+          nicknameService.clearNickname();
+        };
+      }
 
       // TRIOFSND-129: how many distinct fun facts have been seen on this
       // device so far, out of the total available in the loaded bank —
