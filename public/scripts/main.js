@@ -339,6 +339,8 @@
         renderModeFallbackWarningScreen:
           fromWindow.renderModeFallbackWarningScreen ||
           require('../../src/screens/ModeFallbackWarningScreen').renderModeFallbackWarningScreen,
+        renderNicknameScreen:
+          fromWindow.renderNicknameScreen || require('../../src/screens/NicknameScreen').renderNicknameScreen,
       };
     }
 
@@ -370,6 +372,48 @@
       strings: ageGateStrings,
       onSelect: function () {
         onSelected();
+      },
+    });
+  }
+
+  /**
+   * Nickname ("apodo") step: rendered right after '¡Jugar!', before the age
+   * gate, so it is the very first thing asked and always resolved before the
+   * first question of whichever mode gets picked. A nickname already saved
+   * on this device (nicknameService.js's `dinoquiz:nickname`) is reused
+   * silently -- `onDone` runs straight away, the screen is never shown
+   * twice. A missing renderer/service degrades the same way `renderAgeGate`
+   * does: straight to `onDone`, since asking for a name must never block
+   * play.
+   *
+   * Submitting a valid apodo (nicknameScreen.js's own trim/validate rule)
+   * persists it via nicknameService.js so this and every later game reuse it
+   * for personalization and for the Hall of Fame entry
+   * `persistBestScoreAndStreak` records once the game finishes.
+   * "Jugar como invitado" moves on without saving anything -- the game still
+   * plays, and a finished game is still recorded, just under a null/guest
+   * name (hallOfFameService.js's own no-name contract).
+   */
+  function renderNicknameStep(container, renderers, nicknameRequestStrings, onDone) {
+    var nicknameService = resolveNicknameService();
+    var existingNickname =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+
+    if (existingNickname || !renderers || typeof renderers.renderNicknameScreen !== 'function') {
+      onDone();
+      return null;
+    }
+
+    return renderers.renderNicknameScreen(container, {
+      strings: nicknameRequestStrings,
+      onSubmit: function (nickname) {
+        if (nicknameService && typeof nicknameService.saveNickname === 'function') {
+          nicknameService.saveNickname(nickname);
+        }
+        onDone();
+      },
+      onGuest: function () {
+        onDone();
       },
     });
   }
@@ -830,6 +874,39 @@
       return require('../../src/services/analytics');
     }
     return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.analytics) || null;
+  }
+
+  /**
+   * Resolves src/services/nicknameService.js, the local `dinoquiz:nickname`
+   * ("apodo") persistence the nickname step below reads before deciding
+   * whether to show the request screen, and writes once the player submits
+   * one. Same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveAnalytics`/`resolveModeStorage` above: under Node/Jest it
+   * resolves via `require`, and in the real, bundler-less browser it
+   * resolves the `public/scripts/nicknameService.js` port loaded as a
+   * `<script>` (see public/index.html) off
+   * `window.DinoQuiz.services.nicknameService`.
+   */
+  function resolveNicknameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/nicknameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.nicknameService) || null;
+  }
+
+  /**
+   * Resolves src/services/hallOfFameService.js, the local on-device top-10
+   * score list `persistBestScoreAndStreak` below feeds on every finished
+   * game. Same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveNicknameService` above.
+   */
+  function resolveHallOfFameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/hallOfFameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.hallOfFameService) || null;
   }
 
   /**
@@ -1457,6 +1534,15 @@
    * (before the write above can have landed) and combines it with this
    * game's own score/racha locally, which is exactly what the write above
    * will eventually persist anyway.
+   *
+   * Hall of Fame (hallOfFameService.js): every call here is also one more
+   * finished game, across every mode, exactly like the cross-mode bestScore/
+   * bestStreak combined above -- so this is the single place that also adds
+   * a `{ name, score, timestamp }` entry to the on-device top-10 list.
+   * `name` is whatever nickname is currently saved (nicknameService.js), or
+   * `null` for a guest game (hallOfFameService.js's own no-name contract) --
+   * never read from anywhere else, and never written to `storage`, an
+   * analytics event or a log entry.
    */
   function persistBestScoreAndStreak(storage, finalState) {
     if (!storage || !finalState) {
@@ -1477,6 +1563,16 @@
     }
     if (typeof storage.recordStreak === 'function' && typeof finalState.maxStreak === 'number') {
       storage.recordStreak(finalState.maxStreak);
+    }
+
+    if (typeof finalState.score === 'number') {
+      var hallOfFameService = resolveHallOfFameService();
+      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
+        var nicknameService = resolveNicknameService();
+        var name =
+          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: Date.now() });
+      }
     }
 
     return { bestScore: bestScore, bestStreak: bestStreak };
@@ -3706,6 +3802,7 @@
             privacy: data.privacy,
             purchase: data.purchase,
             ageGate: data.ageGate,
+            nicknameRequest: data.nicknameRequest,
             modeSelector: data.modeSelector,
             modes: data.modes,
             modeChange: data.modeChange,
@@ -4343,7 +4440,12 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              // TRIOFSND-193/207: the age gate is shown right here -- after
+              // Nickname step: asked before the age gate, before anything
+              // else, and skipped silently on every later '¡Jugar!' once a
+              // nickname is already saved on this device (see
+              // `renderNicknameStep`'s own doc comment).
+              //
+              // TRIOFSND-193/207: the age gate is shown right after -- after
               // '¡Jugar!', before the game is prepared. TRIOFSND-232: once it
               // resolves, the illustrated mode selector is shown next instead
               // of starting Quiz straight away -- selecting a mode there is
@@ -4355,16 +4457,18 @@
               // onPurchase) -- startLevelGame's `storageObj` must read from that
               // same backend, or a purchase confirmed here would still show
               // ads on this very game's Resultados screen.
-              renderAgeGate(container, renderers, resources && resources.ageGate, function () {
-                renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
-                  storageObj: resolvedMuteStorage,
-                  analyticsStorage: storage,
-                  storage: storage,
-                  // TRIOFSND-253: resolved once here so every mode reachable
-                  // from the selector reads/writes its own level progress and
-                  // finished-game result through the same modeProgressStorage
-                  // instance (see startLevelGame/finishLevel).
-                  modeProgressStorage: resolveModeProgressStorage(),
+              renderNicknameStep(container, renderers, resources && resources.nicknameRequest, function () {
+                renderAgeGate(container, renderers, resources && resources.ageGate, function () {
+                  renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
+                    storageObj: resolvedMuteStorage,
+                    analyticsStorage: storage,
+                    storage: storage,
+                    // TRIOFSND-253: resolved once here so every mode reachable
+                    // from the selector reads/writes its own level progress and
+                    // finished-game result through the same modeProgressStorage
+                    // instance (see startLevelGame/finishLevel).
+                    modeProgressStorage: resolveModeProgressStorage(),
+                  });
                 });
               });
             }
@@ -4766,6 +4870,9 @@
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
       renderAgeGate: renderAgeGate,
+      renderNicknameStep: renderNicknameStep,
+      resolveNicknameService: resolveNicknameService,
+      resolveHallOfFameService: resolveHallOfFameService,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,
