@@ -1177,6 +1177,76 @@ describe('TRIOFSND-97: Resultados banner/rewarded ad gated by the remove-ads pur
   });
 });
 
+describe('nickname edit/delete control on Home (Añadir opción visible para cambiar/borrar el nombre)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    container.remove();
+    window.localStorage.clear();
+  });
+
+  test('saving a nickname from Home replaces the previously stored value under dinoquiz:nickname', async () => {
+    window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('OldName'));
+
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const { home: homeStrings, nicknameSettings: nicknameStrings } = require('../../public/i18n/es.json');
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings, nicknameSettings: nicknameStrings }),
+    });
+
+    await renderHome(document, renderers.renderHomeScreen, fetchFn);
+
+    const nicknameButton = getByRole(container, 'button', { name: homeStrings.globalControls.nicknameButton });
+    nicknameButton.click();
+    expect(container.textContent).toContain(nicknameStrings.currentNicknameFormat.replace('{nickname}', 'OldName'));
+
+    const input = container.querySelector('#home-screen-nickname-input');
+    input.value = 'Rex';
+    const saveButton = getByRole(container, 'button', { name: nicknameStrings.saveButton });
+    saveButton.click();
+
+    expect(window.localStorage.getItem('dinoquiz:nickname')).toBe(JSON.stringify('Rex'));
+    expect(container.textContent).toContain(nicknameStrings.saveSuccessMessage);
+  });
+
+  test('deleting a saved nickname requires a confirm step and then removes the dinoquiz:nickname key entirely', async () => {
+    window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('Rex'));
+
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const { home: homeStrings, nicknameSettings: nicknameStrings } = require('../../public/i18n/es.json');
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ home: homeStrings, nicknameSettings: nicknameStrings }),
+    });
+
+    await renderHome(document, renderers.renderHomeScreen, fetchFn);
+
+    const nicknameButton = getByRole(container, 'button', { name: homeStrings.globalControls.nicknameButton });
+    nicknameButton.click();
+
+    const deleteButton = getByRole(container, 'button', { name: nicknameStrings.deleteButton });
+    deleteButton.click();
+    // A single tap only opens the confirm step -- the key must still be there.
+    expect(window.localStorage.getItem('dinoquiz:nickname')).toBe(JSON.stringify('Rex'));
+
+    const deleteConfirmButton = getByRole(container, 'button', { name: nicknameStrings.deleteConfirmButton });
+    deleteConfirmButton.click();
+
+    expect(window.localStorage.getItem('dinoquiz:nickname')).toBeNull();
+    expect(container.textContent).toContain(nicknameStrings.noNicknameSaved);
+    expect(container.textContent).toContain(nicknameStrings.deleteSuccessMessage);
+  });
+});
+
 describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/terminar) and safe exit on level generation failure', () => {
   let container;
 
