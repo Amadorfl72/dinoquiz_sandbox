@@ -475,6 +475,7 @@
   },
   "hallOfFame": {
     "title": "Salón de la Fama",
+    "backButtonLabel": "Volver",
     "columns": {
       "rank": "Puesto",
       "player": "Jugador o jugadora",
