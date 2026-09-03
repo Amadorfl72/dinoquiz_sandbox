@@ -58,15 +58,29 @@ function buildLeveledQuestionBank(levels) {
 
 // Answers the currently visible question and advances manually via
 // "Siguiente" (TRIOFSND-84): the button is shown and enabled synchronously
-// in the same update as the feedback (AC-6), so it can be clicked right away.
-// The 0ms fake-timer advance below flushes the microtask queue (pending
-// `onAnswer` storage writes) without adding any real wall-clock wait.
+// in the same update as the feedback (AC-6), so it's located and asserted
+// on right away — no timer advance is needed to reveal, enable or click it.
+// The 0ms fake-timer advance right before the click below only flushes the
+// microtask queue for the already-fired, fire-and-forget `onAnswer` storage
+// writes (e.g. TRIOFSND-129's discovered-fun-facts tally), so they've
+// settled before the next question/Resultados renders — it adds no real
+// wall-clock wait and is unrelated to "Siguiente" itself.
 async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
+
+  const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+  const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+  expect(funFactBox.hidden).toBe(false);
+  expect(nextButton.hidden).toBe(false);
+  expect(nextButton.disabled).toBe(false);
+  // "Siguiente" precedes the dato curioso in real DOM/reading order (AC-6):
+  // a screen reader's virtual cursor reaches it before the fun-fact text.
+  expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
   await jest.advanceTimersByTimeAsync(0);
-  getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+  nextButton.click();
 }
 
 /** Reads the current question's prompt, then answers it and advances (see answerCurrentQuestion). */
@@ -158,8 +172,19 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(funFactBox.hidden).toBe(false);
     expect(funFactBox.textContent).toContain(questions[0].funFact);
 
-    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    // "Siguiente" is visible and enabled immediately, in the same update as
+    // the feedback/dato curioso — no timer advance needed (AC-6).
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+    expect(nextButton.hidden).toBe(false);
+    expect(nextButton.disabled).toBe(false);
+    // It precedes the dato curioso in real DOM/reading order, reachable by a
+    // screen reader before the fun-fact text.
+    expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
+    nextButton.click();
+
+    // A single tap advances exactly one question — no skip, no double
+    // transition — even with the celebration animation/sound still pending.
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
   });
 
@@ -178,8 +203,16 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(funFactBox.textContent).toContain(questions[0].funFact);
     expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
 
-    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    // A wrong answer never delays "Siguiente" either: visible, enabled and
+    // ahead of the dato curioso immediately (AC-6).
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+    expect(nextButton.hidden).toBe(false);
+    expect(nextButton.disabled).toBe(false);
+    expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
+    nextButton.click();
+
+    // A single tap advances exactly one question, not two.
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
   });
 
