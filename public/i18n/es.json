@@ -28,7 +28,8 @@
         "unmuteLabel": "Activar sonido"
       },
       "privacyButton": "Resumen de privacidad",
-      "purchaseButton": "Eliminar anuncios"
+      "purchaseButton": "Eliminar anuncios",
+      "nicknameButton": "Editar o borrar tu apodo"
     },
     "tooltip": {
       "message": "¡Toca aquí para jugar!"
@@ -175,7 +176,7 @@
     "updatedAt": "Última actualización: julio de 2026",
     "kidsCallout": {
       "heading": "Para ti, peque 🦖",
-      "body": "DinoQuiz no te pregunta tu nombre, ni tu foto, ni dónde vives. Solo guardamos en este aparato tu mejor puntuación y los datos curiosos que ya descubriste, para que los veas la próxima vez que juegues."
+      "body": "DinoQuiz no te pregunta tu nombre real, ni tu foto, ni dónde vives. Solo guardamos en este aparato tu mejor puntuación, los datos curiosos que ya descubriste y, si tú quieres, un apodo para saludarte -- y puedes cambiarlo o borrarlo cuando quieras."
     },
     "sections": [
       {
@@ -184,7 +185,7 @@
         "paragraphs": [
           "DinoQuiz no pide ni guarda datos personales de niñas y niños: no hay registro, no hay nombre, no hay foto, no hay ubicación ni contactos.",
           "Todo lo que necesita la app para jugar (preguntas, imágenes, sonidos) viene ya incluido y funciona sin conexión a internet.",
-          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos y si el sonido está silenciado. Esta información nunca sale del dispositivo.",
+          "En el propio dispositivo se guarda, solo de forma local: la mejor puntuación, la racha de aciertos, los datos curiosos ya descubiertos, si el sonido está silenciado y, si se ha guardado voluntariamente, un apodo (nunca el nombre real ni el apellido). Esta información nunca sale del dispositivo.",
           "De forma anónima y agregada podemos recibir información técnica como el modelo del dispositivo, la versión del sistema, el idioma o el tamaño de pantalla, y estadísticas de uso (por ejemplo, si una partida se completó). Estos datos no permiten identificar a ninguna persona."
         ]
       },
@@ -209,7 +210,7 @@
         "heading": "Tus derechos (y los de tu hija o hijo)",
         "paragraphs": [
           "Como no recogemos datos personales, no existe un perfil que consultar, corregir o eliminar en nuestros sistemas.",
-          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador.",
+          "Toda la información guardada vive únicamente en el dispositivo: puedes borrarla en cualquier momento desinstalando la aplicación o borrando sus datos desde los ajustes del dispositivo o del navegador. El apodo guardado, en concreto, también se puede editar o borrar en cualquier momento desde el control 'Editar o borrar tu apodo' en la pantalla de Inicio, sin necesidad de tocar ningún ajuste del dispositivo.",
           "Si tienes cualquier duda sobre privacidad, o crees que en algún momento se ha recogido un dato que no debería, puedes ejercer tus derechos de acceso, rectificación, supresión, oposición y portabilidad escribiéndonos a la dirección de contacto indicada más abajo."
         ]
       },
@@ -384,7 +385,7 @@
       },
       {
         "heading": "¿Dónde se guarda el progreso?",
-        "body": "La puntuación, la racha de aciertos y los datos curiosos descubiertos se guardan solo en este dispositivo (localStorage/IndexedDB). Nunca se envían a ningún servidor."
+        "body": "La puntuación, la racha de aciertos, los datos curiosos descubiertos y, si se guardó voluntariamente, un apodo, se guardan solo en este dispositivo (localStorage/IndexedDB). Nunca se envían a ningún servidor."
       },
       {
         "heading": "¿Qué datos anónimos se usan?",
@@ -396,7 +397,7 @@
       },
       {
         "heading": "¿Cuáles son tus derechos?",
-        "body": "Como no guardamos datos personales, no hay nada que borrar, corregir o exportar a nivel individual. Si tienes cualquier duda, puedes escribirnos."
+        "body": "Como no guardamos datos personales, no hay nada que borrar, corregir o exportar a nivel individual. El apodo guardado es la única excepción: puedes editarlo o borrarlo cuando quieras desde 'Editar o borrar tu apodo' en Inicio, y borrar todos los datos del dispositivo (desinstalando la app o borrando datos desde los ajustes) también lo elimina. Si tienes cualquier duda, puedes escribirnos."
       },
       {
         "heading": "Contacto",
@@ -411,6 +412,25 @@
     "priceLabel": "Pago único de 3,99 €",
     "purchaseButton": "Comprar ahora",
     "offlineNotice": "No hay conexión a internet ahora mismo. Conéctate a la wifi o a los datos y vuelve a intentarlo para completar la compra."
+  },
+  "nicknameSettings": {
+    "heading": "Tu apodo",
+    "closeButton": "Cerrar",
+    "description": "Este apodo se guarda solo en este dispositivo para personalizar el juego. Puedes cambiarlo o borrarlo cuando quieras.",
+    "currentNicknameFormat": "Apodo guardado: {nickname}",
+    "noNicknameSaved": "Todavía no has guardado ningún apodo.",
+    "inputLabel": "Nuevo apodo",
+    "saveButton": "Guardar",
+    "deleteButton": "Borrar apodo",
+    "deleteConfirmMessage": "¿Seguro que quieres borrar tu apodo guardado en este dispositivo? La próxima partida volverá a preguntarte si quieres guardar uno.",
+    "deleteConfirmButton": "Borrar",
+    "deleteCancelButton": "Cancelar",
+    "saveSuccessMessage": "Apodo guardado en este dispositivo.",
+    "deleteSuccessMessage": "Apodo borrado de este dispositivo.",
+    "errors": {
+      "empty": "Escribe un apodo antes de guardar.",
+      "tooLong": "Tu apodo es muy largo. Usa como máximo 20 letras."
+    }
   },
   "results": {
     "heading": "¡Resultados!",
@@ -452,6 +472,22 @@
       "rewardedBadge": "Anuncio",
       "rewardedButton": "Ver un anuncio y descubrir una pista extra"
     }
+  },
+  "hallOfFame": {
+    "title": "Salón de la Fama",
+    "columns": {
+      "rank": "Puesto",
+      "player": "Jugador o jugadora",
+      "score": "Puntos"
+    },
+    "guestLabel": "Jugador invitado",
+    "emptyMessage": "Todavía no hay partidas guardadas. ¡Juega una partida para aparecer aquí!",
+    "highlightBadge": "Tu partida",
+    "deleteButtonLabel": "Borrar Hall of Fame",
+    "deleteConfirmMessage": "¿Seguro que quieres borrar todo el Hall of Fame? Esta acción no se puede deshacer.",
+    "deleteConfirmButtonLabel": "Sí, borrar",
+    "deleteCancelButtonLabel": "Cancelar",
+    "deleteSuccessMessage": "Hall of Fame borrado en este dispositivo."
   },
   "feedback": {
     "correct": {
