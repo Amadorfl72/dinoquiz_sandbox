@@ -224,7 +224,10 @@ describe('no hardcoded visible-text literals in public/scripts/*.js', () => {
     expect(findEmbeddedVisibleLiterals("el.addEventListener('click', handler);")).toEqual([]);
   });
 
-  const scriptFiles = fs.readdirSync(SCRIPTS_DIR).filter((name) => name.endsWith('.js'));
+  // Jest specs (public/scripts/*.test.js) are never loaded by the browser --
+  // their `it(...)`/`describe(...)` descriptions are prose for the test
+  // runner's output, not player-visible UI copy, so they are excluded here.
+  const scriptFiles = fs.readdirSync(SCRIPTS_DIR).filter((name) => name.endsWith('.js') && !name.endsWith('.test.js'));
 
   test('public/scripts/ has at least one script to scan', () => {
     expect(scriptFiles.length).toBeGreaterThan(0);
