@@ -414,7 +414,11 @@
   },
   "results": {
     "heading": "¡Resultados!",
-    "scoreLabel": "Puntuación",
+    "scoreLabel": "Puntos de la partida",
+    "score": {
+      "levelLabel": "Puntos del nivel",
+      "gameLabel": "Puntos de la partida"
+    },
     "scoreFormat": "{score}/{total}",
     "percentageFormat": "Acertaste el {percentage}% de las rondas",
     "starsLabel": "{stars} de {maxStars} estrellas conseguidas",
@@ -499,7 +503,11 @@
     "correctOptionAriaLabel": "Respuesta correcta: {answer}",
     "selectedOptionAriaLabel": "Tu respuesta: {answer}",
     "funFactHeading": "Dato curioso",
-    "scoreLabel": "Puntos",
+    "scoreLabel": "Puntos del nivel",
+    "score": {
+      "levelLabel": "Puntos del nivel",
+      "gameLabel": "Puntos de la partida"
+    },
     "nextButton": "Siguiente",
     "imageAlt": "Ilustración de un {dinosaur}",
     "imageAltFunFact": "Dato curioso: {funFact}",
