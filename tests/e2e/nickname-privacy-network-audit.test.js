@@ -81,10 +81,27 @@ async function installOutboundCapture(page) {
     if (window.fetch) {
       var originalFetch = window.fetch.bind(window);
       window.fetch = function (input, init) {
-        record('fetch', {
-          url: typeof input === 'string' ? input : input && input.url,
-          body: init && init.body,
-        });
+        var isRequestObject = typeof Request !== 'undefined' && input instanceof Request;
+        var url = typeof input === 'string' ? input : input && input.url;
+        var body = init && 'body' in init ? init.body : undefined;
+
+        if (isRequestObject && body === undefined) {
+          // A `Request` instance carries its own body internally (not on
+          // `init`) -- clone it before the real fetch consumes the stream so
+          // both the recorder and the actual request can read it.
+          input
+            .clone()
+            .text()
+            .then(function (text) {
+              record('fetch', { url: url, body: text });
+            })
+            .catch(function () {
+              record('fetch', { url: url, body: '<unreadable Request body>' });
+            });
+          return originalFetch(input, init);
+        }
+
+        record('fetch', { url: url, body: body });
         return originalFetch(input, init);
       };
     }
@@ -302,6 +319,39 @@ describe('auditoría dinámica de red/eventos/beacons/errores -- el apodo nunca 
       };
 
       assertNoLeakAcrossSurfaces(NICKNAME_FAIL, surfaces);
+    },
+    NAVIGATION_TIMEOUT_MS
+  );
+
+  test(
+    'el capturador de fetch detecta el cuerpo de una fuga incluso cuando se pasa como objeto Request',
+    async () => {
+      const LEAKED_VALUE = 'NOMBRE_PRIVADO';
+
+      // Regresión dirigida: `fetch(new Request(url, { body }))` guarda el
+      // payload dentro del propio objeto `Request` en vez de en `init.body`,
+      // así que un capturador que solo lea `init.body` vería `undefined` y
+      // dejaría pasar una fuga real. Esta prueba no depende del flujo de la
+      // app -- ejercita `installOutboundCapture` directamente para probar
+      // que el propio arnés de auditoría detecta este patrón.
+      await installOutboundCapture(page);
+      await page.goto(baseURL);
+
+      await page.evaluate(async (value) => {
+        try {
+          await fetch(new Request('/leak-attempt', { method: 'POST', body: value }));
+        } catch (error) {
+          // El endpoint no existe (404) o la red del test la rechaza -- lo
+          // único relevante aquí es que el capturador vea el cuerpo antes de
+          // que la petición real se resuelva o falle.
+        }
+      }, LEAKED_VALUE);
+
+      // El cuerpo de un `Request` se lee de forma asíncrona (clonando el
+      // stream), así que se espera brevemente a que `record()` lo procese.
+      await expect
+        .poll(async () => (await readOutboundCapture(page)).join('\n'), { timeout: 2_000 })
+        .toContain(LEAKED_VALUE);
     },
     NAVIGATION_TIMEOUT_MS
   );
