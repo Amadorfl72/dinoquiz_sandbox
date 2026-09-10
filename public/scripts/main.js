@@ -1532,6 +1532,10 @@
    * Hall of Fame (hallOfFameService.js): every call here is also one more
    * finished game, across every mode, exactly like the cross-mode bestScore/
    * bestStreak combined above -- so this is the single place that also adds
+    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
+
+   */
+  function persistBestScoreAndStreak(storage, finalState) {
    * a `{ name, score, timestamp }` entry to the on-device top-10 list (never
    * duplicated by a second `addEntry` call elsewhere -- see the QA report
    * this fixed: finishing a game used to write two entries, one from here
@@ -1541,10 +1545,6 @@
    * available, so a caller with no per-question storage double (or one that
    * hasn't wired ctx.storage) still gets its game recorded, exactly like the
    * old Quiz-only block did.
-   */
-  function persistBestScoreAndStreak(storage, finalState) {
-    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
-
     if (!storage || !finalState) {
       return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
@@ -1841,12 +1841,15 @@
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
-        // Hall of Fame entry: `persistBestScoreAndStreak` above is the single
-        // place that records it (see that function's doc comment) -- its
-        // returned `hallOfFameEntryId` is stashed here so `finishLevel` below
-        // has an identifier ready to hand to hallOfFameScreen.js for
-        // highlighting.
-        finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
+        // Hall of Fame entry point (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): the entry
+        // itself was already added by `persistBestScoreAndStreak` above (the
+        // single call site, see its own doc comment) -- this just stashes
+        // its identifier on `finalState` so `finishLevel` below can hand it
+        // to hallOfFameScreen.js for highlighting.
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID) {
+          finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
+        }
 
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
