@@ -1532,29 +1532,19 @@
    * Hall of Fame (hallOfFameService.js): every call here is also one more
    * finished game, across every mode, exactly like the cross-mode bestScore/
    * bestStreak combined above -- so this is the single place that also adds
-   * a `{ name, score, timestamp }` entry to the on-device top-10 list.
-   * `name` is whatever nickname is currently saved (nicknameService.js), or
-   * `null` for a guest game (hallOfFameService.js's own no-name contract) --
-   * never read from anywhere else, and never written to `storage`, an
-   * analytics event or a log entry. This is the ONLY call site that adds a
-   * Hall of Fame entry -- `hallOfFameEntryId` (the entry's own `timestamp`,
-   * its only identifier, see hallOfFameService.js's own doc comment) is
-   * returned so a caller like `playLevel` can stash it for highlighting
-   * without adding a second, duplicate entry of its own.
+    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
+
    */
   function persistBestScoreAndStreak(storage, finalState) {
-    var hallOfFameEntryId;
-    if (finalState && typeof finalState.score === 'number') {
-      var hallOfFameService = resolveHallOfFameService();
-      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-        var nicknameService = resolveNicknameService();
-        var name =
-          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
-        hallOfFameEntryId = Date.now();
-        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: hallOfFameEntryId });
-      }
-    }
-
+   * a `{ name, score, timestamp }` entry to the on-device top-10 list (never
+   * duplicated by a second `addEntry` call elsewhere -- see the QA report
+   * this fixed: finishing a game used to write two entries, one from here
+   * and one from `playLevel`'s own now-removed Quiz-only block). Delegated to
+   * `recordHallOfFameEntry` below, which -- unlike the bestScore/bestStreak
+   * bookkeeping in this function -- never depends on `storage` being
+   * available, so a caller with no per-question storage double (or one that
+   * hasn't wired ctx.storage) still gets its game recorded, exactly like the
+   * old Quiz-only block did.
     if (!storage || !finalState) {
       return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
@@ -1576,6 +1566,39 @@
     }
 
     return { bestScore: bestScore, bestStreak: bestStreak, hallOfFameEntryId: hallOfFameEntryId };
+  }
+
+  /**
+   * Adds a `{ name, score, timestamp }` entry to the on-device Hall of Fame
+   * top-10 (hallOfFameService.js) for the just-finished game -- the single
+   * place this happens, called once per finished game by
+   * `persistBestScoreAndStreak` above, regardless of mode. `name` is
+   * whatever nickname is currently saved (nicknameService.js), or `null` for
+   * a guest game (hallOfFameService.js's own no-name contract) -- never read
+   * from anywhere else, and never written to `storage`, an analytics event
+   * or a log entry. Returns the `timestamp` used (doubling as the entry's
+   * identifier, since hallOfFameService.js's entries have no separate `id`
+   * field) so callers like `playLevel` can stash it on `finalState` for
+   * `finishLevel` to hand to hallOfFameScreen.js for highlighting, or
+   * `undefined` if no entry was recorded (no score, or the service is
+   * unavailable).
+   */
+  function recordHallOfFameEntry(finalState) {
+    if (!finalState || typeof finalState.score !== 'number') {
+      return undefined;
+    }
+
+    var hallOfFameService = resolveHallOfFameService();
+    if (!hallOfFameService || typeof hallOfFameService.addEntry !== 'function') {
+      return undefined;
+    }
+
+    var nicknameService = resolveNicknameService();
+    var name =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+    var timestamp = Date.now();
+    hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: timestamp });
+    return timestamp;
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -1818,7 +1841,6 @@
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
-
         // Hall of Fame entry point (Quiz only -- the one mode this shared
         // orchestrator serves, see buildModeDispatchRegistry): the entry
         // itself was already added by `persistBestScoreAndStreak` above (the
