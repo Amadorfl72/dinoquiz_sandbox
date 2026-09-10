@@ -1053,7 +1053,9 @@ body {
 .results-screen__max-level-unlocked,
 .results-screen__fun-facts-progress,
 .results-screen__best-score,
-.results-screen__best-streak {
+.results-screen__best-streak,
+.results-screen__level-points,
+.results-screen__game-accumulated-points {
   font-size: var(--font-size-body);
   margin: 0;
   color: var(--color-text);
