@@ -6,7 +6,6 @@ require('@testing-library/jest-dom');
 const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
-const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const { results: strings, question: questionStrings, ageGate: ageGateStrings } = require('../../public/i18n/es.json');
 
 // TRIOFSND-193: '¡Jugar!' now opens the age gate before the first question.
@@ -58,18 +57,15 @@ function buildLeveledQuestionBank(levels) {
 }
 
 // Answers the currently visible question and advances manually via
-// "Siguiente" (TRIOFSND-84): the button only becomes clickable once the
-// question screen's own MIN_ADVANCE_DELAY_MS gate (AC-6) has elapsed, so
-// fake timers must be advanced past it first.
+// "Siguiente" (TRIOFSND-84): the button is shown and enabled synchronously
+// in the same update as the feedback (AC-6), so it can be clicked right away.
+// The 0ms fake-timer advance below flushes the microtask queue (pending
+// `onAnswer` storage writes) without adding any real wall-clock wait.
 async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
-  // "Siguiente" stays disabled for MIN_ADVANCE_DELAY_MS after answering
-  // (AC-6); fast-forward past it (async, so any pending microtask work — e.g.
-  // the aria-live announcement — flushes too) so walking through a whole
-  // game doesn't take real wall-clock time.
-  await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
+  await jest.advanceTimersByTimeAsync(0);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
@@ -162,7 +158,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(funFactBox.hidden).toBe(false);
     expect(funFactBox.textContent).toContain(questions[0].funFact);
 
-    jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
     getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
@@ -183,7 +178,6 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(funFactBox.textContent).toContain(questions[0].funFact);
     expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
 
-    jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
     getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
@@ -530,12 +524,12 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       correctButton.click();
 
       // Not enough time has passed yet: still on the same question.
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS - 1);
       expect(container.querySelector('.question-screen__prompt').textContent).toBe(firstPrompt);
 
-      // Past MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS with no manual tap:
-      // the controller advances automatically.
-      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+      // Past AUTO_ADVANCE_GRACE_MS with no manual tap: the controller
+      // advances automatically.
+      jest.advanceTimersByTime(1);
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
       expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
     });
@@ -551,7 +545,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const buttons = container.querySelectorAll('.question-screen__option');
       buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
 
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
       expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
@@ -567,7 +561,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const [correctButton] = container.querySelectorAll('.question-screen__option');
       correctButton.click();
 
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
       expect(container.textContent).toContain('1/1');
@@ -723,12 +717,12 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       correctButton.click();
 
       // Not enough time has passed yet: still on the same question.
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS - 1);
       expect(container.querySelector('.question-screen__prompt').textContent).toBe(firstPrompt);
 
-      // Past MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS with no manual tap:
-      // the controller advances automatically.
-      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
+      // Past AUTO_ADVANCE_GRACE_MS with no manual tap: the controller
+      // advances automatically.
+      jest.advanceTimersByTime(1);
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
       expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
     });
@@ -744,7 +738,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const buttons = container.querySelectorAll('.question-screen__option');
       buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
 
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
       expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
@@ -760,7 +754,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       const [correctButton] = container.querySelectorAll('.question-screen__option');
       correctButton.click();
 
-      jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS);
+      jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(getByRole(container, 'heading', { name: strings.heading })).toBeInTheDocument();
       expect(container.textContent).toContain('1/1');
@@ -1539,7 +1533,7 @@ describe('progresión de niveles 5-10 sobre el banco real de 300 preguntas', () 
     const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
     const index = correct ? question.correctAnswerIndex : (question.correctAnswerIndex + 1) % buttons.length;
     buttons[index].click();
-    await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
+    await jest.advanceTimersByTimeAsync(0);
     getByRole(container, 'button', { name: questionStrings.nextButton }).click();
   }
 

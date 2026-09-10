@@ -734,6 +734,53 @@ describe('level-progress actions: repeat level, go to next unlocked level, back 
   });
 });
 
+describe('Hall of Fame entry point (options.onViewHallOfFame)', () => {
+  const { hallOfFame: hallOfFameStrings } = require('../../public/i18n/es.json');
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders no Hall of Fame button when onViewHallOfFame is not provided (unchanged for existing callers)', () => {
+    const { viewHallOfFameButton } = renderResultsScreen(container, { score: 6 });
+
+    expect(viewHallOfFameButton).toBeNull();
+  });
+
+  test('renders a Hall of Fame button labelled with the reused hallOfFame.title string, that calls onViewHallOfFame', () => {
+    const onViewHallOfFame = jest.fn();
+    const { viewHallOfFameButton } = renderResultsScreen(container, {
+      score: 6,
+      onViewHallOfFame,
+      hallOfFameStrings,
+    });
+
+    expect(getByRole(container, 'button', { name: hallOfFameStrings.title })).toBe(viewHallOfFameButton);
+
+    viewHallOfFameButton.click();
+
+    expect(onViewHallOfFame).toHaveBeenCalledTimes(1);
+  });
+
+  test('the Hall of Fame button is a real, keyboard- and touch-operable <button>', () => {
+    const { viewHallOfFameButton } = renderResultsScreen(container, {
+      score: 6,
+      onViewHallOfFame: jest.fn(),
+      hallOfFameStrings,
+    });
+
+    expect(viewHallOfFameButton.tagName).toBe('BUTTON');
+    expect(viewHallOfFameButton).toHaveAttribute('type', 'button');
+    expect(viewHallOfFameButton).toHaveAccessibleName();
+  });
+});
+
 describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp text (AC-2/AC-23)', () => {
   const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 

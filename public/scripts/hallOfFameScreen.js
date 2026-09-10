@@ -40,6 +40,13 @@
  * each cell labelled via `data-label` + `::before`) instead of letting a
  * 3-column table force horizontal scrolling.
  *
+ * Back navigation: `options.onBack`, when provided, wires a leading
+ * `strings.backButtonLabel` ("Volver") button -- same optional-callback
+ * contract as diagnosticsScreen.js/privacyPolicyScreen.js's own back
+ * buttons. This screen has no opinion on *where* "back" leads (Inicio or
+ * Resultados, whichever the entry point that opened it was) -- deciding
+ * that destination is entirely public/scripts/main.js's job.
+ *
  * Browser bridge: DinoQuiz has no bundler, so this screen -- which the
  * browser actually runs -- lives under `public/` and follows the dual
  * CommonJS/global pattern of public/scripts/resultsScreen.js/
@@ -271,6 +278,15 @@
     var root = doc.createElement('div');
     root.className = 'hall-of-fame-screen';
 
+    var backButton = doc.createElement('button');
+    backButton.type = 'button';
+    backButton.className = 'hall-of-fame-screen__back-button';
+    backButton.textContent = strings.backButtonLabel;
+    backButton.setAttribute('aria-label', strings.backButtonLabel);
+    if (typeof options.onBack === 'function') {
+      backButton.addEventListener('click', options.onBack);
+    }
+
     var heading = doc.createElement('h1');
     heading.className = 'hall-of-fame-screen__heading';
     heading.textContent = strings.title;
@@ -287,6 +303,7 @@
     clearedStatus.className = 'hall-of-fame-screen__cleared-status';
     clearedStatus.setAttribute('aria-live', 'polite');
 
+    root.appendChild(backButton);
     root.appendChild(heading);
     root.appendChild(current.body);
     root.appendChild(clearedStatus);
@@ -344,6 +361,7 @@
 
     return {
       root: root,
+      backButton: backButton,
       heading: heading,
       getBody: function () {
         return current.body;

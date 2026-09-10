@@ -403,10 +403,12 @@ Tras responder, además del resaltado de la opción correcta, la pantalla muestr
   tipografía ≥20sp y `aria-live="polite"` para que TalkBack/VoiceOver lo lean en cuanto
   aparece.
 - El botón "Siguiente" (`question-screen__next-button`, área táctil ≥48x48dp), que se
-  muestra deshabilitado y solo se habilita tras `MIN_ADVANCE_DELAY_MS` (4s, ver
-  `src/screens/QuestionScreen.js`) para garantizar que el dato curioso esté visible al
-  menos ese tiempo (AC-6). El temporizador es un `setTimeout` de reloj de pared, sin
-  ninguna dependencia de audio, por lo que el flujo funciona igual en modo silencio.
+  muestra y habilita de forma síncrona en la misma actualización que pinta el feedback
+  (aciertos/incorrectas) y el dato curioso (AC-6, ver `src/screens/QuestionScreen.js`) —
+  sin temporizador, sin depender de red ni de que termine la animación/sonido de
+  celebración. Precede al recuadro de dato curioso tanto visualmente como en el orden del
+  DOM/foco, para que los lectores de pantalla lo alcancen antes que el texto del dato
+  curioso.
 
 ### CTA opcional de anuncio con recompensa (TRIOFSND-86)
 
@@ -426,7 +428,8 @@ anuncios real, solo hay que sustituir el `provider` de ese servicio, sin tocar l
 - `rewardedAdService.request()` nunca rechaza la promesa: si el anuncio no está disponible,
   no se completa o el proveedor lanza un error, siempre resuelve
   `{ granted: false, reason: ... }`. La pantalla nunca necesita `try/catch` ni bloquea el
-  flujo — "Siguiente" y su temporizador son completamente independientes del CTA.
+  flujo — "Siguiente" y su estado (habilitado desde el principio) son completamente
+  independientes del CTA.
 - Si el niño ve el anuncio hasta el final (`granted: true`), se revela un segundo recuadro
   de dato curioso (`question-screen__extra-fun-fact-box`, azul para diferenciarlo del
   amarillo del dato curioso gratuito) con un dato adicional del mismo dinosaurio
@@ -491,12 +494,12 @@ pregunta o a Resultados. Cada respuesta puede avanzar el juego de dos formas, am
 resueltas por la misma función interna `advance()` para que una partida nunca avance dos
 veces por la misma pregunta:
 
-- **Manual**: el niño pulsa "Siguiente" una vez que deja de estar deshabilitado (pasado
-  `MIN_ADVANCE_DELAY_MS`, ver [`public/scripts/questionScreen.js`](public/scripts/questionScreen.js)).
+- **Manual**: el niño pulsa "Siguiente", que ya está visible y habilitado desde el
+  instante en que se pinta el feedback (AC-6, ver
+  [`public/scripts/questionScreen.js`](public/scripts/questionScreen.js)) — sin
+  temporizador propio.
 - **Automático**: si no pulsa nada, un `setTimeout` programado justo tras revelar el
-  feedback avanza la partida por su cuenta pasados `MIN_ADVANCE_DELAY_MS +
-  AUTO_ADVANCE_GRACE_MS` (el temporizador propio de la pantalla, más un margen extra para
-  que el botón haya estado pulsable un rato antes de que la app decida por el niño; PRD
+  feedback avanza la partida por su cuenta pasados `AUTO_ADVANCE_GRACE_MS` (PRD
   main_workflow paso 5: "botón 'Siguiente' (o avance automático) lleva a la siguiente
   pregunta"). Un tap manual cancela el temporizador pendiente.
 

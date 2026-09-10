@@ -48,17 +48,20 @@
  * compositor-driven, no layout thrashing). `warmUpFeedbackAnimation` forces
  * the browser to resolve that keyframe's styles once, off-screen, right
  * after the question mounts, so the child's first tap doesn't pay a
- * first-run style-recalculation cost.
+ * first-run style-recalculation cost. `handleSelect` also brackets this
+ * work with `performance.mark`/`performance.measure` calls (guarded for
+ * environments without the User Timing API) so this budget stays
+ * measurable in the field — the mark/measure names are static labels only,
+ * never the question id, the selected answer or any other per-answer
+ * payload.
  *
- * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
- * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
- * (4s), guaranteeing the dato curioso stays on screen long enough to read.
- * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
- * audio cue — so the flow works identically with sound muted (no audio
- * dependency). It is exposed on the exported `renderQuestionScreen` function
- * (and in the CommonJS/window API below) so the app-shell flow controller
- * (public/scripts/main.js, TRIOFSND-84) can derive its own auto-advance
- * delay from the same single source of truth instead of duplicating 4000.
+ * "Siguiente" availability (AC-6): the button is shown and enabled
+ * synchronously, in the same click-handler update that renders the
+ * acierto/fallo feedback and the dato curioso — no `setTimeout`, no network
+ * dependency, and no wait on the celebration animation/sound, so a child
+ * (or an automated flow) can advance the instant the feedback paints. It
+ * precedes the dato curioso box both visually and in DOM order, so screen
+ * readers reach "Siguiente" before the fun-fact text.
  *
  * Accessibility (AC-14, TRIOFSND-79): the dato curioso paragraph and the
  * visible `feedback` paragraph are both `aria-live="polite"`, and the
@@ -81,13 +84,6 @@
  * silent mode the miss is communicated only visually, exactly like the
  * existing feedback styling. `options.playFailSound` lets callers override
  * the resolved audio module (used by tests).
- *
- * Advance timer (AC-6): "Siguiente" appears disabled as soon as the answer
- * is revealed and only becomes clickable after `MIN_ADVANCE_DELAY_MS`
- * (4s), guaranteeing the dato curioso stays on screen long enough to read.
- * The delay is a plain `setTimeout` — a wall-clock timer, never gated on an
- * audio cue — so the flow works identically with sound muted (no audio
- * dependency).
  *
  * Accessibility (AC-4/AC-14): the dinosaur illustration carries a
  * descriptive `alt` built from the i18n `dinosaurNames` map instead of a
@@ -142,7 +138,7 @@
  * without a real ad network, so that service's default provider always
  * reports the ad as unavailable and the CTA stays hidden until a future ad
  * adapter is plugged into it. Whatever the ad service resolves with, the
- * CTA never touches `nextButton` or its advance timer — the game always
+ * CTA never touches `nextButton` or its enabled state — the game always
  * continues.
  *
  * Image style by age (TRIOFSND-194): the dinosaur illustration's variant
@@ -174,8 +170,29 @@
   var NEUTRAL_CLASS = 'question-screen__option--neutral';
   var CELEBRATE_CLASS = 'question-screen__option--celebrate';
   var IMAGE_BASE_PATH = '/assets/images/';
-  var MIN_ADVANCE_DELAY_MS = 4000;
   var DEFAULT_TOTAL_QUESTIONS = 10;
+
+  // Static, per-render labels only (AC-5) -- never the question id, the
+  // selected answer or any other per-answer payload -- so this timing data
+  // carries no persistent identifier and no response payload.
+  var PERF_MARK_FEEDBACK_START = 'dinoquiz:question-feedback-start';
+  var PERF_MARK_NEXT_BUTTON_READY = 'dinoquiz:question-next-button-ready';
+  var PERF_MEASURE_FEEDBACK_TO_NEXT = 'dinoquiz:question-feedback-to-next-button';
+
+  /** Guards every User Timing API call: not every runtime (older browsers, jsdom) implements `performance.mark`/`measure`. */
+  function markPerformance(name) {
+    if (typeof performance === 'undefined' || typeof performance.mark !== 'function') return;
+    performance.mark(name);
+  }
+
+  function measurePerformance(name, startMark, endMark) {
+    if (typeof performance === 'undefined' || typeof performance.measure !== 'function') return;
+    try {
+      performance.measure(name, startMark, endMark);
+    } catch (error) {
+      // Missing marks (unsupported runtime) must never break the feedback flow.
+    }
+  }
 
   /** Fills a "{answer}" placeholder, falling back to the raw answer text if no format string is configured. */
   function formatAnswerTemplate(format, answerText) {
@@ -653,6 +670,8 @@
       if (answered) return;
       answered = true;
 
+      markPerformance(PERF_MARK_FEEDBACK_START);
+
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
@@ -716,11 +735,15 @@
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
       }
+      // Shown and enabled synchronously, in this same update (AC-6): no
+      // timer, no network dependency, and no wait on the celebration
+      // animation/sound below -- the child can advance the instant the
+      // feedback paints.
       nextButton.hidden = false;
-      nextButton.disabled = true;
-      setTimeout(function () {
-        nextButton.disabled = false;
-      }, MIN_ADVANCE_DELAY_MS);
+      nextButton.disabled = false;
+
+      markPerformance(PERF_MARK_NEXT_BUTTON_READY);
+      measurePerformance(PERF_MEASURE_FEEDBACK_TO_NEXT, PERF_MARK_FEEDBACK_START, PERF_MARK_NEXT_BUTTON_READY);
 
       if (!correct && playFailSound) {
         playFailSound({ muted: !!options.muted });
@@ -752,11 +775,14 @@
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
     root.appendChild(announcementEl);
+    // "Siguiente" precedes the dato curioso box, both visually and in
+    // DOM/focus order (AC-6), so a screen reader's virtual cursor reaches it
+    // before the fun-fact text.
+    root.appendChild(nextButton);
     root.appendChild(funFactBox);
     root.appendChild(rewardedAdCta);
     root.appendChild(rewardedAdStatus);
     root.appendChild(extraFunFactBox);
-    root.appendChild(nextButton);
     container.appendChild(root);
 
     warmUpFeedbackAnimation();
@@ -793,19 +819,12 @@
     };
   }
 
-  // Exposed on the function itself (not just the module's `api` below) so
-  // the app-shell flow controller (public/scripts/main.js, TRIOFSND-84) can
-  // derive its auto-advance delay from `renderers.renderQuestionScreen`
-  // without a second require of this module.
-  renderQuestionScreen.MIN_ADVANCE_DELAY_MS = MIN_ADVANCE_DELAY_MS;
-
   var api = {
     renderQuestionScreen: renderQuestionScreen,
     warmUpFeedbackAnimation: warmUpFeedbackAnimation,
     buildResultAnnouncement: buildResultAnnouncement,
     validateFailureCopy: validateFailureCopy,
     validateFeedbackCopy: validateFeedbackCopy,
-    MIN_ADVANCE_DELAY_MS: MIN_ADVANCE_DELAY_MS,
   };
 
   if (typeof module !== 'undefined' && module.exports) {

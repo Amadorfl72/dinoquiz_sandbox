@@ -22,6 +22,22 @@ describe('i18n resource loader', () => {
     expect(home.parentalNotice.message).toMatch(/progreso/i);
   });
 
+  describe('question/results score labels', () => {
+    test('question.score has distinct, accessible level and game labels', () => {
+      const { question } = getStrings('es');
+      expect(question.score.levelLabel).toBe('Puntos del nivel');
+      expect(question.score.gameLabel).toBe('Puntos de la partida');
+      expect(question.score.levelLabel).not.toBe(question.score.gameLabel);
+    });
+
+    test('results.score has distinct, accessible level and game labels', () => {
+      const { results } = getStrings('es');
+      expect(results.score.levelLabel).toBe('Puntos del nivel');
+      expect(results.score.gameLabel).toBe('Puntos de la partida');
+      expect(results.score.levelLabel).not.toBe(results.score.gameLabel);
+    });
+  });
+
   describe('modeSelector strings', () => {
     // Mirrors src/game/modesCatalog.js MODE_IDS exactly, so the illustrated
     // selector and the availability evaluator always agree on which modes exist.
