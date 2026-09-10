@@ -1095,7 +1095,8 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
     // get()/set() chain several awaits). The 10th answer's write must land
     // before Resultados renders (its discoveredFunFactsCount reads the
     // storage snapshot synchronously the instant "Siguiente" is clicked), so
-    // this flushes right after the answer click -- before "Siguiente" is
+    // this flushes (via the shared flushPromises() -- real timers, no fake-
+    // timer advance) right after the answer click -- before "Siguiente" is
     // even looked up -- unrelated to "Siguiente" itself, which is already
     // visible/enabled synchronously the instant the option is selected: the
     // assertion below and the click that follows it have no timer
@@ -1104,7 +1105,7 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
       const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
       const index = correct ? 0 : 1;
       buttons[index].click();
-      await jest.advanceTimersByTimeAsync(0);
+      await flushPromises();
 
       const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
       expect(nextButton.hidden).toBe(false);
