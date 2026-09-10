@@ -1530,17 +1530,42 @@
    * will eventually persist anyway.
    *
    * Hall of Fame (hallOfFameService.js): every call here is also one more
-   * finished game, across every mode, exactly like the cross-mode bestScore/
-   * bestStreak combined above -- so this is the single place that also adds
-   * a `{ name, score, timestamp }` entry to the on-device top-10 list.
-   * `name` is whatever nickname is currently saved (nicknameService.js), or
-   * `null` for a guest game (hallOfFameService.js's own no-name contract) --
-   * never read from anywhere else, and never written to `storage`, an
-   * analytics event or a log entry.
+   * finished game, across every mode -- so this delegates to
+   * `recordHallOfFameEntry` below, independent of whether `storage` (the
+   * bestScore/streak client) is even available, and returns its id as
+   * `hallOfFameEntryId` so a caller (e.g. `playLevel`) can highlight this
+   * exact entry later without adding a second, duplicate one of its own.
    */
+  /**
+   * Records `finalState` as a `{ name, score, timestamp }` entry via
+   * hallOfFameService.js -- independent of whatever `storage` (the
+   * bestScore/streak StorageClient) is available, since hallOfFameService.js
+   * persists through its own dedicated localStorage key, not through
+   * `storage`. Returns the `timestamp` used as the entry's id, or
+   * `undefined` if no entry could be recorded (missing service, or no
+   * numeric score to record).
+   */
+  function recordHallOfFameEntry(finalState) {
+    if (!finalState || typeof finalState.score !== 'number') {
+      return undefined;
+    }
+    var hallOfFameService = resolveHallOfFameService();
+    if (!hallOfFameService || typeof hallOfFameService.addEntry !== 'function') {
+      return undefined;
+    }
+    var nicknameService = resolveNicknameService();
+    var name =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+    var timestamp = Date.now();
+    hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: timestamp });
+    return timestamp;
+  }
+
   function persistBestScoreAndStreak(storage, finalState) {
+    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
+
     if (!storage || !finalState) {
-      return { bestScore: undefined, bestStreak: undefined };
+      return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
 
     var bestScore = combineWithCurrent(
@@ -1559,17 +1584,7 @@
       storage.recordStreak(finalState.maxStreak);
     }
 
-    if (typeof finalState.score === 'number') {
-      var hallOfFameService = resolveHallOfFameService();
-      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-        var nicknameService = resolveNicknameService();
-        var name =
-          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
-        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: Date.now() });
-      }
-    }
-
-    return { bestScore: bestScore, bestStreak: bestStreak };
+    return { bestScore: bestScore, bestStreak: bestStreak, hallOfFameEntryId: hallOfFameEntryId };
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -1814,17 +1829,15 @@
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
         // Hall of Fame entry (Quiz only -- the one mode this shared
-        // orchestrator serves, see buildModeDispatchRegistry): recorded here,
-        // once per finished level, so `finishLevel` below always has an
-        // identifier ready to hand to hallOfFameScreen.js for highlighting.
-        // `timestamp` doubles as the entry's identifier (see
-        // hallOfFameService.js's own doc comment: entries have no separate
-        // `id` field) -- stashed on `finalState` for `finishLevel` to read.
-        var hallOfFameService = resolveHallOfFameService();
-        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID && hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-          var hallOfFameTimestamp = Date.now();
-          hallOfFameService.addEntry({ name: null, score: finalState.score, timestamp: hallOfFameTimestamp }, ctx.storageObj);
-          finalState.hallOfFameEntryId = hallOfFameTimestamp;
+        // orchestrator serves, see buildModeDispatchRegistry): `finalState`
+        // just got its one-and-only entry recorded above by
+        // `persistBestScoreAndStreak` (with whatever nickname is currently
+        // saved, or `null` for a guest game). Reuse that same entry's id --
+        // stashed on `finalState` for `finishLevel` to read and hand to
+        // hallOfFameScreen.js for highlighting -- instead of adding a second,
+        // always-guest (`name: null`) duplicate entry here.
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID) {
+          finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
         }
 
         var outcome = gameFlow.completeLevel({
