@@ -73,6 +73,7 @@ const PRECACHE_URLS = [
   '/scripts/oidoJurasicoScreen.js',
   '/scripts/resultsScreen.js',
   '/scripts/hallOfFameScreen.js',
+  '/scripts/hallOfFameService.js',
   '/scripts/modesCatalog.js',
   '/scripts/unlockThresholds.js',
   '/scripts/modeStorage.js',
