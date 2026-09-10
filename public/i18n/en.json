@@ -116,7 +116,7 @@
   },
   "ageGate": {
     "screenTitle": "How old are you?",
-    "instructions": "Choose your age to start playing. It's only used for this game: we don't save or share it.",
+    "instructions": "Choose your age to start playing. It's only used while you play this game: it isn't saved or shared. That's different from your nickname: if you saved one, it stays saved on this device until you delete it.",
     "sevenOption": "7 years or younger",
     "eightPlusOption": "8 years or older"
   },
@@ -183,9 +183,10 @@
         "id": "que-datos",
         "heading": "What information do we use?",
         "paragraphs": [
-          "DinoQuiz doesn't ask for or store personal data from children: there's no registration, no name, no photo, no location, and no contacts.",
+          "DinoQuiz doesn't ask for data that truly identifies children: there's no registration, no real name is requested, no photo, no location, and no contacts.",
+          "Before each game, we ask for an age to adapt the game. That age is only used while the game lasts and isn't saved anywhere, not on the device and not on any server.",
           "Everything the app needs to play (questions, images, sounds) is already included and works without an internet connection.",
-          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, whether sound is muted, and, if voluntarily saved, a nickname (never the real name or last name). This information never leaves the device.",
+          "The device itself stores, only locally: the best score, the streak of correct answers, the fun facts already discovered, whether sound is muted, and, if voluntarily saved, a nickname (never the real name or last name). That nickname can be edited or deleted at any time from Home, and deleting it also removes it from this device. This information never leaves the device.",
           "We may receive anonymous, aggregated technical information such as the device model, system version, language, or screen size, and usage statistics (for example, whether a game was completed). This data cannot identify any individual person."
         ]
       },
@@ -210,7 +211,7 @@
         "heading": "Your rights (and your child's)",
         "paragraphs": [
           "Since we don't collect personal data, there's no profile to look up, correct, or delete in our systems.",
-          "All saved information lives only on the device: you can delete it at any time by uninstalling the app or clearing its data from the device or browser settings. The saved nickname, specifically, can also be edited or deleted at any time from the 'Edit or delete your nickname' control on the Home screen, with no need to touch any device setting.",
+          "All saved information lives only on the device: you can delete it at any time by tapping \"Delete my data\" on this same screen, by uninstalling the app, or by clearing its data from the device or browser settings. That deletion includes your best score, your streak, the fun facts you've discovered, and the Hall of Fame top scores saved on this device. The saved nickname, specifically, can also be edited or deleted at any time from the 'Edit or delete your nickname' control on the Home screen, with no need to touch any device setting.",
           "If you have any questions about privacy, or believe some data was collected that shouldn't have been, you can exercise your rights of access, rectification, erasure, objection, and portability by writing to the contact address below."
         ]
       },
@@ -229,7 +230,15 @@
           "If this policy changes, we'll indicate it by updating the date on this page. We recommend checking it from time to time together with your child."
         ]
       }
-    ]
+    ],
+    "dataDeletion": {
+      "heading": "Delete your data now",
+      "buttonLabel": "Delete my data",
+      "confirmMessage": "Are you sure you want to delete your best score, your streak, the fun facts you've discovered, and the Hall of Fame saved on this device? This can't be undone.",
+      "cancelButtonLabel": "Cancel",
+      "confirmButtonLabel": "Delete",
+      "successMessage": "Done: we've deleted your best score, your streak, the fun facts you've discovered, and the Hall of Fame saved on this device."
+    }
   },
   "diagnostics": {
     "screenTitle": "Technical diagnostics",
@@ -381,7 +390,7 @@
     "sections": [
       {
         "heading": "What data do we collect?",
-        "body": "None that's personal. DinoQuiz doesn't ask for name, age, photo, email, or any other data that identifies the player. There are no accounts or logins."
+        "body": "None that truly identifies the player. Before the game we ask for an age to adapt the game, but it isn't saved or shared: it's only used while that game lasts. We don't ask for a real name, photo, email, or location, and there are no accounts or logins."
       },
       {
         "heading": "Where is progress saved?",
