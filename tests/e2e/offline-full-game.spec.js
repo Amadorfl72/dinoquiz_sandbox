@@ -47,14 +47,29 @@ async function waitForPrecache(page) {
     .toBe(true);
 }
 
-/** Plays through every question on screen (any option — the point is completing the flow, not the score). */
+/**
+ * Plays through every question on screen (any option — the point is
+ * completing the flow, not the score).
+ *
+ * TRIOFSND-111 / "Eliminar tiempo de espera al responder pregunta": "Siguiente"
+ * must be visible and enabled in the SAME update that renders the feedback
+ * (questionScreen.js's handleSelect, AC-6) — including fully offline, never
+ * behind a multi-second grace timeout that would hide which question
+ * actually failed to respond immediately. The per-iteration message pins
+ * down the exact question index in any failure output.
+ */
 async function playFullGame(page) {
   for (let index = 0; index < QUESTIONS_PER_GAME; index += 1) {
     await expect(page.locator(QUESTION_SCREEN)).toBeVisible();
     await page.locator(QUESTION_OPTION).first().click();
 
     const nextButton = page.locator(NEXT_BUTTON);
-    await expect(nextButton).toBeEnabled({ timeout: 6_000 });
+    await expect(nextButton, `question ${index + 1}/${QUESTIONS_PER_GAME}: "Siguiente" should be visible immediately after answering`).toBeVisible({
+      timeout: 500,
+    });
+    await expect(nextButton, `question ${index + 1}/${QUESTIONS_PER_GAME}: "Siguiente" should be enabled immediately after answering`).toBeEnabled({
+      timeout: 500,
+    });
     await nextButton.click();
   }
 }
