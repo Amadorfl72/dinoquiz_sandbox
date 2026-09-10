@@ -15,6 +15,7 @@ const { test, expect } = require('@playwright/test');
  */
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
+const NICKNAME_GUEST_BUTTON = '.nickname-screen__guest-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option--eight-plus';
 const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
@@ -28,9 +29,10 @@ const RESULTS_SCREEN = '.results-screen';
 const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
-/** Inicio -> edad -> selector de modos -> Quiz (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game starts. */
+/** Inicio -> apodo -> edad -> selector de modos -> Quiz (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game starts. On a fresh device (no saved nickname) the nickname step shows before the age gate -- "Jugar como invitado" skips it without persisting one, same as the age gate/mode selector that follow. */
 async function startQuizFromHome(page) {
   await page.locator(HOME_PLAY_BUTTON).click();
+  await page.locator(NICKNAME_GUEST_BUTTON).click();
   await page.locator(AGE_GATE_OPTION).click();
   await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
 }
@@ -134,6 +136,8 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible({ timeout: 20_000 });
     await page.locator(HOME_PLAY_BUTTON).click();
+    await expect(page.locator(NICKNAME_GUEST_BUTTON)).toBeVisible({ timeout: 20_000 });
+    await page.locator(NICKNAME_GUEST_BUTTON).click();
     await expect(page.locator(AGE_GATE_OPTION)).toBeVisible({ timeout: 20_000 });
     await page.locator(AGE_GATE_OPTION).click();
     await expect(page.locator(MODE_SELECTOR_QUIZ_CARD)).toBeVisible({ timeout: 20_000 });
