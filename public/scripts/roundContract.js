@@ -14,7 +14,8 @@
  *
  * Two explicit steps per round, mirroring the real Quiz/Laberinto screens
  * (questionScreen.js's `handleSelect` scores immediately on tap and only
- * *later*, after `MIN_ADVANCE_DELAY_MS`, does main.js's `advance()` move to
+ * *later*, once "Siguiente" is tapped (or the app-shell's
+ * `AUTO_ADVANCE_GRACE_MS` elapses), does main.js's `advance()` move to
  * the next question -- never the same call):
  *
  *   1. `evaluateAnswer(session, response)` -- scores `response.isCorrect`

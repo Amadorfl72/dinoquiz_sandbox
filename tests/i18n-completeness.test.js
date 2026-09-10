@@ -224,10 +224,10 @@ describe('no hardcoded visible-text literals in public/scripts/*.js', () => {
     expect(findEmbeddedVisibleLiterals("el.addEventListener('click', handler);")).toEqual([]);
   });
 
-  // Browser-loaded scripts only (see public/index.html) -- a colocated
-  // `*.test.js` file (e.g. privacyPolicyScreen.test.js) is never shipped to
-  // the browser, so its own test-description strings are exempt the same
-  // way developer-only diagnostics are.
+  // Jest specs (public/scripts/*.test.js, e.g. privacyPolicyScreen.test.js)
+  // are never loaded by the browser -- their `it(...)`/`describe(...)`
+  // descriptions are prose for the test runner's output, not player-visible
+  // UI copy, so they are excluded here.
   const scriptFiles = fs.readdirSync(SCRIPTS_DIR).filter((name) => name.endsWith('.js') && !name.endsWith('.test.js'));
 
   test('public/scripts/ has at least one script to scan', () => {

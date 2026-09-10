@@ -339,6 +339,8 @@
         renderModeFallbackWarningScreen:
           fromWindow.renderModeFallbackWarningScreen ||
           require('../../src/screens/ModeFallbackWarningScreen').renderModeFallbackWarningScreen,
+        renderNicknameScreen:
+          fromWindow.renderNicknameScreen || require('../../src/screens/NicknameScreen').renderNicknameScreen,
       };
     }
 
@@ -370,6 +372,48 @@
       strings: ageGateStrings,
       onSelect: function () {
         onSelected();
+      },
+    });
+  }
+
+  /**
+   * Nickname ("apodo") step: rendered right after '¡Jugar!', before the age
+   * gate, so it is the very first thing asked and always resolved before the
+   * first question of whichever mode gets picked. A nickname already saved
+   * on this device (nicknameService.js's `dinoquiz:nickname`) is reused
+   * silently -- `onDone` runs straight away, the screen is never shown
+   * twice. A missing renderer/service degrades the same way `renderAgeGate`
+   * does: straight to `onDone`, since asking for a name must never block
+   * play.
+   *
+   * Submitting a valid apodo (nicknameScreen.js's own trim/validate rule)
+   * persists it via nicknameService.js so this and every later game reuse it
+   * for personalization and for the Hall of Fame entry
+   * `persistBestScoreAndStreak` records once the game finishes.
+   * "Jugar como invitado" moves on without saving anything -- the game still
+   * plays, and a finished game is still recorded, just under a null/guest
+   * name (hallOfFameService.js's own no-name contract).
+   */
+  function renderNicknameStep(container, renderers, nicknameRequestStrings, onDone) {
+    var nicknameService = resolveNicknameService();
+    var existingNickname =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+
+    if (existingNickname || !renderers || typeof renderers.renderNicknameScreen !== 'function') {
+      onDone();
+      return null;
+    }
+
+    return renderers.renderNicknameScreen(container, {
+      strings: nicknameRequestStrings,
+      onSubmit: function (nickname) {
+        if (nicknameService && typeof nicknameService.saveNickname === 'function') {
+          nicknameService.saveNickname(nickname);
+        }
+        onDone();
+      },
+      onGuest: function () {
+        onDone();
       },
     });
   }
@@ -833,6 +877,39 @@
   }
 
   /**
+   * Resolves src/services/nicknameService.js, the local `dinoquiz:nickname`
+   * ("apodo") persistence the nickname step below reads before deciding
+   * whether to show the request screen, and writes once the player submits
+   * one. Same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveAnalytics`/`resolveModeStorage` above: under Node/Jest it
+   * resolves via `require`, and in the real, bundler-less browser it
+   * resolves the `public/scripts/nicknameService.js` port loaded as a
+   * `<script>` (see public/index.html) off
+   * `window.DinoQuiz.services.nicknameService`.
+   */
+  function resolveNicknameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/nicknameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.nicknameService) || null;
+  }
+
+  /**
+   * Resolves src/services/hallOfFameService.js, the local on-device top-10
+   * score list `persistBestScoreAndStreak` below feeds on every finished
+   * game. Same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveNicknameService` above.
+   */
+  function resolveHallOfFameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/hallOfFameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.hallOfFameService) || null;
+  }
+
+  /**
    * Renders modeChangeConfirmScreen.js (TRIOFSND-237) with the `modeChange`
    * i18n strings already resolved into `resources` (see `loadHomeResources`).
    * Returns null (renders nothing) when the renderer failed to load, mirroring
@@ -1255,27 +1332,26 @@
     return (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.questions) || null;
   }
 
-  // Extra wall-clock time (TRIOFSND-84) the flow controller waits, on top of
-  // the question screen's own MIN_ADVANCE_DELAY_MS gate on "Siguiente"
-  // (public/scripts/questionScreen.js, AC-6), before auto-advancing a child
-  // who never taps the button themselves. Giving that grace period after the
-  // button becomes clickable means the automatic advance never races the
-  // moment the button first becomes tappable.
+  // Wall-clock time (TRIOFSND-84) the flow controller waits, after
+  // "Siguiente" is shown and enabled (public/scripts/questionScreen.js,
+  // AC-6, synchronous — no gate of its own), before auto-advancing a child
+  // who never taps the button themselves. This keeps the dato curioso on
+  // screen long enough to read even when nobody taps "Siguiente".
   var AUTO_ADVANCE_GRACE_MS = 4000;
 
   /**
    * Renders the question at `session.state.questionIndex`, then advances to
    * the next one (or completes the game) either when the child taps
-   * "Siguiente" or, if they don't, automatically once
-   * `MIN_ADVANCE_DELAY_MS + AUTO_ADVANCE_GRACE_MS` has elapsed since the
-   * answer was revealed (PRD main_workflow step 5: "botón 'Siguiente' (o
-   * avance automático) lleva a la siguiente pregunta"). Both paths funnel
-   * through the same `advance()` so a game is only ever walked forward once
-   * per question, whichever trigger fires first. `analyticsStorage` records
-   * the aggregated `pregunta_respondida`/`pregunta_respondida_fallo` event
-   * counters (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client
-   * whose `recordQuestionAnswered` call updates that question's historic
-   * accuracy aggregate.
+   * "Siguiente" or, if they don't, automatically once `AUTO_ADVANCE_GRACE_MS`
+   * has elapsed since the answer was revealed (PRD main_workflow step 5:
+   * "botón 'Siguiente' (o avance automático) lleva a la siguiente
+   * pregunta"). Both paths funnel through the same `advance()` so a game is
+   * only ever walked forward once per question, whichever trigger fires
+   * first. `analyticsStorage` records the aggregated
+   * `pregunta_respondida`/`pregunta_respondida_fallo` event counters
+   * (TRIOFSND-92); `storage` is the TRIOFSND-80 per-question client whose
+   * `recordQuestionAnswered` call updates that question's historic accuracy
+   * aggregate.
    */
   function renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext) {
     var question = session.questions[session.state.questionIndex];
@@ -1299,11 +1375,6 @@
         renderQuestionAt(container, renderers, session, onGameComplete, storageObj, analyticsStorage, storage, levelContext);
       }
     }
-
-    var minAdvanceDelayMs =
-      (typeof renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS === 'number' &&
-        renderers.renderQuestionScreen.MIN_ADVANCE_DELAY_MS) ||
-      0;
 
     var questionOptions = {
       score: session.state.score,
@@ -1354,7 +1425,7 @@
           storage.markFunFactDiscovered(question.id);
         }
 
-        autoAdvanceTimer = setTimeout(advance, minAdvanceDelayMs + AUTO_ADVANCE_GRACE_MS);
+        autoAdvanceTimer = setTimeout(advance, AUTO_ADVANCE_GRACE_MS);
       },
       onNext: function () {
         if (session.state.questionIndex + 1 >= session.questions.length) {
@@ -1457,6 +1528,15 @@
    * (before the write above can have landed) and combines it with this
    * game's own score/racha locally, which is exactly what the write above
    * will eventually persist anyway.
+   *
+   * Hall of Fame (hallOfFameService.js): every call here is also one more
+   * finished game, across every mode, exactly like the cross-mode bestScore/
+   * bestStreak combined above -- so this is the single place that also adds
+   * a `{ name, score, timestamp }` entry to the on-device top-10 list.
+   * `name` is whatever nickname is currently saved (nicknameService.js), or
+   * `null` for a guest game (hallOfFameService.js's own no-name contract) --
+   * never read from anywhere else, and never written to `storage`, an
+   * analytics event or a log entry.
    */
   function persistBestScoreAndStreak(storage, finalState) {
     if (!storage || !finalState) {
@@ -1477,6 +1557,16 @@
     }
     if (typeof storage.recordStreak === 'function' && typeof finalState.maxStreak === 'number') {
       storage.recordStreak(finalState.maxStreak);
+    }
+
+    if (typeof finalState.score === 'number') {
+      var hallOfFameService = resolveHallOfFameService();
+      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
+        var nicknameService = resolveNicknameService();
+        var name =
+          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: Date.now() });
+      }
     }
 
     return { bestScore: bestScore, bestStreak: bestStreak };
@@ -1723,6 +1813,20 @@
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
+        // Hall of Fame entry (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): recorded here,
+        // once per finished level, so `finishLevel` below always has an
+        // identifier ready to hand to hallOfFameScreen.js for highlighting.
+        // `timestamp` doubles as the entry's identifier (see
+        // hallOfFameService.js's own doc comment: entries have no separate
+        // `id` field) -- stashed on `finalState` for `finishLevel` to read.
+        var hallOfFameService = resolveHallOfFameService();
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID && hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
+          var hallOfFameTimestamp = Date.now();
+          hallOfFameService.addEntry({ name: null, score: finalState.score, timestamp: hallOfFameTimestamp }, ctx.storageObj);
+          finalState.hallOfFameEntryId = hallOfFameTimestamp;
+        }
+
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
           answers: finalState.answers,
@@ -1824,7 +1928,12 @@
 
     return Promise.resolve(ctx.maxUnlockedLevelPromise)
       .then(function (maxLevelUnlocked) {
-        return renderers.renderResultsScreen(container, {
+        // Captured in a local variable (rather than passed inline) so
+        // `onViewHallOfFame` below can re-render this exact Resultados
+        // screen when the player comes back from the Hall of Fame, without
+        // re-running the level-unlock/result storage writes above a second
+        // time (calling `finishLevel` itself again would).
+        var resultsOptions = {
           score: finalState.score,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
@@ -1870,7 +1979,23 @@
               homeStorage
             );
           },
-        });
+        };
+
+        // Hall of Fame entry point (Resultados): hands off the just-finished
+        // level's own entry identifier (see playLevel above) so
+        // hallOfFameScreen.js can highlight that row, and its 'back' path
+        // returns to this very same Resultados screen (re-rendering from
+        // `resultsOptions`, not by re-running `finishLevel`).
+        resultsOptions.onViewHallOfFame = function () {
+          renderHallOfFame(doc, undefined, fetchFn, {
+            highlightEntryId: finalState.hallOfFameEntryId,
+            onBack: function () {
+              renderers.renderResultsScreen(container, resultsOptions);
+            },
+          });
+        };
+
+        return renderers.renderResultsScreen(container, resultsOptions);
       });
   }
 
@@ -3659,6 +3784,46 @@
     return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.diagnostics) || null;
   }
 
+  /**
+   * Resolves public/scripts/hallOfFameService.js, same require-or-`window.DinoQuiz`
+   * fallback shape as `resolveDiagnostics` above -- registered on
+   * `window.DinoQuiz.services.hallOfFameService` (see that file), so
+   * `playLevel`'s entry recording below and hallOfFameScreen.js itself read
+   * and write the same on-device top-10 list in the real, unbundled browser
+   * too, not just under Node/Jest.
+   */
+  function resolveHallOfFameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.hallOfFameService) {
+      return win.DinoQuiz.services.hallOfFameService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/hallOfFameService');
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Resolves public/scripts/nicknameService.js (local nickname/"apodo"
+   * persistence), same require-or-`window.DinoQuiz` fallback shape as
+   * `resolveDiagnostics` above -- registered on
+   * `window.DinoQuiz.services.nicknameService` (see that file), so Home's
+   * edit/delete apodo control (`renderHome` below) actually persists in the
+   * real, unbundled browser too, not just under Node/Jest. A missing
+   * service still falls back to null, and every call site's own null guard
+   * keeps that from ever blocking gameplay.
+   */
+  function resolveNicknameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (typeof require === 'function') {
+      return require('../../src/services/nicknameService');
+    }
+    return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.nicknameService) || null;
+  }
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -3705,7 +3870,10 @@
             home: data.home,
             privacy: data.privacy,
             purchase: data.purchase,
+            hallOfFame: data.hallOfFame,
+            nicknameSettings: data.nicknameSettings,
             ageGate: data.ageGate,
+            nicknameRequest: data.nicknameRequest,
             modeSelector: data.modeSelector,
             modes: data.modes,
             modeChange: data.modeChange,
@@ -3718,6 +3886,13 @@
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
+    });
+  }
+
+  /** Fetches the whole i18n resource once and hands back the `hallOfFame` screen copy -- everything renderHallOfFame needs. */
+  function loadHallOfFameStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.hallOfFame;
     });
   }
 
@@ -4270,12 +4445,40 @@
 
     return loadHomeResources(fetchFn).then(function (resources) {
       var renderOptions = resources
-        ? { strings: resources.home, privacyStrings: resources.privacy, purchaseStrings: resources.purchase }
+        ? {
+            strings: resources.home,
+            privacyStrings: resources.privacy,
+            purchaseStrings: resources.purchase,
+            hallOfFameStrings: resources.hallOfFame,
+            nicknameStrings: resources.nicknameSettings,
+          }
         : {};
 
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
+
+      // Hall of Fame entry point (Inicio): opens the Hall of Fame screen and
+      // wires its 'back' path straight back to a freshly-rendered Inicio --
+      // the same fresh renderHome(...) shape every other "return to Inicio"
+      // call site in this file uses (see finishLevel's onExit below).
+      renderOptions.onOpenHallOfFame = function () {
+        renderHallOfFame(doc, undefined, fetchFn, {
+          onBack: function () {
+            var backHomeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderHomeScreen,
+              fetchFn,
+              backHomeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              backHomeStorage
+            );
+          },
+        });
+      };
 
       if (resolvedMuteStorage) {
         renderOptions.muted = loadMutedState(resolvedMuteStorage);
@@ -4302,6 +4505,24 @@
         // mode this flag cannot afford.
         persistAdsRemovedState(true, adsStorage);
       };
+
+      // The Home "Editar o borrar tu apodo" control reads and writes through
+      // nicknameService (public/scripts/nicknameService.js) directly -- it
+      // is a single small localStorage value namespaced under
+      // `dinoquiz:`, same rationale as the mute preference above, not part of
+      // `storage`'s IndexedDB-with-fallback backend. Saving always replaces
+      // the previous value; deleting removes the key entirely so the next
+      // game offers the optional nickname capture again.
+      var nicknameService = resolveNicknameService();
+      if (nicknameService) {
+        renderOptions.nickname = nicknameService.getNickname();
+        renderOptions.onSaveNickname = function (value) {
+          nicknameService.saveNickname(value);
+        };
+        renderOptions.onDeleteNickname = function () {
+          nicknameService.clearNickname();
+        };
+      }
 
       // TRIOFSND-129: how many distinct fun facts have been seen on this
       // device so far, out of the total available in the loaded bank —
@@ -4343,7 +4564,12 @@
               if (tooltipStorage && typeof tooltipStorage.recordEvent === 'function') {
                 tooltipStorage.recordEvent('partida_iniciada');
               }
-              // TRIOFSND-193/207: the age gate is shown right here -- after
+              // Nickname step: asked before the age gate, before anything
+              // else, and skipped silently on every later '¡Jugar!' once a
+              // nickname is already saved on this device (see
+              // `renderNicknameStep`'s own doc comment).
+              //
+              // TRIOFSND-193/207: the age gate is shown right after -- after
               // '¡Jugar!', before the game is prepared. TRIOFSND-232: once it
               // resolves, the illustrated mode selector is shown next instead
               // of starting Quiz straight away -- selecting a mode there is
@@ -4355,16 +4581,18 @@
               // onPurchase) -- startLevelGame's `storageObj` must read from that
               // same backend, or a purchase confirmed here would still show
               // ads on this very game's Resultados screen.
-              renderAgeGate(container, renderers, resources && resources.ageGate, function () {
-                renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
-                  storageObj: resolvedMuteStorage,
-                  analyticsStorage: storage,
-                  storage: storage,
-                  // TRIOFSND-253: resolved once here so every mode reachable
-                  // from the selector reads/writes its own level progress and
-                  // finished-game result through the same modeProgressStorage
-                  // instance (see startLevelGame/finishLevel).
-                  modeProgressStorage: resolveModeProgressStorage(),
+              renderNicknameStep(container, renderers, resources && resources.nicknameRequest, function () {
+                renderAgeGate(container, renderers, resources && resources.ageGate, function () {
+                  renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
+                    storageObj: resolvedMuteStorage,
+                    analyticsStorage: storage,
+                    storage: storage,
+                    // TRIOFSND-253: resolved once here so every mode reachable
+                    // from the selector reads/writes its own level progress and
+                    // finished-game result through the same modeProgressStorage
+                    // instance (see startLevelGame/finishLevel).
+                    modeProgressStorage: resolveModeProgressStorage(),
+                  });
                 });
               });
             }
@@ -4506,6 +4734,49 @@
         options.onBack = onBack;
       }
       return renderDiagnosticsScreen(container, options);
+    });
+  }
+
+  /**
+   * Renders the Hall of Fame screen into #app, the same fetch-then-render
+   * shape as `renderPrivacyPolicy`/`renderDiagnostics` above. Two things a
+   * caller may pass through `options`: `highlightEntryId` (the just-finished
+   * game's own entry identifier, forwarded straight to hallOfFameScreen.js's
+   * `highlightEntryId` so it can highlight that row) and `onBack`, which --
+   * unlike the always-Inicio `onBack` those two screens wire -- is supplied
+   * fresh by each caller below (`renderHome`'s entry point re-renders Inicio;
+   * `finishLevel`'s re-renders the very same Resultados), so this screen
+   * itself stays agnostic about where "back" leads.
+   */
+  function renderHallOfFame(doc, renderHallOfFameScreen, fetchFn, options) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderHallOfFameScreen =
+      renderHallOfFameScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderHallOfFameScreen);
+
+    if (!doc || typeof renderHallOfFameScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    options = options || {};
+
+    return loadHallOfFameStrings(fetchFn).then(function (strings) {
+      var renderOptions = strings ? { strings: strings } : {};
+      if (options.highlightEntryId !== undefined) {
+        renderOptions.highlightEntryId = options.highlightEntryId;
+      }
+      if (typeof options.onBack === 'function') {
+        renderOptions.onBack = options.onBack;
+      }
+      return renderHallOfFameScreen(container, renderOptions);
     });
   }
 
@@ -4741,6 +5012,9 @@
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,
       resolveDiagnostics: resolveDiagnostics,
+      resolveHallOfFameService: resolveHallOfFameService,
+      loadHallOfFameStrings: loadHallOfFameStrings,
+      renderHallOfFame: renderHallOfFame,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
@@ -4766,6 +5040,9 @@
       renderPrivacyPolicy: renderPrivacyPolicy,
       renderRoute: renderRoute,
       renderAgeGate: renderAgeGate,
+      renderNicknameStep: renderNicknameStep,
+      resolveNicknameService: resolveNicknameService,
+      resolveHallOfFameService: resolveHallOfFameService,
       resolveScreenRenderers: resolveScreenRenderers,
       resolveGameFlow: resolveGameFlow,
       loadQuestions: loadQuestions,

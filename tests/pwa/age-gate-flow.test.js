@@ -24,7 +24,6 @@ require('@testing-library/jest-dom');
 const { getByRole } = require('@testing-library/dom');
 
 const MAIN_JS_PATH = path.resolve(__dirname, '../../public/scripts/main.js');
-const { MIN_ADVANCE_DELAY_MS } = require('../../public/scripts/questionScreen');
 const {
   home: homeStrings,
   ageGate: ageGateStrings,
@@ -65,7 +64,7 @@ async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
-  await jest.advanceTimersByTimeAsync(MIN_ADVANCE_DELAY_MS);
+  await jest.advanceTimersByTimeAsync(0);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 }
 
@@ -84,6 +83,16 @@ function mockHomeFetch() {
 function selectQuizMode(container) {
   container.querySelector('[data-mode-id="quiz"]').click();
 }
+
+// A saved nickname (nicknameService.js's `dinoquiz:nickname`) makes the
+// nickname step -- now shown right after '¡Jugar!', before the age gate --
+// skip itself silently, so every scenario below (none of which cares about
+// the nickname flow itself) reaches the age gate straight away, exactly as
+// before that step existed. See tests/pwa/nickname-flow.test.js for the
+// nickname step's own coverage.
+beforeEach(() => {
+  window.localStorage.setItem('dinoquiz:nickname', JSON.stringify('Rex'));
+});
 
 describe('TRIOFSND-196: age gate integrated into the "¡Jugar!" flow (image style + session persistence)', () => {
   let container;

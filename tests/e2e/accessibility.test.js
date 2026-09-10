@@ -38,6 +38,7 @@ const { QUESTIONS_PER_GAME } = require('../../src/game/gameFlow');
 const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
+const NICKNAME_GUEST_BUTTON = '.nickname-screen__guest-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option';
 const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
@@ -61,11 +62,18 @@ async function auditScreen(page, screenName) {
 }
 
 /**
- * Picks any age band, then the Quiz card on the mode selector that follows it
- * (TRIOFSND-232), so the flow reaches the question screen -- neither the age
- * gate nor the mode selector is one of the 4 audited screens here.
+ * Plays as guest past the nickname step (TRIOFSND: "Integrar el nombre en
+ * el flujo de partida"), picks any age band, then the Quiz card on the mode
+ * selector that follows it (TRIOFSND-232), so the flow reaches the question
+ * screen -- none of the nickname/age gate/mode selector steps is one of the
+ * 4 audited screens here.
  */
 async function skipAgeGateIfPresent(page) {
+  const nicknameGuestButton = page.locator(NICKNAME_GUEST_BUTTON);
+  if (await nicknameGuestButton.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await nicknameGuestButton.click();
+  }
+
   const ageGateOption = page.locator(AGE_GATE_OPTION).first();
   if (await ageGateOption.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await ageGateOption.click();

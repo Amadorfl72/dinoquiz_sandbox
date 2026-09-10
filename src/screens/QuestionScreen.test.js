@@ -6,7 +6,7 @@ const path = require('path');
 require('@testing-library/jest-dom');
 const { getByRole, getAllByRole, getByText } = require('@testing-library/dom');
 
-const { renderQuestionScreen, MIN_ADVANCE_DELAY_MS, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
+const { renderQuestionScreen, buildResultAnnouncement, validateFailureCopy, validateFeedbackCopy } = require('./QuestionScreen');
 const { createSoundService, SOUND_SRC, MUTE_STORAGE_KEY } = require('../services/sound');
 const { question: strings } = require('../../public/i18n/es.json');
 const { loadQuestionBank, resolveDatoCurioso, EXPECTED_QUESTION_COUNT } = require('../data/questionBank');
@@ -556,21 +556,15 @@ describe('QuestionScreen', () => {
     });
 
     test('advancing via "Siguiente" carries forward the unchanged score', () => {
-      jest.useFakeTimers();
-      try {
-        const question = buildQuestion();
-        const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
-        const onNext = jest.fn();
-        const { optionButtons, nextButton } = renderQuestionScreen(container, question, { score: 6, onNext });
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const onNext = jest.fn();
+      const { optionButtons, nextButton } = renderQuestionScreen(container, question, { score: 6, onNext });
 
-        optionButtons[wrongIndex].click();
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
-        nextButton.click();
+      optionButtons[wrongIndex].click();
+      nextButton.click();
 
-        expect(onNext).toHaveBeenCalledWith(6);
-      } finally {
-        jest.useRealTimers();
-      }
+      expect(onNext).toHaveBeenCalledWith(6);
     });
   });
 
@@ -690,11 +684,11 @@ describe('QuestionScreen', () => {
       optionButtons[question.correctAnswerIndex].click();
       const elapsed = performance.now() - start;
 
-      // Feedback classes land before any timer fires — only the advance
-      // timer (gating "Siguiente", see below) is scheduled.
+      // Feedback classes land synchronously and no timer is scheduled --
+      // "Siguiente" is enabled in this same update (AC-6), no gate of its own.
       expect(optionButtons[question.correctAnswerIndex]).toHaveClass('question-screen__option--correct');
       expect(elapsed).toBeLessThan(300);
-      expect(jest.getTimerCount()).toBe(1);
+      expect(jest.getTimerCount()).toBe(0);
     } finally {
       jest.useRealTimers();
     }
@@ -781,51 +775,74 @@ describe('QuestionScreen', () => {
     });
   });
 
-  describe('"Siguiente" advance timer (AC-6: dato curioso visible >=4s before advancing)', () => {
-    test('shows "Siguiente" disabled as soon as the answer is revealed', () => {
+  describe('"Siguiente" availability (AC-6: shown and enabled synchronously)', () => {
+    test('shows "Siguiente" already enabled as soon as the answer is revealed -- no timer, no wait', () => {
+      jest.useFakeTimers();
+      try {
+        const question = buildQuestion();
+        const { optionButtons, nextButton } = renderQuestionScreen(container, question);
+
+        optionButtons[question.correctAnswerIndex].click();
+
+        expect(nextButton).toBeVisible();
+        expect(nextButton).not.toBeDisabled();
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test('clicking "Siguiente" right after answering advances immediately', () => {
       const question = buildQuestion();
-      const { optionButtons, nextButton } = renderQuestionScreen(container, question);
+      const onNext = jest.fn();
+      const { optionButtons, nextButton, getScore } = renderQuestionScreen(container, question, { onNext });
 
       optionButtons[question.correctAnswerIndex].click();
+      nextButton.click();
 
-      expect(nextButton).toBeVisible();
-      expect(nextButton).toBeDisabled();
+      expect(onNext).toHaveBeenCalledWith(getScore());
     });
 
-    test('clicking "Siguiente" before the timer elapses does not advance', () => {
-      jest.useFakeTimers();
+    test('precedes the dato curioso box in DOM/focus order, both visually and for screen readers', () => {
+      const question = buildQuestion();
+      const { nextButton, funFactBox } = renderQuestionScreen(container, question);
+
+      expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    test('brackets the feedback update with User Timing marks/measure, carrying no question id or answer payload', () => {
+      const markSpy = jest.fn();
+      const measureSpy = jest.fn();
+      const originalMark = performance.mark;
+      const originalMeasure = performance.measure;
+      performance.mark = markSpy;
+      performance.measure = measureSpy;
       try {
         const question = buildQuestion();
-        const onNext = jest.fn();
-        const { optionButtons, nextButton } = renderQuestionScreen(container, question, { onNext });
+        const { optionButtons } = renderQuestionScreen(container, question);
 
         optionButtons[question.correctAnswerIndex].click();
-        nextButton.click();
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS - 1);
 
-        expect(nextButton).toBeDisabled();
-        expect(onNext).not.toHaveBeenCalled();
+        expect(markSpy).toHaveBeenCalledTimes(2);
+        const markNames = markSpy.mock.calls.map((call) => call[0]);
+        markNames.forEach((name) => {
+          expect(name).not.toContain(question.id);
+          expect(name).not.toContain(String(question.correctAnswerIndex));
+        });
+        expect(measureSpy).toHaveBeenCalledTimes(1);
+        expect(measureSpy).toHaveBeenCalledWith(expect.any(String), markNames[0], markNames[1]);
       } finally {
-        jest.useRealTimers();
+        performance.mark = originalMark;
+        performance.measure = originalMeasure;
       }
     });
 
-    test('enables "Siguiente" once MIN_ADVANCE_DELAY_MS has elapsed, letting the child advance', () => {
-      jest.useFakeTimers();
-      try {
-        const question = buildQuestion();
-        const onNext = jest.fn();
-        const { optionButtons, nextButton, getScore } = renderQuestionScreen(container, question, { onNext });
+    test('never throws when the runtime has no User Timing API (e.g. this jsdom test environment)', () => {
+      expect(typeof performance.mark).not.toBe('function');
+      const question = buildQuestion();
+      const { optionButtons } = renderQuestionScreen(container, question);
 
-        optionButtons[question.correctAnswerIndex].click();
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
-
-        expect(nextButton).not.toBeDisabled();
-        nextButton.click();
-        expect(onNext).toHaveBeenCalledWith(getScore());
-      } finally {
-        jest.useRealTimers();
-      }
+      expect(() => optionButtons[question.correctAnswerIndex].click()).not.toThrow();
     });
   });
 
@@ -1084,27 +1101,21 @@ describe('QuestionScreen', () => {
     }
 
     test('stays hidden when the ads hook reports no rewarded ad is available, and never blocks "Siguiente"', () => {
-      jest.useFakeTimers();
-      try {
-        const question = buildQuestion();
-        const rewardedAdService = fakeAdService({ isAvailable: () => false });
-        const onNext = jest.fn();
-        const { optionButtons, rewardedAdCta, nextButton } = renderQuestionScreen(container, question, {
-          rewardedAdService,
-          onNext,
-        });
+      const question = buildQuestion();
+      const rewardedAdService = fakeAdService({ isAvailable: () => false });
+      const onNext = jest.fn();
+      const { optionButtons, rewardedAdCta, nextButton } = renderQuestionScreen(container, question, {
+        rewardedAdService,
+        onNext,
+      });
 
-        optionButtons[question.correctAnswerIndex].click();
+      optionButtons[question.correctAnswerIndex].click();
 
-        expect(rewardedAdCta.hidden).toBe(true);
+      expect(rewardedAdCta.hidden).toBe(true);
 
-        jest.advanceTimersByTime(MIN_ADVANCE_DELAY_MS);
-        expect(nextButton).not.toBeDisabled();
-        nextButton.click();
-        expect(onNext).toHaveBeenCalled();
-      } finally {
-        jest.useRealTimers();
-      }
+      expect(nextButton).not.toBeDisabled();
+      nextButton.click();
+      expect(onNext).toHaveBeenCalled();
     });
 
     test('is revealed, clearly labeled as an ad, once the answer is fed back and the ads hook reports availability', () => {
@@ -1132,7 +1143,7 @@ describe('QuestionScreen', () => {
       );
 
       optionButtons[question.correctAnswerIndex].click();
-      expect(nextButton).toBeDisabled();
+      expect(nextButton).not.toBeDisabled();
 
       rewardedAdCta.click();
       await Promise.resolve();
@@ -1141,8 +1152,8 @@ describe('QuestionScreen', () => {
       expect(extraFunFactBox.hidden).toBe(false);
       expect(extraFunFact).toHaveTextContent(strings.rewardedAd.extraFacts.trex);
       expect(rewardedAdCta.hidden).toBe(true);
-      // Watching the ad never re-enables "Siguiente" early, nor disables it further.
-      expect(nextButton).toBeDisabled();
+      // Watching the ad never disables "Siguiente" -- the two controls are independent.
+      expect(nextButton).not.toBeDisabled();
     });
 
     test('shows a neutral status and keeps the game going when the rewarded ad is not completed', async () => {

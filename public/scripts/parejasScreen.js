@@ -40,9 +40,8 @@
  * out "Parejas encontradas: N de M" as digits, not just a filling board.
  *
  * Mismatch timing: two revealed-but-unmatched cards flip back to hidden
- * after `MISMATCH_RESET_DELAY_MS` (a plain `setTimeout`, same idiom as
- * questionScreen.js's `MIN_ADVANCE_DELAY_MS`) so the player has time to see
- * both faces before they hide again; while that timer is pending, every
+ * after `MISMATCH_RESET_DELAY_MS` (a plain `setTimeout`) so the player has
+ * time to see both faces before they hide again; while that timer is pending, every
  * still-hidden card is disabled so a third tap can't race the reveal count
  * (mirrors `parejasGame.js`'s own hard MAX_VISIBLE_UNMATCHED rule).
  *
