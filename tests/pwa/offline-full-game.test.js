@@ -147,7 +147,7 @@ describe('TRIOFSND-111: partida completa offline — Inicio -> Quiz (10 pregunta
     getByRole(container, 'button', { name: resultsStrings.playAgainButton }).click();
     expect(container.querySelector('.question-screen')).not.toBeNull();
     expect(container.querySelector('.results-screen')).toBeNull();
-    expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
 
     expect(window.navigator.onLine).toBe(false);
     expect(global.fetch).not.toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe('TRIOFSND-111: partida completa offline — Inicio -> Quiz (10 pregunta
       expect(
         container.querySelectorAll('.question-screen__option--correct')[0]
       ).toBe(buttons[firstQuestion.correctAnswerIndex]);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
     } finally {
       jest.useRealTimers();
     }

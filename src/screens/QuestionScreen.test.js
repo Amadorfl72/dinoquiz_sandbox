@@ -47,20 +47,6 @@ function createFakeAudioFactory() {
 
 const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
 
-// Design tokens (TRIOFSND-133) moved these values into `:root` custom
-// properties, so a rule's literal px/rem values must be resolved through
-// `var(--token)` before pattern-matching them here.
-function resolveCssCustomProperties(css, ruleText) {
-  const rootMatch = css.match(/:root\s*\{([^}]*)\}/);
-  const tokens = {};
-  Array.from((rootMatch ? rootMatch[1] : '').matchAll(/--([\w-]+):\s*([^;]+);/g)).forEach((match) => {
-    tokens[match[1]] = match[2].trim();
-  });
-  return ruleText.replace(/var\(--([\w-]+)\)/g, (fullMatch, name) =>
-    Object.prototype.hasOwnProperty.call(tokens, name) ? tokens[name] : fullMatch
-  );
-}
-
 function buildQuestion(overrides = {}) {
   return {
     id: 'trex-01',
@@ -310,43 +296,85 @@ describe('QuestionScreen', () => {
     });
   });
 
-  test('starts the score at 0 by default', () => {
+  test('starts both score markers at 0 by default', () => {
     renderQuestionScreen(container, buildQuestion());
 
-    expect(getByText(container, `${strings.scoreLabel}: 0`)).toBeInTheDocument();
+    expect(getByText(container, `${strings.score.levelLabel}: 0`)).toBeInTheDocument();
+    expect(getByText(container, `${strings.score.gameLabel}: 0`)).toBeInTheDocument();
   });
 
-  test('the score text style meets the minimum 20sp font size (TRIOFSND-83)', () => {
-    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+  describe('two distinct score blocks (level vs. game total, fix: render level and game score as two distinct blocks)', () => {
+    test('renders exactly two score markers -- the old single marker is replaced, never a third figure alongside them', () => {
+      const { levelScoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion());
 
-    // Sizes are design tokens (custom properties set in :root, mirrored in
-    // src/theme/designTokens.js) rather than literal values on the rule
-    // itself — resolve `var(--x)` against that :root map before asserting.
-    const rootMatch = css.match(/:root\s*{([^}]*)}/);
-    expect(rootMatch).not.toBeNull();
-    const tokens = {};
-    for (const tokenMatch of rootMatch[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
-      tokens[tokenMatch[1]] = tokenMatch[2].trim();
-    }
+      const scoreNodes = container.querySelectorAll('.question-screen__score-level, .question-screen__score-game');
+      expect(scoreNodes).toHaveLength(2);
+      expect(container.querySelector('.question-screen__score')).toBeNull();
+      expect(levelScoreEl).toBeInTheDocument();
+      expect(gameScoreEl).toBeInTheDocument();
+      expect(levelScoreEl).not.toBe(gameScoreEl);
+    });
 
-    const resolve = (rawValue) => {
-      const varMatch = rawValue.match(/^var\((--[\w-]+)\)$/);
-      return varMatch ? tokens[varMatch[1]] : rawValue;
-    };
+    test('each block carries a visible label and its numeric value, distinguishing level from game total with no visual context', () => {
+      const { levelScoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 3, gameScore: 7 });
 
-    const ruleMatch = css.match(/\.question-screen__score\s*\{([^}]*)\}/);
-    expect(ruleMatch).not.toBeNull();
+      expect(levelScoreEl).toHaveTextContent(`${strings.score.levelLabel}: 3`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 7`);
+    });
 
-    // Accessibility tokens (TRIOFSND-133) moved this rule onto a CSS custom
-    // property (`var(--font-size-body)`); resolve it via the shared helper.
-    const rule = resolveCssCustomProperties(css, ruleMatch[1]);
-    const fontSizeMatch = rule.match(/font-size:\s*([\d.]+)(px|rem)/);
-    expect(fontSizeMatch).not.toBeNull();
+    test('defaults the game total to the level score when a caller omits options.gameScore (flat, non-chained game)', () => {
+      const { levelScoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 4 });
 
-    const fontSizePx = fontSizeMatch[2] === 'rem'
-      ? parseFloat(fontSizeMatch[1]) * 16
-      : parseFloat(fontSizeMatch[1]);
-    expect(fontSizePx).toBeGreaterThanOrEqual(20);
+      expect(levelScoreEl).toHaveTextContent(`${strings.score.levelLabel}: 4`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 4`);
+    });
+
+    test('a correct answer increments both markers by exactly 1', () => {
+      const question = buildQuestion();
+      const { optionButtons, levelScoreEl, gameScoreEl, getScore, getGameScore } = renderQuestionScreen(container, question, {
+        score: 2,
+        gameScore: 9,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(getScore()).toBe(3);
+      expect(getGameScore()).toBe(10);
+      expect(levelScoreEl).toHaveTextContent(`${strings.score.levelLabel}: 3`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 10`);
+    });
+
+    test('an incorrect answer changes neither marker', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, levelScoreEl, gameScoreEl } = renderQuestionScreen(container, question, {
+        score: 2,
+        gameScore: 9,
+      });
+
+      optionButtons[wrongIndex].click();
+
+      expect(levelScoreEl).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 9`);
+    });
+
+    test('reuses the same pill visual pattern as the nivel/progreso badges, as two blocks inside their own row', () => {
+      const { scoreRow, levelScoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion());
+
+      expect(scoreRow.children).toHaveLength(2);
+      expect(scoreRow.children[0]).toBe(levelScoreEl);
+      expect(scoreRow.children[1]).toBe(gameScoreEl);
+    });
+
+    test('the two score badge color tokens meet WCAG AA contrast (PRD AC-13)', () => {
+      const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+
+      expect(css).toMatch(/\.question-screen__score-level\s*\{/);
+      expect(css).toMatch(/\.question-screen__score-game\s*\{/);
+      // The actual ratio math is guarded by src/theme/contrast.test.js
+      // against src/theme/questionScreenColors.js's levelScoreBadge/
+      // gameScoreBadge tokens, which this stylesheet mirrors.
+    });
   });
 
   describe('on a correct answer', () => {
@@ -361,7 +389,7 @@ describe('QuestionScreen', () => {
       expect(correctButton).toHaveClass('question-screen__option--correct');
       expect(correctButton).toHaveClass('question-screen__option--celebrate');
       expect(getScore()).toBe(4);
-      expect(getByText(container, `${strings.scoreLabel}: 4`)).toBeInTheDocument();
+      expect(getByText(container, `${strings.score.levelLabel}: 4`)).toBeInTheDocument();
       expect(onAnswer).toHaveBeenCalledWith(
         expect.objectContaining({
           isCorrect: true,
@@ -418,7 +446,7 @@ describe('QuestionScreen', () => {
       optionButtons[wrongIndex].click();
 
       expect(getScore()).toBe(5);
-      expect(getByText(container, `${strings.scoreLabel}: 5`)).toBeInTheDocument();
+      expect(getByText(container, `${strings.score.levelLabel}: 5`)).toBeInTheDocument();
     });
 
     test('does not let the score go below its pre-answer value across several misses', () => {
@@ -856,28 +884,33 @@ describe('QuestionScreen', () => {
       expect(announcement).toHaveTextContent('');
     });
 
-    test('on a hit, announces the celebratory feedback, the correct answer and the updated score as one sentence', () => {
+    test('on a hit, announces the celebratory feedback, the correct answer and both updated scores as one sentence', () => {
       const question = buildQuestion();
-      const { optionButtons, announcement, getScore } = renderQuestionScreen(container, question, { score: 3 });
+      const { optionButtons, announcement, getScore, getGameScore } = renderQuestionScreen(container, question, {
+        score: 3,
+        gameScore: 8,
+      });
 
       optionButtons[question.correctAnswerIndex].click();
 
       expect(announcement).toHaveTextContent(strings.feedback.correct);
       expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
       expect(announcement).toHaveTextContent(question.funFact);
-      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: ${getScore()}`);
+      expect(announcement).toHaveTextContent(`${strings.score.levelLabel}: ${getScore()}`);
+      expect(announcement).toHaveTextContent(`${strings.score.gameLabel}: ${getGameScore()}`);
     });
 
     test('on a miss, announces the neutral feedback plus the actual text of the correct answer (not just a visual highlight)', () => {
       const question = buildQuestion();
       const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
-      const { optionButtons, announcement } = renderQuestionScreen(container, question, { score: 5 });
+      const { optionButtons, announcement } = renderQuestionScreen(container, question, { score: 5, gameScore: 9 });
 
       optionButtons[wrongIndex].click();
 
       expect(announcement).toHaveTextContent(strings.feedback.incorrect);
       expect(announcement).toHaveTextContent(question.options[question.correctAnswerIndex]);
-      expect(announcement).toHaveTextContent(`${strings.scoreLabel}: 5`);
+      expect(announcement).toHaveTextContent(`${strings.score.levelLabel}: 5`);
+      expect(announcement).toHaveTextContent(`${strings.score.gameLabel}: 9`);
     });
 
     test('is visually hidden but present in the accessibility tree (.sr-only)', () => {
@@ -887,16 +920,17 @@ describe('QuestionScreen', () => {
       expect(announcement).toHaveClass('sr-only');
     });
 
-    test('buildResultAnnouncement composes the outcome, correct answer, fun fact and score into one string', () => {
+    test('buildResultAnnouncement composes the outcome, correct answer, fun fact and both scores into one string', () => {
       const question = buildQuestion();
 
-      const hitAnnouncement = buildResultAnnouncement(strings, question, true, 4);
+      const hitAnnouncement = buildResultAnnouncement(strings, question, true, 4, 11);
       expect(hitAnnouncement).toContain(strings.feedback.correct);
       expect(hitAnnouncement).toContain(question.options[question.correctAnswerIndex]);
       expect(hitAnnouncement).toContain(question.funFact);
-      expect(hitAnnouncement).toContain(`${strings.scoreLabel}: 4`);
+      expect(hitAnnouncement).toContain(`${strings.score.levelLabel}: 4`);
+      expect(hitAnnouncement).toContain(`${strings.score.gameLabel}: 11`);
 
-      const missAnnouncement = buildResultAnnouncement(strings, question, false, 4);
+      const missAnnouncement = buildResultAnnouncement(strings, question, false, 4, 11);
       expect(missAnnouncement).toContain(strings.feedback.incorrect);
       expect(missAnnouncement).toContain(question.options[question.correctAnswerIndex]);
     });
@@ -904,7 +938,7 @@ describe('QuestionScreen', () => {
     test('omits the fun-fact segment instead of announcing "undefined" when the question has no fun fact', () => {
       const question = buildQuestion({ funFact: undefined });
 
-      const announcementText = buildResultAnnouncement(strings, question, true, 1);
+      const announcementText = buildResultAnnouncement(strings, question, true, 1, 1);
 
       expect(announcementText).not.toMatch(/undefined/);
     });

@@ -176,7 +176,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     const funFactBox = container.querySelector('.question-screen__fun-fact-box');
     expect(funFactBox.hidden).toBe(false);
     expect(funFactBox.textContent).toContain(questions[0].funFact);
-    expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
 
     getByRole(container, 'button', { name: questionStrings.nextButton }).click();
 
@@ -244,7 +244,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       // game), not still on Resultados, with a fresh, reset score of 0.
       expect(container.querySelector('.question-screen')).not.toBeNull();
       expect(container.querySelector('.results-screen')).toBeNull();
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
 
       // Finish the replayed game to confirm the reset score (not the old
       // game's answers) drives the new result.
@@ -531,7 +531,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       // advances automatically.
       jest.advanceTimersByTime(1);
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
     });
 
     test('fallo: also advances automatically, carrying forward the unchanged score', () => {
@@ -548,7 +548,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
     });
 
     test('auto-advances straight to Resultados when the last question times out unanswered-via-"Siguiente"', () => {
@@ -582,7 +582,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).toBe(secondPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
     });
   });
 
@@ -724,7 +724,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       // advances automatically.
       jest.advanceTimersByTime(1);
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
     });
 
     test('fallo: also advances automatically, carrying forward the unchanged score', () => {
@@ -741,7 +741,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).not.toBe(firstPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
     });
 
     test('auto-advances straight to Resultados when the last question times out unanswered-via-"Siguiente"', () => {
@@ -775,7 +775,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
       jest.advanceTimersByTime(AUTO_ADVANCE_GRACE_MS);
 
       expect(container.querySelector('.question-screen__prompt').textContent).toBe(secondPrompt);
-      expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 1`);
+      expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
     });
   });
 });
@@ -1380,9 +1380,55 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(container.textContent).toContain(strings.levelOutcome.insufficientScore);
     expect(container.querySelector('.results-screen__max-level-unlocked')).toBeNull();
 
-    // "Volver a jugar" starts a fresh level 1 game, not level 2.
+    // "Volver a jugar" starts a fresh level 1 game, not level 2 -- an
+    // explicit new game, so both score markers reset to 0, not just the
+    // level's own tally.
     getByRole(container, 'button', { name: strings.playAgainButton }).click();
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 0`);
+  });
+
+  test('fix: "Puntos del nivel" resets to 0 on a level-up while "Puntos de la partida" carries the previous level\'s total forward unchanged', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    // Level 1 starts both markers at 0.
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 0`);
+
+    // A correct answer increments both markers by exactly 1, in lockstep.
+    await answerCurrentQuestion(container, { correct: true });
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 1`);
+
+    // A wrong answer changes neither marker.
+    await answerCurrentQuestion(container, { correct: false });
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 1`);
+
+    // Finish level 1 at 6/10 (>=6 unlocks level 2): already 1 hit + 1 miss
+    // above, so 5 more hits and 3 more misses cover the remaining 8 questions.
+    await playLevelWithPattern('CCCCCFFF');
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.textContent).toContain(strings.levelOutcome.levelUp.replace('{nextLevel}', '2'));
+
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+
+    // Level 2 starts fresh (0 aciertos in this level) but the game total
+    // survives the level transition unchanged, from the previous level's 6.
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('2');
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 0`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 6`);
+
+    // Chaining continues to add up on top of the carried-over total.
+    await answerCurrentQuestion(container, { correct: true });
+    expect(container.textContent).toContain(`${questionStrings.score.levelLabel}: 1`);
+    expect(container.textContent).toContain(`${questionStrings.score.gameLabel}: 7`);
   });
 
   test('fin en nivel 10: la partida siempre termina al completar el nivel 10 (MAX_LEVEL), sea cual sea la puntuación', async () => {

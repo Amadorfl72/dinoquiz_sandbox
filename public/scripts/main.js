@@ -1376,10 +1376,26 @@
       }
     }
 
+    // Level score vs. game-accumulated score (fix: render level and game
+    // score as two distinct blocks): a level-chained session (`levelGame`,
+    // as started by gameFlow.js's `startLevel` -- see playLevel/
+    // startLevelGame below) carries `levelPoints`/`gameAccumulatedPoints`
+    // instead of the flat, single-level session's plain `score` (see
+    // gameFlow.js's `createInitialGameState` vs. `createInitialLevelState`).
+    // `session.state.score` is still kept in sync either way -- it is this
+    // level's own tally, exactly what finishLevel/renderResultsFor/
+    // persistBestScoreAndStreak below already read as `finalState.score`.
+    var isLevelSession = typeof session.state.levelPoints === 'number';
+
     var questionOptions = {
-      score: session.state.score,
+      score: isLevelSession ? session.state.levelPoints : session.state.score,
+      gameScore: isLevelSession ? session.state.gameAccumulatedPoints : session.state.score,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
+        if (isLevelSession) {
+          session.state.levelPoints = result.score;
+          session.state.gameAccumulatedPoints = result.gameScore;
+        }
         session.state.score = result.score;
         session.state.answers = session.state.answers.concat([
           {
@@ -1855,6 +1871,13 @@
           modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
+          // Fix: render level and game score as two distinct blocks -- this
+          // level's own `gameAccumulatedPoints` (updated by renderQuestionAt's
+          // onAnswer above) is what `startLevel` seeds the next level's
+          // running total with (see gameFlow.js's own doc comment on
+          // completeLevel), so "Total de la partida" survives a level-up
+          // unchanged instead of silently resetting to 0.
+          gameAccumulatedPoints: finalState.gameAccumulatedPoints,
         });
 
         // The level just played is always resolved (gameOver/reason are

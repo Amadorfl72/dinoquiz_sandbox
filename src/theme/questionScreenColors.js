@@ -38,6 +38,16 @@ const QUESTION_SCREEN_COLORS = Object.freeze({
   // text at ~1.66:1. White on `COLORS.stars` measures ~4.91:1, above the
   // 4.5:1 floor (see contrast.test.js).
   progressBadge: Object.freeze({ background: COLORS.stars, text: COLORS.white }),
+  // "Puntos del nivel"/"Puntos de la partida" score badges (fix: render
+  // level and game score as two distinct blocks): reuse the same
+  // already-AA-verified color pairs as `correct` (primary green) and
+  // `rewardedAdCta` (purple) rather than introducing new, unreviewed hues --
+  // this level's own score reads as the same "positive/success" green as a
+  // correct answer, while the game's running total gets a visually distinct
+  // color so the two pills are never confused with each other or with the
+  // nivel/progreso pair above.
+  levelScoreBadge: Object.freeze({ background: COLORS.primary, text: COLORS.white }),
+  gameScoreBadge: Object.freeze({ background: '#6A1B9A', text: '#FFFFFF' }),
 });
 
 /**

@@ -633,12 +633,6 @@ body {
   text-align: center;
 }
 
-.question-screen__score {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
 /*
  * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
@@ -664,12 +658,6 @@ body {
   max-width: 100%;
   margin: 0 auto 16px;
   border-radius: 16px;
-}
-
-.question-screen__score {
-  font-size: 20px;
-  margin: 0 0 16px;
-  color: var(--color-text);
 }
 
 .question-screen__progress-row {
@@ -710,6 +698,49 @@ body {
 
 .question-screen__progress {
   background-color: var(--color-stars);
+}
+
+/*
+ * Puntos del nivel / Puntos de la partida (fix: render level and game score
+ * as two distinct blocks): the level's own score marker replaces the old
+ * single `.question-screen__score` line entirely -- never a third figure
+ * alongside these two -- and both blocks reuse the exact same pill pattern
+ * as the nivel/progreso badges just above (own row, `flex-wrap` + `nowrap`
+ * text so both fit on one line at 375px without a horizontal scrollbar or
+ * pushing `.question-screen__options` off-screen). Colors mirror
+ * src/theme/questionScreenColors.js's `levelScoreBadge`/`gameScoreBadge`
+ * tokens (contrast.test.js guards both at WCAG AA) -- keep both in sync.
+ * Each pill's own text already reads "<label>: <value>", so its default
+ * accessible name states both the concept and the value with no extra
+ * aria-label needed.
+ */
+.question-screen__score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  max-width: 100%;
+}
+
+.question-screen__score-level,
+.question-screen__score-game {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--color-white);
+}
+
+.question-screen__score-level {
+  background-color: var(--color-primary);
+}
+
+.question-screen__score-game {
+  background-color: #6a1b9a;
 }
 
 .question-screen__feedback {

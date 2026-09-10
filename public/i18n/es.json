@@ -532,7 +532,6 @@
     "correctOptionAriaLabel": "Respuesta correcta: {answer}",
     "selectedOptionAriaLabel": "Tu respuesta: {answer}",
     "funFactHeading": "Dato curioso",
-    "scoreLabel": "Puntos del nivel",
     "score": {
       "levelLabel": "Puntos del nivel",
       "gameLabel": "Puntos de la partida"

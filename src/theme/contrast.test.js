@@ -78,6 +78,16 @@ describe('question screen color tokens (PRD AC-13: WCAG AA in every answer state
     const { background, text } = QUESTION_SCREEN_COLORS.progressBadge;
     expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
   });
+
+  test('the "Puntos del nivel" score badge meets AA', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.levelScoreBadge;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('the "Puntos de la partida" score badge meets AA', () => {
+    const { background, text } = QUESTION_SCREEN_COLORS.gameScoreBadge;
+    expect(contrastRatio(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 describe('global controls color tokens (PRD AC-13: WCAG AA for mute/privacy/purchase controls)', () => {

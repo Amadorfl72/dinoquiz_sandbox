@@ -157,11 +157,32 @@
  * Level progress UI (TRIOFSND-206): when the caller passes `options.level`
  * and `options.questionNumber`, a progress row shows the active level next
  * to the "N de 10" progress within this level -- never the child's age band
- * (never read here) nor an aggregated score from other levels (`score`
- * already reflects only the level being played, since `gameFlow.js`'s
- * `startLevel` resets it per level). Omitting `options.questionNumber`
- * renders no progress row at all, so existing callers that don't pass level
- * data see no change.
+ * (never read here). Omitting `options.questionNumber` renders no progress
+ * row at all, so existing callers that don't pass level data see no change.
+ *
+ * Two distinct score markers (level vs. game total): a single running
+ * "score" used to double as both
+ * "this level's own tally" and "the whole game's tally", which is only
+ * correct for a flat, single-level game. `options.score`/`getScore()` keep
+ * meaning this level's own points (reset to 0 by the caller at the start of
+ * every level, per `gameFlow.js`'s `startLevel`); `options.gameScore`/
+ * `getGameScore()` is the running total across every level chained so far in
+ * this same game, carried forward across level transitions by the caller
+ * (`gameFlow.js`'s `gameAccumulatedPoints`) and reset to 0 only when a new
+ * game actually starts. When a caller omits `options.gameScore` (a flat,
+ * non-chained game has no separate concept), it defaults to the level score,
+ * so both markers move in lockstep exactly like the single figure used to.
+ * `handleSelect` applies the same +1/+0 rule (`scoring.applyAnswerToScore`)
+ * to both counters from the same `correct` outcome, so a single answer can
+ * never increment one without the other, and a wrong answer never changes
+ * either. Rendered as two visually separate pill blocks (`.question-screen__
+ * score-level`/`.question-screen__score-game`), reusing the nivel/progreso
+ * badge pattern above rather than one combined line of text, and replacing
+ * the single legacy score marker entirely -- never a third figure alongside
+ * them. Each pill's own text already reads "<label>: <value>" (mirroring the
+ * strings.score.levelLabel/gameLabel i18n keys), so its default accessible
+ * name already states both the concept and the value with no extra
+ * aria-label needed.
  */
 
 (function () {
@@ -437,7 +458,7 @@
     probe.remove();
   }
 
-  function buildResultAnnouncement(strings, question, correct, score) {
+  function buildResultAnnouncement(strings, question, correct, levelScore, gameScore) {
     var parts = [correct ? strings.feedback.correct : strings.feedback.incorrect];
 
     parts.push(
@@ -451,7 +472,8 @@
       parts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
     }
 
-    parts.push(strings.scoreLabel + ': ' + score);
+    parts.push(strings.score.levelLabel + ': ' + levelScore);
+    parts.push(strings.score.gameLabel + ': ' + gameScore);
 
     return parts.join(' ');
   }
@@ -472,7 +494,8 @@
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
     var rewardedAdService = resolveRewardedAdService(options);
 
-    var score = options.score || 0;
+    var levelScore = options.score || 0;
+    var gameScore = typeof options.gameScore === 'number' ? options.gameScore : levelScore;
     var answered = false;
 
     container.innerHTML = '';
@@ -505,9 +528,9 @@
     prompt.textContent = question.question;
 
     // Level/progress row (TRIOFSND-206): shows the active level next to the
-    // "N de 10" progress, never the child's age band or a cross-level
-    // running tally -- `score`/`scoreEl` below already only ever reflects
-    // the level currently being played (see gameFlow.js's per-level state).
+    // "N de 10" progress, never the child's age band -- the cross-level
+    // running total has its own dedicated block below (`gameScoreEl`)
+    // instead of leaking into this row.
     var progressRow = null;
     var levelEl = null;
     var progressEl = null;
@@ -544,9 +567,22 @@
       }
     }
 
-    var scoreEl = document.createElement('p');
-    scoreEl.className = 'question-screen__score';
-    scoreEl.textContent = strings.scoreLabel + ': ' + score;
+    // Two distinct, visually separated score blocks -- see the module doc
+    // comment above: `levelScoreEl` is this level's own tally, `gameScoreEl`
+    // the running total across every level chained so far in this game.
+    var scoreRow = document.createElement('div');
+    scoreRow.className = 'question-screen__score-row';
+
+    var levelScoreEl = document.createElement('p');
+    levelScoreEl.className = 'question-screen__score-level';
+    levelScoreEl.textContent = strings.score.levelLabel + ': ' + levelScore;
+
+    var gameScoreEl = document.createElement('p');
+    gameScoreEl.className = 'question-screen__score-game';
+    gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+
+    scoreRow.appendChild(levelScoreEl);
+    scoreRow.appendChild(gameScoreEl);
 
     var optionsGroup = document.createElement('div');
     optionsGroup.className = 'question-screen__options';
@@ -673,8 +709,9 @@
       markPerformance(PERF_MARK_FEEDBACK_START);
 
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
-      var previousScore = score;
-      score = scoring.applyAnswerToScore(score, correct);
+      var previousScore = levelScore;
+      levelScore = scoring.applyAnswerToScore(levelScore, correct);
+      gameScore = scoring.applyAnswerToScore(gameScore, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
       if (soundService) {
@@ -717,7 +754,8 @@
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
-      scoreEl.textContent = strings.scoreLabel + ': ' + score;
+      levelScoreEl.textContent = strings.score.levelLabel + ': ' + levelScore;
+      gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -730,7 +768,7 @@
       // overlaps a still-in-flight round-change announcement from this same
       // screen's mount.
       if (a11yAnnouncer) {
-        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score));
+        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, levelScore, gameScore));
       }
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
@@ -752,8 +790,9 @@
       if (onAnswer) {
         onAnswer({
           isCorrect: correct,
-          scoreDelta: score - previousScore,
-          score: score,
+          scoreDelta: levelScore - previousScore,
+          score: levelScore,
+          gameScore: gameScore,
           selectedIndex: selectedIndex,
           correctIndex: question.correctAnswerIndex,
         });
@@ -762,7 +801,7 @@
 
     bindActivation(nextButton, function () {
       if (typeof options.onNext === 'function') {
-        options.onNext(score);
+        options.onNext(levelScore);
       }
     });
 
@@ -771,7 +810,7 @@
     if (progressRow) {
       root.appendChild(progressRow);
     }
-    root.appendChild(scoreEl);
+    root.appendChild(scoreRow);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
     root.appendChild(announcementEl);
@@ -798,7 +837,9 @@
       progressRow: progressRow,
       levelEl: levelEl,
       progressEl: progressEl,
-      scoreEl: scoreEl,
+      scoreRow: scoreRow,
+      levelScoreEl: levelScoreEl,
+      gameScoreEl: gameScoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
       announcementEl: announcementEl,
@@ -811,7 +852,10 @@
       extraFunFact: extraFunFact,
       nextButton: nextButton,
       getScore: function () {
-        return score;
+        return levelScore;
+      },
+      getGameScore: function () {
+        return gameScore;
       },
       isAnswered: function () {
         return answered;
