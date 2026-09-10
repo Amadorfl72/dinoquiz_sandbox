@@ -1536,11 +1536,27 @@
    * `name` is whatever nickname is currently saved (nicknameService.js), or
    * `null` for a guest game (hallOfFameService.js's own no-name contract) --
    * never read from anywhere else, and never written to `storage`, an
-   * analytics event or a log entry.
+   * analytics event or a log entry. This is the ONLY call site that adds a
+   * Hall of Fame entry -- `hallOfFameEntryId` (the entry's own `timestamp`,
+   * its only identifier, see hallOfFameService.js's own doc comment) is
+   * returned so a caller like `playLevel` can stash it for highlighting
+   * without adding a second, duplicate entry of its own.
    */
   function persistBestScoreAndStreak(storage, finalState) {
+    var hallOfFameEntryId;
+    if (finalState && typeof finalState.score === 'number') {
+      var hallOfFameService = resolveHallOfFameService();
+      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
+        var nicknameService = resolveNicknameService();
+        var name =
+          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+        hallOfFameEntryId = Date.now();
+        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: hallOfFameEntryId });
+      }
+    }
+
     if (!storage || !finalState) {
-      return { bestScore: undefined, bestStreak: undefined };
+      return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
 
     var bestScore = combineWithCurrent(
@@ -1559,17 +1575,7 @@
       storage.recordStreak(finalState.maxStreak);
     }
 
-    if (typeof finalState.score === 'number') {
-      var hallOfFameService = resolveHallOfFameService();
-      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-        var nicknameService = resolveNicknameService();
-        var name =
-          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
-        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: Date.now() });
-      }
-    }
-
-    return { bestScore: bestScore, bestStreak: bestStreak };
+    return { bestScore: bestScore, bestStreak: bestStreak, hallOfFameEntryId: hallOfFameEntryId };
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -1813,18 +1819,14 @@
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
-        // Hall of Fame entry (Quiz only -- the one mode this shared
-        // orchestrator serves, see buildModeDispatchRegistry): recorded here,
-        // once per finished level, so `finishLevel` below always has an
-        // identifier ready to hand to hallOfFameScreen.js for highlighting.
-        // `timestamp` doubles as the entry's identifier (see
-        // hallOfFameService.js's own doc comment: entries have no separate
-        // `id` field) -- stashed on `finalState` for `finishLevel` to read.
-        var hallOfFameService = resolveHallOfFameService();
-        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID && hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-          var hallOfFameTimestamp = Date.now();
-          hallOfFameService.addEntry({ name: null, score: finalState.score, timestamp: hallOfFameTimestamp }, ctx.storageObj);
-          finalState.hallOfFameEntryId = hallOfFameTimestamp;
+        // Hall of Fame entry point (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): the entry
+        // itself was already added by `persistBestScoreAndStreak` above (the
+        // single call site, see its own doc comment) -- this just stashes
+        // its identifier on `finalState` so `finishLevel` below can hand it
+        // to hallOfFameScreen.js for highlighting.
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID) {
+          finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
         }
 
         var outcome = gameFlow.completeLevel({
