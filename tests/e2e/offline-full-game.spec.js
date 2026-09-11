@@ -37,10 +37,48 @@ async function startQuizFromHome(page) {
   await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
 }
 
-/** Waits until the service worker has finished precaching the local question bank. */
+/**
+ * Waits until the service worker has finished precaching the local question
+ * bank. If registration/activation fails, this throws with the concrete
+ * install/activate state instead of letting the caller time out on a bare
+ * `navigator.serviceWorker.ready` with no diagnostic -- so a broken
+ * precache reads as "install rejected"/"stuck waiting", not just a hang.
+ */
 async function waitForPrecache(page) {
   await page.waitForFunction(() => Boolean(navigator.serviceWorker));
-  await page.evaluate(() => navigator.serviceWorker.ready);
+
+  const readiness = await page.evaluate(async () => {
+    try {
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_resolve, reject) =>
+          setTimeout(() => reject(new Error('navigator.serviceWorker.ready did not resolve within 15000ms')), 15_000)
+        ),
+      ]);
+      return { ok: true, scope: registration.scope };
+    } catch (error) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      return {
+        ok: false,
+        message: error && error.message,
+        registrationStates: registrations.map((registration) => ({
+          scope: registration.scope,
+          installing: Boolean(registration.installing),
+          waiting: Boolean(registration.waiting),
+          active: Boolean(registration.active),
+        })),
+      };
+    }
+  });
+
+  if (!readiness.ok) {
+    throw new Error(
+      `Service worker never became ready: ${readiness.message}. Registrations: ${JSON.stringify(
+        readiness.registrationStates
+      )}`
+    );
+  }
+
   await expect
     .poll(() => page.evaluate(() => caches.match('/data/questions.json').then((match) => Boolean(match))), {
       message: 'waiting for the service worker to precache /data/questions.json',
