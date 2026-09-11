@@ -234,6 +234,34 @@ body {
   outline-offset: 3px;
 }
 
+.home-screen__hall-of-fame-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 700;
+  color: #1b5e20;
+  background-color: #ffffff;
+  border: 2px solid #1b5e20;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-screen__hall-of-fame-button:hover {
+  background-color: #f1f8e9;
+}
+
+.home-screen__hall-of-fame-button:focus-visible {
+  outline: 4px solid #fbc02d;
+  outline-offset: 3px;
+}
+
 .home-screen__parental-notice {
   max-width: 60ch;
   font-size: var(--font-size-min);
@@ -605,12 +633,6 @@ body {
   text-align: center;
 }
 
-.question-screen__score {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
 /*
  * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
@@ -638,10 +660,52 @@ body {
   border-radius: 16px;
 }
 
-.question-screen__score {
-  font-size: 20px;
+/*
+ * Puntos del nivel / Puntos de la partida (level vs. game-wide score): two
+ * visually distinct blocks, never merged into one ambiguous "Puntos: N"
+ * line, mirroring the nivel/progreso separation below. Stacked in a column
+ * (not side by side, unlike the shorter nivel/progreso badges) because each
+ * block's full i18n label + number is too long to fit two-up at 375px --
+ * a column, `max-width` capped well under the 375px viewport (minus the
+ * 24px `#app` padding on each side) and `overflow-wrap` keep every block
+ * on screen without a horizontal scrollbar or pushing
+ * `.question-screen__options` out of the visible viewport. Font-size stays
+ * at the shared `--font-size-body` (20sp) floor for reading text, unlike
+ * the smaller nivel/progreso badges, since this is primary score content
+ * (TRIOFSND-83). Colors mirror src/theme/questionScreenColors.js's
+ * `levelPointsBadge`/`gamePointsBadge` tokens (contrast.test.js guards both
+ * at WCAG AA 4.5:1) -- keep both in sync.
+ */
+.question-screen__score-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   margin: 0 0 16px;
-  color: var(--color-text);
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+.question-screen__level-points,
+.question-screen__game-points {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  color: var(--color-white);
+  text-align: center;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.question-screen__level-points {
+  background-color: var(--color-primary);
+}
+
+.question-screen__game-points {
+  background-color: #00695c;
 }
 
 .question-screen__progress-row {
@@ -1025,7 +1089,9 @@ body {
 .results-screen__max-level-unlocked,
 .results-screen__fun-facts-progress,
 .results-screen__best-score,
-.results-screen__best-streak {
+.results-screen__best-streak,
+.results-screen__level-points,
+.results-screen__game-accumulated-points {
   font-size: var(--font-size-body);
   margin: 0;
   color: var(--color-text);
@@ -1120,7 +1186,8 @@ body {
  */
 .results-screen__repeat-level-button,
 .results-screen__go-to-next-level-button,
-.results-screen__back-to-selector-button {
+.results-screen__back-to-selector-button,
+.results-screen__hall-of-fame-button {
   min-width: var(--tap-target-min);
   min-height: var(--tap-target-min);
   font-size: var(--font-size-button);
@@ -1137,19 +1204,22 @@ body {
 
 .results-screen__repeat-level-button:hover,
 .results-screen__go-to-next-level-button:hover,
-.results-screen__back-to-selector-button:hover {
+.results-screen__back-to-selector-button:hover,
+.results-screen__hall-of-fame-button:hover {
   background-color: var(--color-option-bg-hover);
 }
 
 .results-screen__repeat-level-button:active,
 .results-screen__go-to-next-level-button:active,
-.results-screen__back-to-selector-button:active {
+.results-screen__back-to-selector-button:active,
+.results-screen__hall-of-fame-button:active {
   background-color: var(--color-option-bg-pressed);
 }
 
 .results-screen__repeat-level-button:focus-visible,
 .results-screen__go-to-next-level-button:focus-visible,
-.results-screen__back-to-selector-button:focus-visible {
+.results-screen__back-to-selector-button:focus-visible,
+.results-screen__hall-of-fame-button:focus-visible {
   outline: 4px solid var(--color-focus-ring-on-light);
   outline-offset: 3px;
 }
@@ -4512,6 +4582,33 @@ body {
   padding: 16px;
   color: var(--color-text);
   background-color: var(--color-bg);
+}
+
+.hall-of-fame-screen__back-button {
+  display: block;
+  align-self: flex-start;
+  min-height: var(--tap-target-min);
+  min-width: var(--tap-target-min);
+  margin-bottom: 12px;
+  padding: 10px 20px;
+  font-size: var(--font-size-button);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.hall-of-fame-screen__back-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.hall-of-fame-screen__back-button:focus-visible {
+  outline: 4px solid var(--color-focus-ring-on-light);
+  outline-offset: 3px;
 }
 
 .hall-of-fame-screen__heading {

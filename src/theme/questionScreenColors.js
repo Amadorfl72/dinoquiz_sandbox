@@ -38,6 +38,14 @@ const QUESTION_SCREEN_COLORS = Object.freeze({
   // text at ~1.66:1. White on `COLORS.stars` measures ~4.91:1, above the
   // 4.5:1 floor (see contrast.test.js).
   progressBadge: Object.freeze({ background: COLORS.stars, text: COLORS.white }),
+  // "Puntos del nivel" insignia: reuses the shared `primary`
+  // green so the level's own running score reads as tied to the app's main
+  // action color, distinct from the level/progress hues above.
+  levelPointsBadge: Object.freeze({ background: COLORS.primary, text: COLORS.white }),
+  // "Puntos de la partida" insignia: a distinct teal, shared with the
+  // unanswered-option palette below, so the game-wide accumulated total
+  // never reads as the same concept as the level's own score.
+  gamePointsBadge: Object.freeze({ background: '#00695C', text: COLORS.white }),
 });
 
 /**

@@ -59,6 +59,13 @@
  * public/scripts/main.js), same read-only rationale as the other optional
  * pieces above. Each is independently optional.
  *
+ * Level points / game accumulated points: `options.levelPoints` and
+ * `options.gameAccumulatedPoints` mirror `gameFlow.js`'s two-counter state
+ * (TRIOFSND-254) -- the points earned in the level just finished, and the
+ * running total across the whole game so far. Each renders its own labeled
+ * line, independently optional, same pattern as bestScore/bestStreak above.
+ * Labels come from `strings.score.levelLabel`/`strings.score.gameLabel`.
+ *
  * Own-mode score, percentage, stars and level-progress actions (TRIOFSND-252,
  * PRD "Resultados comunes con porcentaje y estrellas"): a mode's own game need
  * not score out of 10 -- `options.maxScore` generalizes the score/star scale
@@ -75,6 +82,16 @@
  * returns to the illustrated mode selector. Each is independently optional
  * and, like every other option above, this screen never resolves them
  * itself -- the caller supplies the level/maxLevelUnlocked/callbacks.
+ *
+ * Hall of Fame entry point: `options.onViewHallOfFame`, when provided, adds
+ * a "Salón de la Fama" action alongside the others above -- the label
+ * reuses `options.hallOfFameStrings.title` (the same string
+ * hallOfFameScreen.js already uses as its own heading) instead of a second,
+ * separate string, resolved the same optional-injection way `strings` is
+ * resolved via `resolveStrings`. Like `onBackToSelector`, this screen never
+ * decides where the button navigates to -- public/scripts/main.js wires the
+ * actual screen switch and passes through the just-finished game's entry
+ * identifier for hallOfFameScreen.js to highlight.
  */
 
 (function () {
@@ -168,6 +185,23 @@
     }
     var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
     return bundle ? bundle.results : null;
+  }
+
+  // Resolved the same optional-injection way resolveStrings resolves
+  // `results` above, but pointed at the `hallOfFame` section instead --
+  // reused as-is for the "Salón de la Fama" button label (see the module
+  // doc) rather than declaring a second, separate string.
+  function resolveHallOfFameStrings(options) {
+    options = options || {};
+    if (options.hallOfFameStrings) {
+      return options.hallOfFameStrings;
+    }
+    if (typeof require === 'function') {
+      var i18n = require('../../src/i18n');
+      return i18n.getStrings(options.locale || i18n.DEFAULT_LOCALE).hallOfFame;
+    }
+    var bundle = (typeof window !== 'undefined' && window.DinoQuiz && window.DinoQuiz.strings) || null;
+    return bundle ? bundle.hallOfFame : null;
   }
 
   // TRIOFSND-311: the final-summary announcement now goes through the same
@@ -376,6 +410,25 @@
     starsEl.setAttribute('aria-label', formatTemplate(strings.starsLabel, { stars: stars, maxStars: MAX_STARS }));
     starsEl.textContent = '★'.repeat(stars) + '☆'.repeat(MAX_STARS - stars);
 
+    // Level points / game accumulated points: the points earned in the level
+    // just finished, and the running total across the whole game so far
+    // (gameFlow.js's state.levelPoints/state.gameAccumulatedPoints,
+    // TRIOFSND-254). Each is independently optional, same rationale as
+    // bestScoreEl/bestStreakEl below.
+    var levelPointsEl = null;
+    if (Number.isInteger(options.levelPoints)) {
+      levelPointsEl = document.createElement('p');
+      levelPointsEl.className = 'results-screen__level-points';
+      levelPointsEl.textContent = strings.score.levelLabel + ': ' + options.levelPoints;
+    }
+
+    var gameAccumulatedPointsEl = null;
+    if (Number.isInteger(options.gameAccumulatedPoints)) {
+      gameAccumulatedPointsEl = document.createElement('p');
+      gameAccumulatedPointsEl.className = 'results-screen__game-accumulated-points';
+      gameAccumulatedPointsEl.textContent = strings.score.gameLabel + ': ' + options.gameAccumulatedPoints;
+    }
+
     var messageEl = document.createElement('p');
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
@@ -455,6 +508,12 @@
     ];
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
+    }
+    if (levelPointsEl) {
+      announcementParts.push(levelPointsEl.textContent);
+    }
+    if (gameAccumulatedPointsEl) {
+      announcementParts.push(gameAccumulatedPointsEl.textContent);
     }
     if (levelOutcomeEl) {
       announcementParts.push(levelOutcomeEl.textContent);
@@ -555,6 +614,21 @@
       actions.appendChild(backToSelectorButton);
     }
 
+    // Hall of Fame entry point: only rendered when the caller supplies
+    // onViewHallOfFame, like onRepeatLevel/onBackToSelector above. Its label
+    // reuses hallOfFameStrings.title instead of a separate results-screen
+    // string (see the module doc).
+    var viewHallOfFameButton = null;
+    if (typeof options.onViewHallOfFame === 'function') {
+      var hallOfFameStrings = resolveHallOfFameStrings(options);
+      viewHallOfFameButton = document.createElement('button');
+      viewHallOfFameButton.type = 'button';
+      viewHallOfFameButton.className = 'results-screen__hall-of-fame-button';
+      viewHallOfFameButton.textContent = hallOfFameStrings ? hallOfFameStrings.title : '';
+      bindActivation(viewHallOfFameButton, options.onViewHallOfFame);
+      actions.appendChild(viewHallOfFameButton);
+    }
+
     // AC-20/AC-21: hidden once the remove-ads purchase has been made.
     var showAds = options.adsRemoved !== true;
     var adsSection = null;
@@ -612,6 +686,12 @@
     root.appendChild(scoreEl);
     root.appendChild(percentageEl);
     root.appendChild(starsEl);
+    if (levelPointsEl) {
+      root.appendChild(levelPointsEl);
+    }
+    if (gameAccumulatedPointsEl) {
+      root.appendChild(gameAccumulatedPointsEl);
+    }
     root.appendChild(messageEl);
     if (levelOutcomeEl) {
       root.appendChild(levelOutcomeEl);
@@ -641,6 +721,8 @@
       scoreEl: scoreEl,
       percentageEl: percentageEl,
       starsEl: starsEl,
+      levelPointsEl: levelPointsEl,
+      gameAccumulatedPointsEl: gameAccumulatedPointsEl,
       messageEl: messageEl,
       levelOutcomeEl: levelOutcomeEl,
       maxLevelUnlockedEl: maxLevelUnlockedEl,
@@ -653,6 +735,7 @@
       repeatLevelButton: repeatLevelButton,
       goToNextUnlockedLevelButton: goToNextUnlockedLevelButton,
       backToSelectorButton: backToSelectorButton,
+      viewHallOfFameButton: viewHallOfFameButton,
       adsSection: adsSection,
       adBanner: adBanner,
       rewardedAdButton: rewardedAdButton,

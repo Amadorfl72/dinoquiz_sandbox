@@ -1532,15 +1532,21 @@
    * Hall of Fame (hallOfFameService.js): every call here is also one more
    * finished game, across every mode, exactly like the cross-mode bestScore/
    * bestStreak combined above -- so this is the single place that also adds
-   * a `{ name, score, timestamp }` entry to the on-device top-10 list.
-   * `name` is whatever nickname is currently saved (nicknameService.js), or
-   * `null` for a guest game (hallOfFameService.js's own no-name contract) --
-   * never read from anywhere else, and never written to `storage`, an
-   * analytics event or a log entry.
+    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
+
    */
   function persistBestScoreAndStreak(storage, finalState) {
+   * a `{ name, score, timestamp }` entry to the on-device top-10 list (never
+   * duplicated by a second `addEntry` call elsewhere -- see the QA report
+   * this fixed: finishing a game used to write two entries, one from here
+   * and one from `playLevel`'s own now-removed Quiz-only block). Delegated to
+   * `recordHallOfFameEntry` below, which -- unlike the bestScore/bestStreak
+   * bookkeeping in this function -- never depends on `storage` being
+   * available, so a caller with no per-question storage double (or one that
+   * hasn't wired ctx.storage) still gets its game recorded, exactly like the
+   * old Quiz-only block did.
     if (!storage || !finalState) {
-      return { bestScore: undefined, bestStreak: undefined };
+      return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
 
     var bestScore = combineWithCurrent(
@@ -1559,17 +1565,40 @@
       storage.recordStreak(finalState.maxStreak);
     }
 
-    if (typeof finalState.score === 'number') {
-      var hallOfFameService = resolveHallOfFameService();
-      if (hallOfFameService && typeof hallOfFameService.addEntry === 'function') {
-        var nicknameService = resolveNicknameService();
-        var name =
-          nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
-        hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: Date.now() });
-      }
+    return { bestScore: bestScore, bestStreak: bestStreak, hallOfFameEntryId: hallOfFameEntryId };
+  }
+
+  /**
+   * Adds a `{ name, score, timestamp }` entry to the on-device Hall of Fame
+   * top-10 (hallOfFameService.js) for the just-finished game -- the single
+   * place this happens, called once per finished game by
+   * `persistBestScoreAndStreak` above, regardless of mode. `name` is
+   * whatever nickname is currently saved (nicknameService.js), or `null` for
+   * a guest game (hallOfFameService.js's own no-name contract) -- never read
+   * from anywhere else, and never written to `storage`, an analytics event
+   * or a log entry. Returns the `timestamp` used (doubling as the entry's
+   * identifier, since hallOfFameService.js's entries have no separate `id`
+   * field) so callers like `playLevel` can stash it on `finalState` for
+   * `finishLevel` to hand to hallOfFameScreen.js for highlighting, or
+   * `undefined` if no entry was recorded (no score, or the service is
+   * unavailable).
+   */
+  function recordHallOfFameEntry(finalState) {
+    if (!finalState || typeof finalState.score !== 'number') {
+      return undefined;
     }
 
-    return { bestScore: bestScore, bestStreak: bestStreak };
+    var hallOfFameService = resolveHallOfFameService();
+    if (!hallOfFameService || typeof hallOfFameService.addEntry !== 'function') {
+      return undefined;
+    }
+
+    var nicknameService = resolveNicknameService();
+    var name =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+    var timestamp = Date.now();
+    hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: timestamp });
+    return timestamp;
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -1812,6 +1841,15 @@
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
+        // Hall of Fame entry point (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): the entry
+        // itself was already added by `persistBestScoreAndStreak` above (the
+        // single call site, see its own doc comment) -- this just stashes
+        // its identifier on `finalState` so `finishLevel` below can hand it
+        // to hallOfFameScreen.js for highlighting.
+        if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID) {
+          finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
+        }
 
         var outcome = gameFlow.completeLevel({
           level: levelGame.level,
@@ -1914,7 +1952,12 @@
 
     return Promise.resolve(ctx.maxUnlockedLevelPromise)
       .then(function (maxLevelUnlocked) {
-        return renderers.renderResultsScreen(container, {
+        // Captured in a local variable (rather than passed inline) so
+        // `onViewHallOfFame` below can re-render this exact Resultados
+        // screen when the player comes back from the Hall of Fame, without
+        // re-running the level-unlock/result storage writes above a second
+        // time (calling `finishLevel` itself again would).
+        var resultsOptions = {
           score: finalState.score,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
@@ -1960,7 +2003,23 @@
               homeStorage
             );
           },
-        });
+        };
+
+        // Hall of Fame entry point (Resultados): hands off the just-finished
+        // level's own entry identifier (see playLevel above) so
+        // hallOfFameScreen.js can highlight that row, and its 'back' path
+        // returns to this very same Resultados screen (re-rendering from
+        // `resultsOptions`, not by re-running `finishLevel`).
+        resultsOptions.onViewHallOfFame = function () {
+          renderHallOfFame(doc, undefined, fetchFn, {
+            highlightEntryId: finalState.hallOfFameEntryId,
+            onBack: function () {
+              renderers.renderResultsScreen(container, resultsOptions);
+            },
+          });
+        };
+
+        return renderers.renderResultsScreen(container, resultsOptions);
       });
   }
 
@@ -3750,6 +3809,29 @@
   }
 
   /**
+   * Resolves public/scripts/hallOfFameService.js, same require-or-`window.DinoQuiz`
+   * fallback shape as `resolveDiagnostics` above -- registered on
+   * `window.DinoQuiz.services.hallOfFameService` (see that file), so
+   * `playLevel`'s entry recording below and hallOfFameScreen.js itself read
+   * and write the same on-device top-10 list in the real, unbundled browser
+   * too, not just under Node/Jest.
+   */
+  function resolveHallOfFameService(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.hallOfFameService) {
+      return win.DinoQuiz.services.hallOfFameService;
+    }
+    if (typeof require === 'function') {
+      try {
+        return require('../../src/services/hallOfFameService');
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Resolves public/scripts/nicknameService.js (local nickname/"apodo"
    * persistence), same require-or-`window.DinoQuiz` fallback shape as
    * `resolveDiagnostics` above -- registered on
@@ -3766,7 +3848,6 @@
     }
     return (win && win.DinoQuiz && win.DinoQuiz.services && win.DinoQuiz.services.nicknameService) || null;
   }
-
   function fetchJson(fetchFn, resourcePath) {
     return fetchFn(resourcePath).then(function (response) {
       return response.json();
@@ -3813,6 +3894,7 @@
             home: data.home,
             privacy: data.privacy,
             purchase: data.purchase,
+            hallOfFame: data.hallOfFame,
             nicknameSettings: data.nicknameSettings,
             ageGate: data.ageGate,
             nicknameRequest: data.nicknameRequest,
@@ -3828,6 +3910,13 @@
   function loadPrivacyPolicyStrings(fetchFn, resourcePath) {
     return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
       return data && data.privacyPolicy;
+    });
+  }
+
+  /** Fetches the whole i18n resource once and hands back the `hallOfFame` screen copy -- everything renderHallOfFame needs. */
+  function loadHallOfFameStrings(fetchFn, resourcePath) {
+    return fetchI18nResource(fetchFn, resourcePath).then(function (data) {
+      return data && data.hallOfFame;
     });
   }
 
@@ -4384,6 +4473,7 @@
             strings: resources.home,
             privacyStrings: resources.privacy,
             purchaseStrings: resources.purchase,
+            hallOfFameStrings: resources.hallOfFame,
             nicknameStrings: resources.nicknameSettings,
           }
         : {};
@@ -4391,6 +4481,28 @@
       if (onOpenPrivacyPolicy) {
         renderOptions.onOpenPrivacyPolicy = onOpenPrivacyPolicy;
       }
+
+      // Hall of Fame entry point (Inicio): opens the Hall of Fame screen and
+      // wires its 'back' path straight back to a freshly-rendered Inicio --
+      // the same fresh renderHome(...) shape every other "return to Inicio"
+      // call site in this file uses (see finishLevel's onExit below).
+      renderOptions.onOpenHallOfFame = function () {
+        renderHallOfFame(doc, undefined, fetchFn, {
+          onBack: function () {
+            var backHomeStorage = resolveHomeStorage();
+            renderHome(
+              doc,
+              renderHomeScreen,
+              fetchFn,
+              backHomeStorage,
+              function () {
+                navigateToPrivacyPolicy();
+              },
+              backHomeStorage
+            );
+          },
+        });
+      };
 
       if (resolvedMuteStorage) {
         renderOptions.muted = loadMutedState(resolvedMuteStorage);
@@ -4650,6 +4762,49 @@
   }
 
   /**
+   * Renders the Hall of Fame screen into #app, the same fetch-then-render
+   * shape as `renderPrivacyPolicy`/`renderDiagnostics` above. Two things a
+   * caller may pass through `options`: `highlightEntryId` (the just-finished
+   * game's own entry identifier, forwarded straight to hallOfFameScreen.js's
+   * `highlightEntryId` so it can highlight that row) and `onBack`, which --
+   * unlike the always-Inicio `onBack` those two screens wire -- is supplied
+   * fresh by each caller below (`renderHome`'s entry point re-renders Inicio;
+   * `finishLevel`'s re-renders the very same Resultados), so this screen
+   * itself stays agnostic about where "back" leads.
+   */
+  function renderHallOfFame(doc, renderHallOfFameScreen, fetchFn, options) {
+    doc = doc || (typeof document !== 'undefined' ? document : undefined);
+    renderHallOfFameScreen =
+      renderHallOfFameScreen ||
+      (typeof window !== 'undefined' &&
+        window.DinoQuiz &&
+        window.DinoQuiz.screens &&
+        window.DinoQuiz.screens.renderHallOfFameScreen);
+
+    if (!doc || typeof renderHallOfFameScreen !== 'function') {
+      return Promise.resolve(null);
+    }
+
+    var container = doc.getElementById('app');
+    if (!container) {
+      return Promise.resolve(null);
+    }
+
+    options = options || {};
+
+    return loadHallOfFameStrings(fetchFn).then(function (strings) {
+      var renderOptions = strings ? { strings: strings } : {};
+      if (options.highlightEntryId !== undefined) {
+        renderOptions.highlightEntryId = options.highlightEntryId;
+      }
+      if (typeof options.onBack === 'function') {
+        renderOptions.onBack = options.onBack;
+      }
+      return renderHallOfFameScreen(container, renderOptions);
+    });
+  }
+
+  /**
    * Renders the launch-gate status screen (TRIOFSND-325) for the hidden
    * `#/gates-lanzamiento` route: resolves the i18n copy the same way
    * `renderDiagnostics` does, fetches the precomputed gates report (the
@@ -4881,6 +5036,9 @@
       logPlatformSupportFallback: logPlatformSupportFallback,
       resolveLogger: resolveLogger,
       resolveDiagnostics: resolveDiagnostics,
+      resolveHallOfFameService: resolveHallOfFameService,
+      loadHallOfFameStrings: loadHallOfFameStrings,
+      renderHallOfFame: renderHallOfFame,
       installLinkGuard: installLinkGuard,
       loadHomeResources: loadHomeResources,
       loadHomeStrings: loadHomeStrings,
