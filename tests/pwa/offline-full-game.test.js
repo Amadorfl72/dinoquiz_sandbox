@@ -32,12 +32,27 @@ function rejectingFetch() {
   return jest.fn(() => Promise.reject(new Error('network unreachable: device is offline')));
 }
 
-/** Answers the question currently on screen with its correct option, then advances. */
+/**
+ * Answers the question currently on screen with its correct option, then
+ * advances. "Siguiente" is shown and enabled synchronously in the same
+ * update as the feedback/dato curioso (AC-6), so this taps it right away —
+ * no timer advance, no network round-trip needed.
+ */
 function answerCurrentQuestionCorrectly(container, session) {
   const question = session.questions[session.state.questionIndex];
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   buttons[question.correctAnswerIndex].click();
-  getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+
+  const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+  const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+  expect(funFactBox.hidden).toBe(false);
+  expect(nextButton.hidden).toBe(false);
+  expect(nextButton.disabled).toBe(false);
+  // "Siguiente" precedes the dato curioso in real DOM/reading order (AC-6):
+  // a screen reader's virtual cursor reaches it before the fun-fact text.
+  expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+  nextButton.click();
 }
 
 describe('TRIOFSND-111: el banco de preguntas se carga del JSON local, nunca por red', () => {
@@ -171,12 +186,20 @@ describe('TRIOFSND-111: partida completa offline — Inicio -> Quiz (10 pregunta
       const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
       buttons[wrongIndex].click();
 
-      expect(container.querySelector('.question-screen__fun-fact-box')).not.toHaveAttribute('hidden');
+      const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+      expect(funFactBox).not.toHaveAttribute('hidden');
       expect(container.querySelector('.question-screen__fun-fact').textContent).toBe(firstQuestion.funFact);
       expect(
         container.querySelectorAll('.question-screen__option--correct')[0]
       ).toBe(buttons[firstQuestion.correctAnswerIndex]);
       expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
+
+      // A wrong answer never blocks or delays "Siguiente" either: it's
+      // visible, enabled and precedes the dato curioso immediately.
+      const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+      expect(nextButton.hidden).toBe(false);
+      expect(nextButton.disabled).toBe(false);
+      expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     } finally {
       jest.useRealTimers();
     }
