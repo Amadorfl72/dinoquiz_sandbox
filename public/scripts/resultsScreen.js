@@ -362,6 +362,14 @@
     }
 
     var score = options.score;
+    // TRIOFSND-254: the running total across every level of this same game
+    // (including the level just finished). Optional so existing callers that
+    // only ever knew about one score (`options.score`, always this level's
+    // own) render unaffected -- defaults to the level score itself, exactly
+    // like a single-level game where "level" and "game" are the same thing.
+    // Unlike `score`, this is never bounded by `total` -- it accumulates
+    // across as many levels as the game has played.
+    var gameScore = Number.isInteger(options.gameScore) && options.gameScore >= 0 ? options.gameScore : score;
     var normalizedOutcome = normalizeScore(score, total);
     var stars = normalizedOutcome.stars;
     var percentage = normalizedOutcome.percentage;
@@ -386,9 +394,30 @@
       levelEl.textContent = formatTemplate(strings.levelFormat, { level: options.level });
     }
 
+    // Two distinct scoreboards (TRIOFSND-254): "Puntos del nivel" (aciertos
+    // of the level just finished, out of `total`) and "Total de la partida"
+    // (the running sum across every level played in this same game) render
+    // as two visually separated pills in their own row instead of one
+    // run-on line -- this transforms the screen's existing single score
+    // marker rather than adding a second, competing representation of the
+    // same concept. Neither is distinguished from the other by color alone:
+    // each carries its own i18n label and an explicit `aria-label` pairing
+    // that label with its current value.
+    var scoreRow = document.createElement('div');
+    scoreRow.className = 'results-screen__score-row';
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'results-screen__score';
-    scoreEl.textContent = formatTemplate(strings.scoreFormat, { score: score, total: total });
+    scoreEl.textContent =
+      strings.score.levelLabel + ': ' + formatTemplate(strings.scoreFormat, { score: score, total: total });
+    scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score + '/' + total);
+    scoreRow.appendChild(scoreEl);
+
+    var gameScoreEl = document.createElement('p');
+    gameScoreEl.className = 'results-screen__game-score';
+    gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+    gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
+    scoreRow.appendChild(gameScoreEl);
 
     // TRIOFSND-252: the shared 0-100 percentage every mode's result maps
     // onto (scoring.js's normalizeOutcome), shown alongside the mode's own
@@ -483,6 +512,7 @@
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
     }
+    announcementParts.push(gameScoreEl.textContent);
     if (levelOutcomeEl) {
       announcementParts.push(levelOutcomeEl.textContent);
     }
@@ -651,7 +681,7 @@
     if (levelEl) {
       root.appendChild(levelEl);
     }
-    root.appendChild(scoreEl);
+    root.appendChild(scoreRow);
     root.appendChild(percentageEl);
     root.appendChild(starsEl);
     root.appendChild(messageEl);
@@ -680,7 +710,9 @@
     return {
       root: root,
       levelEl: levelEl,
+      scoreRow: scoreRow,
       scoreEl: scoreEl,
+      gameScoreEl: gameScoreEl,
       percentageEl: percentageEl,
       starsEl: starsEl,
       messageEl: messageEl,

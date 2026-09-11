@@ -1357,6 +1357,11 @@
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
+    // TRIOFSND-254: a level-driven session (gameFlow.startLevel/completeLevel)
+    // carries two counters (levelPoints/gameAccumulatedPoints) instead of the
+    // flat, single-level `score` the older startNewGame session shape uses --
+    // see gameFlow.js's own doc comment on createInitialLevelState.
+    var isLevelSession = typeof session.state.levelPoints === 'number';
 
     function advance() {
       if (advanced) return;
@@ -1377,10 +1382,17 @@
     }
 
     var questionOptions = {
-      score: session.state.score,
+      score: isLevelSession ? session.state.levelPoints : session.state.score,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
-        session.state.score = result.score;
+        if (isLevelSession) {
+          var gameFlow = resolveGameFlow();
+          var updatedLevelState = gameFlow.applyAnswerToLevelState(session.state, result.isCorrect);
+          session.state.levelPoints = updatedLevelState.levelPoints;
+          session.state.gameAccumulatedPoints = updatedLevelState.gameAccumulatedPoints;
+        } else {
+          session.state.score = result.score;
+        }
         session.state.answers = session.state.answers.concat([
           {
             questionId: question.id,
@@ -1439,6 +1451,14 @@
         advance();
       },
     };
+
+    // TRIOFSND-254: the running game-accumulated total (carried across every
+    // level of this same game chain) renders alongside the level's own
+    // score -- only for a level session, never for the flat startNewGame
+    // shape, which has no cross-level concept at all.
+    if (isLevelSession) {
+      questionOptions.gameScore = session.state.gameAccumulatedPoints;
+    }
 
     // TRIOFSND-207: `levelContext` is only set by the multi-level orchestrator
     // (startLevelGame/playLevel below) -- the older flat, level-agnostic game
@@ -1824,6 +1844,16 @@
       levelGame,
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+
+        // TRIOFSND-254: `finalState.score` is kept as an alias of this
+        // level's own `levelPoints` so every existing `.score` consumer below
+        // (best score, Hall of Fame, modeProgressStorage.recordResult) keeps
+        // reading exactly the value it always has -- the level just played,
+        // never the cross-level `gameAccumulatedPoints` total.
+        if (typeof finalState.levelPoints === 'number') {
+          finalState.score = finalState.levelPoints;
+        }
+
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
@@ -1850,6 +1880,11 @@
           modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
+          // TRIOFSND-254: carries this game's running total into the next
+          // level's own state (gameFlow.js's startLevel/createInitialLevelState)
+          // so "Total de la partida" survives the level transition instead of
+          // resetting to 0 alongside the level's own levelPoints.
+          gameAccumulatedPoints: finalState.gameAccumulatedPoints,
         });
 
         // The level just played is always resolved (gameOver/reason are
@@ -1948,6 +1983,10 @@
         // time (calling `finishLevel` itself again would).
         var resultsOptions = {
           score: finalState.score,
+          // TRIOFSND-254: the running total across every level played so far
+          // in this same game (including the level just finished) -- read
+          // straight off state, never recomputed here.
+          gameScore: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
           // this shared orchestrator today, same value resultsScreen.js

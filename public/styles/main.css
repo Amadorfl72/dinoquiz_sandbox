@@ -666,9 +666,28 @@ body {
   border-radius: 16px;
 }
 
-.question-screen__score {
-  font-size: 20px;
+/*
+ * Two distinct scoreboards (TRIOFSND-254): "Puntos del nivel" and "Puntos de
+ * la partida" render as two plain-text blocks in their own wrapping row --
+ * same layout strategy as `.question-screen__progress-row` below -- rather
+ * than one run-on line, so at 375px wide both fit without a horizontal
+ * scrollbar or pushing `.question-screen__options` off-screen. Distinguished
+ * from each other only by their i18n label text, never by color alone.
+ */
+.question-screen__score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   margin: 0 0 16px;
+  max-width: 100%;
+}
+
+.question-screen__score,
+.question-screen__game-score {
+  font-size: 20px;
+  margin: 0;
   color: var(--color-text);
 }
 
@@ -1034,7 +1053,24 @@ body {
   color: var(--color-text);
 }
 
-.results-screen__score {
+/*
+ * Two distinct scoreboards (TRIOFSND-254): "Puntos del nivel" and "Total de
+ * la partida" render as two wrapping blocks in their own row instead of one
+ * run-on line, so at 375px wide both fit without a horizontal scrollbar or
+ * pushing "Volver a jugar"/"Salir" off-screen. Distinguished from each other
+ * only by their i18n label text, never by color alone.
+ */
+.results-screen__score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  max-width: 100%;
+}
+
+.results-screen__score,
+.results-screen__game-score {
   font-size: var(--font-size-heading-sm);
   font-weight: bold;
   margin: 0;

@@ -444,6 +444,10 @@
   "results": {
     "heading": "Results!",
     "scoreLabel": "Score",
+    "score": {
+      "levelLabel": "Level points",
+      "gameLabel": "Game total"
+    },
     "scoreFormat": "{score}/{total}",
     "percentageFormat": "You got {percentage}% of the rounds right",
     "starsLabel": "{stars} of {maxStars} stars earned",
@@ -530,6 +534,10 @@
     "selectedOptionAriaLabel": "Your answer: {answer}",
     "funFactHeading": "Fun fact",
     "scoreLabel": "Points",
+    "score": {
+      "levelLabel": "Level points",
+      "gameLabel": "Game total"
+    },
     "nextButton": "Next",
     "imageAlt": "Illustration of a {dinosaur}",
     "imageAltFunFact": "Fun fact: {funFact}",

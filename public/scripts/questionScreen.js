@@ -437,7 +437,7 @@
     probe.remove();
   }
 
-  function buildResultAnnouncement(strings, question, correct, score) {
+  function buildResultAnnouncement(strings, question, correct, score, gameScore) {
     var parts = [correct ? strings.feedback.correct : strings.feedback.incorrect];
 
     parts.push(
@@ -451,7 +451,13 @@
       parts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
     }
 
-    parts.push(strings.scoreLabel + ': ' + score);
+    parts.push(strings.score.levelLabel + ': ' + score);
+
+    // TRIOFSND-254: `gameScore` is optional so existing 4-arg callers (e.g.
+    // direct unit tests) keep announcing just the level score, unchanged.
+    if (Number.isInteger(gameScore)) {
+      parts.push(strings.score.gameLabel + ': ' + gameScore);
+    }
 
     return parts.join(' ');
   }
@@ -473,6 +479,12 @@
     var rewardedAdService = resolveRewardedAdService(options);
 
     var score = options.score || 0;
+    // TRIOFSND-254: the running total across every level of this same game
+    // (including this level's own contribution so far) -- defaults to the
+    // level score itself when the caller omits it (e.g. the flat, single-
+    // level `startNewGame` shape, or an existing test that only sets
+    // `options.score`), so a one-level game never shows a spurious 0.
+    var gameScore = Number.isInteger(options.gameScore) ? options.gameScore : score;
     var answered = false;
 
     container.innerHTML = '';
@@ -544,9 +556,28 @@
       }
     }
 
+    // Two distinct scoreboards (TRIOFSND-254): "Puntos del nivel" (this
+    // level's own aciertos, resets every level) and "Puntos de la partida"
+    // (the running total across every level of this same game) render as two
+    // visually separated pills in their own row -- the same nivel/progreso
+    // badge pattern above -- never merged into one run-on line, and never
+    // distinguished by color alone (each carries its own i18n label). Each
+    // gets an explicit `aria-label` pairing its concept with its current
+    // value so a screen reader announces which is which unambiguously.
+    var scoreRow = document.createElement('div');
+    scoreRow.className = 'question-screen__score-row';
+
     var scoreEl = document.createElement('p');
     scoreEl.className = 'question-screen__score';
-    scoreEl.textContent = strings.scoreLabel + ': ' + score;
+    scoreEl.textContent = strings.score.levelLabel + ': ' + score;
+    scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
+    scoreRow.appendChild(scoreEl);
+
+    var gameScoreEl = document.createElement('p');
+    gameScoreEl.className = 'question-screen__game-score';
+    gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+    gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
+    scoreRow.appendChild(gameScoreEl);
 
     var optionsGroup = document.createElement('div');
     optionsGroup.className = 'question-screen__options';
@@ -675,6 +706,11 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
+      // TRIOFSND-254: the game-accumulated total moves by the exact same
+      // delta as the level score -- the same +1/+0 rule, applied twice --
+      // so a correct answer credits both counters together and a wrong one
+      // leaves both untouched (AC-7).
+      gameScore = scoring.applyAnswerToScore(gameScore, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
       if (soundService) {
@@ -717,7 +753,10 @@
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
-      scoreEl.textContent = strings.scoreLabel + ': ' + score;
+      scoreEl.textContent = strings.score.levelLabel + ': ' + score;
+      scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
+      gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+      gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -730,7 +769,7 @@
       // overlaps a still-in-flight round-change announcement from this same
       // screen's mount.
       if (a11yAnnouncer) {
-        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score));
+        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score, gameScore));
       }
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
@@ -754,6 +793,7 @@
           isCorrect: correct,
           scoreDelta: score - previousScore,
           score: score,
+          gameScore: gameScore,
           selectedIndex: selectedIndex,
           correctIndex: question.correctAnswerIndex,
         });
@@ -771,7 +811,7 @@
     if (progressRow) {
       root.appendChild(progressRow);
     }
-    root.appendChild(scoreEl);
+    root.appendChild(scoreRow);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
     root.appendChild(announcementEl);
@@ -798,7 +838,9 @@
       progressRow: progressRow,
       levelEl: levelEl,
       progressEl: progressEl,
+      scoreRow: scoreRow,
       scoreEl: scoreEl,
+      gameScoreEl: gameScoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
       announcementEl: announcementEl,
@@ -812,6 +854,9 @@
       nextButton: nextButton,
       getScore: function () {
         return score;
+      },
+      getGameScore: function () {
+        return gameScore;
       },
       isAnswered: function () {
         return answered;
