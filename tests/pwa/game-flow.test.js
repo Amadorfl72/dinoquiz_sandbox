@@ -57,16 +57,22 @@ function buildLeveledQuestionBank(levels) {
 }
 
 // Answers the currently visible question and advances manually via
-// "Siguiente" (TRIOFSND-84): the button is shown and enabled synchronously
-// in the same update as the feedback (AC-6), so it can be clicked right away.
-// The 0ms fake-timer advance below flushes the microtask queue (pending
-// `onAnswer` storage writes) without adding any real wall-clock wait.
+// "Siguiente" (TRIOFSND-84): the button is shown and enabled synchronously,
+// in the very same click-handler update that renders the feedback (AC-6) --
+// no timer to flush, no promise to await, no network request pending, so
+// "Siguiente" is clicked right here with no clock advance of any kind.
 async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
-  await jest.advanceTimersByTimeAsync(0);
   getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+}
+
+/** Asserts "Siguiente" precedes the dato curioso box in DOM/accessible order (AC-6) -- document position, never CSS/visual layout. */
+function expectNextButtonPrecedesFunFact(container) {
+  const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+  const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+  expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 }
 
 /** Reads the current question's prompt, then answers it and advances (see answerCurrentQuestion). */
@@ -144,7 +150,7 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     expect(typeof renderers.renderResultsScreen).toBe('function');
   });
 
-  test('acierto: reveals the "Dato Curioso" for the answered question before "Siguiente" is used to advance', () => {
+  test('acierto: in the very same update as the click, shows the positive feedback, the "Dato Curioso" and an enabled "Siguiente" -- before it is used to advance', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(2);
@@ -154,16 +160,29 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     const [correctButton] = container.querySelectorAll('.question-screen__option');
     correctButton.click();
 
+    // No wait, no timer advance, no awaited promise between the click above
+    // and the assertions below: everything already landed synchronously.
+    const feedback = container.querySelector('.question-screen__feedback');
+    expect(feedback.textContent).toContain(questionStrings.feedback.correct);
+
     const funFactBox = container.querySelector('.question-screen__fun-fact-box');
     expect(funFactBox.hidden).toBe(false);
     expect(funFactBox.textContent).toContain(questions[0].funFact);
 
-    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+    expect(nextButton.hidden).toBe(false);
+    expect(nextButton.disabled).toBe(false);
+
+    // "Siguiente" reaches the DOM/accessible tree before the dato curioso --
+    // document order, not a CSS/visual position.
+    expectNextButtonPrecedesFunFact(container);
+
+    nextButton.click();
 
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
   });
 
-  test('fallo: also reveals the "Dato Curioso" (no penalty, no negative copy) before advancing to the next question', () => {
+  test('fallo: also reveals the neutral feedback, the correct answer, the "Dato Curioso" and an enabled "Siguiente" -- no penalty, no negative copy', () => {
     const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(2);
@@ -173,14 +192,171 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
     const buttons = container.querySelectorAll('.question-screen__option');
     buttons[1].click(); // wrong answer (correctAnswerIndex is always 0)
 
+    const feedback = container.querySelector('.question-screen__feedback');
+    expect(feedback.textContent).toContain(questionStrings.feedback.incorrect);
+    expect(feedback.textContent).toContain(questions[0].options[0]); // identifies the correct answer's text
+    expect(container.querySelector('.question-screen__option--correct')).not.toBeNull();
+
     const funFactBox = container.querySelector('.question-screen__fun-fact-box');
     expect(funFactBox.hidden).toBe(false);
     expect(funFactBox.textContent).toContain(questions[0].funFact);
     expect(container.textContent).toContain(`${questionStrings.scoreLabel}: 0`);
 
-    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+    expect(nextButton.hidden).toBe(false);
+    expect(nextButton.disabled).toBe(false);
+
+    expectNextButtonPrecedesFunFact(container);
+
+    nextButton.click();
 
     expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+  });
+
+  test('"Siguiente" can be clicked the instant an answer is picked -- no clock advance, no network request, no wait on audio/celebration/animation', () => {
+    const originalFetch = global.fetch;
+    const fetchSpy = jest.fn(() => Promise.reject(new Error('network must not be used to gate "Siguiente"')));
+    global.fetch = fetchSpy;
+
+    // A single shared spy: preload() eagerly constructs one Audio element
+    // per effect (correct/incorrect), so every constructed instance must
+    // report its play() calls through the same mock.
+    const audioPlaySpy = jest.fn(() => Promise.resolve());
+    const originalAudioCtor = window.Audio;
+    window.Audio = function FakeAudio() {
+      return { play: audioPlaySpy, preload: '', currentTime: 0 };
+    };
+
+    try {
+      const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+      const renderers = resolveScreenRenderers();
+      const questions = buildQuestionBank(2);
+
+      // fetchFn (5th arg) is also wired to the rejecting spy: neither the
+      // flow controller nor the question screen has any legitimate reason to
+      // call it while answering/advancing a plain quiz question.
+      startNewGame(container, renderers, questions, document, fetchSpy, () => 0);
+
+      const [correctButton] = container.querySelectorAll('.question-screen__option');
+      correctButton.click();
+
+      // The (real, unmocked) sound service was invoked synchronously and its
+      // returned promise was never awaited -- "Siguiente" doesn't wait on it.
+      expect(audioPlaySpy).toHaveBeenCalled();
+
+      const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+      expect(nextButton.disabled).toBe(false);
+
+      // Click right away: no jest.advanceTimersByTime/-Async call anywhere
+      // above, no awaited fetch, no awaited animation/celebration.
+      nextButton.click();
+
+      expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = originalFetch;
+      window.Audio = originalAudioCtor;
+    }
+  });
+
+  test('after the first answer every option is disabled, and tapping another option afterwards changes neither the recorded answer, the feedback, nor the score', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(2);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+    buttons[1].click(); // wrong answer first (correctAnswerIndex is 0)
+
+    buttons.forEach((button) => expect(button.disabled).toBe(true));
+
+    const feedbackAfterFirstAnswer = container.querySelector('.question-screen__feedback').textContent;
+    const scoreAfterFirstAnswer = container.querySelector('.question-screen__score').textContent;
+
+    // Further taps on any option, including the actually-correct one, must
+    // be inert once the question is answered.
+    buttons[0].click();
+    buttons[1].click();
+
+    expect(container.querySelector('.question-screen__feedback').textContent).toBe(feedbackAfterFirstAnswer);
+    expect(container.querySelector('.question-screen__score').textContent).toBe(scoreAfterFirstAnswer);
+
+    getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+  });
+
+  test('repeated/rapid taps on an already-clicked "Siguiente" never skip a question, never double-increment progress, and never open Resultados twice', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(3);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    const [correctButton] = container.querySelectorAll('.question-screen__option');
+    correctButton.click();
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+
+    // Several rapid taps on the very same button reference.
+    nextButton.click();
+    nextButton.click();
+    nextButton.click();
+
+    // Exactly one advance happened: question 2 (index 1), not question 3.
+    expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[1].question);
+    expect(container.querySelector('.question-screen__prompt').textContent).not.toContain(questions[2].question);
+  });
+
+  test('for questions 1-9, a single "Siguiente" tap advances progress by exactly one question', async () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    for (let i = 0; i < 9; i += 1) {
+      const promptBefore = container.querySelector('.question-screen__prompt').textContent;
+      expect(promptBefore).toContain(questions[i].question);
+
+      await answerCurrentQuestion(container, { correct: i % 2 === 0 });
+
+      const promptAfter = container.querySelector('.question-screen__prompt').textContent;
+      expect(promptAfter).toContain(questions[i + 1].question);
+      expect(promptAfter).not.toBe(promptBefore);
+      expect(container.querySelector('.results-screen')).toBeNull();
+    }
+  });
+
+  test('answering the 10th question does not auto-open Resultados; a single "Siguiente" tap afterwards opens it with the exact final score', () => {
+    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildQuestionBank(10);
+
+    startNewGame(container, renderers, questions, document, undefined, () => 0);
+
+    for (let i = 0; i < 9; i += 1) {
+      const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+      buttons[0].click(); // correct
+      getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+    }
+
+    expect(container.querySelector('.question-screen__prompt').textContent).toContain(questions[9].question);
+
+    // Answer the 10th question: still no Resultados until "Siguiente" is tapped.
+    const lastButtons = Array.from(container.querySelectorAll('.question-screen__option'));
+    lastButtons[0].click();
+    expect(container.querySelector('.results-screen')).toBeNull();
+    expect(container.querySelector('.question-screen')).not.toBeNull();
+
+    const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+    expect(nextButton.disabled).toBe(false);
+
+    // A single tap opens Resultados, exactly once, with the perfect score.
+    nextButton.click();
+
+    expect(container.querySelector('.results-screen')).not.toBeNull();
+    expect(container.querySelector('.question-screen')).toBeNull();
+    expect(container.textContent).toContain('10/10');
   });
 
   test('startNewGame walks through every question, acertando todas, and lands on Resultados with the right score', async () => {
@@ -1049,6 +1225,12 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
     const storage = new DinoQuizStorage([createMemoryAdapter()]);
+    // main.js fires markFunFactDiscovered without awaiting it (TRIOFSND-129's
+    // write is fire-and-forget, exactly like persistBestScoreAndStreak's --
+    // it never gates "Siguiente"). Awaiting each call's own promise -- not a
+    // clock advance, not a wait on "Siguiente" -- lets that specific write's
+    // in-memory cache update land before the next question renders.
+    const markFunFactDiscoveredSpy = jest.spyOn(storage, 'markFunFactDiscovered');
 
     const capturedOptions = [];
     const renderResultsScreen = renderers.renderResultsScreen;
@@ -1057,14 +1239,12 @@ describe('TRIOFSND-129: Resultados shows the persisted discovered-fun-facts prog
       return renderResultsScreen(resultsContainer, options);
     };
 
-    jest.useFakeTimers();
-    try {
-      startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
-      for (let i = 0; i < 10; i += 1) {
-        await answerCurrentQuestion(container, { correct: true });
-      }
-    } finally {
-      jest.useRealTimers();
+    startNewGame(container, renderers, questions, document, undefined, () => 0, undefined, undefined, storage, storage);
+    for (let i = 0; i < 10; i += 1) {
+      const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
+      buttons[0].click(); // correctAnswerIndex is always 0 (buildQuestion)
+      await markFunFactDiscoveredSpy.mock.results[i].value;
+      getByRole(container, 'button', { name: questionStrings.nextButton }).click();
     }
 
     expect(capturedOptions[0].discoveredFunFactsCount).toBe(10);
