@@ -1532,19 +1532,15 @@
    * Hall of Fame (hallOfFameService.js): every call here is also one more
    * finished game, across every mode, exactly like the cross-mode bestScore/
    * bestStreak combined above -- so this is the single place that also adds
-    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
-
+   * a `{ name, score, timestamp }` entry to the on-device top-10 list --
+   * delegated to `recordHallOfFameEntry` below, the single place a Hall of
+   * Fame entry is written for a finished game (never duplicated by a
+   * second `addEntry` call elsewhere, e.g. from `playLevel`'s old Quiz-only
+   * block).
    */
   function persistBestScoreAndStreak(storage, finalState) {
-   * a `{ name, score, timestamp }` entry to the on-device top-10 list (never
-   * duplicated by a second `addEntry` call elsewhere -- see the QA report
-   * this fixed: finishing a game used to write two entries, one from here
-   * and one from `playLevel`'s own now-removed Quiz-only block). Delegated to
-   * `recordHallOfFameEntry` below, which -- unlike the bestScore/bestStreak
-   * bookkeeping in this function -- never depends on `storage` being
-   * available, so a caller with no per-question storage double (or one that
-   * hasn't wired ctx.storage) still gets its game recorded, exactly like the
-   * old Quiz-only block did.
+    var hallOfFameEntryId = recordHallOfFameEntry(finalState);
+
     if (!storage || !finalState) {
       return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
@@ -1841,6 +1837,7 @@
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
+
         // Hall of Fame entry point (Quiz only -- the one mode this shared
         // orchestrator serves, see buildModeDispatchRegistry): the entry
         // itself was already added by `persistBestScoreAndStreak` above (the
