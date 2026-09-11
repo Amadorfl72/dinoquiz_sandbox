@@ -173,11 +173,29 @@ async function readOutboundCapture(page) {
   return page.evaluate(() => window.__outboundCapture || []);
 }
 
-/** Asserts `secret` appears in none of the given string arrays, reporting which surface failed. */
+/**
+ * Builds every representation of `secret` a leak could plausibly take on the
+ * wire: the literal value, its surrounding-whitespace-trimmed form, its
+ * URL-encoded form (query string / path segment) and its JSON-escaped inner
+ * form (a string value embedded in a serialized object) -- so the audit
+ * catches an embedded/encoded occurrence, not only a byte-for-byte match.
+ */
+function buildLeakVariants(secret) {
+  const trimmed = secret.trim();
+  const jsonEscaped = JSON.stringify(trimmed).slice(1, -1);
+  return Array.from(new Set([secret, trimmed, encodeURIComponent(trimmed), jsonEscaped])).filter(
+    (variant) => variant.length > 0
+  );
+}
+
+/** Asserts none of `secret`'s leak variants (see buildLeakVariants) appear in the given string arrays, reporting which surface/variant failed. */
 function assertNoLeakAcrossSurfaces(secret, surfaces) {
+  const variants = buildLeakVariants(secret);
   for (const [name, entries] of Object.entries(surfaces)) {
     const joined = entries.join('\n');
-    expect(joined, `"${secret}" leaked into ${name}`).not.toContain(secret);
+    for (const variant of variants) {
+      expect(joined, `"${variant}" (variante de "${secret}") leaked into ${name}`).not.toContain(variant);
+    }
   }
 }
 
@@ -262,11 +280,28 @@ describe('auditoría dinámica de red/eventos/beacons/errores -- el apodo nunca 
 
       const outboundCapture = await readOutboundCapture(page);
 
+      // Any local queue an analytics/log service accumulates before ever
+      // calling sendLogs() (e.g. LogService's `dinoquiz:logs`) is also a
+      // surface the apodo must never reach, even though it's never
+      // transmitted today -- excludes the nickname's own storage key, which
+      // legitimately holds the value by design (that's the one approved
+      // local-only destination for it).
+      const otherLocalStorageEntries = await page.evaluate(() => {
+        var entries = [];
+        for (var i = 0; i < window.localStorage.length; i += 1) {
+          var key = window.localStorage.key(i);
+          if (key === 'dinoquiz:nickname') continue;
+          entries.push({ key: key, value: window.localStorage.getItem(key) });
+        }
+        return entries;
+      });
+
       const surfaces = {
         'peticiones de red (url + cuerpo)': processCapture.requests,
         'mensajes de consola (nivel navegador)': processCapture.consoleMessages,
         'errores de página no capturados': processCapture.pageErrors,
         'fetch/XHR/sendBeacon/console/window.onerror interceptados en JS': outboundCapture,
+        'colas locales de analítica/log distintas de la propia clave del apodo': [JSON.stringify(otherLocalStorageEntries)],
       };
 
       assertNoLeakAcrossSurfaces(NICKNAME_A, surfaces);
@@ -352,6 +387,110 @@ describe('auditoría dinámica de red/eventos/beacons/errores -- el apodo nunca 
       await expect
         .poll(async () => (await readOutboundCapture(page)).join('\n'), { timeout: 2_000 })
         .toContain(LEAKED_VALUE);
+    },
+    NAVIGATION_TIMEOUT_MS
+  );
+
+  test(
+    'control positivo: el capturador registra un payload saliente inocuo (demuestra que un "sin fugas" no se debe a una captura rota)',
+    async () => {
+      const HARMLESS_TOKEN = 'CONTROL_POSITIVO_INOCUO_9F2X';
+
+      await installOutboundCapture(page);
+      await page.goto(baseURL);
+
+      // Una petición corriente, sin relación alguna con el apodo -- solo
+      // prueba que `record()` realmente anota algo cuando algo sale.
+      await page.evaluate(async (token) => {
+        try {
+          await fetch('/harmless-control-request?token=' + token);
+        } catch (error) {
+          // El endpoint no existe (404) o la red del test la rechaza -- lo
+          // único relevante aquí es que el capturador viera la petición.
+        }
+      }, HARMLESS_TOKEN);
+
+      await expect
+        .poll(async () => (await readOutboundCapture(page)).join('\n'), { timeout: 2_000 })
+        .toContain(HARMLESS_TOKEN);
+    },
+    NAVIGATION_TIMEOUT_MS
+  );
+
+  test('la aserción de fuga detecta también la variante recortada, URL-encoded y JSON-escaped del apodo, no solo el literal exacto', () => {
+    // Autoprueba del propio arnés (sin navegador): un valor con espacios
+    // exteriores y un carácter que cambia de forma al codificarse/escaparse
+    // debe seguir detectándose aunque la superficie solo contenga esa forma
+    // transformada -- exactamente lo que un backend real haría con
+    // querystrings o cuerpos JSON.
+    const RAW_VALUE = '  Zaphod "Q" Rex  ';
+    const TRIMMED = RAW_VALUE.trim();
+
+    expect(() =>
+      assertNoLeakAcrossSurfaces(RAW_VALUE, {
+        'url con query string URL-encoded': [`/leak?nombre=${encodeURIComponent(TRIMMED)}`],
+      })
+    ).toThrow();
+
+    expect(() =>
+      assertNoLeakAcrossSurfaces(RAW_VALUE, {
+        'cuerpo JSON serializado (comillas escapadas)': [JSON.stringify({ nombre: TRIMMED })],
+      })
+    ).toThrow();
+
+    // Un valor que de verdad no contiene ninguna variante del secreto no
+    // debe fallar -- si no, la aserción sería inútilmente estricta.
+    expect(() =>
+      assertNoLeakAcrossSurfaces(RAW_VALUE, {
+        'superficie sin relación': ['nada que ver aquí'],
+      })
+    ).not.toThrow();
+  });
+
+  test(
+    'localidad de almacenamiento: el apodo solo vive en localStorage bajo una clave dinoquiz: y nunca se copia a cookies ni a sessionStorage',
+    async () => {
+      const NICKNAME = 'RexSoloLocalStorage';
+
+      await installOutboundCapture(page);
+      await page.goto(baseURL);
+      await page.locator(HOME_PLAY_BUTTON).click();
+      await page.locator(NICKNAME_INPUT).fill(NICKNAME);
+      await page.locator(NICKNAME_CONTINUE_BUTTON).click();
+      await expect(page.locator(AGE_GATE_SCREEN)).toBeVisible();
+
+      const persistence = await page.evaluate(() => {
+        var localEntries = [];
+        for (var i = 0; i < window.localStorage.length; i += 1) {
+          var key = window.localStorage.key(i);
+          localEntries.push({ key: key, value: window.localStorage.getItem(key) });
+        }
+        var sessionEntries = [];
+        for (var j = 0; j < window.sessionStorage.length; j += 1) {
+          var sessionKey = window.sessionStorage.key(j);
+          sessionEntries.push({ key: sessionKey, value: window.sessionStorage.getItem(sessionKey) });
+        }
+        return { localEntries: localEntries, sessionEntries: sessionEntries, cookie: document.cookie };
+      });
+
+      // El valor aparece en localStorage, y toda clave que lo contenga lleva
+      // el prefijo dinoquiz: (namespace local exclusivo de DinoQuiz).
+      const nicknameLocalEntries = persistence.localEntries.filter(
+        (entry) => typeof entry.value === 'string' && entry.value.includes(NICKNAME)
+      );
+      expect(nicknameLocalEntries.length).toBeGreaterThan(0);
+      nicknameLocalEntries.forEach((entry) => expect(entry.key.indexOf('dinoquiz:')).toBe(0));
+
+      // Ninguna otra persistencia orientada a transmisión remota (cookies,
+      // sessionStorage) recibe una copia del valor.
+      expect(persistence.cookie).not.toContain(NICKNAME);
+      const sessionLeak = persistence.sessionEntries.some(
+        (entry) => typeof entry.value === 'string' && entry.value.includes(NICKNAME)
+      );
+      expect(sessionLeak).toBe(false);
+
+      const outboundCapture = await readOutboundCapture(page);
+      assertNoLeakAcrossSurfaces(NICKNAME, { 'fetch/XHR/sendBeacon/console interceptados en JS': outboundCapture });
     },
     NAVIGATION_TIMEOUT_MS
   );
