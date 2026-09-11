@@ -72,6 +72,7 @@ const PRECACHE_URLS = [
   '/scripts/timelineScreen.js',
   '/scripts/oidoJurasicoScreen.js',
   '/scripts/resultsScreen.js',
+  '/scripts/hallOfFameService.js',
   '/scripts/hallOfFameScreen.js',
   '/scripts/hallOfFameService.js',
   '/scripts/modesCatalog.js',

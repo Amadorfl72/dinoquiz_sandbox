@@ -15,6 +15,7 @@ const { test, expect } = require('@playwright/test');
  */
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
+const NICKNAME_GUEST_BUTTON = '.nickname-screen__guest-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option--eight-plus';
 const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
@@ -28,9 +29,16 @@ const RESULTS_SCREEN = '.results-screen';
 const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
 
-/** Inicio -> edad -> selector de modos -> Quiz (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game starts. */
+/**
+ * Inicio -> apodo (invitado) -> edad -> selector de modos -> Quiz
+ * (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game
+ * starts. A fresh browser context (as every test here uses) has no nickname
+ * saved yet, so the nickname step always appears -- see nicknameScreen.js /
+ * main.js's `renderNicknameStep`.
+ */
 async function startQuizFromHome(page) {
   await page.locator(HOME_PLAY_BUTTON).click();
+  await page.locator(NICKNAME_GUEST_BUTTON).click();
   await page.locator(AGE_GATE_OPTION).click();
   await page.locator(MODE_SELECTOR_QUIZ_CARD).click();
 }
@@ -47,14 +55,29 @@ async function waitForPrecache(page) {
     .toBe(true);
 }
 
-/** Plays through every question on screen (any option — the point is completing the flow, not the score). */
+/**
+ * Plays through every question on screen (any option — the point is
+ * completing the flow, not the score).
+ *
+ * TRIOFSND-111 / "Eliminar tiempo de espera al responder pregunta": "Siguiente"
+ * must be visible and enabled in the SAME update that renders the feedback
+ * (questionScreen.js's handleSelect, AC-6) — including fully offline, never
+ * behind a multi-second grace timeout that would hide which question
+ * actually failed to respond immediately. The per-iteration message pins
+ * down the exact question index in any failure output.
+ */
 async function playFullGame(page) {
   for (let index = 0; index < QUESTIONS_PER_GAME; index += 1) {
     await expect(page.locator(QUESTION_SCREEN)).toBeVisible();
     await page.locator(QUESTION_OPTION).first().click();
 
     const nextButton = page.locator(NEXT_BUTTON);
-    await expect(nextButton).toBeEnabled({ timeout: 6_000 });
+    await expect(nextButton, `question ${index + 1}/${QUESTIONS_PER_GAME}: "Siguiente" should be visible immediately after answering`).toBeVisible({
+      timeout: 500,
+    });
+    await expect(nextButton, `question ${index + 1}/${QUESTIONS_PER_GAME}: "Siguiente" should be enabled immediately after answering`).toBeEnabled({
+      timeout: 500,
+    });
     await nextButton.click();
   }
 }
@@ -134,6 +157,8 @@ test.describe('TRIOFSND-111: partida completa con el dispositivo sin conexión',
 
     await expect(page.locator(HOME_PLAY_BUTTON)).toBeVisible({ timeout: 20_000 });
     await page.locator(HOME_PLAY_BUTTON).click();
+    await expect(page.locator(NICKNAME_GUEST_BUTTON)).toBeVisible({ timeout: 20_000 });
+    await page.locator(NICKNAME_GUEST_BUTTON).click();
     await expect(page.locator(AGE_GATE_OPTION)).toBeVisible({ timeout: 20_000 });
     await page.locator(AGE_GATE_OPTION).click();
     await expect(page.locator(MODE_SELECTOR_QUIZ_CARD)).toBeVisible({ timeout: 20_000 });
