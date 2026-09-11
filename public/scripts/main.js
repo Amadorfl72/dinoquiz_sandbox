@@ -1358,6 +1358,13 @@
     var advanced = false;
     var autoAdvanceTimer = null;
 
+    // TRIOFSND-254: `levelContext` (only set by the multi-level orchestrator,
+    // see the comment near questionOptions.level below) is also what tells
+    // this level session's `state` apart from the flat, single-score one
+    // `startNewGame` uses -- it carries `levelPoints`/`gameAccumulatedPoints`
+    // (gameFlow.js's `createInitialLevelState`) instead of a plain `score`.
+    var isLevelSession = !!(levelContext && typeof levelContext.level === 'number');
+
     function advance() {
       if (advanced) return;
       advanced = true;
@@ -1377,10 +1384,21 @@
     }
 
     var questionOptions = {
-      score: session.state.score,
+      score: isLevelSession ? session.state.levelPoints : session.state.score,
+      gameAccumulatedPoints: isLevelSession ? session.state.gameAccumulatedPoints : undefined,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
-        session.state.score = result.score;
+        if (isLevelSession) {
+          // TRIOFSND-254: both counters move together off the same
+          // isCorrect flag -- reuses gameFlow.js's own per-answer update
+          // instead of re-deriving it from questionScreen.js's single
+          // `result.score` (that only ever tracked this level's own total).
+          var updatedLevelState = resolveGameFlow().applyAnswerToLevelState(session.state, result.isCorrect);
+          session.state.levelPoints = updatedLevelState.levelPoints;
+          session.state.gameAccumulatedPoints = updatedLevelState.gameAccumulatedPoints;
+        } else {
+          session.state.score = result.score;
+        }
         session.state.answers = session.state.answers.concat([
           {
             questionId: question.id,
@@ -1540,7 +1558,6 @@
    */
   function persistBestScoreAndStreak(storage, finalState) {
     var hallOfFameEntryId = recordHallOfFameEntry(finalState);
-
     if (!storage || !finalState) {
       return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
@@ -1834,6 +1851,13 @@
       levelGame,
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+        // TRIOFSND-254: `persistBestScoreAndStreak`/`recordHallOfFameEntry`
+        // (shared with every other mode) read `finalState.score` -- for a
+        // level session that's this level's own `levelPoints`, never the
+        // game-wide `gameAccumulatedPoints`, so the device's bestScore/Hall
+        // of Fame keep meaning "best single game/level result" exactly as
+        // before this feature existed.
+        finalState.score = finalState.levelPoints;
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
@@ -1858,6 +1882,12 @@
           modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
+          // TRIOFSND-254: carries the running game-wide total into the next
+          // level (see gameFlow.js's own doc comment on completeLevel) --
+          // omitted, `startLevel` would silently reset it to 0 on every
+          // level-up, breaking the "accumulated across the whole game" part
+          // of the two-counter feature.
+          gameAccumulatedPoints: finalState.gameAccumulatedPoints,
         });
 
         // The level just played is always resolved (gameOver/reason are
@@ -1956,6 +1986,13 @@
         // time (calling `finishLevel` itself again would).
         var resultsOptions = {
           score: finalState.score,
+          // TRIOFSND-254: the level just finished own total and the running
+          // total across the whole game so far (see renderQuestionAt/
+          // playLevel above) -- resultsScreen.js renders each as its own
+          // optional, independently-labeled line alongside the existing
+          // score/stars.
+          levelPoints: finalState.levelPoints,
+          gameAccumulatedPoints: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
           // this shared orchestrator today, same value resultsScreen.js

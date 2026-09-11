@@ -1435,6 +1435,83 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     expect(replayEventCount()).toBe(2);
   });
 
+  test('TRIOFSND-254: chaining two levels accumulates gameAccumulatedPoints across the game while levelPoints resets per level', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      randomFn: () => 0,
+    });
+
+    // First question of a brand-new game: both counters start at zero.
+    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
+
+    // Level 1: 6/10 unlocks level 2 -- with nothing accumulated yet,
+    // levelPoints and gameAccumulatedPoints move together in lockstep.
+    await playLevelWithPattern('CCCCCCFFFF');
+
+    expect(container.querySelector('.results-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 6`);
+    expect(container.querySelector('.results-screen__game-accumulated-points')).toHaveTextContent(
+      `${strings.score.gameLabel}: 6`
+    );
+
+    // "Volver a jugar" continues straight into the already-unlocked level 2.
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+
+    // Level 2 starts with a fresh levelPoints (0) but carries the level 1
+    // total forward as gameAccumulatedPoints (6) -- this is the whole point
+    // of the two-counter feature (TRIOFSND-254).
+    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 6`);
+
+    await answerCurrentQuestion(container, { correct: true });
+    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 1`);
+    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 7`);
+
+    await answerCurrentQuestion(container, { correct: true });
+    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 8`);
+
+    // Finish level 2 (8 questions left, all misses -- 2/10 total, game over).
+    await playLevelWithPattern('FFFFFFFF');
+
+    expect(container.querySelector('.results-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+    expect(container.querySelector('.results-screen__game-accumulated-points')).toHaveTextContent(
+      `${strings.score.gameLabel}: 8`
+    );
+  });
+
+  test('TRIOFSND-254: "Volver a jugar" into a brand-new game resets both levelPoints and gameAccumulatedPoints to zero', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, {
+      ageBand: 'eight-plus',
+      randomFn: () => 0,
+    });
+
+    // 5/10 falls one short of the level-up threshold -- the game ends here
+    // with a non-zero accumulated total instead of continuing into level 2.
+    await playLevelWithPattern('CCCCCFFFFF');
+
+    expect(container.querySelector('.results-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 5`);
+    expect(container.querySelector('.results-screen__game-accumulated-points')).toHaveTextContent(
+      `${strings.score.gameLabel}: 5`
+    );
+
+    // "Volver a jugar" here starts a brand-new game at level 1 (game over) --
+    // neither counter carries the just-finished game's total forward.
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+
+    expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
+    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
+  });
+
   describe('salida segura a Inicio cuando gameFlow no puede generar un nivel (menos de 10 preguntas válidas)', () => {
     let consoleErrorSpy;
 
