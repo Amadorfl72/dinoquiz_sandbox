@@ -15,6 +15,7 @@ const { test, expect } = require('@playwright/test');
  */
 
 const HOME_PLAY_BUTTON = '.home-screen__play-button';
+const NICKNAME_GUEST_BUTTON = '.nickname-screen__guest-button';
 const AGE_GATE_OPTION = '.age-gate-screen__option--eight-plus';
 const MODE_SELECTOR_QUIZ_CARD = '.mode-selector-screen__card[data-mode-id="quiz"]';
 const QUESTION_SCREEN = '.question-screen';
@@ -51,6 +52,9 @@ test.describe('TRIOFSND-119: auditoría de red -- ninguna llamada sale del propi
     await page.goto('/');
 
     await page.locator(HOME_PLAY_BUTTON).click();
+    // A fresh browser context has no nickname saved yet, so the nickname
+    // step (nicknameScreen.js's `renderNicknameStep`) always appears first.
+    await page.locator(NICKNAME_GUEST_BUTTON).click();
     await page.locator(AGE_GATE_OPTION).click();
     // TRIOFSND-232: the age gate hands off to the illustrated mode selector.
     await page.locator(MODE_SELECTOR_QUIZ_CARD).click();

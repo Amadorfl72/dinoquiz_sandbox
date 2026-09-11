@@ -633,12 +633,6 @@ body {
   text-align: center;
 }
 
-.question-screen__score {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
 /*
  * Question screen — answer feedback states (TRIOFSND-77, TRIOFSND-88).
  *
@@ -666,10 +660,52 @@ body {
   border-radius: 16px;
 }
 
-.question-screen__score {
-  font-size: 20px;
+/*
+ * Puntos del nivel / Puntos de la partida (level vs. game-wide score): two
+ * visually distinct blocks, never merged into one ambiguous "Puntos: N"
+ * line, mirroring the nivel/progreso separation below. Stacked in a column
+ * (not side by side, unlike the shorter nivel/progreso badges) because each
+ * block's full i18n label + number is too long to fit two-up at 375px --
+ * a column, `max-width` capped well under the 375px viewport (minus the
+ * 24px `#app` padding on each side) and `overflow-wrap` keep every block
+ * on screen without a horizontal scrollbar or pushing
+ * `.question-screen__options` out of the visible viewport. Font-size stays
+ * at the shared `--font-size-body` (20sp) floor for reading text, unlike
+ * the smaller nivel/progreso badges, since this is primary score content
+ * (TRIOFSND-83). Colors mirror src/theme/questionScreenColors.js's
+ * `levelPointsBadge`/`gamePointsBadge` tokens (contrast.test.js guards both
+ * at WCAG AA 4.5:1) -- keep both in sync.
+ */
+.question-screen__score-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   margin: 0 0 16px;
-  color: var(--color-text);
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+.question-screen__level-points,
+.question-screen__game-points {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  color: var(--color-white);
+  text-align: center;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.question-screen__level-points {
+  background-color: var(--color-primary);
+}
+
+.question-screen__game-points {
+  background-color: #00695c;
 }
 
 .question-screen__progress-row {
@@ -1053,7 +1089,9 @@ body {
 .results-screen__max-level-unlocked,
 .results-screen__fun-facts-progress,
 .results-screen__best-score,
-.results-screen__best-streak {
+.results-screen__best-streak,
+.results-screen__level-points,
+.results-screen__game-accumulated-points {
   font-size: var(--font-size-body);
   margin: 0;
   color: var(--color-text);

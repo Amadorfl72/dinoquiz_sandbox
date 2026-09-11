@@ -59,6 +59,13 @@
  * public/scripts/main.js), same read-only rationale as the other optional
  * pieces above. Each is independently optional.
  *
+ * Level points / game accumulated points: `options.levelPoints` and
+ * `options.gameAccumulatedPoints` mirror `gameFlow.js`'s two-counter state
+ * (TRIOFSND-254) -- the points earned in the level just finished, and the
+ * running total across the whole game so far. Each renders its own labeled
+ * line, independently optional, same pattern as bestScore/bestStreak above.
+ * Labels come from `strings.score.levelLabel`/`strings.score.gameLabel`.
+ *
  * Own-mode score, percentage, stars and level-progress actions (TRIOFSND-252,
  * PRD "Resultados comunes con porcentaje y estrellas"): a mode's own game need
  * not score out of 10 -- `options.maxScore` generalizes the score/star scale
@@ -403,6 +410,25 @@
     starsEl.setAttribute('aria-label', formatTemplate(strings.starsLabel, { stars: stars, maxStars: MAX_STARS }));
     starsEl.textContent = '★'.repeat(stars) + '☆'.repeat(MAX_STARS - stars);
 
+    // Level points / game accumulated points: the points earned in the level
+    // just finished, and the running total across the whole game so far
+    // (gameFlow.js's state.levelPoints/state.gameAccumulatedPoints,
+    // TRIOFSND-254). Each is independently optional, same rationale as
+    // bestScoreEl/bestStreakEl below.
+    var levelPointsEl = null;
+    if (Number.isInteger(options.levelPoints)) {
+      levelPointsEl = document.createElement('p');
+      levelPointsEl.className = 'results-screen__level-points';
+      levelPointsEl.textContent = strings.score.levelLabel + ': ' + options.levelPoints;
+    }
+
+    var gameAccumulatedPointsEl = null;
+    if (Number.isInteger(options.gameAccumulatedPoints)) {
+      gameAccumulatedPointsEl = document.createElement('p');
+      gameAccumulatedPointsEl.className = 'results-screen__game-accumulated-points';
+      gameAccumulatedPointsEl.textContent = strings.score.gameLabel + ': ' + options.gameAccumulatedPoints;
+    }
+
     var messageEl = document.createElement('p');
     messageEl.className = 'results-screen__message';
     messageEl.textContent = message;
@@ -482,6 +508,12 @@
     ];
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
+    }
+    if (levelPointsEl) {
+      announcementParts.push(levelPointsEl.textContent);
+    }
+    if (gameAccumulatedPointsEl) {
+      announcementParts.push(gameAccumulatedPointsEl.textContent);
     }
     if (levelOutcomeEl) {
       announcementParts.push(levelOutcomeEl.textContent);
@@ -654,6 +686,12 @@
     root.appendChild(scoreEl);
     root.appendChild(percentageEl);
     root.appendChild(starsEl);
+    if (levelPointsEl) {
+      root.appendChild(levelPointsEl);
+    }
+    if (gameAccumulatedPointsEl) {
+      root.appendChild(gameAccumulatedPointsEl);
+    }
     root.appendChild(messageEl);
     if (levelOutcomeEl) {
       root.appendChild(levelOutcomeEl);
@@ -683,6 +721,8 @@
       scoreEl: scoreEl,
       percentageEl: percentageEl,
       starsEl: starsEl,
+      levelPointsEl: levelPointsEl,
+      gameAccumulatedPointsEl: gameAccumulatedPointsEl,
       messageEl: messageEl,
       levelOutcomeEl: levelOutcomeEl,
       maxLevelUnlockedEl: maxLevelUnlockedEl,

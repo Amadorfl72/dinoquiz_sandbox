@@ -472,7 +472,16 @@
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
     var rewardedAdService = resolveRewardedAdService(options);
 
+    // Two independent running totals (see "Level/game score UI" below):
+    // `score` is the level's own score, unchanged from before this feature
+    // existed, so every pre-existing caller/test that only ever passed
+    // `options.score` keeps behaving exactly as it did. `gameAccumulatedPoints`
+    // defaults to the same value when a caller doesn't yet pass one
+    // separately (v1 ships a single difficulty level, so the two totals
+    // coincide until a caller wires gameFlow.js's own gameAccumulatedPoints
+    // tracking through).
     var score = options.score || 0;
+    var gameAccumulatedPoints = typeof options.gameAccumulatedPoints === 'number' ? options.gameAccumulatedPoints : score;
     var answered = false;
 
     container.innerHTML = '';
@@ -506,8 +515,10 @@
 
     // Level/progress row (TRIOFSND-206): shows the active level next to the
     // "N de 10" progress, never the child's age band or a cross-level
-    // running tally -- `score`/`scoreEl` below already only ever reflects
-    // the level currently being played (see gameFlow.js's per-level state).
+    // running tally -- `score`/`levelPointsEl` below already only ever
+    // reflects the level currently being played (see gameFlow.js's per-level
+    // state); the separate game-wide total is `gameAccumulatedPoints`/
+    // `gamePointsEl`.
     var progressRow = null;
     var levelEl = null;
     var progressEl = null;
@@ -544,9 +555,24 @@
       }
     }
 
-    var scoreEl = document.createElement('p');
-    scoreEl.className = 'question-screen__score';
-    scoreEl.textContent = strings.scoreLabel + ': ' + score;
+    // Level/game score UI: two visually and semantically distinct blocks
+    // (never a single ambiguous "Puntos: N") so a child/parent can tell the
+    // level's own running score from the game-wide accumulated total at a
+    // glance, mirroring the level/progress badge pair above. Each block's
+    // own i18n label (`strings.score.levelLabel`/`gameLabel`) is part of its
+    // visible text, so the distinction is conveyed to screen readers too.
+    var scoreRow = document.createElement('div');
+    scoreRow.className = 'question-screen__score-row';
+
+    var levelPointsEl = document.createElement('p');
+    levelPointsEl.className = 'question-screen__level-points';
+    levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+    scoreRow.appendChild(levelPointsEl);
+
+    var gamePointsEl = document.createElement('p');
+    gamePointsEl.className = 'question-screen__game-points';
+    gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameAccumulatedPoints;
+    scoreRow.appendChild(gamePointsEl);
 
     var optionsGroup = document.createElement('div');
     optionsGroup.className = 'question-screen__options';
@@ -675,6 +701,7 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
+      gameAccumulatedPoints = scoring.applyAnswerToScore(gameAccumulatedPoints, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
       if (soundService) {
@@ -717,7 +744,8 @@
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
-      scoreEl.textContent = strings.scoreLabel + ': ' + score;
+      levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+      gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameAccumulatedPoints;
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -771,7 +799,7 @@
     if (progressRow) {
       root.appendChild(progressRow);
     }
-    root.appendChild(scoreEl);
+    root.appendChild(scoreRow);
     root.appendChild(optionsGroup);
     root.appendChild(feedback);
     root.appendChild(announcementEl);
@@ -798,7 +826,9 @@
       progressRow: progressRow,
       levelEl: levelEl,
       progressEl: progressEl,
-      scoreEl: scoreEl,
+      scoreRow: scoreRow,
+      levelPointsEl: levelPointsEl,
+      gamePointsEl: gamePointsEl,
       optionButtons: optionButtons,
       feedback: feedback,
       announcementEl: announcementEl,
