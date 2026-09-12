@@ -308,21 +308,29 @@ describe('TRIOFSND-100/TRIOFSND-84: app-shell navigation Quiz -> Resultados -> V
   });
 
   test('for questions 1-9, a single "Siguiente" tap advances progress by exactly one question', async () => {
-    const { resolveScreenRenderers, startNewGame } = require(MAIN_JS_PATH);
+    // startLevelGame, not the level-agnostic startNewGame, is what the real
+    // Quiz mode dispatches to (main.js's buildModeDispatchRegistry) -- it is
+    // the only orchestrator that renders the "N de 10" progress row this
+    // scenario checks (questionScreen.js only shows it when a level context
+    // is passed).
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
     const renderers = resolveScreenRenderers();
     const questions = buildQuestionBank(10);
 
-    startNewGame(container, renderers, questions, document, undefined, () => 0);
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
 
     for (let i = 0; i < 9; i += 1) {
       const promptBefore = container.querySelector('.question-screen__prompt').textContent;
       expect(promptBefore).toContain(questions[i].question);
+      expect(container.querySelector('.question-screen__progress')).toHaveTextContent(`${i + 1} de 10`);
 
       await answerCurrentQuestion(container, { correct: i % 2 === 0 });
 
       const promptAfter = container.querySelector('.question-screen__prompt').textContent;
       expect(promptAfter).toContain(questions[i + 1].question);
       expect(promptAfter).not.toBe(promptBefore);
+      // A single tap advances progress by exactly one question, never two.
+      expect(container.querySelector('.question-screen__progress')).toHaveTextContent(`${i + 2} de 10`);
       expect(container.querySelector('.results-screen')).toBeNull();
     }
   });
