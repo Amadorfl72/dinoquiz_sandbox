@@ -446,7 +446,7 @@
     "scoreLabel": "Score",
     "score": {
       "levelLabel": "Level points",
-      "gameLabel": "Game total"
+      "gameLabel": "Game points"
     },
     "scoreFormat": "{score}/{total}",
     "percentageFormat": "You got {percentage}% of the rounds right",
@@ -536,7 +536,7 @@
     "scoreLabel": "Points",
     "score": {
       "levelLabel": "Level points",
-      "gameLabel": "Game total"
+      "gameLabel": "Game points"
     },
     "nextButton": "Next",
     "imageAlt": "Illustration of a {dinosaur}",

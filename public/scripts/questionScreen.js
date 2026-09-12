@@ -478,6 +478,14 @@
     var onAnswer = typeof options.onAnswer === 'function' ? options.onAnswer : null;
     var rewardedAdService = resolveRewardedAdService(options);
 
+    // Two independent running totals (see "Level/game score UI" below):
+    // `score` is the level's own score, unchanged from before this feature
+    // existed, so every pre-existing caller/test that only ever passed
+    // `options.score` keeps behaving exactly as it did. `gameAccumulatedPoints`
+    // defaults to the same value when a caller doesn't yet pass one
+    // separately (v1 ships a single difficulty level, so the two totals
+    // coincide until a caller wires gameFlow.js's own gameAccumulatedPoints
+    // tracking through).
     var score = options.score || 0;
     // TRIOFSND-254: the running total across every level of this same game
     // (including this level's own contribution so far) -- defaults to the
@@ -518,8 +526,10 @@
 
     // Level/progress row (TRIOFSND-206): shows the active level next to the
     // "N de 10" progress, never the child's age band or a cross-level
-    // running tally -- `score`/`scoreEl` below already only ever reflects
-    // the level currently being played (see gameFlow.js's per-level state).
+    // running tally -- `score`/`levelPointsEl` below already only ever
+    // reflects the level currently being played (see gameFlow.js's per-level
+    // state); the separate game-wide total is `gameAccumulatedPoints`/
+    // `gamePointsEl`.
     var progressRow = null;
     var levelEl = null;
     var progressEl = null;
@@ -556,28 +566,24 @@
       }
     }
 
-    // Two distinct scoreboards (TRIOFSND-254): "Puntos del nivel" (this
-    // level's own aciertos, resets every level) and "Puntos de la partida"
-    // (the running total across every level of this same game) render as two
-    // visually separated pills in their own row -- the same nivel/progreso
-    // badge pattern above -- never merged into one run-on line, and never
-    // distinguished by color alone (each carries its own i18n label). Each
-    // gets an explicit `aria-label` pairing its concept with its current
-    // value so a screen reader announces which is which unambiguously.
+    // Level/game score UI: two visually and semantically distinct blocks
+    // (never a single ambiguous "Puntos: N") so a child/parent can tell the
+    // level's own running score from the game-wide accumulated total at a
+    // glance, mirroring the level/progress badge pair above. Each block's
+    // own i18n label (`strings.score.levelLabel`/`gameLabel`) is part of its
+    // visible text, so the distinction is conveyed to screen readers too.
     var scoreRow = document.createElement('div');
     scoreRow.className = 'question-screen__score-row';
 
-    var scoreEl = document.createElement('p');
-    scoreEl.className = 'question-screen__score';
-    scoreEl.textContent = strings.score.levelLabel + ': ' + score;
-    scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
-    scoreRow.appendChild(scoreEl);
+    var levelPointsEl = document.createElement('p');
+    levelPointsEl.className = 'question-screen__level-points';
+    levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+    scoreRow.appendChild(levelPointsEl);
 
-    var gameScoreEl = document.createElement('p');
-    gameScoreEl.className = 'question-screen__game-score';
-    gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
-    gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
-    scoreRow.appendChild(gameScoreEl);
+    var gamePointsEl = document.createElement('p');
+    gamePointsEl.className = 'question-screen__game-points';
+    gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+    scoreRow.appendChild(gamePointsEl);
 
     var optionsGroup = document.createElement('div');
     optionsGroup.className = 'question-screen__options';
@@ -706,10 +712,6 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
-      // TRIOFSND-254: the game-accumulated total moves by the exact same
-      // delta as the level score -- the same +1/+0 rule, applied twice --
-      // so a correct answer credits both counters together and a wrong one
-      // leaves both untouched (AC-7).
       gameScore = scoring.applyAnswerToScore(gameScore, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
@@ -753,10 +755,8 @@
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
-      scoreEl.textContent = strings.score.levelLabel + ': ' + score;
-      scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
-      gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
-      gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
+      levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+      gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -839,8 +839,8 @@
       levelEl: levelEl,
       progressEl: progressEl,
       scoreRow: scoreRow,
-      scoreEl: scoreEl,
-      gameScoreEl: gameScoreEl,
+      levelPointsEl: levelPointsEl,
+      gamePointsEl: gamePointsEl,
       optionButtons: optionButtons,
       feedback: feedback,
       announcementEl: announcementEl,

@@ -1363,6 +1363,13 @@
     // see gameFlow.js's own doc comment on createInitialLevelState.
     var isLevelSession = typeof session.state.levelPoints === 'number';
 
+    // TRIOFSND-254: `levelContext` (only set by the multi-level orchestrator,
+    // see the comment near questionOptions.level below) is also what tells
+    // this level session's `state` apart from the flat, single-score one
+    // `startNewGame` uses -- it carries `levelPoints`/`gameAccumulatedPoints`
+    // (gameFlow.js's `createInitialLevelState`) instead of a plain `score`.
+    var isLevelSession = !!(levelContext && typeof levelContext.level === 'number');
+
     function advance() {
       if (advanced) return;
       advanced = true;
@@ -1383,11 +1390,15 @@
 
     var questionOptions = {
       score: isLevelSession ? session.state.levelPoints : session.state.score,
+      gameAccumulatedPoints: isLevelSession ? session.state.gameAccumulatedPoints : undefined,
       muted: loadMutedState(storageObj),
       onAnswer: function (result) {
         if (isLevelSession) {
-          var gameFlow = resolveGameFlow();
-          var updatedLevelState = gameFlow.applyAnswerToLevelState(session.state, result.isCorrect);
+          // TRIOFSND-254: both counters move together off the same
+          // isCorrect flag -- reuses gameFlow.js's own per-answer update
+          // instead of re-deriving it from questionScreen.js's single
+          // `result.score` (that only ever tracked this level's own total).
+          var updatedLevelState = resolveGameFlow().applyAnswerToLevelState(session.state, result.isCorrect);
           session.state.levelPoints = updatedLevelState.levelPoints;
           session.state.gameAccumulatedPoints = updatedLevelState.gameAccumulatedPoints;
         } else {
@@ -1551,10 +1562,12 @@
    *
    * Hall of Fame (hallOfFameService.js): every call here is also one more
    * finished game, across every mode -- so this delegates to
-   * `recordHallOfFameEntry` below, independent of whether `storage` (the
-   * bestScore/streak client) is even available, and returns its id as
-   * `hallOfFameEntryId` so a caller (e.g. `playLevel`) can highlight this
-   * exact entry later without adding a second, duplicate one of its own.
+   * `recordHallOfFameEntry` below, the single place a Hall of Fame entry is
+   * written for a finished game (never duplicated by a second `addEntry`
+   * call elsewhere, e.g. from `playLevel`'s old Quiz-only block), and
+   * returns its id as `hallOfFameEntryId` so a caller (e.g. `playLevel`) can
+   * highlight this exact entry later without adding a second, duplicate one
+   * of its own.
    */
   /**
    * Records `finalState` as a `{ name, score, timestamp }` entry via
@@ -1583,7 +1596,6 @@
 
   function persistBestScoreAndStreak(storage, finalState) {
     var hallOfFameEntryId = recordHallOfFameEntry(finalState);
-
     if (!storage || !finalState) {
       return { bestScore: undefined, bestStreak: undefined, hallOfFameEntryId: hallOfFameEntryId };
     }
@@ -1845,27 +1857,23 @@
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
 
-        // TRIOFSND-254: `finalState.score` is kept as an alias of this
-        // level's own `levelPoints` so every existing `.score` consumer below
-        // (best score, Hall of Fame, modeProgressStorage.recordResult) keeps
-        // reading exactly the value it always has -- the level just played,
-        // never the cross-level `gameAccumulatedPoints` total.
-        if (typeof finalState.levelPoints === 'number') {
-          finalState.score = finalState.levelPoints;
-        }
-
+        // TRIOFSND-254: `persistBestScoreAndStreak`/`recordHallOfFameEntry`
+        // (shared with every other mode) read `finalState.score` -- for a
+        // level session that's this level's own `levelPoints`, never the
+        // game-wide `gameAccumulatedPoints`, so the device's bestScore/Hall
+        // of Fame keep meaning "best single game/level result" exactly as
+        // before this feature existed.
+        finalState.score = finalState.levelPoints;
         var bestScoreAndStreak = persistBestScoreAndStreak(ctx.storage, finalState);
         finalState.bestScore = bestScoreAndStreak.bestScore;
         finalState.bestStreak = bestScoreAndStreak.bestStreak;
 
-        // Hall of Fame entry (Quiz only -- the one mode this shared
-        // orchestrator serves, see buildModeDispatchRegistry): `finalState`
-        // just got its one-and-only entry recorded above by
-        // `persistBestScoreAndStreak` (with whatever nickname is currently
-        // saved, or `null` for a guest game). Reuse that same entry's id --
-        // stashed on `finalState` for `finishLevel` to read and hand to
-        // hallOfFameScreen.js for highlighting -- instead of adding a second,
-        // always-guest (`name: null`) duplicate entry here.
+        // Hall of Fame entry point (Quiz only -- the one mode this shared
+        // orchestrator serves, see buildModeDispatchRegistry): the entry
+        // itself was already added by `persistBestScoreAndStreak` above (the
+        // single call site, see its own doc comment) -- this just stashes
+        // its identifier on `finalState` so `finishLevel` below can hand it
+        // to hallOfFameScreen.js for highlighting.
         if ((ctx.modeId || QUIZ_MODE_ID) === QUIZ_MODE_ID) {
           finalState.hallOfFameEntryId = bestScoreAndStreak.hallOfFameEntryId;
         }
@@ -1881,9 +1889,11 @@
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
           // TRIOFSND-254: carries this game's running total into the next
-          // level's own state (gameFlow.js's startLevel/createInitialLevelState)
-          // so "Total de la partida" survives the level transition instead of
-          // resetting to 0 alongside the level's own levelPoints.
+          // level's own state (gameFlow.js's startLevel/createInitialLevelState,
+          // see its own doc comment on completeLevel) so "Total de la partida"
+          // survives the level transition instead of resetting to 0 alongside
+          // the level's own levelPoints -- omitted, `startLevel` would
+          // silently reset it to 0 on every level-up.
           gameAccumulatedPoints: finalState.gameAccumulatedPoints,
         });
 
@@ -1983,10 +1993,13 @@
         // time (calling `finishLevel` itself again would).
         var resultsOptions = {
           score: finalState.score,
-          // TRIOFSND-254: the running total across every level played so far
-          // in this same game (including the level just finished) -- read
-          // straight off state, never recomputed here.
-          gameScore: finalState.gameAccumulatedPoints,
+          // TRIOFSND-254: the level just finished own total and the running
+          // total across the whole game so far (see renderQuestionAt/
+          // playLevel above) -- resultsScreen.js renders each as its own
+          // optional, independently-labeled line alongside the existing
+          // score/stars.
+          levelPoints: finalState.levelPoints,
+          gameAccumulatedPoints: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
           // this shared orchestrator today, same value resultsScreen.js

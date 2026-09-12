@@ -502,6 +502,62 @@ describe('best score / longest racha (TRIOFSND-96)', () => {
   });
 });
 
+describe('level points / game accumulated points', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders no level-points/game-accumulated-points elements when neither is provided (unchanged for existing callers)', () => {
+    const { levelPointsEl, gameAccumulatedPointsEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(levelPointsEl).toBeNull();
+    expect(gameAccumulatedPointsEl).toBeNull();
+  });
+
+  test('renders the level points and game accumulated points independently', () => {
+    expect(renderResultsScreen(container, { score: 6, levelPoints: 8 }).levelPointsEl).toHaveTextContent('8');
+    expect(
+      renderResultsScreen(container, { score: 6, gameAccumulatedPoints: 14 }).gameAccumulatedPointsEl
+    ).toHaveTextContent('14');
+  });
+
+  test('renders both the level points and the game accumulated total after finishing a level', () => {
+    const { levelPointsEl, gameAccumulatedPointsEl } = renderResultsScreen(container, {
+      score: 6,
+      levelPoints: 6,
+      gameAccumulatedPoints: 14,
+    });
+
+    expect(levelPointsEl).toHaveTextContent(strings.score.levelLabel);
+    expect(levelPointsEl).toHaveTextContent('6');
+    expect(gameAccumulatedPointsEl).toHaveTextContent(strings.score.gameLabel);
+    expect(gameAccumulatedPointsEl).toHaveTextContent('14');
+  });
+
+  test('the aria-live summary announcement includes the level-points/game-accumulated-points info', () => {
+    const { announcementEl } = renderResultsScreen(container, {
+      score: 6,
+      levelPoints: 6,
+      gameAccumulatedPoints: 14,
+    });
+
+    expect(announcementEl).toHaveTextContent(`${strings.score.levelLabel}: 6`);
+    expect(announcementEl).toHaveTextContent(`${strings.score.gameLabel}: 14`);
+  });
+
+  test('the level-points/game-accumulated-points copy contains no negative/discouraging language', () => {
+    expect(findBannedWords(strings.score.levelLabel)).toEqual([]);
+    expect(findBannedWords(strings.score.gameLabel)).toEqual([]);
+  });
+});
+
 describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded ad, AC-20/AC-21)', () => {
   let container;
 

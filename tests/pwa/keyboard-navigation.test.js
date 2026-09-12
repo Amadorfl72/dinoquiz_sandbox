@@ -161,7 +161,7 @@ describe('TRIOFSND-310: keyboard-only navigation through a full quiz session (In
         pressActivationKey(targetOption, index % 2 === 0 ? ' ' : 'Enter');
         score += 1;
 
-        expect(questionApi.scoreEl.textContent).toContain(String(score));
+        expect(questionApi.levelPointsEl.textContent).toContain(String(score));
 
         const tabOrderAfterAnswer = getTabOrder(container);
         // Every option is now disabled (excluded from the tab order);
