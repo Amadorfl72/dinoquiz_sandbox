@@ -98,47 +98,16 @@ function flushPromises() {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-/** Intercepts every network primitive the browser exposes and records every attempted call instead of letting it reach a real network stack. */
-function installNetworkInterceptors() {
-  const calls = [];
-
-  const originalFetch = global.fetch;
-  global.fetch = jest.fn((input) => {
-    calls.push({ type: 'fetch', target: String(input) });
-    return Promise.reject(new Error('network access blocked in privacy regression test'));
-  });
-
-  const originalOpen = window.XMLHttpRequest.prototype.open;
-  const originalSend = window.XMLHttpRequest.prototype.send;
-  window.XMLHttpRequest.prototype.open = function (method, url) {
-    calls.push({ type: 'xhr-open', target: String(url) });
-    return originalOpen.apply(this, arguments);
-  };
-  window.XMLHttpRequest.prototype.send = function () {
-    calls.push({ type: 'xhr-send' });
-    return originalSend.apply(this, arguments);
-  };
-
-  const originalSendBeacon = window.navigator.sendBeacon;
-  window.navigator.sendBeacon = function (url) {
-    calls.push({ type: 'sendBeacon', target: String(url) });
-    return true;
-  };
-
-  return {
-    calls,
-    restore() {
-      global.fetch = originalFetch;
-      window.XMLHttpRequest.prototype.open = originalOpen;
-      window.XMLHttpRequest.prototype.send = originalSend;
-      window.navigator.sendBeacon = originalSendBeacon;
-    },
-  };
-}
+// Shared network/egress leak-detection helper (TRIOFSND-304): the single
+// place fetch/XMLHttpRequest/sendBeacon interception lives for the privacy
+// suite, so this file no longer keeps its own copy of that instrumentation
+// (see tests/privacy/support/networkLeakWatch.js's own doc comment for why
+// a duplicated, fetch(url,init)-only watcher previously produced a false
+// negative on `fetch(new Request(...))`).
+const { install, restore, getRecords } = require('./support/networkLeakWatch');
 
 describe('TRIOFSND-321: privacy regression -- sin telemetría remota ni identificadores', () => {
   let container;
-  let network;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -146,12 +115,12 @@ describe('TRIOFSND-321: privacy regression -- sin telemetría remota ni identifi
     document.body.appendChild(container);
     window.localStorage.clear();
     diagnostics.resetDiagnostics();
-    network = installNetworkInterceptors();
+    install();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-    network.restore();
+    restore();
     container.remove();
     diagnostics.resetDiagnostics();
     window.localStorage.clear();
@@ -282,6 +251,6 @@ describe('TRIOFSND-321: privacy regression -- sin telemetría remota ni identifi
     // (CONVENTIONS.md); el único camino capaz de hacer red
     // (LogService#sendLogs) nunca se invoca desde ninguna pantalla/servicio
     // ejercitado arriba.
-    expect(network.calls).toEqual([]);
+    expect(getRecords()).toEqual([]);
   });
 });

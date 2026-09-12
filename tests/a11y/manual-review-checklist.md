@@ -49,8 +49,15 @@ Resultados. La checklist de abajo se repite para cada uno de los ocho modos:
 | Línea del tiempo | `timelineScreen.js` |
 
 Además, repetir el bloque 1 (navegación por teclado) y el bloque 2 (lector de pantalla) sobre las
-pantallas comunes del flujo: Inicio, selector de edad, selector de modo, confirmación de cambio de
-modo, Resultados y política de privacidad.
+pantallas comunes del flujo: Inicio, pantalla de solicitud de apodo, panel de "Editar o borrar tu
+apodo" de Inicio (abierto y con la confirmación de borrado visible), selector de edad, selector de
+modo, confirmación de cambio de modo, Resultados y política de privacidad. La suite automatizada
+(`tests/pwa/nickname-flow.test.js`, `src/screens/NicknameScreen.test.js`,
+`tests/e2e/nickname-flow-accessibility.test.js`'s axe-core scans y
+`tests/privacy/nickname-privacy-flow.test.js`) valida el contrato semántico automatizable de estas
+tres pantallas del apodo (etiquetas, roles, `aria-invalid`/`aria-describedby`/`role="alert"`, orden
+de foco) porque jsdom no reproduce un lector de pantalla real; esta checklist manual sigue siendo
+la única forma de confirmar que lo anunciado tiene sentido escuchado en voz alta.
 
 ## 1. Navegación completa solo con teclado
 
