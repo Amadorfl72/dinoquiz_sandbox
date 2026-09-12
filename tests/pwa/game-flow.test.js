@@ -1573,6 +1573,140 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
   });
 });
 
+describe('TRIOFSND-254: level points vs game-accumulated points, end to end through the real Quiz flow', () => {
+  let container;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+    jest.resetModules();
+
+    window.Audio = function FakeAudio() {
+      return { play: () => Promise.resolve(), preload: '', currentTime: 0 };
+    };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    container.remove();
+  });
+
+  async function playLevelWithPattern(pattern) {
+    for (const mark of pattern.split('')) {
+      await answerCurrentQuestion(container, { correct: mark === 'C' });
+    }
+    await jest.advanceTimersByTimeAsync(0);
+  }
+
+  function scoreRowText() {
+    return {
+      level: container.querySelector('.question-screen__score').textContent,
+      game: container.querySelector('.question-screen__game-score').textContent,
+    };
+  }
+
+  test('Resultados muestra los puntos exactos del nivel tras aciertos y fallos, y el total de la partida coincide (primer nivel)', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    // 7 aciertos, 3 fallos -- ninguna cifra debe verse afectada por los fallos.
+    await playLevelWithPattern('CCCCCCCFFF');
+
+    const levelScoreEl = container.querySelector('.results-screen__score');
+    const gameScoreEl = container.querySelector('.results-screen__game-score');
+    expect(levelScoreEl).toHaveTextContent('7/10');
+    // First level of a new game: the game total equals the level's own score.
+    expect(gameScoreEl).toHaveTextContent('7');
+  });
+
+  test('una respuesta incorrecta no cambia ni los puntos del nivel ni el total de la partida', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    await answerCurrentQuestion(container, { correct: true });
+    const afterHit = scoreRowText();
+
+    await answerCurrentQuestion(container, { correct: false });
+    const afterMiss = scoreRowText();
+
+    expect(afterMiss).toEqual(afterHit);
+  });
+
+  test('al pasar al siguiente nivel de la misma partida, los puntos del nivel vuelven a 0 y el total de la partida se conserva y luego se suma', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    // 6/10 unlocks level 2 (gameFlow.js's LEVEL_UP_MIN_CORRECT).
+    await playLevelWithPattern('CCCCCCFFFF');
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+
+    // Nivel 2 recién comenzado: puntos del nivel a 0, total de la partida conserva el nivel 1.
+    expect(scoreRowText()).toEqual({
+      level: expect.stringContaining(': 0'),
+      game: expect.stringContaining(': 6'),
+    });
+
+    // 5 aciertos más en el nivel 2 (insuficiente para desbloquear un nivel 3
+    // que este banco de pruebas no genera) -- el total de la partida debe ser
+    // la suma (6 + 5), no una cifra recalculada desde cero.
+    await playLevelWithPattern('CCCCCFFFFF');
+
+    const levelScoreEl = container.querySelector('.results-screen__score');
+    const gameScoreEl = container.querySelector('.results-screen__game-score');
+    expect(levelScoreEl).toHaveTextContent('5/10');
+    expect(gameScoreEl).toHaveTextContent('11');
+  });
+
+  test('empezar una partida nueva reinicia los puntos del nivel y el total de la partida a 0, sin reutilizar el acumulado anterior', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1, 2]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+
+    // 6/10 unlocks level 2, carrying gameAccumulatedPoints=6 forward.
+    await playLevelWithPattern('CCCCCCFFFF');
+    getByRole(container, 'button', { name: strings.nextLevelButtonFormat.replace('{level}', '2') }).click();
+
+    // Insufficient score on level 2 ends the game.
+    await playLevelWithPattern('FFFFFFFFFF');
+    getByRole(container, 'button', { name: strings.playAgainButton }).click();
+
+    // A brand-new game at level 1 must show 0/0 before answering anything,
+    // never the previous game's accumulated total.
+    expect(scoreRowText()).toEqual({
+      level: expect.stringContaining(': 0'),
+      game: expect.stringContaining(': 0'),
+    });
+  });
+
+  test('cada marcador expone una etiqueta accesible inequívoca que combina concepto y valor', async () => {
+    const { resolveScreenRenderers, startLevelGame } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const questions = buildLeveledQuestionBank([1]);
+
+    startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
+    await answerCurrentQuestion(container, { correct: true });
+
+    const levelEl = container.querySelector('.question-screen__score');
+    const gameEl = container.querySelector('.question-screen__game-score');
+    expect(levelEl.getAttribute('aria-label')).toBe(`${questionStrings.score.levelLabel}: 1`);
+    expect(gameEl.getAttribute('aria-label')).toBe(`${questionStrings.score.gameLabel}: 1`);
+    expect(levelEl.getAttribute('aria-label')).not.toBe(gameEl.getAttribute('aria-label'));
+  });
+});
+
 // Content-integrity regression for the real 300-question bank (30 questions
 // per level, levels 1-10, see src/data/questionBank.test.js for the
 // per-question checks): the level-unlock chain must behave the same way on

@@ -437,7 +437,7 @@
     probe.remove();
   }
 
-  function buildResultAnnouncement(strings, question, correct, score) {
+  function buildResultAnnouncement(strings, question, correct, score, gameScore) {
     var parts = [correct ? strings.feedback.correct : strings.feedback.incorrect];
 
     parts.push(
@@ -451,7 +451,13 @@
       parts.push(strings.imageAltFunFact.replace('{funFact}', question.funFact));
     }
 
-    parts.push(strings.scoreLabel + ': ' + score);
+    parts.push(strings.score.levelLabel + ': ' + score);
+
+    // TRIOFSND-254: `gameScore` is optional so existing 4-arg callers (e.g.
+    // direct unit tests) keep announcing just the level score, unchanged.
+    if (Number.isInteger(gameScore)) {
+      parts.push(strings.score.gameLabel + ': ' + gameScore);
+    }
 
     return parts.join(' ');
   }
@@ -481,7 +487,12 @@
     // coincide until a caller wires gameFlow.js's own gameAccumulatedPoints
     // tracking through).
     var score = options.score || 0;
-    var gameAccumulatedPoints = typeof options.gameAccumulatedPoints === 'number' ? options.gameAccumulatedPoints : score;
+    // TRIOFSND-254: the running total across every level of this same game
+    // (including this level's own contribution so far) -- defaults to the
+    // level score itself when the caller omits it (e.g. the flat, single-
+    // level `startNewGame` shape, or an existing test that only sets
+    // `options.score`), so a one-level game never shows a spurious 0.
+    var gameScore = Number.isInteger(options.gameScore) ? options.gameScore : score;
     var answered = false;
 
     container.innerHTML = '';
@@ -571,7 +582,7 @@
 
     var gamePointsEl = document.createElement('p');
     gamePointsEl.className = 'question-screen__game-points';
-    gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameAccumulatedPoints;
+    gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
     scoreRow.appendChild(gamePointsEl);
 
     var optionsGroup = document.createElement('div');
@@ -701,7 +712,7 @@
       var correct = scoring.isAnswerCorrect(question, selectedIndex);
       var previousScore = score;
       score = scoring.applyAnswerToScore(score, correct);
-      gameAccumulatedPoints = scoring.applyAnswerToScore(gameAccumulatedPoints, correct);
+      gameScore = scoring.applyAnswerToScore(gameScore, correct);
       var correctAnswerText = question.options[question.correctAnswerIndex];
 
       if (soundService) {
@@ -745,7 +756,7 @@
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
       levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
-      gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameAccumulatedPoints;
+      gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -758,7 +769,7 @@
       // overlaps a still-in-flight round-change announcement from this same
       // screen's mount.
       if (a11yAnnouncer) {
-        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score));
+        a11yAnnouncer.announce(buildResultAnnouncement(strings, question, correct, score, gameScore));
       }
       if (rewardedAdService && typeof rewardedAdService.isAvailable === 'function' && rewardedAdService.isAvailable()) {
         rewardedAdCta.hidden = false;
@@ -782,6 +793,7 @@
           isCorrect: correct,
           scoreDelta: score - previousScore,
           score: score,
+          gameScore: gameScore,
           selectedIndex: selectedIndex,
           correctIndex: question.correctAnswerIndex,
         });
@@ -842,6 +854,9 @@
       nextButton: nextButton,
       getScore: function () {
         return score;
+      },
+      getGameScore: function () {
+        return gameScore;
       },
       isAnswered: function () {
         return answered;

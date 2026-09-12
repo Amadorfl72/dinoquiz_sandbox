@@ -246,6 +246,72 @@ describe('QuestionScreen', () => {
     });
   });
 
+  describe('two scoreboards: level points vs game-accumulated points (TRIOFSND-254)', () => {
+    test('score and game-score are two distinct DOM nodes, each in its own row', () => {
+      const { scoreRow } = renderQuestionScreen(container, buildQuestion(), { score: 2, gameScore: 9 });
+
+      expect(scoreRow.children).toHaveLength(2);
+      expect(scoreRow.children[0]).toHaveClass('question-screen__score');
+      expect(scoreRow.children[1]).toHaveClass('question-screen__game-score');
+      expect(scoreRow.children[0]).not.toBe(scoreRow.children[1]);
+    });
+
+    test('renders the given level score and game score independently, with distinct labels', () => {
+      const { scoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 2, gameScore: 9 });
+
+      expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 9`);
+    });
+
+    test('defaults the game score to the level score when omitted, so a one-level game shows a consistent total', () => {
+      const { scoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 3 });
+
+      expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 3`);
+      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 3`);
+    });
+
+    test('a correct answer increments both counters by exactly 1; an incorrect answer changes neither', () => {
+      const question = buildQuestion();
+      const { optionButtons, getScore, getGameScore } = renderQuestionScreen(container, question, {
+        score: 2,
+        gameScore: 9,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(getScore()).toBe(3);
+      expect(getGameScore()).toBe(10);
+    });
+
+    test('an incorrect answer leaves both the level score and the game score exactly as they were', () => {
+      const question = buildQuestion();
+      const wrongIndex = question.options.findIndex((_, i) => i !== question.correctAnswerIndex);
+      const { optionButtons, getScore, getGameScore } = renderQuestionScreen(container, question, {
+        score: 4,
+        gameScore: 12,
+      });
+
+      optionButtons[wrongIndex].click();
+
+      expect(getScore()).toBe(4);
+      expect(getGameScore()).toBe(12);
+    });
+
+    test('each scoreboard exposes an unambiguous accessible label pairing its own concept with its current value', () => {
+      const question = buildQuestion();
+      const { optionButtons, scoreEl, gameScoreEl } = renderQuestionScreen(container, question, {
+        score: 5,
+        gameScore: 15,
+      });
+
+      optionButtons[question.correctAnswerIndex].click();
+
+      expect(scoreEl.getAttribute('aria-label')).toBe(`${strings.score.levelLabel}: 6`);
+      expect(gameScoreEl.getAttribute('aria-label')).toBe(`${strings.score.gameLabel}: 16`);
+      expect(scoreEl.getAttribute('aria-label')).not.toBe(gameScoreEl.getAttribute('aria-label'));
+    });
+  });
+
   describe('image style by age (TRIOFSND-194)', () => {
     test('defaults to "dibujo" (today\'s only asset set) when no age band is available', () => {
       const question = buildQuestion();
@@ -1244,5 +1310,32 @@ describe('QuestionScreen', () => {
       expect(request).toHaveBeenCalledTimes(1);
       expect(rewardedAdCta).toBeDisabled();
     });
+  });
+});
+
+describe('the two score blocks never force horizontal scroll at 375px (TRIOFSND-254)', () => {
+  test('the score row wraps instead of forcing a fixed width wider than a 375px viewport', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.question-screen__score-row\s*\{([^}]*)\}/);
+
+    expect(ruleMatch).not.toBeNull();
+    expect(ruleMatch[1]).toMatch(/flex-wrap:\s*wrap/);
+    expect(ruleMatch[1]).toMatch(/max-width:\s*100%/);
+    expect(ruleMatch[1]).not.toMatch(/(?<!max-)width:\s*\d/);
+  });
+
+  test('rendering both score blocks does not remove the answer options from the DOM', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const { optionButtons } = renderQuestionScreen(container, buildQuestion(), {
+      score: 4,
+      gameScore: 12,
+    });
+
+    expect(container.querySelector('.question-screen__options')).toBeInTheDocument();
+    optionButtons.forEach((button) => expect(button).toBeVisible());
+
+    container.remove();
   });
 });

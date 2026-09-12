@@ -1357,6 +1357,11 @@
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
+    // TRIOFSND-254: a level-driven session (gameFlow.startLevel/completeLevel)
+    // carries two counters (levelPoints/gameAccumulatedPoints) instead of the
+    // flat, single-level `score` the older startNewGame session shape uses --
+    // see gameFlow.js's own doc comment on createInitialLevelState.
+    var isLevelSession = typeof session.state.levelPoints === 'number';
 
     // TRIOFSND-254: `levelContext` (only set by the multi-level orchestrator,
     // see the comment near questionOptions.level below) is also what tells
@@ -1458,6 +1463,14 @@
       },
     };
 
+    // TRIOFSND-254: the running game-accumulated total (carried across every
+    // level of this same game chain) renders alongside the level's own
+    // score -- only for a level session, never for the flat startNewGame
+    // shape, which has no cross-level concept at all.
+    if (isLevelSession) {
+      questionOptions.gameScore = session.state.gameAccumulatedPoints;
+    }
+
     // TRIOFSND-207: `levelContext` is only set by the multi-level orchestrator
     // (startLevelGame/playLevel below) -- the older flat, level-agnostic game
     // (startNewGame) never passes it, so it keeps rendering with no progress
@@ -1548,14 +1561,39 @@
    * will eventually persist anyway.
    *
    * Hall of Fame (hallOfFameService.js): every call here is also one more
-   * finished game, across every mode, exactly like the cross-mode bestScore/
-   * bestStreak combined above -- so this is the single place that also adds
-   * a `{ name, score, timestamp }` entry to the on-device top-10 list --
-   * delegated to `recordHallOfFameEntry` below, the single place a Hall of
-   * Fame entry is written for a finished game (never duplicated by a
-   * second `addEntry` call elsewhere, e.g. from `playLevel`'s old Quiz-only
-   * block).
+   * finished game, across every mode -- so this delegates to
+   * `recordHallOfFameEntry` below, the single place a Hall of Fame entry is
+   * written for a finished game (never duplicated by a second `addEntry`
+   * call elsewhere, e.g. from `playLevel`'s old Quiz-only block), and
+   * returns its id as `hallOfFameEntryId` so a caller (e.g. `playLevel`) can
+   * highlight this exact entry later without adding a second, duplicate one
+   * of its own.
    */
+  /**
+   * Records `finalState` as a `{ name, score, timestamp }` entry via
+   * hallOfFameService.js -- independent of whatever `storage` (the
+   * bestScore/streak StorageClient) is available, since hallOfFameService.js
+   * persists through its own dedicated localStorage key, not through
+   * `storage`. Returns the `timestamp` used as the entry's id, or
+   * `undefined` if no entry could be recorded (missing service, or no
+   * numeric score to record).
+   */
+  function recordHallOfFameEntry(finalState) {
+    if (!finalState || typeof finalState.score !== 'number') {
+      return undefined;
+    }
+    var hallOfFameService = resolveHallOfFameService();
+    if (!hallOfFameService || typeof hallOfFameService.addEntry !== 'function') {
+      return undefined;
+    }
+    var nicknameService = resolveNicknameService();
+    var name =
+      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
+    var timestamp = Date.now();
+    hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: timestamp });
+    return timestamp;
+  }
+
   function persistBestScoreAndStreak(storage, finalState) {
     var hallOfFameEntryId = recordHallOfFameEntry(finalState);
     if (!storage || !finalState) {
@@ -1579,39 +1617,6 @@
     }
 
     return { bestScore: bestScore, bestStreak: bestStreak, hallOfFameEntryId: hallOfFameEntryId };
-  }
-
-  /**
-   * Adds a `{ name, score, timestamp }` entry to the on-device Hall of Fame
-   * top-10 (hallOfFameService.js) for the just-finished game -- the single
-   * place this happens, called once per finished game by
-   * `persistBestScoreAndStreak` above, regardless of mode. `name` is
-   * whatever nickname is currently saved (nicknameService.js), or `null` for
-   * a guest game (hallOfFameService.js's own no-name contract) -- never read
-   * from anywhere else, and never written to `storage`, an analytics event
-   * or a log entry. Returns the `timestamp` used (doubling as the entry's
-   * identifier, since hallOfFameService.js's entries have no separate `id`
-   * field) so callers like `playLevel` can stash it on `finalState` for
-   * `finishLevel` to hand to hallOfFameScreen.js for highlighting, or
-   * `undefined` if no entry was recorded (no score, or the service is
-   * unavailable).
-   */
-  function recordHallOfFameEntry(finalState) {
-    if (!finalState || typeof finalState.score !== 'number') {
-      return undefined;
-    }
-
-    var hallOfFameService = resolveHallOfFameService();
-    if (!hallOfFameService || typeof hallOfFameService.addEntry !== 'function') {
-      return undefined;
-    }
-
-    var nicknameService = resolveNicknameService();
-    var name =
-      nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
-    var timestamp = Date.now();
-    hallOfFameService.addEntry({ name: name, score: finalState.score, timestamp: timestamp });
-    return timestamp;
   }
 
   /** Renders Resultados for a finished game; 'Volver a jugar' starts a fresh game, 'Salir' goes to Inicio. */
@@ -1851,6 +1856,7 @@
       levelGame,
       function (finalState) {
         finalState.maxStreak = gameFlow.calculateMaxStreak(finalState.answers);
+
         // TRIOFSND-254: `persistBestScoreAndStreak`/`recordHallOfFameEntry`
         // (shared with every other mode) read `finalState.score` -- for a
         // level session that's this level's own `levelPoints`, never the
@@ -1882,11 +1888,12 @@
           modeId: ctx.modeId,
           getQuestionsByLevel: ctx.getQuestionsByLevel,
           randomFn: ctx.randomFn,
-          // TRIOFSND-254: carries the running game-wide total into the next
-          // level (see gameFlow.js's own doc comment on completeLevel) --
-          // omitted, `startLevel` would silently reset it to 0 on every
-          // level-up, breaking the "accumulated across the whole game" part
-          // of the two-counter feature.
+          // TRIOFSND-254: carries this game's running total into the next
+          // level's own state (gameFlow.js's startLevel/createInitialLevelState,
+          // see its own doc comment on completeLevel) so "Total de la partida"
+          // survives the level transition instead of resetting to 0 alongside
+          // the level's own levelPoints -- omitted, `startLevel` would
+          // silently reset it to 0 on every level-up.
           gameAccumulatedPoints: finalState.gameAccumulatedPoints,
         });
 

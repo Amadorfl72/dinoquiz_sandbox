@@ -121,9 +121,9 @@ describe('ResultsScreen rendering', () => {
   });
 
   test('renders the score as X/10', () => {
-    renderResultsScreen(container, { score: 7 });
+    const { scoreEl } = renderResultsScreen(container, { score: 7 });
 
-    expect(getByText(container, '7/10')).toBeInTheDocument();
+    expect(scoreEl).toHaveTextContent('7/10');
   });
 
   test.each([
@@ -617,6 +617,61 @@ describe('Results screen ads (TRIOFSND-97: discreet banner + optional rewarded a
   });
 });
 
+describe('two scoreboards: level points vs game-accumulated points (TRIOFSND-254)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('score and game-score render as two distinct DOM nodes in their own row', () => {
+    const { scoreRow, scoreEl, gameScoreEl } = renderResultsScreen(container, { score: 7, gameScore: 21 });
+
+    expect(scoreRow.children).toHaveLength(2);
+    expect(scoreRow.children[0]).toBe(scoreEl);
+    expect(scoreRow.children[1]).toBe(gameScoreEl);
+  });
+
+  test('renders the level score and game total independently, with distinct labels', () => {
+    const { scoreEl, gameScoreEl } = renderResultsScreen(container, { score: 7, gameScore: 21 });
+
+    expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 7/10`);
+    expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 21`);
+  });
+
+  test('the game total is never bounded by maxScore -- it can exceed a single level\'s own scale', () => {
+    const { gameScoreEl } = renderResultsScreen(container, { score: 8, gameScore: 34 });
+
+    expect(gameScoreEl).toHaveTextContent('34');
+  });
+
+  test('defaults the game total to the level score when omitted, so a single-level game shows a consistent total', () => {
+    const { scoreEl, gameScoreEl } = renderResultsScreen(container, { score: 6 });
+
+    expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 6/10`);
+    expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 6`);
+  });
+
+  test('each scoreboard exposes an unambiguous accessible label pairing its own concept with its current value', () => {
+    const { scoreEl, gameScoreEl } = renderResultsScreen(container, { score: 7, gameScore: 21 });
+
+    expect(scoreEl.getAttribute('aria-label')).toBe(`${strings.score.levelLabel}: 7/10`);
+    expect(gameScoreEl.getAttribute('aria-label')).toBe(`${strings.score.gameLabel}: 21`);
+    expect(scoreEl.getAttribute('aria-label')).not.toBe(gameScoreEl.getAttribute('aria-label'));
+  });
+
+  test('the aria-live summary announcement includes the game total alongside the existing score/stars/message summary', () => {
+    const { announcementEl } = renderResultsScreen(container, { score: 7, gameScore: 21, message: 'Mensaje de prueba' });
+
+    expect(announcementEl).toHaveTextContent(`${strings.score.gameLabel}: 21`);
+  });
+});
+
 describe('own-mode score, percentage and stars (TRIOFSND-252)', () => {
   let container;
 
@@ -882,5 +937,39 @@ describe('"Volver a jugar" button style meets 64dp height / 48dp width / 24sp te
     expect(minHeight).toBeGreaterThanOrEqual(64);
     expect(minWidth).toBeGreaterThanOrEqual(48);
     expect(fontSizePx).toBeGreaterThanOrEqual(24);
+  });
+});
+
+describe('the two score blocks never force horizontal scroll at 375px (TRIOFSND-254)', () => {
+  const MAIN_CSS_PATH = path.resolve(__dirname, '../../public/styles/main.css');
+
+  test('the score row wraps instead of forcing a fixed width wider than a 375px viewport', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.results-screen__score-row\s*\{([^}]*)\}/);
+
+    expect(ruleMatch).not.toBeNull();
+    expect(ruleMatch[1]).toMatch(/flex-wrap:\s*wrap/);
+    expect(ruleMatch[1]).toMatch(/max-width:\s*100%/);
+    expect(ruleMatch[1]).not.toMatch(/(?<!max-)width:\s*\d/);
+  });
+
+  test('the results screen itself never grows past a 480px cap, well under a 375px viewport plus margins', () => {
+    const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
+    const ruleMatch = css.match(/\.results-screen\s*\{([^}]*)\}/);
+
+    expect(ruleMatch).not.toBeNull();
+    expect(ruleMatch[1]).toMatch(/max-width:\s*480px/);
+  });
+
+  test('rendering both blocks does not remove or hide the main "Volver a jugar"/"Salir" controls', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const { playAgainButton, exitButton } = renderResultsScreen(container, { score: 7, gameScore: 21 });
+
+    expect(playAgainButton).toBeVisible();
+    expect(exitButton).toBeVisible();
+
+    container.remove();
   });
 });
