@@ -28,6 +28,7 @@ const RESULTS_SCREEN = '.results-screen';
 // so matching by its stable class covers every level outcome.
 const PLAY_AGAIN_BUTTON = '.results-screen__play-again-button';
 const QUESTIONS_PER_GAME = 10;
+const NEXT_BUTTON_TOLERANCE_MS = 500;
 
 /** Inicio -> apodo -> edad -> selector de modos -> Quiz (TRIOFSND-193/232): every '¡Jugar!' tap goes through this before a game starts. On a fresh device (no saved nickname) the nickname step shows before the age gate -- "Jugar como invitado" skips it without persisting one, same as the age gate/mode selector that follow. */
 async function startQuizFromHome(page) {
@@ -87,14 +88,27 @@ async function waitForPrecache(page) {
     .toBe(true);
 }
 
-/** Plays through every question on screen (any option — the point is completing the flow, not the score). */
+/**
+ * Plays through every question on screen (any option — the point is
+ * completing the flow, not the score), asserting on each one that
+ * "Siguiente" becomes visible/enabled/actionable within the same 500ms
+ * e2e tolerance offline as online (no network round-trip should ever gate
+ * it, so being offline must not change this).
+ */
 async function playFullGame(page) {
   for (let index = 0; index < QUESTIONS_PER_GAME; index += 1) {
     await expect(page.locator(QUESTION_SCREEN)).toBeVisible();
+
+    const start = Date.now();
     await page.locator(QUESTION_OPTION).first().click();
+    await page.waitForFunction((selector) => {
+      const button = document.querySelector(selector);
+      return Boolean(button) && !button.hidden && !button.disabled;
+    }, NEXT_BUTTON);
+    expect(Date.now() - start).toBeLessThanOrEqual(NEXT_BUTTON_TOLERANCE_MS);
 
     const nextButton = page.locator(NEXT_BUTTON);
-    await expect(nextButton).toBeEnabled({ timeout: 6_000 });
+    await nextButton.click({ trial: true });
     await nextButton.click();
   }
 }

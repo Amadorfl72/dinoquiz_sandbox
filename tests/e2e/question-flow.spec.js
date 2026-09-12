@@ -230,6 +230,47 @@ test.describe('Avance único y bloqueo de resultados', () => {
   });
 });
 
+test.describe('Orden visual en los tamaños representativos de la suite', () => {
+  // Representative breakpoints for the PRD's "tablet-first... adaptación
+  // funcional a móvil y escritorio": tablet landscape matches the app's own
+  // `(min-width: 900px) and (orientation: landscape)` media query in
+  // main.css, tablet portrait is the same device rotated, mobile and desktop
+  // bound the range below/above it.
+  const VIEWPORTS = [
+    { label: 'móvil', width: 375, height: 667 },
+    { label: 'tablet vertical', width: 768, height: 1024 },
+    { label: 'tablet horizontal', width: 1024, height: 768 },
+    { label: 'escritorio', width: 1440, height: 900 },
+  ];
+
+  for (const viewport of VIEWPORTS) {
+    test(`"Siguiente" aparece visualmente encima del dato curioso en ${viewport.label} (${viewport.width}x${viewport.height})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      await startQuizFromHome(page);
+
+      const correctIndex = await getCorrectOptionIndex(page);
+      await page.locator(QUESTION_OPTION).nth(correctIndex).click();
+      await expect(page.locator(NEXT_BUTTON)).toBeEnabled();
+      await expect(page.locator(FUN_FACT_BOX)).toBeVisible();
+
+      const nextButtonBox = await page.locator(NEXT_BUTTON).boundingBox();
+      const funFactBox = await page.locator(FUN_FACT_BOX).boundingBox();
+
+      expect(nextButtonBox).not.toBeNull();
+      expect(funFactBox).not.toBeNull();
+      // "Encima" = its bottom edge sits at or above the dato curioso's top
+      // edge -- a real layout-engine measurement, so a CSS `order`/
+      // `column-reverse`/absolute-positioning trick that visually flipped
+      // the DOM order would fail this even though the earlier DOM/tab-order
+      // assertion only inspects markup, not paint.
+      expect(nextButtonBox.y + nextButtonBox.height).toBeLessThanOrEqual(funFactBox.y);
+    });
+  }
+});
+
 test.describe('Comportamiento idéntico con reduced-motion y audio silenciado', () => {
   test.use({ reducedMotion: 'reduce' });
 
