@@ -15,7 +15,10 @@ module.exports = defineConfig({
   testMatch: '**/*.spec.js',
   timeout: 90_000,
   fullyParallel: false,
-  retries: process.env.CI ? 1 : 0,
+  // No retries: acceptance for this suite must come from deterministic
+  // waits (Playwright auto-waiting locators, explicit phase polling), never
+  // from a flake being re-run into a pass.
+  retries: 0,
   reporter: 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
