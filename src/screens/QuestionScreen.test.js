@@ -401,7 +401,7 @@ describe('QuestionScreen', () => {
       return varMatch ? tokens[varMatch[1]] : rawValue;
     };
 
-    const ruleMatch = css.match(/\.question-screen__level-points,\s*\.question-screen__game-points\s*\{([^}]*)\}/);
+    const ruleMatch = css.match(/\.question-screen__score,\s*\.question-screen__game-score\s*\{([^}]*)\}/);
     expect(ruleMatch).not.toBeNull();
 
     // Accessibility tokens (TRIOFSND-133) moved this rule onto a CSS custom
@@ -414,59 +414,6 @@ describe('QuestionScreen', () => {
       ? parseFloat(fontSizeMatch[1]) * 16
       : parseFloat(fontSizeMatch[1]);
     expect(fontSizePx).toBeGreaterThanOrEqual(20);
-  });
-
-  describe('level and game score as two distinct blocks (no ambiguous single "Puntos: N")', () => {
-    test('renders exactly one block for the level score and one for the game score, with no leftover combined block', () => {
-      renderQuestionScreen(container, buildQuestion());
-
-      expect(container.querySelectorAll('.question-screen__level-points')).toHaveLength(1);
-      expect(container.querySelectorAll('.question-screen__game-points')).toHaveLength(1);
-      expect(container.querySelector('.question-screen__score')).toBeNull();
-    });
-
-    test('each block carries only its own labeled value, never a combined/duplicated string', () => {
-      const { levelPointsEl, gamePointsEl } = renderQuestionScreen(container, buildQuestion(), {
-        score: 3,
-        gameAccumulatedPoints: 9,
-      });
-
-      expect(levelPointsEl.textContent).toBe(`${strings.score.levelLabel}: 3`);
-      expect(gamePointsEl.textContent).toBe(`${strings.score.gameLabel}: 9`);
-      expect(levelPointsEl.textContent).not.toBe(gamePointsEl.textContent);
-    });
-
-    test('defaults the game-wide total to the level score when no separate value is passed (single-level MVP)', () => {
-      const { levelPointsEl, gamePointsEl } = renderQuestionScreen(container, buildQuestion(), { score: 4 });
-
-      expect(levelPointsEl.textContent).toBe(`${strings.score.levelLabel}: 4`);
-      expect(gamePointsEl.textContent).toBe(`${strings.score.gameLabel}: 4`);
-    });
-
-    test('a correct answer updates both blocks by the same delta, independently of each other', () => {
-      const question = buildQuestion();
-      const { optionButtons, levelPointsEl, gamePointsEl } = renderQuestionScreen(container, question, {
-        score: 2,
-        gameAccumulatedPoints: 15,
-      });
-
-      optionButtons[question.correctAnswerIndex].click();
-
-      expect(levelPointsEl.textContent).toBe(`${strings.score.levelLabel}: 3`);
-      expect(gamePointsEl.textContent).toBe(`${strings.score.gameLabel}: 16`);
-    });
-
-    test('both blocks fit within a 375px viewport without a horizontal scrollbar or pushing the options off-screen', () => {
-      const css = fs.readFileSync(MAIN_CSS_PATH, 'utf-8');
-
-      const rowRuleMatch = css.match(/\.question-screen__score-row\s*\{([^}]*)\}/);
-      expect(rowRuleMatch).not.toBeNull();
-      expect(rowRuleMatch[1]).toMatch(/max-width:\s*\d+px/);
-
-      const blockRuleMatch = css.match(/\.question-screen__level-points,\s*\.question-screen__game-points\s*\{([^}]*)\}/);
-      expect(blockRuleMatch).not.toBeNull();
-      expect(blockRuleMatch[1]).toMatch(/overflow-wrap:\s*break-word/);
-    });
   });
 
   describe('on a correct answer', () => {

@@ -1357,12 +1357,6 @@
     var question = session.questions[session.state.questionIndex];
     var advanced = false;
     var autoAdvanceTimer = null;
-    // TRIOFSND-254: a level-driven session (gameFlow.startLevel/completeLevel)
-    // carries two counters (levelPoints/gameAccumulatedPoints) instead of the
-    // flat, single-level `score` the older startNewGame session shape uses --
-    // see gameFlow.js's own doc comment on createInitialLevelState.
-    var isLevelSession = typeof session.state.levelPoints === 'number';
-
     // TRIOFSND-254: `levelContext` (only set by the multi-level orchestrator,
     // see the comment near questionOptions.level below) is also what tells
     // this level session's `state` apart from the flat, single-score one
@@ -2000,6 +1994,7 @@
           // score/stars.
           levelPoints: finalState.levelPoints,
           gameAccumulatedPoints: finalState.gameAccumulatedPoints,
+          gameScore: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
           // this shared orchestrator today, same value resultsScreen.js

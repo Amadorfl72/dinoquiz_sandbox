@@ -1446,8 +1446,8 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     });
 
     // First question of a brand-new game: both counters start at zero.
-    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
-    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
+    expect(container.querySelector('.question-screen__score')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-score')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
 
     // Level 1: 6/10 unlocks level 2 -- with nothing accumulated yet,
     // levelPoints and gameAccumulatedPoints move together in lockstep.
@@ -1464,16 +1464,16 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     // Level 2 starts with a fresh levelPoints (0) but carries the level 1
     // total forward as gameAccumulatedPoints (6) -- this is the whole point
     // of the two-counter feature (TRIOFSND-254).
-    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
-    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 6`);
+    expect(container.querySelector('.question-screen__score')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-score')).toHaveTextContent(`${strings.score.gameLabel}: 6`);
 
     await answerCurrentQuestion(container, { correct: true });
-    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 1`);
-    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 7`);
+    expect(container.querySelector('.question-screen__score')).toHaveTextContent(`${strings.score.levelLabel}: 1`);
+    expect(container.querySelector('.question-screen__game-score')).toHaveTextContent(`${strings.score.gameLabel}: 7`);
 
     await answerCurrentQuestion(container, { correct: true });
-    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 2`);
-    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 8`);
+    expect(container.querySelector('.question-screen__score')).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+    expect(container.querySelector('.question-screen__game-score')).toHaveTextContent(`${strings.score.gameLabel}: 8`);
 
     // Finish level 2 (8 questions left, all misses -- 2/10 total, game over).
     await playLevelWithPattern('FFFFFFFF');
@@ -1508,8 +1508,8 @@ describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/termina
     getByRole(container, 'button', { name: strings.playAgainButton }).click();
 
     expect(container.querySelector('.question-screen__level')).toHaveTextContent('1');
-    expect(container.querySelector('.question-screen__level-points')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
-    expect(container.querySelector('.question-screen__game-points')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
+    expect(container.querySelector('.question-screen__score')).toHaveTextContent(`${strings.score.levelLabel}: 0`);
+    expect(container.querySelector('.question-screen__game-score')).toHaveTextContent(`${strings.score.gameLabel}: 0`);
   });
 
   describe('salida segura a Inicio cuando gameFlow no puede generar un nivel (menos de 10 preguntas válidas)', () => {

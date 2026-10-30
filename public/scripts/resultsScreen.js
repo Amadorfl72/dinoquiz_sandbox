@@ -538,6 +538,7 @@
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
     }
+    announcementParts.push(gameScoreEl.textContent);
     if (levelPointsEl) {
       announcementParts.push(levelPointsEl.textContent);
     }
