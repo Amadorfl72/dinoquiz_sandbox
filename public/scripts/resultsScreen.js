@@ -538,6 +538,11 @@
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
     }
+    // TRIOFSND-254: the running game-wide total (gameScoreEl) is always
+    // rendered (it defaults to the level score), so it is always announced
+    // too -- unlike levelPointsEl/gameAccumulatedPointsEl below, which stay
+    // independently optional for their own (legacy) callers.
+    announcementParts.push(gameScoreEl.textContent);
     if (levelPointsEl) {
       announcementParts.push(levelPointsEl.textContent);
     }

@@ -526,10 +526,9 @@
 
     // Level/progress row (TRIOFSND-206): shows the active level next to the
     // "N de 10" progress, never the child's age band or a cross-level
-    // running tally -- `score`/`levelPointsEl` below already only ever
-    // reflects the level currently being played (see gameFlow.js's per-level
-    // state); the separate game-wide total is `gameAccumulatedPoints`/
-    // `gamePointsEl`.
+    // running tally -- `score`/`scoreEl` below already only ever reflects
+    // the level currently being played (see gameFlow.js's per-level state);
+    // the separate game-wide total is `gameScore`/`gameScoreEl`.
     var progressRow = null;
     var levelEl = null;
     var progressEl = null;
@@ -575,15 +574,17 @@
     var scoreRow = document.createElement('div');
     scoreRow.className = 'question-screen__score-row';
 
-    var levelPointsEl = document.createElement('p');
-    levelPointsEl.className = 'question-screen__level-points';
-    levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
-    scoreRow.appendChild(levelPointsEl);
+    var scoreEl = document.createElement('p');
+    scoreEl.className = 'question-screen__score';
+    scoreEl.textContent = strings.score.levelLabel + ': ' + score;
+    scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
+    scoreRow.appendChild(scoreEl);
 
-    var gamePointsEl = document.createElement('p');
-    gamePointsEl.className = 'question-screen__game-points';
-    gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
-    scoreRow.appendChild(gamePointsEl);
+    var gameScoreEl = document.createElement('p');
+    gameScoreEl.className = 'question-screen__game-score';
+    gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+    gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
+    scoreRow.appendChild(gameScoreEl);
 
     var optionsGroup = document.createElement('div');
     optionsGroup.className = 'question-screen__options';
@@ -755,8 +756,10 @@
         feedback.textContent =
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
-      levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
-      gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+      scoreEl.textContent = strings.score.levelLabel + ': ' + score;
+      scoreEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
+      gameScoreEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+      gameScoreEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;
@@ -839,8 +842,8 @@
       levelEl: levelEl,
       progressEl: progressEl,
       scoreRow: scoreRow,
-      levelPointsEl: levelPointsEl,
-      gamePointsEl: gamePointsEl,
+      scoreEl: scoreEl,
+      gameScoreEl: gameScoreEl,
       optionButtons: optionButtons,
       feedback: feedback,
       announcementEl: announcementEl,

@@ -679,16 +679,16 @@ body {
 .question-screen__score-row {
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 8px;
   margin: 0 0 16px;
-  width: 100%;
-  max-width: 300px;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
-.question-screen__level-points,
-.question-screen__game-points {
+.question-screen__score,
+.question-screen__game-score {
   margin: 0;
   font-size: var(--font-size-body);
   font-weight: 700;
@@ -700,11 +700,11 @@ body {
   overflow-wrap: break-word;
 }
 
-.question-screen__level-points {
+.question-screen__score {
   background-color: var(--color-primary);
 }
 
-.question-screen__game-points {
+.question-screen__game-score {
   background-color: #00695c;
 }
 
