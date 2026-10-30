@@ -1602,8 +1602,8 @@ describe('TRIOFSND-254: level points vs game-accumulated points, end to end thro
 
   function scoreRowText() {
     return {
-      level: container.querySelector('.question-screen__score').textContent,
-      game: container.querySelector('.question-screen__game-score').textContent,
+      level: container.querySelector('.question-screen__level-points').textContent,
+      game: container.querySelector('.question-screen__game-points').textContent,
     };
   }
 
@@ -1699,8 +1699,8 @@ describe('TRIOFSND-254: level points vs game-accumulated points, end to end thro
     startLevelGame(container, renderers, questions, document, undefined, { ageBand: 'eight-plus', randomFn: () => 0 });
     await answerCurrentQuestion(container, { correct: true });
 
-    const levelEl = container.querySelector('.question-screen__score');
-    const gameEl = container.querySelector('.question-screen__game-score');
+    const levelEl = container.querySelector('.question-screen__level-points');
+    const gameEl = container.querySelector('.question-screen__game-points');
     expect(levelEl.getAttribute('aria-label')).toBe(`${questionStrings.score.levelLabel}: 1`);
     expect(gameEl.getAttribute('aria-label')).toBe(`${questionStrings.score.gameLabel}: 1`);
     expect(levelEl.getAttribute('aria-label')).not.toBe(gameEl.getAttribute('aria-label'));

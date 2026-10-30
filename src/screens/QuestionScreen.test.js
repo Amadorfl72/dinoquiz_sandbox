@@ -247,27 +247,27 @@ describe('QuestionScreen', () => {
   });
 
   describe('two scoreboards: level points vs game-accumulated points (TRIOFSND-254)', () => {
-    test('score and game-score are two distinct DOM nodes, each in its own row', () => {
+    test('level points and game points are two distinct DOM nodes, each in its own row', () => {
       const { scoreRow } = renderQuestionScreen(container, buildQuestion(), { score: 2, gameScore: 9 });
 
       expect(scoreRow.children).toHaveLength(2);
-      expect(scoreRow.children[0]).toHaveClass('question-screen__score');
-      expect(scoreRow.children[1]).toHaveClass('question-screen__game-score');
+      expect(scoreRow.children[0]).toHaveClass('question-screen__level-points');
+      expect(scoreRow.children[1]).toHaveClass('question-screen__game-points');
       expect(scoreRow.children[0]).not.toBe(scoreRow.children[1]);
     });
 
     test('renders the given level score and game score independently, with distinct labels', () => {
-      const { scoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 2, gameScore: 9 });
+      const { levelPointsEl, gamePointsEl } = renderQuestionScreen(container, buildQuestion(), { score: 2, gameScore: 9 });
 
-      expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 2`);
-      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 9`);
+      expect(levelPointsEl).toHaveTextContent(`${strings.score.levelLabel}: 2`);
+      expect(gamePointsEl).toHaveTextContent(`${strings.score.gameLabel}: 9`);
     });
 
     test('defaults the game score to the level score when omitted, so a one-level game shows a consistent total', () => {
-      const { scoreEl, gameScoreEl } = renderQuestionScreen(container, buildQuestion(), { score: 3 });
+      const { levelPointsEl, gamePointsEl } = renderQuestionScreen(container, buildQuestion(), { score: 3 });
 
-      expect(scoreEl).toHaveTextContent(`${strings.score.levelLabel}: 3`);
-      expect(gameScoreEl).toHaveTextContent(`${strings.score.gameLabel}: 3`);
+      expect(levelPointsEl).toHaveTextContent(`${strings.score.levelLabel}: 3`);
+      expect(gamePointsEl).toHaveTextContent(`${strings.score.gameLabel}: 3`);
     });
 
     test('a correct answer increments both counters by exactly 1; an incorrect answer changes neither', () => {
@@ -299,16 +299,16 @@ describe('QuestionScreen', () => {
 
     test('each scoreboard exposes an unambiguous accessible label pairing its own concept with its current value', () => {
       const question = buildQuestion();
-      const { optionButtons, scoreEl, gameScoreEl } = renderQuestionScreen(container, question, {
+      const { optionButtons, levelPointsEl, gamePointsEl } = renderQuestionScreen(container, question, {
         score: 5,
         gameScore: 15,
       });
 
       optionButtons[question.correctAnswerIndex].click();
 
-      expect(scoreEl.getAttribute('aria-label')).toBe(`${strings.score.levelLabel}: 6`);
-      expect(gameScoreEl.getAttribute('aria-label')).toBe(`${strings.score.gameLabel}: 16`);
-      expect(scoreEl.getAttribute('aria-label')).not.toBe(gameScoreEl.getAttribute('aria-label'));
+      expect(levelPointsEl.getAttribute('aria-label')).toBe(`${strings.score.levelLabel}: 6`);
+      expect(gamePointsEl.getAttribute('aria-label')).toBe(`${strings.score.gameLabel}: 16`);
+      expect(levelPointsEl.getAttribute('aria-label')).not.toBe(gamePointsEl.getAttribute('aria-label'));
     });
   });
 
@@ -428,7 +428,7 @@ describe('QuestionScreen', () => {
     test('each block carries only its own labeled value, never a combined/duplicated string', () => {
       const { levelPointsEl, gamePointsEl } = renderQuestionScreen(container, buildQuestion(), {
         score: 3,
-        gameAccumulatedPoints: 9,
+        gameScore: 9,
       });
 
       expect(levelPointsEl.textContent).toBe(`${strings.score.levelLabel}: 3`);
@@ -447,7 +447,7 @@ describe('QuestionScreen', () => {
       const question = buildQuestion();
       const { optionButtons, levelPointsEl, gamePointsEl } = renderQuestionScreen(container, question, {
         score: 2,
-        gameAccumulatedPoints: 15,
+        gameScore: 15,
       });
 
       optionButtons[question.correctAnswerIndex].click();
@@ -461,7 +461,7 @@ describe('QuestionScreen', () => {
 
       const rowRuleMatch = css.match(/\.question-screen__score-row\s*\{([^}]*)\}/);
       expect(rowRuleMatch).not.toBeNull();
-      expect(rowRuleMatch[1]).toMatch(/max-width:\s*\d+px/);
+      expect(rowRuleMatch[1]).toMatch(/max-width:\s*100%/);
 
       const blockRuleMatch = css.match(/\.question-screen__level-points,\s*\.question-screen__game-points\s*\{([^}]*)\}/);
       expect(blockRuleMatch).not.toBeNull();

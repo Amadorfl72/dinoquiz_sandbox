@@ -1995,9 +1995,12 @@
           score: finalState.score,
           // TRIOFSND-254: the level just finished own total and the running
           // total across the whole game so far (see renderQuestionAt/
-          // playLevel above) -- resultsScreen.js renders each as its own
-          // optional, independently-labeled line alongside the existing
-          // score/stars.
+          // playLevel above) -- resultsScreen.js's own "Puntos de la
+          // partida" block reads `gameScore` (defaulting to `score` when
+          // omitted), so it must be set explicitly here or a level 2+ result
+          // would silently show this level's own score instead of the
+          // carried-forward game total.
+          gameScore: finalState.gameAccumulatedPoints,
           levelPoints: finalState.levelPoints,
           gameAccumulatedPoints: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
