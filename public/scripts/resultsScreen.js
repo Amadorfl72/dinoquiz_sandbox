@@ -538,6 +538,10 @@
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
     }
+    // TRIOFSND-254: gameScoreEl always renders (defaulting to the level
+    // score when options.gameScore is omitted), so the announcement always
+    // includes the game total alongside the level score/stars/message.
+    announcementParts.push(gameScoreEl.textContent);
     if (levelPointsEl) {
       announcementParts.push(levelPointsEl.textContent);
     }
