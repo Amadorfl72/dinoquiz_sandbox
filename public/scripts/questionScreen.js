@@ -578,11 +578,13 @@
     var levelPointsEl = document.createElement('p');
     levelPointsEl.className = 'question-screen__level-points';
     levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+    levelPointsEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
     scoreRow.appendChild(levelPointsEl);
 
     var gamePointsEl = document.createElement('p');
     gamePointsEl.className = 'question-screen__game-points';
     gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+    gamePointsEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
     scoreRow.appendChild(gamePointsEl);
 
     var optionsGroup = document.createElement('div');
@@ -756,7 +758,9 @@
           strings.feedback.incorrect + ' ' + formatAnswerTemplate(strings.correctAnswerAnnouncementFormat, correctAnswerText);
       }
       levelPointsEl.textContent = strings.score.levelLabel + ': ' + score;
+      levelPointsEl.setAttribute('aria-label', strings.score.levelLabel + ': ' + score);
       gamePointsEl.textContent = strings.score.gameLabel + ': ' + gameScore;
+      gamePointsEl.setAttribute('aria-label', strings.score.gameLabel + ': ' + gameScore);
 
       funFact.textContent = question.funFact;
       funFactBox.hidden = false;

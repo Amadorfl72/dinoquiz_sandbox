@@ -534,6 +534,7 @@
         maxStars: MAX_STARS,
         message: message,
       }),
+      gameScoreEl.textContent,
     ];
     if (levelEl) {
       announcementParts.push(levelEl.textContent);
