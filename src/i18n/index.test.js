@@ -102,4 +102,47 @@ describe('i18n resource loader', () => {
       expect(modeSelector.modes.oidoJurasico.accessibleLabel).toMatch(/imaginado/i);
     });
   });
+
+  describe('avatarPicker strings (nickname screen avatar selector)', () => {
+    const { VALID_DINOSAURS } = require('../data/questionBank');
+
+    test('exposes a section title and usage instructions', () => {
+      const { avatarPicker } = getStrings('es');
+      expect(typeof avatarPicker.sectionTitle).toBe('string');
+      expect(avatarPicker.sectionTitle.length).toBeGreaterThan(0);
+      expect(typeof avatarPicker.instructions).toBe('string');
+      expect(avatarPicker.instructions.length).toBeGreaterThan(0);
+    });
+
+    test('exposes a "no avatar selected" status text', () => {
+      const { avatarPicker } = getStrings('es');
+      expect(typeof avatarPicker.noAvatarSelectedStatus).toBe('string');
+      expect(avatarPicker.noAvatarSelectedStatus.length).toBeGreaterThan(0);
+    });
+
+    test('the option accessible-name format and the selection announcement format both interpolate {dinosaur}', () => {
+      const { avatarPicker } = getStrings('es');
+      expect(avatarPicker.optionAriaLabelFormat).toContain('{dinosaur}');
+      expect(avatarPicker.selectedAnnouncementFormat).toContain('{dinosaur}');
+    });
+
+    test.each(VALID_DINOSAURS)(
+      'dinosaur "%s" has a reusable display name in the top-level dinosaurNames catalog',
+      (dinosaurId) => {
+        const { dinosaurNames } = getStrings('es');
+        expect(typeof dinosaurNames[dinosaurId]).toBe('string');
+        expect(dinosaurNames[dinosaurId].length).toBeGreaterThan(0);
+      }
+    );
+
+    test.each(VALID_DINOSAURS)(
+      'dinosaur "%s" resolves to a non-empty accessible option label and selection announcement',
+      (dinosaurId) => {
+        const { avatarPicker, dinosaurNames } = getStrings('es');
+        const name = dinosaurNames[dinosaurId];
+        expect(avatarPicker.optionAriaLabelFormat.replace('{dinosaur}', name)).toContain(name);
+        expect(avatarPicker.selectedAnnouncementFormat.replace('{dinosaur}', name)).toContain(name);
+      }
+    );
+  });
 });

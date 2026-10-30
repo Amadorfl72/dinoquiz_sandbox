@@ -132,6 +132,13 @@
       "tooLong": "Your nickname is too long. Use 20 letters at most."
     }
   },
+  "avatarPicker": {
+    "sectionTitle": "Choose your dinosaur",
+    "instructions": "Tap a dinosaur to use it as your avatar. It's optional: you can continue without choosing one.",
+    "optionAriaLabelFormat": "Choose {dinosaur} as your avatar",
+    "noAvatarSelectedStatus": "You haven't chosen an avatar yet.",
+    "selectedAnnouncementFormat": "You've chosen {dinosaur} as your avatar."
+  },
   "modeChange": {
     "title": "Change game?",
     "message": "You haven't finished this game yet. If you change games now, you'll lose your current progress.",
