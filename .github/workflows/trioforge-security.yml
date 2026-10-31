@@ -16,10 +16,15 @@ jobs:
         with:
           python-version: '3.12'
       - name: Secret scan (gitleaks)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           base=https://github.com/gitleaks/gitleaks/releases/download
           curl -sSfL "$base/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz" | tar -xz gitleaks
-          if ! ./gitleaks detect --source . --redact --no-banner; then
+          if ! ./gitleaks detect --source . --redact --no-banner --log-opts="$BASE..$HEAD" \
+              --report-format json --report-path /tmp/gitleaks.json; then
+            jq -r '.[:10][] | "::error file=\(.File),line=\(.StartLine)::gitleaks \(.RuleID): possible secret committed in \(.Commit[0:8])"' /tmp/gitleaks.json 2>/dev/null || true
             echo "::error::trioforge-security: gitleaks detected committed secrets"
             exit 1
           fi
