@@ -29,14 +29,23 @@ jobs:
             exit 1
           fi
       - name: Dependency scan (osv-scanner)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           base=https://github.com/google/osv-scanner/releases/download
           curl -sSfL "$base/v1.9.2/osv-scanner_linux_amd64" -o osv-scanner
           chmod +x osv-scanner
-          set +e; ./osv-scanner --recursive ./ ; code=$?; set -e
+          set +e; ./osv-scanner --format json --recursive ./ > /tmp/osv-pr.json; code=$?; set -e
           if [ "$code" = "1" ]; then
-            echo "::error::trioforge-security: osv-scanner found vulnerable dependencies"
-            exit 1
+            git worktree add --detach /tmp/tf-osv-base "$BASE" >/dev/null 2>&1 || true
+            ./osv-scanner --format json --recursive /tmp/tf-osv-base > /tmp/osv-base.json || true
+            jq -e . /tmp/osv-base.json >/dev/null 2>&1 || echo '{}' > /tmp/osv-base.json
+            jq -r --slurpfile old /tmp/osv-base.json --arg root "$PWD/" '([$old[0].results[]?.packages[]? | .package.name as $n | .vulnerabilities[]? | "\($n) \(.id)"]) as $known | .results[]? | (.source.path | ltrimstr($root)) as $file | .packages[]? | .package as $p | .vulnerabilities[]? | .id as $id | if ($known | index("\($p.name) \($id)")) then "::warning::osv-scanner: already on the base: \($id) in \($p.name) \($p.version)" else "::error file=\($file)::osv-scanner \($id) in \($p.name) \($p.version)" end' /tmp/osv-pr.json > /tmp/osv-lines || true
+            cat /tmp/osv-lines
+            if grep -q '^::error' /tmp/osv-lines || [ ! -s /tmp/osv-lines ]; then
+              echo "::error::trioforge-security: osv-scanner found vulnerable dependencies"
+              exit 1
+            fi
           fi
       - name: SAST (semgrep)
         run: |
