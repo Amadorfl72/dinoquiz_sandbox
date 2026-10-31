@@ -2000,6 +2000,7 @@
           // score/stars.
           levelPoints: finalState.levelPoints,
           gameAccumulatedPoints: finalState.gameAccumulatedPoints,
+          gameScore: finalState.gameAccumulatedPoints,
           // TRIOFSND-253: generalizes the score scale this mode's level is
           // played against -- QUESTIONS_PER_GAME (10) for every mode using
           // this shared orchestrator today, same value resultsScreen.js
