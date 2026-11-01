@@ -102,4 +102,34 @@ describe('i18n resource loader', () => {
       expect(modeSelector.modes.oidoJurasico.accessibleLabel).toMatch(/imaginado/i);
     });
   });
+
+  describe('nicknameRequest.avatarPicker strings', () => {
+    const { VALID_DINOSAURS } = require('../data/questionBank');
+
+    test('exposes a group label, instructions, and an optional-selection notice', () => {
+      const { avatarPicker } = getStrings('es').nicknameRequest;
+      expect(typeof avatarPicker.groupLabel).toBe('string');
+      expect(avatarPicker.groupLabel.length).toBeGreaterThan(0);
+      expect(typeof avatarPicker.instructions).toBe('string');
+      expect(avatarPicker.instructions.length).toBeGreaterThan(0);
+      expect(typeof avatarPicker.optionalNotice).toBe('string');
+      expect(avatarPicker.optionalNotice.length).toBeGreaterThan(0);
+    });
+
+    test('the optionAriaLabelFormat interpolates a {dinosaur} placeholder', () => {
+      const { avatarPicker } = getStrings('es').nicknameRequest;
+      expect(avatarPicker.optionAriaLabelFormat).toMatch(/\{dinosaur\}/);
+    });
+
+    test.each(VALID_DINOSAURS)('resolves a non-empty accessible avatar label for "%s"', (dinosaur) => {
+      const { avatarPicker } = getStrings('es').nicknameRequest;
+      const { dinosaurNames } = getStrings('es');
+      expect(typeof dinosaurNames[dinosaur]).toBe('string');
+      expect(dinosaurNames[dinosaur].length).toBeGreaterThan(0);
+
+      const label = avatarPicker.optionAriaLabelFormat.replace('{dinosaur}', dinosaurNames[dinosaur]);
+      expect(label).not.toMatch(/\{dinosaur\}/);
+      expect(label.length).toBeGreaterThan(0);
+    });
+  });
 });

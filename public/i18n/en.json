@@ -130,6 +130,12 @@
     "errors": {
       "empty": "Type a nickname before continuing.",
       "tooLong": "Your nickname is too long. Use 20 letters at most."
+    },
+    "avatarPicker": {
+      "groupLabel": "Choose your dinosaur",
+      "instructions": "Tap the dinosaur you like best, or move between them with the keyboard arrows and press Enter or space to choose it.",
+      "optionAriaLabelFormat": "Choose {dinosaur} as your avatar",
+      "optionalNotice": "Choosing a dinosaur is optional: you can continue without choosing one."
     }
   },
   "modeChange": {
