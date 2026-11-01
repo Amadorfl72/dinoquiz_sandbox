@@ -130,6 +130,12 @@
     "errors": {
       "empty": "Escribe un apodo antes de continuar.",
       "tooLong": "Tu apodo es muy largo. Usa como máximo 20 letras."
+    },
+    "avatarPicker": {
+      "groupLabel": "Elige tu dinosaurio",
+      "instructions": "Toca el dinosaurio que más te guste, o muévete entre ellos con las flechas del teclado y pulsa Intro o espacio para elegirlo.",
+      "optionAriaLabelFormat": "Elegir a {dinosaur} como tu avatar",
+      "optionalNotice": "Elegir un dinosaurio es opcional: puedes continuar sin elegir ninguno."
     }
   },
   "modeChange": {
