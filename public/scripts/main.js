@@ -393,6 +393,12 @@
    * "Jugar como invitado" moves on without saving anything -- the game still
    * plays, and a finished game is still recorded, just under a null/guest
    * name (hallOfFameService.js's own no-name contract).
+   *
+   * The screen's avatar picker is optional and independent of the apodo
+   * itself: whichever dinosaur is chosen (if any) is persisted immediately
+   * via `nicknameService.saveAvatar`, not deferred to 'Continuar', so it is
+   * never lost if the player picks an avatar and then "Jugar como
+   * invitado"s instead of submitting a name.
    */
   function renderNicknameStep(container, renderers, nicknameRequestStrings, onDone) {
     var nicknameService = resolveNicknameService();
@@ -406,6 +412,13 @@
 
     return renderers.renderNicknameScreen(container, {
       strings: nicknameRequestStrings,
+      initialAvatarId:
+        nicknameService && typeof nicknameService.getAvatar === 'function' ? nicknameService.getAvatar() : null,
+      onSelectAvatar: function (avatarId) {
+        if (nicknameService && typeof nicknameService.saveAvatar === 'function') {
+          nicknameService.saveAvatar(avatarId);
+        }
+      },
       onSubmit: function (nickname) {
         if (nicknameService && typeof nicknameService.saveNickname === 'function') {
           nicknameService.saveNickname(nickname);

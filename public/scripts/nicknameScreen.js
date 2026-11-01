@@ -33,6 +33,26 @@
  * color alone. Both actions are real `<button>`s, and Enter from inside the
  * text field submits exactly like the 'Continuar' button (no native
  * `<form>` involved, consistent with the rest of the app's screens).
+ *
+ * Avatar picker (player-avatars convention, TRIOFSND): a grid of the
+ * dinosaur avatars from public/scripts/avatarList.js, rendered as an ARIA
+ * `radiogroup` of `role="radio"` buttons -- real, focusable, keyboard
+ * operable `<button>`s rather than native `<input type="radio">`s, matching
+ * every other option control in this app (e.g. modeSelectorScreen.js's
+ * cards). Choosing an avatar is always optional: nothing here blocks
+ * 'Continuar'/'Jugar como invitado', and no option starts selected unless
+ * `options.initialAvatarId` names one. A roving `tabindex` keeps exactly one
+ * option in the Tab order; per the `avatarPicker.instructions` copy itself
+ * (public/i18n/es.json), the arrow keys only move that focus between
+ * options, and Enter/Space/click is what actually chooses one -- so arrowing
+ * through the grid to look around never silently changes the selection.
+ * Choosing an option calls `options.onSelectAvatar(avatarId)`; persisting it
+ * (via nicknameService.js, same as the nickname itself) is the caller's job,
+ * same separation of concerns as `onSubmit` above. Each option's accessible
+ * name comes from `avatarPicker.optionAriaLabelFormat` interpolated with the
+ * dinosaur's localized name (`dinosaurNames`) -- never the bare id -- and
+ * its illustration is `alt=""`/`aria-hidden="true"` since that accessible
+ * name already conveys which dinosaur it is.
  */
 
 (function () {
@@ -81,17 +101,160 @@
     return { value: value, valid: true, errorCode: null };
   }
 
-  function resolveDefaultStrings(locale) {
+  function resolveDefaultStrings(locale, section) {
     if (typeof require === 'function') {
       var i18n = require('../../src/i18n');
-      return i18n.getStrings(locale || i18n.DEFAULT_LOCALE).nicknameRequest;
+      return i18n.getStrings(locale || i18n.DEFAULT_LOCALE)[section || 'nicknameRequest'];
     }
     return null;
+  }
+
+  function resolveAvatarList(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.data && win.DinoQuiz.data.avatarList) {
+      return win.DinoQuiz.data.avatarList.AVATAR_LIST;
+    }
+    if (typeof require === 'function') {
+      return require('./avatarList').AVATAR_LIST;
+    }
+    return [];
+  }
+
+  /**
+   * Builds the avatar picker (see the module doc comment's "Avatar picker"
+   * section) -- a `role="radiogroup"` of `role="radio"` option buttons, one
+   * per `avatarList` entry, with a roving `tabindex` and a selection that
+   * only ever changes on click or Enter/Space, never on arrow navigation
+   * alone.
+   */
+  function buildAvatarPicker(doc, avatarList, dinosaurNames, pickerStrings, initialAvatarId, onSelectAvatar) {
+    pickerStrings = pickerStrings || {};
+    dinosaurNames = dinosaurNames || {};
+    var selectedId = typeof initialAvatarId === 'string' && initialAvatarId.length > 0 ? initialAvatarId : null;
+
+    var root = doc.createElement('div');
+    root.className = 'avatar-picker';
+
+    var label = doc.createElement('p');
+    label.id = 'nickname-screen-avatar-picker-label';
+    label.className = 'avatar-picker__label';
+    label.textContent = pickerStrings.groupLabel;
+
+    var instructions = doc.createElement('p');
+    instructions.id = 'nickname-screen-avatar-picker-instructions';
+    instructions.className = 'avatar-picker__instructions';
+    instructions.textContent = pickerStrings.instructions;
+
+    var grid = doc.createElement('div');
+    grid.className = 'avatar-picker__grid';
+    grid.setAttribute('role', 'radiogroup');
+    grid.setAttribute('aria-labelledby', label.id);
+    grid.setAttribute('aria-describedby', instructions.id);
+
+    var optionButtons = [];
+    var optionsById = {};
+
+    function accessibleLabelFor(avatar) {
+      var name = dinosaurNames[avatar.nameKey] || avatar.nameKey;
+      var format = pickerStrings.optionAriaLabelFormat || '{dinosaur}';
+      return format.replace('{dinosaur}', name);
+    }
+
+    function setFocusableIndex(index) {
+      optionButtons.forEach(function (button, i) {
+        button.tabIndex = i === index ? 0 : -1;
+      });
+    }
+
+    function focusIndex(index) {
+      if (optionButtons.length === 0) return;
+      var wrapped = (index + optionButtons.length) % optionButtons.length;
+      setFocusableIndex(wrapped);
+      optionButtons[wrapped].focus();
+    }
+
+    function selectAvatar(avatarId) {
+      selectedId = avatarId;
+      optionButtons.forEach(function (button) {
+        button.setAttribute('aria-checked', button.getAttribute('data-avatar-id') === avatarId ? 'true' : 'false');
+      });
+      if (typeof onSelectAvatar === 'function') {
+        onSelectAvatar(avatarId);
+      }
+    }
+
+    avatarList.forEach(function (avatar, index) {
+      var button = doc.createElement('button');
+      button.type = 'button';
+      button.className = 'avatar-picker__option';
+      button.setAttribute('role', 'radio');
+      button.setAttribute('data-avatar-id', avatar.id);
+      button.setAttribute('aria-checked', avatar.id === selectedId ? 'true' : 'false');
+      button.setAttribute('aria-label', accessibleLabelFor(avatar));
+      button.tabIndex = -1;
+
+      var image = doc.createElement('img');
+      image.className = 'avatar-picker__image';
+      image.setAttribute('alt', '');
+      image.setAttribute('aria-hidden', 'true');
+      image.setAttribute('src', avatar.image);
+      button.appendChild(image);
+
+      button.addEventListener('click', function () {
+        setFocusableIndex(index);
+        selectAvatar(avatar.id);
+      });
+
+      button.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          focusIndex(index + 1);
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          focusIndex(index - 1);
+        } else if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          selectAvatar(avatar.id);
+        }
+      });
+
+      optionButtons.push(button);
+      optionsById[avatar.id] = button;
+      grid.appendChild(button);
+    });
+
+    var initialFocusIndex = avatarList.findIndex(function (avatar) {
+      return avatar.id === selectedId;
+    });
+    setFocusableIndex(initialFocusIndex >= 0 ? initialFocusIndex : 0);
+
+    var optionalNotice = doc.createElement('p');
+    optionalNotice.className = 'avatar-picker__optional-notice';
+    optionalNotice.textContent = pickerStrings.optionalNotice;
+
+    root.appendChild(label);
+    root.appendChild(instructions);
+    root.appendChild(grid);
+    root.appendChild(optionalNotice);
+
+    return {
+      root: root,
+      grid: grid,
+      label: label,
+      instructions: instructions,
+      optionalNotice: optionalNotice,
+      options: optionsById,
+      getSelectedAvatarId: function () {
+        return selectedId;
+      },
+    };
   }
 
   function renderNicknameScreen(container, options) {
     options = options || {};
     var strings = options.strings || resolveDefaultStrings(options.locale);
+    var dinosaurNames = options.dinosaurNames || resolveDefaultStrings(options.locale, 'dinosaurNames');
+    var avatarList = options.avatarList || resolveAvatarList();
 
     container.innerHTML = '';
 
@@ -162,6 +325,15 @@
     field.appendChild(hint);
     field.appendChild(error);
 
+    var avatarPicker = buildAvatarPicker(
+      document,
+      avatarList,
+      dinosaurNames,
+      strings.avatarPicker,
+      options.initialAvatarId,
+      options.onSelectAvatar
+    );
+
     var actions = document.createElement('div');
     actions.className = 'nickname-screen__actions';
 
@@ -213,6 +385,7 @@
     root.appendChild(title);
     root.appendChild(instructions);
     root.appendChild(field);
+    root.appendChild(avatarPicker.root);
     root.appendChild(actions);
     container.appendChild(root);
 
@@ -224,6 +397,9 @@
       root: root,
       title: title,
       instructions: instructions,
+      avatarPicker: avatarPicker.root,
+      avatarOptions: avatarPicker.options,
+      getSelectedAvatarId: avatarPicker.getSelectedAvatarId,
       label: label,
       input: input,
       hint: hint,
