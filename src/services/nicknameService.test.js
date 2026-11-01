@@ -1,6 +1,14 @@
 'use strict';
 
-const { getNickname, saveNickname, clearNickname, NICKNAME_STORAGE_KEY } = require('./nicknameService');
+const {
+  getNickname,
+  saveNickname,
+  clearNickname,
+  getAvatar,
+  saveAvatar,
+  clearAvatar,
+  NICKNAME_STORAGE_KEY,
+} = require('./nicknameService');
 
 function makeStorage() {
   const store = {};
@@ -32,7 +40,7 @@ describe('nicknameService — local nickname ("apodo") persistence', () => {
     const storage = makeStorage();
     saveNickname('Rex', storage);
     expect(NICKNAME_STORAGE_KEY).toBe('dinoquiz:nickname');
-    expect(storage._store[NICKNAME_STORAGE_KEY]).toBe(JSON.stringify('Rex'));
+    expect(storage._store[NICKNAME_STORAGE_KEY]).toBe(JSON.stringify({ nickname: 'Rex', avatarId: null }));
   });
 
   it('overwrites a previously stored nickname', () => {
@@ -45,7 +53,7 @@ describe('nicknameService — local nickname ("apodo") persistence', () => {
   it('trims surrounding whitespace before persisting and reading', () => {
     const storage = makeStorage();
     saveNickname('  Rex  ', storage);
-    expect(storage._store[NICKNAME_STORAGE_KEY]).toBe(JSON.stringify('Rex'));
+    expect(storage._store[NICKNAME_STORAGE_KEY]).toBe(JSON.stringify({ nickname: 'Rex', avatarId: null }));
     expect(getNickname(storage)).toBe('Rex');
   });
 
@@ -196,6 +204,230 @@ describe('nicknameService — local nickname ("apodo") persistence', () => {
             expect(String(arg)).not.toContain(secretName);
           }
         }
+        expect(spy).not.toHaveBeenCalled();
+      }
+    } finally {
+      consoleSpies.forEach((spy) => spy.mockRestore());
+    }
+  });
+});
+
+describe('nicknameService — optional avatar id alongside the nickname', () => {
+  it('returns null (no avatar) when nothing was ever saved', () => {
+    const storage = makeStorage();
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('round-trips an avatar id through the given storage adapter', () => {
+    const storage = makeStorage();
+    expect(saveAvatar('triceratops', storage)).toBe(true);
+    expect(getAvatar(storage)).toBe('triceratops');
+  });
+
+  it('persists the avatar under the same key as the nickname, not a separate one', () => {
+    const storage = makeStorage();
+    saveNickname('Rex', storage);
+    saveAvatar('triceratops', storage);
+    expect(storage._store[NICKNAME_STORAGE_KEY]).toBe(
+      JSON.stringify({ nickname: 'Rex', avatarId: 'triceratops' })
+    );
+  });
+
+  it('saves and reads the nickname and avatar together without either clobbering the other', () => {
+    const storage = makeStorage();
+    expect(saveNickname('Rex', storage)).toBe(true);
+    expect(saveAvatar('triceratops', storage)).toBe(true);
+
+    expect(getNickname(storage)).toBe('Rex');
+    expect(getAvatar(storage)).toBe('triceratops');
+  });
+
+  it('saving the avatar first, then the nickname, keeps both', () => {
+    const storage = makeStorage();
+    expect(saveAvatar('triceratops', storage)).toBe(true);
+    expect(saveNickname('Rex', storage)).toBe(true);
+
+    expect(getNickname(storage)).toBe('Rex');
+    expect(getAvatar(storage)).toBe('triceratops');
+  });
+
+  it('reads a nickname with no avatar previously saved, defaulting avatar to null without throwing', () => {
+    const storage = makeStorage();
+    saveNickname('Rex', storage);
+
+    expect(getNickname(storage)).toBe('Rex');
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('reads a legacy plain-string nickname entry (no avatar field) with avatar defaulting to null', () => {
+    const storage = makeStorage();
+    storage.setItem(NICKNAME_STORAGE_KEY, JSON.stringify('Rex'));
+
+    expect(getNickname(storage)).toBe('Rex');
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('clearing the avatar leaves the nickname untouched', () => {
+    const storage = makeStorage();
+    saveNickname('Rex', storage);
+    saveAvatar('triceratops', storage);
+
+    expect(clearAvatar(storage)).toBe(true);
+
+    expect(getAvatar(storage)).toBeNull();
+    expect(getNickname(storage)).toBe('Rex');
+  });
+
+  it('clearing the nickname leaves the avatar untouched', () => {
+    const storage = makeStorage();
+    saveNickname('Rex', storage);
+    saveAvatar('triceratops', storage);
+
+    expect(clearNickname(storage)).toBe(true);
+
+    expect(getNickname(storage)).toBeNull();
+    expect(getAvatar(storage)).toBe('triceratops');
+  });
+
+  it('clearing both leaves no entry behind', () => {
+    const storage = makeStorage();
+    saveNickname('Rex', storage);
+    saveAvatar('triceratops', storage);
+
+    clearNickname(storage);
+    clearAvatar(storage);
+
+    expect(Object.prototype.hasOwnProperty.call(storage._store, NICKNAME_STORAGE_KEY)).toBe(false);
+  });
+
+  it('overwrites a previously stored avatar id', () => {
+    const storage = makeStorage();
+    saveAvatar('triceratops', storage);
+    saveAvatar('tiranosaurio', storage);
+    expect(getAvatar(storage)).toBe('tiranosaurio');
+  });
+
+  it('trims surrounding whitespace before persisting and reading the avatar id', () => {
+    const storage = makeStorage();
+    saveAvatar('  triceratops  ', storage);
+    expect(getAvatar(storage)).toBe('triceratops');
+  });
+
+  it('treats an empty or whitespace-only avatar id as no avatar, never creating an entry', () => {
+    const storage = makeStorage();
+    expect(saveAvatar('', storage)).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(storage._store, NICKNAME_STORAGE_KEY)).toBe(false);
+
+    expect(saveAvatar('   ', storage)).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(storage._store, NICKNAME_STORAGE_KEY)).toBe(false);
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('rejects non-string avatar id values without throwing, treating them as no avatar', () => {
+    const storage = makeStorage();
+    expect(saveAvatar(null, storage)).toBe(true);
+    expect(saveAvatar(undefined, storage)).toBe(true);
+    expect(saveAvatar(42, storage)).toBe(true);
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('removes a stored avatar via clearAvatar', () => {
+    const storage = makeStorage();
+    saveAvatar('triceratops', storage);
+    expect(clearAvatar(storage)).toBe(true);
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  it('clearAvatar on an already-absent key still reports success', () => {
+    const storage = makeStorage();
+    expect(clearAvatar(storage)).toBe(true);
+  });
+
+  it('returns null instead of throwing when the stored value is corrupted JSON', () => {
+    const storage = makeStorage();
+    storage.setItem(NICKNAME_STORAGE_KEY, '{not-json');
+    expect(getAvatar(storage)).toBeNull();
+  });
+
+  describe('tolerate-storage-failure pattern (AW8)', () => {
+    it('degrades to a no-op false/null when no storage is available at all', () => {
+      const originalLocalStorage = window.localStorage;
+      Object.defineProperty(window, 'localStorage', { value: undefined, configurable: true });
+      try {
+        expect(saveAvatar('triceratops', null)).toBe(false);
+        expect(getAvatar(null)).toBeNull();
+        expect(clearAvatar(null)).toBe(false);
+      } finally {
+        Object.defineProperty(window, 'localStorage', { value: originalLocalStorage, configurable: true });
+      }
+    });
+
+    it('degrades to a no-op false/null when accessing window.localStorage itself throws', () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        get() {
+          throw new Error('blocked');
+        },
+      });
+      try {
+        expect(getAvatar()).toBeNull();
+        expect(saveAvatar('triceratops')).toBe(false);
+        expect(clearAvatar()).toBe(false);
+      } finally {
+        Object.defineProperty(window, 'localStorage', originalDescriptor);
+      }
+    });
+
+    it('surfaces a throwing setItem as a false return instead of throwing', () => {
+      const storage = {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error('quota exceeded');
+        },
+        removeItem: () => {},
+      };
+      expect(saveAvatar('triceratops', storage)).toBe(false);
+    });
+
+    it('surfaces a throwing getItem as a null return instead of throwing', () => {
+      const storage = {
+        getItem: () => {
+          throw new Error('boom');
+        },
+        setItem: () => {},
+        removeItem: () => {},
+      };
+      expect(getAvatar(storage)).toBeNull();
+    });
+
+    it('surfaces a throwing removeItem as a false return instead of throwing', () => {
+      const storage = {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {
+          throw new Error('boom');
+        },
+      };
+      expect(clearAvatar(storage)).toBe(false);
+      // A blank save routes through clearAvatar internally and must degrade the same way.
+      expect(saveAvatar('   ', storage)).toBe(false);
+    });
+  });
+
+  it('never calls console methods with the avatar id value, on any path', () => {
+    const consoleSpies = ['log', 'warn', 'error', 'info', 'debug'].map((method) =>
+      jest.spyOn(console, method).mockImplementation(() => {})
+    );
+    try {
+      const storage = makeStorage();
+      const avatarId = 'triceratops';
+
+      saveAvatar(avatarId, storage);
+      getAvatar(storage);
+      clearAvatar(storage);
+
+      for (const spy of consoleSpies) {
         expect(spy).not.toHaveBeenCalled();
       }
     } finally {
