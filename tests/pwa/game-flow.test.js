@@ -1217,7 +1217,9 @@ describe('nickname edit/delete control on Home (Añadir opción visible para cam
     const saveButton = getByRole(container, 'button', { name: nicknameStrings.saveButton });
     saveButton.click();
 
-    expect(window.localStorage.getItem('dinoquiz:nickname')).toBe(JSON.stringify('Rex'));
+    expect(window.localStorage.getItem('dinoquiz:nickname')).toBe(
+      JSON.stringify({ nickname: 'Rex', avatarId: null })
+    );
     expect(container.textContent).toContain(nicknameStrings.saveSuccessMessage);
   });
 

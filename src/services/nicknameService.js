@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Local nickname ("apodo") persistence.
+ * Local nickname ("apodo") persistence, plus the optional selected avatar
+ * id stored alongside it under the same entry.
  *
  * The implementation lives in public/scripts/nicknameService.js because
  * public/scripts/main.js's game-start flow has to read/write it live in the
