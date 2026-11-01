@@ -3317,6 +3317,8 @@ body {
   font-size: var(--font-size-body);
   color: var(--color-text);
   overflow-wrap: break-word;
+}
+
 /*
  * Silhouette (TRIOFSND-263): the same cartoon illustration Parejas already
  * shows, blacked out via `filter` regardless of its own colors -- no second
