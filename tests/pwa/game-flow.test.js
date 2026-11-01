@@ -1250,6 +1250,49 @@ describe('nickname edit/delete control on Home (Añadir opción visible para cam
     expect(container.textContent).toContain(nicknameStrings.noNicknameSaved);
     expect(container.textContent).toContain(nicknameStrings.deleteSuccessMessage);
   });
+
+  test('opening the panel with a saved nickname and avatar shows that avatar marked, and choosing another persists it immediately', async () => {
+    window.localStorage.setItem('dinoquiz:nickname', JSON.stringify({ nickname: 'Rex', avatarId: 'trex' }));
+
+    const { renderHome, resolveScreenRenderers } = require(MAIN_JS_PATH);
+    const renderers = resolveScreenRenderers();
+    const {
+      home: homeStrings,
+      nicknameSettings: nicknameStrings,
+      nicknameRequest: nicknameRequestStrings,
+      dinosaurNames,
+    } = require('../../public/i18n/es.json');
+    const fetchFn = jest.fn().mockResolvedValue({
+      json: () =>
+        Promise.resolve({
+          home: homeStrings,
+          nicknameSettings: nicknameStrings,
+          nicknameRequest: nicknameRequestStrings,
+          dinosaurNames,
+        }),
+    });
+
+    await renderHome(document, renderers.renderHomeScreen, fetchFn);
+
+    const nicknameButton = getByRole(container, 'button', { name: homeStrings.globalControls.nicknameButton });
+    nicknameButton.click();
+
+    const trexOption = container.querySelector('[data-avatar-id="trex"]');
+    const triceratopsOption = container.querySelector('[data-avatar-id="triceratops"]');
+    expect(trexOption).toHaveAttribute('aria-checked', 'true');
+    expect(trexOption).toHaveAttribute(
+      'aria-label',
+      nicknameRequestStrings.avatarPicker.optionAriaLabelFormat.replace('{dinosaur}', dinosaurNames.trex)
+    );
+
+    triceratopsOption.click();
+
+    expect(triceratopsOption).toHaveAttribute('aria-checked', 'true');
+    expect(trexOption).toHaveAttribute('aria-checked', 'false');
+    expect(window.localStorage.getItem('dinoquiz:nickname')).toBe(
+      JSON.stringify({ nickname: 'Rex', avatarId: 'triceratops' })
+    );
+  });
 });
 
 describe('TRIOFSND-207: multi-level orchestration (continuar/desbloquear/terminar) and safe exit on level generation failure', () => {

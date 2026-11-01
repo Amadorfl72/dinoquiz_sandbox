@@ -393,8 +393,22 @@
    * "Jugar como invitado" moves on without saving anything -- the game still
    * plays, and a finished game is still recorded, just under a null/guest
    * name (hallOfFameService.js's own no-name contract).
+   *
+   * The screen's avatar picker is optional and independent of the apodo
+   * itself: whichever dinosaur is chosen (if any) is persisted immediately
+   * via `nicknameService.saveAvatar`, not deferred to 'Continuar', so it is
+   * never lost if the player picks an avatar and then "Jugar como
+   * invitado"s instead of submitting a name.
+   *
+   * `dinosaurNames` is threaded through explicitly from `resources` (the
+   * same fetch `loadHomeResources` already made) rather than left for
+   * nicknameScreen.js's own `resolveDefaultStrings` fallback to resolve: that
+   * fallback calls `require('../../src/i18n')`, which only exists under
+   * Jest -- a real browser has no `require`, so without this the avatar
+   * picker's accessible names would silently fall back to raw dinosaur ids
+   * (e.g. "trex" instead of "Tyrannosaurus Rex").
    */
-  function renderNicknameStep(container, renderers, nicknameRequestStrings, onDone) {
+  function renderNicknameStep(container, renderers, nicknameRequestStrings, dinosaurNames, onDone) {
     var nicknameService = resolveNicknameService();
     var existingNickname =
       nicknameService && typeof nicknameService.getNickname === 'function' ? nicknameService.getNickname() : null;
@@ -406,6 +420,14 @@
 
     return renderers.renderNicknameScreen(container, {
       strings: nicknameRequestStrings,
+      dinosaurNames: dinosaurNames,
+      initialAvatarId:
+        nicknameService && typeof nicknameService.getAvatar === 'function' ? nicknameService.getAvatar() : null,
+      onSelectAvatar: function (avatarId) {
+        if (nicknameService && typeof nicknameService.saveAvatar === 'function') {
+          nicknameService.saveAvatar(avatarId);
+        }
+      },
       onSubmit: function (nickname) {
         if (nicknameService && typeof nicknameService.saveNickname === 'function') {
           nicknameService.saveNickname(nickname);
@@ -3939,6 +3961,7 @@
             nicknameSettings: data.nicknameSettings,
             ageGate: data.ageGate,
             nicknameRequest: data.nicknameRequest,
+            dinosaurNames: data.dinosaurNames,
             modeSelector: data.modeSelector,
             modes: data.modes,
             modeChange: data.modeChange,
@@ -4516,6 +4539,8 @@
             purchaseStrings: resources.purchase,
             hallOfFameStrings: resources.hallOfFame,
             nicknameStrings: resources.nicknameSettings,
+            avatarPickerStrings: resources.nicknameRequest && resources.nicknameRequest.avatarPicker,
+            dinosaurNames: resources.dinosaurNames,
           }
         : {};
 
@@ -4587,6 +4612,15 @@
         renderOptions.onDeleteNickname = function () {
           nicknameService.clearNickname();
         };
+        // Avatar picker (TRIOFSND): preselected from whatever is already
+        // saved, persisted immediately on choice -- same
+        // nicknameService.getAvatar/saveAvatar contract `renderNicknameStep`
+        // uses, so clearNickname above (which never touches the avatar) and
+        // this panel always agree on what's saved.
+        renderOptions.avatarId = nicknameService.getAvatar();
+        renderOptions.onSelectAvatar = function (avatarId) {
+          nicknameService.saveAvatar(avatarId);
+        };
       }
 
       // TRIOFSND-129: how many distinct fun facts have been seen on this
@@ -4646,7 +4680,7 @@
               // onPurchase) -- startLevelGame's `storageObj` must read from that
               // same backend, or a purchase confirmed here would still show
               // ads on this very game's Resultados screen.
-              renderNicknameStep(container, renderers, resources && resources.nicknameRequest, function () {
+              renderNicknameStep(container, renderers, resources && resources.nicknameRequest, resources && resources.dinosaurNames, function () {
                 renderAgeGate(container, renderers, resources && resources.ageGate, function () {
                   renderModeSelector(container, renderers, questions, doc, fetchFn, resources, {
                     storageObj: resolvedMuteStorage,

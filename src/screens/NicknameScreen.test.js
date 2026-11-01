@@ -10,7 +10,8 @@ const {
   validateNickname,
   renderNicknameScreen,
 } = require('./NicknameScreen');
-const { nicknameRequest: strings } = require('../../public/i18n/es.json');
+const { nicknameRequest: strings, dinosaurNames } = require('../../public/i18n/es.json');
+const { AVATAR_LIST } = require('../data/avatarList');
 
 describe('validateNickname/trimNickname (pure, no DOM/storage)', () => {
   test('the limit is 20 characters', () => {
@@ -293,5 +294,204 @@ describe('NicknameScreen accessibility (label, focus, error semantics, keyboard)
 
     guestButton.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
     expect(onGuest).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NicknameScreen avatar picker (rendering)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('renders the group label, instructions and optional notice from the es locale resource file', () => {
+    renderNicknameScreen(container, { strings, dinosaurNames });
+
+    expect(container.textContent).toContain(strings.avatarPicker.groupLabel);
+    expect(container.textContent).toContain(strings.avatarPicker.instructions);
+    expect(container.textContent).toContain(strings.avatarPicker.optionalNotice);
+  });
+
+  test('renders exactly one radio option per avatar in the catalog, inside a radiogroup', () => {
+    const { avatarPicker, avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    const grid = avatarPicker.querySelector('[role="radiogroup"]');
+    expect(grid).not.toBeNull();
+    expect(grid.querySelectorAll('[role="radio"]').length).toBe(AVATAR_LIST.length);
+    expect(Object.keys(avatarOptions).length).toBe(AVATAR_LIST.length);
+  });
+
+  test('each option has an accessible name built from optionAriaLabelFormat and the dinosaur\'s localized name', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    AVATAR_LIST.forEach((avatar) => {
+      const expectedLabel = strings.avatarPicker.optionAriaLabelFormat.replace('{dinosaur}', dinosaurNames[avatar.nameKey]);
+      expect(avatarOptions[avatar.id]).toHaveAccessibleName(expectedLabel);
+    });
+  });
+
+  test('each option\'s illustration is decorative -- empty alt and aria-hidden, never the only name source', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    AVATAR_LIST.forEach((avatar) => {
+      const img = avatarOptions[avatar.id].querySelector('img');
+      expect(img).toHaveAttribute('alt', '');
+      expect(img).toHaveAttribute('aria-hidden', 'true');
+      expect(img).toHaveAttribute('src', avatar.image);
+    });
+  });
+
+  test('no avatar is selected by default -- selection is optional', () => {
+    const { avatarOptions, getSelectedAvatarId } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    expect(getSelectedAvatarId()).toBeNull();
+    Object.values(avatarOptions).forEach((button) => {
+      expect(button).toHaveAttribute('aria-checked', 'false');
+    });
+  });
+
+  test('exactly one option is in the tab order (roving tabindex), defaulting to the first', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    const tabbable = Object.values(avatarOptions).filter((button) => button.tabIndex === 0);
+    expect(tabbable.length).toBe(1);
+    expect(tabbable[0]).toBe(avatarOptions[AVATAR_LIST[0].id]);
+  });
+
+  test('options.initialAvatarId preselects that option and is reflected by getSelectedAvatarId', () => {
+    const preselected = AVATAR_LIST[2].id;
+    const { avatarOptions, getSelectedAvatarId } = renderNicknameScreen(container, {
+      strings,
+      dinosaurNames,
+      initialAvatarId: preselected,
+    });
+
+    expect(getSelectedAvatarId()).toBe(preselected);
+    expect(avatarOptions[preselected]).toHaveAttribute('aria-checked', 'true');
+    expect(avatarOptions[preselected].tabIndex).toBe(0);
+  });
+
+  test('re-rendering into the same container clears the previous avatar picker too', () => {
+    renderNicknameScreen(container, { strings, dinosaurNames });
+    renderNicknameScreen(container, { strings, dinosaurNames });
+
+    expect(container.querySelectorAll('.avatar-picker').length).toBe(1);
+    expect(container.querySelectorAll('[role="radio"]').length).toBe(AVATAR_LIST.length);
+  });
+});
+
+describe('NicknameScreen avatar picker (selection)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('clicking an avatar selects it and calls onSelectAvatar with its id', () => {
+    const onSelectAvatar = jest.fn();
+    const { avatarOptions, getSelectedAvatarId } = renderNicknameScreen(container, {
+      strings,
+      dinosaurNames,
+      onSelectAvatar,
+    });
+    const target = AVATAR_LIST[1].id;
+
+    avatarOptions[target].click();
+
+    expect(onSelectAvatar).toHaveBeenCalledTimes(1);
+    expect(onSelectAvatar).toHaveBeenCalledWith(target);
+    expect(getSelectedAvatarId()).toBe(target);
+    expect(avatarOptions[target]).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('selecting a different avatar deselects the previous one -- only one is ever checked', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const second = AVATAR_LIST[1].id;
+
+    avatarOptions[first].click();
+    expect(avatarOptions[first]).toHaveAttribute('aria-checked', 'true');
+
+    avatarOptions[second].click();
+    expect(avatarOptions[second]).toHaveAttribute('aria-checked', 'true');
+    expect(avatarOptions[first]).toHaveAttribute('aria-checked', 'false');
+  });
+
+  test('pressing Enter or Space on a focused option selects it, same as a click', () => {
+    const onSelectAvatar = jest.fn();
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames, onSelectAvatar });
+    const target = AVATAR_LIST[0].id;
+
+    avatarOptions[target].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+    expect(onSelectAvatar).toHaveBeenCalledWith(target);
+    expect(avatarOptions[target]).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('arrow keys move focus between options without changing the selection', () => {
+    const onSelectAvatar = jest.fn();
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames, onSelectAvatar });
+    const first = AVATAR_LIST[0].id;
+    const second = AVATAR_LIST[1].id;
+
+    avatarOptions[first].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+
+    expect(avatarOptions[second]).toHaveFocus();
+    expect(onSelectAvatar).not.toHaveBeenCalled();
+    expect(avatarOptions[first]).toHaveAttribute('aria-checked', 'false');
+    expect(avatarOptions[second]).toHaveAttribute('aria-checked', 'false');
+    expect(avatarOptions[second].tabIndex).toBe(0);
+    expect(avatarOptions[first].tabIndex).toBe(-1);
+  });
+
+  test('ArrowLeft from the first option wraps around to the last one', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const last = AVATAR_LIST[AVATAR_LIST.length - 1].id;
+
+    avatarOptions[first].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }));
+
+    expect(avatarOptions[last]).toHaveFocus();
+  });
+
+  test('choosing an avatar never blocks Continuar -- a valid apodo still submits', () => {
+    const onSubmit = jest.fn();
+    const { avatarOptions, input, continueButton } = renderNicknameScreen(container, {
+      strings,
+      dinosaurNames,
+      onSubmit,
+    });
+
+    avatarOptions[AVATAR_LIST[0].id].click();
+    input.value = 'Rex';
+    continueButton.click();
+
+    expect(onSubmit).toHaveBeenCalledWith('Rex');
+  });
+
+  test('continuing as guest without ever choosing an avatar works -- selection stays optional', () => {
+    const onGuest = jest.fn();
+    const { guestButton, getSelectedAvatarId } = renderNicknameScreen(container, { strings, dinosaurNames, onGuest });
+
+    guestButton.click();
+
+    expect(onGuest).toHaveBeenCalledTimes(1);
+    expect(getSelectedAvatarId()).toBeNull();
+  });
+
+  test('missing onSelectAvatar never throws when an avatar is activated', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    expect(() => avatarOptions[AVATAR_LIST[0].id].click()).not.toThrow();
   });
 });
