@@ -34,12 +34,23 @@ function buildQuestionBank(count) {
 
 // Answers the currently visible question and advances manually via
 // "Siguiente" (see tests/pwa/game-flow.test.js for the same helper).
+// "Siguiente" is shown and enabled synchronously in the same update as the
+// feedback (AC-6), so it's tapped right away — no timer advance needed to
+// reveal, enable or click it.
 async function answerCurrentQuestion(container, { correct }) {
   const buttons = Array.from(container.querySelectorAll('.question-screen__option'));
   const index = correct ? 0 : 1; // correctAnswerIndex is always 0 in buildQuestion
   buttons[index].click();
-  await jest.advanceTimersByTimeAsync(0);
-  getByRole(container, 'button', { name: questionStrings.nextButton }).click();
+
+  const funFactBox = container.querySelector('.question-screen__fun-fact-box');
+  const nextButton = getByRole(container, 'button', { name: questionStrings.nextButton });
+  expect(funFactBox.hidden).toBe(false);
+  expect(nextButton.hidden).toBe(false);
+  expect(nextButton.disabled).toBe(false);
+  // "Siguiente" precedes the dato curioso in real DOM/reading order (AC-6).
+  expect(nextButton.compareDocumentPosition(funFactBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+  nextButton.click();
 }
 
 describe('TRIOFSND-92: pregunta_respondida aggregates acierto/fallo per id_pregunta, no per-child log', () => {
