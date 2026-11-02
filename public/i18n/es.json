@@ -135,7 +135,8 @@
       "groupLabel": "Elige tu dinosaurio",
       "instructions": "Toca el dinosaurio que más te guste, o muévete entre ellos con las flechas del teclado y pulsa Intro o espacio para elegirlo.",
       "optionAriaLabelFormat": "Elegir a {dinosaur} como tu avatar",
-      "optionalNotice": "Elegir un dinosaurio es opcional: puedes continuar sin elegir ninguno."
+      "optionalNotice": "Elegir un dinosaurio es opcional: puedes continuar sin elegir ninguno.",
+      "selectedAnnouncement": "Elegiste a {dinosaur} como tu avatar."
     }
   },
   "modeChange": {

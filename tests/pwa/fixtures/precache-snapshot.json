@@ -1,5 +1,5 @@
 {
-  "swVersion": "v63",
+  "swVersion": "v64",
   "precacheUrls": [
     "/",
     "/assets/images/cards/back.svg",
@@ -160,7 +160,7 @@
     "/scripts/ageGateScreen.js": "4e581209cf3cb21ab3bdd892c74d5ae79a443d245872d60bea7e2936c408166e",
     "/scripts/nicknameService.js": "3820fbc054c6958cd50c468347c94c00978145fa9e7f32656824bb54ec5623b2",
     "/scripts/avatarList.js": "9665577841244e678d86a9556f21ffe3a1ab207d99dfe2c817bd06c5ba19465f",
-    "/scripts/nicknameScreen.js": "6da765f8de371a96f9523b2aa85d62c8f90591cb4c911095a5874ab71d961aad",
+    "/scripts/nicknameScreen.js": "aa20397af5df9e314e43d8d9b3f85aba090df7a40766e6c329ae7c6d43486bab",
     "/scripts/imageStyleService.js": "772847ad1c6c2bfc03e988f23707bfd80044931fadcbc71f08d6087a23519003",
     "/scripts/questionScreen.js": "9e16944682ca939296157035b88c17ed03ecd0d1a43872c10a3ef805b747cdee",
     "/scripts/mazeGenerator.js": "2d28efeaa7189e377c73a80421545215c735c3dfb7397194a20a1276f1087e9a",
@@ -265,7 +265,7 @@
     "/assets/sounds/oido-jurasico/trex.wav": "347562503fb9d6ac332e56c0ace758fb8792911680c63b8fb27a618b05ec8027",
     "/assets/sounds/oido-jurasico/triceratops.wav": "ec3c9ee92a003b0d82a950cc91e65788f5c8f8b54c2b0370f9ae02d7e3ef8642",
     "/assets/sounds/oido-jurasico/velociraptor.wav": "9a3ed07be6986ae7f945ce53862e04f68970bee5ffcfe2ee526a9c2b85f53699",
-    "/i18n/es.json": "ff44919defa7b48ddaaf90773a9d100301f8dd383fe2d71dec328398dc2d53de",
+    "/i18n/es.json": "a6bb8ca2df32da50e460e9b6720a75ad383074cbacf0ef311b1736da3c55fb65",
     "/data/questions.json": "ef590ce1be049df6f3faa7b6fc4aa7c3dcb7dcf2fdbcacedece0574662e4c2d1",
     "/data/creatures.json": "f06502fbfc19883c4bef37d431cc3c579f7872bafc6a357cc214297f66d5d1bc",
     "/data/launchGateReport.json": "14e7864a03ad5ed54921ff6617353b766c40c22b0d877d89f7bd2ee94273e54d",
