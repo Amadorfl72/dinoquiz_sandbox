@@ -464,6 +464,51 @@ describe('NicknameScreen avatar picker (selection)', () => {
     expect(avatarOptions[last]).toHaveFocus();
   });
 
+  test('ArrowRight from the last option wraps around to the first one', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const last = AVATAR_LIST[AVATAR_LIST.length - 1].id;
+
+    avatarOptions[last].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+
+    expect(avatarOptions[first]).toHaveFocus();
+  });
+
+  test('ArrowDown/ArrowUp move focus the same way as ArrowRight/ArrowLeft', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const second = AVATAR_LIST[1].id;
+
+    avatarOptions[first].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    expect(avatarOptions[second]).toHaveFocus();
+
+    avatarOptions[second].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+    expect(avatarOptions[first]).toHaveFocus();
+  });
+
+  test('pressing Space on a focused option selects it, same as a click', () => {
+    const onSelectAvatar = jest.fn();
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames, onSelectAvatar });
+    const target = AVATAR_LIST[1].id;
+
+    avatarOptions[target].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+
+    expect(onSelectAvatar).toHaveBeenCalledWith(target);
+    expect(avatarOptions[target]).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('only one radio option is ever reachable by Tab at a time (roving tabindex), and it tracks the selection', () => {
+    const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const third = AVATAR_LIST[2].id;
+
+    avatarOptions[third].click();
+
+    const tabbable = Object.values(avatarOptions).filter((button) => button.tabIndex === 0);
+    expect(tabbable).toEqual([avatarOptions[third]]);
+    expect(avatarOptions[first].tabIndex).toBe(-1);
+  });
+
   test('choosing an avatar never blocks Continuar -- a valid apodo still submits', () => {
     const onSubmit = jest.fn();
     const { avatarOptions, input, continueButton } = renderNicknameScreen(container, {
@@ -493,5 +538,68 @@ describe('NicknameScreen avatar picker (selection)', () => {
     const { avatarOptions } = renderNicknameScreen(container, { strings, dinosaurNames });
 
     expect(() => avatarOptions[AVATAR_LIST[0].id].click()).not.toThrow();
+  });
+});
+
+describe('NicknameScreen avatar picker (screen reader announcement of the selection state)', () => {
+  let container;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    container.remove();
+  });
+
+  test('exposes a dedicated role="status"/aria-live="polite" region, visually hidden and empty before any choice', () => {
+    const { avatarAnnouncement } = renderNicknameScreen(container, { strings, dinosaurNames });
+
+    expect(avatarAnnouncement).toHaveAttribute('role', 'status');
+    expect(avatarAnnouncement).toHaveAttribute('aria-live', 'polite');
+    expect(avatarAnnouncement).toHaveClass('sr-only');
+    expect(avatarAnnouncement.textContent).toBe('');
+  });
+
+  test('clicking an avatar announces the chosen dinosaur by its localized name, built from selectedAnnouncement', () => {
+    const { avatarOptions, avatarAnnouncement } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const target = AVATAR_LIST[0].id;
+
+    avatarOptions[target].click();
+
+    const expected = strings.avatarPicker.selectedAnnouncement.replace('{dinosaur}', dinosaurNames[target]);
+    expect(avatarAnnouncement.textContent).toBe(expected);
+  });
+
+  test('selecting via Enter/Space announces the choice the same way as a click', () => {
+    const { avatarOptions, avatarAnnouncement } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const target = AVATAR_LIST[1].id;
+
+    avatarOptions[target].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+    const expected = strings.avatarPicker.selectedAnnouncement.replace('{dinosaur}', dinosaurNames[target]);
+    expect(avatarAnnouncement.textContent).toBe(expected);
+  });
+
+  test('choosing a different avatar overwrites the announcement with the new choice, never appending', () => {
+    const { avatarOptions, avatarAnnouncement } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+    const second = AVATAR_LIST[1].id;
+
+    avatarOptions[first].click();
+    avatarOptions[second].click();
+
+    const expected = strings.avatarPicker.selectedAnnouncement.replace('{dinosaur}', dinosaurNames[second]);
+    expect(avatarAnnouncement.textContent).toBe(expected);
+  });
+
+  test('moving focus with the arrow keys alone never writes to the announcement region', () => {
+    const { avatarOptions, avatarAnnouncement } = renderNicknameScreen(container, { strings, dinosaurNames });
+    const first = AVATAR_LIST[0].id;
+
+    avatarOptions[first].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+
+    expect(avatarAnnouncement.textContent).toBe('');
   });
 });

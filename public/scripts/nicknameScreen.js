@@ -53,6 +53,21 @@
  * dinosaur's localized name (`dinosaurNames`) -- never the bare id -- and
  * its illustration is `alt=""`/`aria-hidden="true"` since that accessible
  * name already conveys which dinosaur it is.
+ *
+ * `aria-checked` on the focused `role="radio"` button already lets a screen
+ * reader announce the selection, but that depends on focus being on the
+ * option at the moment it changes (e.g. a pointer/touch activation never
+ * moves focus there first in every assistive-tech/browser combination).
+ * To make the "chosen" state unambiguous for TalkBack/VoiceOver regardless
+ * of how the option was activated, `selectAvatar` also writes a one-line
+ * confirmation (`avatarPicker.selectedAnnouncement`, interpolated with the
+ * dinosaur's localized name) into a dedicated `role="status"`/
+ * `aria-live="polite"` region, visually hidden via `.sr-only` -- same
+ * pattern as every other screen's `announcementEl` (see mazeScreen.js,
+ * classifyScreen.js). It starts empty (nothing is announced before any
+ * choice) and is a stable node the picker only ever overwrites, never
+ * replaces, so a screen reader's live-region handling isn't retriggered by
+ * React/DOM churn.
  */
 
 (function () {
@@ -151,13 +166,27 @@
     grid.setAttribute('aria-labelledby', label.id);
     grid.setAttribute('aria-describedby', instructions.id);
 
+    var announcement = doc.createElement('p');
+    announcement.className = 'avatar-picker__announcement sr-only';
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
+
     var optionButtons = [];
     var optionsById = {};
 
+    function dinosaurNameFor(avatar) {
+      return dinosaurNames[avatar.nameKey] || avatar.nameKey;
+    }
+
     function accessibleLabelFor(avatar) {
-      var name = dinosaurNames[avatar.nameKey] || avatar.nameKey;
       var format = pickerStrings.optionAriaLabelFormat || '{dinosaur}';
-      return format.replace('{dinosaur}', name);
+      return format.replace('{dinosaur}', dinosaurNameFor(avatar));
+    }
+
+    function announceSelection(avatar) {
+      var format = pickerStrings.selectedAnnouncement;
+      if (typeof format !== 'string' || format === '') return;
+      announcement.textContent = format.replace('{dinosaur}', dinosaurNameFor(avatar));
     }
 
     function setFocusableIndex(index) {
@@ -178,6 +207,12 @@
       optionButtons.forEach(function (button) {
         button.setAttribute('aria-checked', button.getAttribute('data-avatar-id') === avatarId ? 'true' : 'false');
       });
+      var avatar = avatarList.find(function (candidate) {
+        return candidate.id === avatarId;
+      });
+      if (avatar) {
+        announceSelection(avatar);
+      }
       if (typeof onSelectAvatar === 'function') {
         onSelectAvatar(avatarId);
       }
@@ -236,6 +271,7 @@
     root.appendChild(instructions);
     root.appendChild(grid);
     root.appendChild(optionalNotice);
+    root.appendChild(announcement);
 
     return {
       root: root,
@@ -243,6 +279,7 @@
       label: label,
       instructions: instructions,
       optionalNotice: optionalNotice,
+      announcement: announcement,
       options: optionsById,
       getSelectedAvatarId: function () {
         return selectedId;
@@ -399,6 +436,7 @@
       instructions: instructions,
       avatarPicker: avatarPicker.root,
       avatarOptions: avatarPicker.options,
+      avatarAnnouncement: avatarPicker.announcement,
       getSelectedAvatarId: avatarPicker.getSelectedAvatarId,
       label: label,
       input: input,

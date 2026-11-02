@@ -135,7 +135,8 @@
       "groupLabel": "Choose your dinosaur",
       "instructions": "Tap the dinosaur you like best, or move between them with the keyboard arrows and press Enter or space to choose it.",
       "optionAriaLabelFormat": "Choose {dinosaur} as your avatar",
-      "optionalNotice": "Choosing a dinosaur is optional: you can continue without choosing one."
+      "optionalNotice": "Choosing a dinosaur is optional: you can continue without choosing one.",
+      "selectedAnnouncement": "You chose {dinosaur} as your avatar."
     }
   },
   "modeChange": {
