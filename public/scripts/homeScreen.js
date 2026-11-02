@@ -107,6 +107,16 @@
  * (resolved the same require-or-`window.DinoQuiz` way as `resolveIsOnline`
  * above) so the same-app rule ("apodo, no apellido", 20 characters) is never
  * re-derived here.
+ *
+ * The same panel also offers the avatar picker (PRD "Construir la cuadrícula
+ * de selección de avatar"): players who already have a saved nickname never
+ * see the nickname-request screen again (it is skipped once a nickname
+ * exists -- see main.js's `renderNicknameStep`), so this is their only way
+ * back into it. It reuses `nicknameScreen.js`'s `buildAvatarPicker` (not a
+ * second implementation), preselected from `options.avatarId` and saved
+ * immediately on choice via `options.onSelectAvatar` -- same immediate-
+ * persist, Continuar-independent contract as the nickname-request screen's
+ * own picker. Deleting the nickname above never touches the avatar.
  */
 
 (function () {
@@ -171,7 +181,13 @@
     };
   }
 
-  /** Resolves public/scripts/nicknameScreen.js's exported validation helpers -- same require-or-`window.DinoQuiz` fallback shape as `resolveIsOnline` above. */
+  /**
+   * Resolves public/scripts/nicknameScreen.js's exported API -- validation
+   * helpers (`validateNickname`) plus `buildAvatarPicker`, reused here
+   * (TRIOFSND) so the "Editar o borrar tu apodo" panel's avatar picker is
+   * the exact same control, not a second implementation. Same require-or-
+   * `window.DinoQuiz` fallback shape as `resolveIsOnline` above.
+   */
   function resolveNicknameValidation(win) {
     win = win || (typeof window !== 'undefined' ? window : undefined);
     if (win && win.DinoQuiz && win.DinoQuiz.screens && win.DinoQuiz.screens.nickname) {
@@ -181,6 +197,18 @@
       return require('./nicknameScreen');
     }
     return null;
+  }
+
+  /** Resolves public/scripts/avatarList.js's AVATAR_LIST -- same require-or-`window.DinoQuiz` fallback shape as `resolveIsOnline` above. */
+  function resolveAvatarList(win) {
+    win = win || (typeof window !== 'undefined' ? window : undefined);
+    if (win && win.DinoQuiz && win.DinoQuiz.data && win.DinoQuiz.data.avatarList) {
+      return win.DinoQuiz.data.avatarList.AVATAR_LIST;
+    }
+    if (typeof require === 'function') {
+      return require('./avatarList').AVATAR_LIST;
+    }
+    return [];
   }
 
   function buildDisclosurePanel(id, headingText, closeButtonLabel) {
@@ -325,8 +353,14 @@
    * read by the caller at render time; `onSave`/`onDelete` are the actual
    * persistence callbacks (this screen never touches storage itself, same
    * contract as `onToggleMute`/`onPurchase`).
+   *
+   * `avatarOptions` (`{ avatarPickerStrings, dinosaurNames, currentAvatarId,
+   * onSelectAvatar }`) adds the same avatar picker the nickname-request
+   * screen has, built via `nicknameApi.buildAvatarPicker` -- omitted (no
+   * grid rendered) when that API isn't available.
    */
-  function buildNicknamePanel(strings, currentNickname, onSave, onDelete, win) {
+  function buildNicknamePanel(strings, currentNickname, onSave, onDelete, avatarOptions, win) {
+    avatarOptions = avatarOptions || {};
     var built = buildDisclosurePanel('home-screen-nickname-panel', strings.heading, strings.closeButton);
     var nicknameApi = resolveNicknameValidation(win);
 
@@ -368,6 +402,21 @@
     field.appendChild(input);
     field.appendChild(error);
     built.body.appendChild(field);
+
+    var avatarPickerBuilt =
+      nicknameApi && typeof nicknameApi.buildAvatarPicker === 'function'
+        ? nicknameApi.buildAvatarPicker(
+            document,
+            resolveAvatarList(win),
+            avatarOptions.dinosaurNames,
+            avatarOptions.avatarPickerStrings,
+            avatarOptions.currentAvatarId,
+            avatarOptions.onSelectAvatar
+          )
+        : null;
+    if (avatarPickerBuilt) {
+      built.body.appendChild(avatarPickerBuilt.root);
+    }
 
     function clearError() {
       if (error.hidden) return;
@@ -495,6 +544,13 @@
     built.deleteCancelButton = deleteCancelButton;
     built.deleteConfirmButton = deleteConfirmButton;
     built.status = status;
+    built.avatarPicker = avatarPickerBuilt ? avatarPickerBuilt.root : null;
+    built.avatarOptions = avatarPickerBuilt ? avatarPickerBuilt.options : null;
+    built.getSelectedAvatarId = avatarPickerBuilt
+      ? avatarPickerBuilt.getSelectedAvatarId
+      : function () {
+          return null;
+        };
     return built;
   }
 
@@ -505,6 +561,9 @@
     var purchaseStrings = options.purchaseStrings || resolveDefaultLocaleStrings(options.locale, 'purchase');
     var hallOfFameStrings = options.hallOfFameStrings || resolveDefaultLocaleStrings(options.locale, 'hallOfFame');
     var nicknameStrings = options.nicknameStrings || resolveDefaultLocaleStrings(options.locale, 'nicknameSettings');
+    var avatarPickerStrings =
+      options.avatarPickerStrings || (resolveDefaultLocaleStrings(options.locale, 'nicknameRequest') || {}).avatarPicker;
+    var dinosaurNames = options.dinosaurNames || resolveDefaultLocaleStrings(options.locale, 'dinosaurNames');
     var controlsStrings = strings.globalControls;
 
     container.innerHTML = '';
@@ -696,7 +755,13 @@
       nicknameStrings,
       options.nickname,
       options.onSaveNickname,
-      options.onDeleteNickname
+      options.onDeleteNickname,
+      {
+        avatarPickerStrings: avatarPickerStrings,
+        dinosaurNames: dinosaurNames,
+        currentAvatarId: options.avatarId,
+        onSelectAvatar: options.onSelectAvatar,
+      }
     );
     wireDisclosure(nicknameButton, nicknamePanelBuilt.panel, nicknamePanelBuilt.closeButton);
 
@@ -759,6 +824,9 @@
       nicknameDeleteCancelButton: nicknamePanelBuilt.deleteCancelButton,
       nicknameDeleteConfirmButton: nicknamePanelBuilt.deleteConfirmButton,
       nicknameStatus: nicknamePanelBuilt.status,
+      nicknameAvatarPicker: nicknamePanelBuilt.avatarPicker,
+      nicknameAvatarOptions: nicknamePanelBuilt.avatarOptions,
+      getSelectedNicknameAvatarId: nicknamePanelBuilt.getSelectedAvatarId,
       isMuted: function () {
         return muted;
       },
